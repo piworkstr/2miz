@@ -53,3 +53,9 @@
 
 İlke: albüm ve günlük görev hiç kısıtlanmaz. Kısıtlar kodda tek bir anahtarla açılıp kapanır;
 ilk yayında kapalı başlar.
+
+## Çift aboneliği kuralları
+- Biri öder, eşleşme süresince ikisi de premium olur (satın alma ödeyenin hesabına bağlı, çift belgesine işlenir).
+- "Premium'u sevgiline hediye et" seçeneği.
+- Aylık ve indirimli yıllık plan; ilk kez alanlara 7 gün ücretsiz deneme.
+- Ayrılık durumunda premium ödeyende kalır; ödeyen yeni biriyle eşleşirse yeni çifte geçer.
