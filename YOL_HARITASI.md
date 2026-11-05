@@ -28,3 +28,12 @@
 - Basılı albüm siparişi (ücretli)
 - Premium görev paketleri
 - Apple ve Google ile giriş
+
+## Gelir modeli
+- **Çift aboneliği:** biri öder, ikisi premium olur. Aylık ve indirimli yıllık plan.
+- **Basılı albüm:** yıl dönümü, Sevgililer Günü, doğum günü hatırlatmalarıyla ücretli baskı siparişi.
+- **Tek seferlik satın almalar:** yeni temalar, özel görev paketleri, ekstra "şimdi olmaz" hakkı.
+- **Ödüllü reklam (isteğe bağlı):** reklam izle → ekstra sürpriz görev / çark hakkı. Banner reklam yok.
+- **Date ortaklıkları:** kafe, sinema, restoran indirimleri ve sponsorlu date önerileri.
+- **Büyüme:** polaroidleri Instagram'da paylaşma (köşede küçük logo).
+- **Yaş sınırı:** 18+ (ya da 17+), fotoğraf ve kişisel veri nedeniyle.
