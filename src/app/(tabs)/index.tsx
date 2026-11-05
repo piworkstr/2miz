@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { DateCard } from '../../components/DateCard';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
@@ -31,6 +32,8 @@ export default function Today() {
         <Stat icon={t.id === 'asko' ? 'heart' : 'flame-outline'} value={streakAlive ? couple.streak : 0} label={t.copy.streak} />
         <Stat icon={t.id === 'asko' ? 'happy-outline' : 'star-outline'} value={couple.points} label={t.copy.points} />
       </View>
+
+      <DateCard />
 
       {mode === 'pending' ? (
         <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />

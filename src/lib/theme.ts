@@ -42,6 +42,20 @@ type Copy = {
   surpriseBtn: string;
   surpriseAgain: string;
   tabs: { today: string; album: string; coupons: string; us: string };
+  date: {
+    today: string;
+    selfieHint: string;
+    weAreOnDate: string;
+    plan: string;
+    partnerSaysToday: (p: string) => string;
+    confirmToday: string;
+    partnerPlanned: (p: string, day: string) => string;
+    confirm: string;
+    waiting: (p: string) => string;
+    upcoming: string;
+    pickDay: string;
+    cancel: string;
+  };
 };
 
 export type Theme = {
@@ -115,6 +129,20 @@ const standart: Theme = {
     surpriseBtn: 'Sürpriz görev çek',
     surpriseAgain: 'Başka bir tane',
     tabs: { today: 'Bugün', album: 'Albüm', coupons: 'Kuponlar', us: 'Biz' },
+    date: {
+      today: 'Bugün date günü!',
+      selfieHint: 'İkinizin aynı karede olduğu bir selfie çekin, albüme özel bir sayfa olarak girecek.',
+      weAreOnDate: "Bugün date'teyiz",
+      plan: 'Date planla',
+      partnerSaysToday: (p) => `${p} bugün date'te olduğunuzu söylüyor.`,
+      confirmToday: 'Evet, birlikteyiz',
+      partnerPlanned: (p, d) => `${p} ${d} için date planladı.`,
+      confirm: 'Onayla',
+      waiting: (p) => `${p} onaylayınca date günü kesinleşecek.`,
+      upcoming: "Planlanan date'ler",
+      pickDay: 'Hangi gün?',
+      cancel: 'Vazgeç',
+    },
   },
 };
 
@@ -174,6 +202,20 @@ const agir: Theme = {
     surpriseBtn: 'Sürpriz iş çek',
     surpriseAgain: 'Başkası',
     tabs: { today: 'Bugün', album: 'Arşiv', coupons: 'Fişler', us: 'Ekip' },
+    date: {
+      today: 'Bugün date var',
+      selfieHint: 'Aynı karede bir selfie. Albüme özel sayfa olarak girer.',
+      weAreOnDate: "Date'teyiz",
+      plan: 'Date ayarla',
+      partnerSaysToday: (p) => `${p}: bugün date var.`,
+      confirmToday: 'Doğru',
+      partnerPlanned: (p, d) => `${p} ${d} için date ayarladı.`,
+      confirm: 'Tamam',
+      waiting: (p) => `${p} onaylayınca kesinleşir.`,
+      upcoming: 'Ayarlanan date\'ler',
+      pickDay: 'Hangi gün?',
+      cancel: 'İptal',
+    },
   },
 };
 
@@ -234,6 +276,20 @@ const asko: Theme = {
     surpriseBtn: 'Sürpriz çek',
     surpriseAgain: 'Bir tane daha',
     tabs: { today: 'Bugün', album: 'Anılar', coupons: 'Kuponlar', us: 'Biz' },
+    date: {
+      today: 'Bugün date günümüz!',
+      selfieHint: 'Yanak yanağa bir selfie çekin, albümde kocaman özel bir sayfa olacak.',
+      weAreOnDate: "Şu an date'teyiz",
+      plan: 'Date planlayalım',
+      partnerSaysToday: (p) => `${p} bugün date'te olduğunuzu söylüyor, ay ne tatlı.`,
+      confirmToday: 'Evet evet!',
+      partnerPlanned: (p, d) => `${p} ${d} için date planladı, kabul mü?`,
+      confirm: 'Hı hı, olur',
+      waiting: (p) => `${p} onaylayınca date günümüz kesinleşecek.`,
+      upcoming: "Tatlı date'lerimiz",
+      pickDay: 'Hangi gün tatlım?',
+      cancel: 'Vazgeçtim',
+    },
   },
 };
 

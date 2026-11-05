@@ -32,6 +32,10 @@ service cloud.firestore {
       match /days/{dayId} {
         allow read, write: if isMember(coupleId);
       }
+
+      match /dates/{dateId} {
+        allow read, write: if isMember(coupleId);
+      }
     }
   }
 }
