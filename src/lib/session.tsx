@@ -3,7 +3,15 @@ import { collection, doc, limit, onSnapshot, query, where } from 'firebase/fires
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { auth, db } from './firebase';
 
-export type Profile = { name: string; theme?: string };
+export type Profile = {
+  name: string;
+  theme?: string;
+  loveLanguage?: string;
+  birthDate?: string; // YYYY-MM-DD
+  interests?: string[];
+  notifyTime?: 'sabah' | 'ogle' | 'aksam';
+  onboarded?: boolean;
+};
 
 export type Couple = {
   id: string;
@@ -12,6 +20,8 @@ export type Couple = {
   points: number;
   streak: number;
   lastCompleteDay: string | null;
+  startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
+  status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };
 
 type Session = {
@@ -38,6 +48,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [couple, setCouple] = useState<Couple | null>(null);
   const [coupleReady, setCoupleReady] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
 
   useEffect(
     () =>
@@ -53,13 +64,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setCouple(null);
       setCoupleReady(true);
+      setProfileReady(true);
       return;
     }
     setCoupleReady(false);
+    setProfileReady(false);
 
     const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (snap) => {
       setProfile(snap.exists() ? (snap.data() as Profile) : null);
-    });
+      setProfileReady(true);
+    }, () => setProfileReady(true));
 
     // Kullanıcının üyesi olduğu çift belgesini dinler. Partner davet kodunu
     // girdiği anda, davet eden tarafta da eşleşme otomatik görünür.
@@ -85,7 +99,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider
-      value={{ loading: !authReady || !coupleReady, user, profile, couple, partnerId, partnerName }}
+      value={{ loading: !authReady || !coupleReady || !profileReady, user, profile, couple, partnerId, partnerName }}
     >
       {children}
     </SessionContext.Provider>

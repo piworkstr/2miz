@@ -2,7 +2,7 @@
 
 Bu ilk sürümde çalışanlar: hesap oluşturma/giriş, davet koduyla partner eşleşmesi,
 günlük ortak görev (kabul / başka görev), görev tamamlama + not, puan ve seri, sürpriz görev
-ve kişiye özel tema seçimi ("Biz" sekmesinde: Standart, Ağır Abi, Aşko Kuşko).
+kişiye özel tema seçimi, sevgi dili testiyle başlayan tanışma akışı ve date günü planlama.
 Albüm, kuponlar, selfie, oyunlar ve "canım sıkıldı" bildirimi sonraki adımlarda eklenecek.
 
 ## 1. Bilgisayarı hazırla (bir kez)

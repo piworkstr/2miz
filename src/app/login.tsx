@@ -1,13 +1,13 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
+import { ageFrom, DateInput, toDateKey, type DateParts } from '../components/DateInput';
 import { Button, ErrorText, Input, Muted, Screen } from '../components/ui';
 import { auth, db } from '../lib/firebase';
-import { THEMES } from '../lib/theme';
-
-// Giriş ve eşleşme, tema seçilmeden önce görüldüğü için Standart temayla çizilir.
-const { colors, fonts } = THEMES.standart;
+import { useOnboarding } from '../lib/onboarding';
+import { useTheme } from '../lib/useTheme';
 
 function friendlyError(code: string): string {
   switch (code) {
@@ -29,8 +29,12 @@ function friendlyError(code: string): string {
 }
 
 export default function Login() {
-  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const t = useTheme();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const { loveLanguage, theme } = useOnboarding();
+  const [mode, setMode] = useState<'signup' | 'signin'>(params.mode === 'signin' ? 'signin' : 'signup');
   const [name, setName] = useState('');
+  const [birth, setBirth] = useState<DateParts>({ d: '', m: '', y: '' });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,14 +42,27 @@ export default function Login() {
 
   async function submit() {
     setError('');
-    if (mode === 'signup' && !name.trim()) return setError('Partnerinin göreceği adını yaz.');
+    let birthDate: string | null = null;
+    if (mode === 'signup') {
+      if (!name.trim()) return setError('Partnerinin göreceği adını yaz.');
+      birthDate = toDateKey(birth);
+      if (!birthDate) return setError('Doğum tarihini gün / ay / yıl olarak gir.');
+      if (ageFrom(birthDate) < 18) return setError('UsDaily 18 yaş ve üzeri içindir.');
+    }
     if (!email.trim() || !password) return setError('E-posta ve şifre gerekli.');
+
     setBusy(true);
     try {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(cred.user, { displayName: name.trim() });
-        await setDoc(doc(db, 'users', cred.user.uid), { name: name.trim() });
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          name: name.trim(),
+          birthDate,
+          theme: theme ?? 'standart',
+          ...(loveLanguage ? { loveLanguage } : {}),
+          onboarded: false,
+        });
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       }
@@ -59,13 +76,21 @@ export default function Login() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
-        <View style={styles.hero}>
-          <Text style={styles.logo}>UsDaily</Text>
-          <Muted style={{ textAlign: 'center' }}>Her gün küçük bir görev, birlikte büyüyen bir hikaye.</Muted>
+        <View style={{ gap: 4, marginTop: 16, marginBottom: 8 }}>
+          <Text style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 46, color: t.colors.text }}>
+            {mode === 'signup' ? 'Hesabını oluştur' : 'Tekrar hoş geldin'}
+          </Text>
+          {mode === 'signup' && <Muted>Son bir adım, sonra partnerini bağlayacağız.</Muted>}
         </View>
 
         {mode === 'signup' && (
-          <Input placeholder="Adın" value={name} onChangeText={setName} autoCapitalize="words" />
+          <>
+            <Input placeholder="Adın" value={name} onChangeText={setName} autoCapitalize="words" />
+            <View style={{ gap: 6 }}>
+              <Muted style={{ fontSize: 13 }}>Doğum tarihin</Muted>
+              <DateInput value={birth} onChange={setBirth} />
+            </View>
+          </>
         )}
         <Input
           placeholder="E-posta"
@@ -79,8 +104,11 @@ export default function Login() {
         <ErrorText>{error}</ErrorText>
 
         <Button label={mode === 'signup' ? 'Hesap oluştur' : 'Giriş yap'} onPress={submit} busy={busy} />
-        <Pressable onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')} style={styles.switch}>
-          <Text style={styles.switchText}>
+        <Pressable
+          onPress={() => (mode === 'signin' && !loveLanguage ? router.replace('/welcome') : setMode(mode === 'signup' ? 'signin' : 'signup'))}
+          style={{ alignItems: 'center', padding: 8 }}
+        >
+          <Text style={{ color: t.colors.primary, fontSize: 15 }}>
             {mode === 'signup' ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kayıt ol'}
           </Text>
         </Pressable>
@@ -88,10 +116,3 @@ export default function Login() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: { alignItems: 'center', marginTop: 48, marginBottom: 24, gap: 6 },
-  logo: { fontFamily: fonts.title, fontSize: 64, color: colors.primary },
-  switch: { alignItems: 'center', padding: 8 },
-  switchText: { color: colors.primary, fontSize: 15 },
-});

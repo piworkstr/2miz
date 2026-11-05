@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
@@ -26,6 +27,9 @@ export default function Today() {
       <View style={{ gap: 2, marginTop: 4 }}>
         <Title>{t.copy.hello(profile?.name ?? '')}</Title>
         <Muted>{tx(t, t.copy.dateLine(prettyDate(key), partnerName))}</Muted>
+        {couple.startDate && (
+          <Muted style={{ color: t.colors.primary }}>{tx(t, `${daysTogether(couple.startDate)}. gününüz`)}</Muted>
+        )}
       </View>
 
       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -33,6 +37,7 @@ export default function Today() {
         <Stat icon={t.id === 'asko' ? 'happy-outline' : 'star-outline'} value={couple.points} label={t.copy.points} />
       </View>
 
+      <CoupleInfoCard />
       <DateCard />
 
       {mode === 'pending' ? (

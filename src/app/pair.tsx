@@ -1,17 +1,21 @@
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, Text, View } from 'react-native';
 import { Button, Card, ErrorText, Input, Muted, Screen, Title } from '../components/ui';
 import { auth } from '../lib/firebase';
 import { createInvite, joinInvite } from '../lib/pairing';
 import { useSession } from '../lib/session';
-import { THEMES } from '../lib/theme';
-
-// Giriş ve eşleşme, tema seçilmeden önce görüldüğü için Standart temayla çizilir.
-const { colors, fonts } = THEMES.standart;
+import { useTheme } from '../lib/useTheme';
 
 export default function Pair() {
   const { profile, user } = useSession();
+  const { colors, fonts } = useTheme();
+  const styles = {
+    cardTitle: { fontSize: 17, fontWeight: '600' as const, color: colors.text },
+    code: { fontFamily: fonts.title, fontSize: 52, letterSpacing: 6, color: colors.primary, textAlign: 'center' as const },
+    codeInput: { fontSize: 22, letterSpacing: 6, textAlign: 'center' as const },
+    or: { textAlign: 'center' as const, color: colors.muted },
+  };
   const myName = profile?.name || user?.displayName || 'Ben';
   const [code, setCode] = useState<string | null>(null);
   const [partnerCode, setPartnerCode] = useState('');
@@ -88,10 +92,3 @@ export default function Pair() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  cardTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
-  code: { fontFamily: fonts.title, fontSize: 52, letterSpacing: 6, color: colors.primary, textAlign: 'center' },
-  codeInput: { fontSize: 22, letterSpacing: 6, textAlign: 'center' },
-  or: { textAlign: 'center', color: colors.muted },
-});

@@ -6,6 +6,9 @@
 - Görev tamamlama + not, puan ve seri
 - Sürpriz görev
 - Kişiye özel tema: Standart, Ağır Abi, Aşko Kuşko (renk, font, metin dili)
+- Tanışma akışı: hoş geldin → 5 soruluk sevgi dili testi → tema önerisi (uygulama anında o temaya geçer)
+  → kayıt (ad, doğum tarihi, 18+ kontrolü) → ilgi alanları ve bildirim saati (atlanabilir) → eşleşme
+- Çift bilgileri: birliktelik tarihi, ilişki durumu, "X. gününüz" sayacı
 - Date günü: önceden planlama + anlık "Bugün date'teyiz", partner onayı, o gün özel date kartı
 
 ## Sıradaki adım: selfie ve albüm
@@ -16,6 +19,9 @@
 - Not: fotoğraflar için Firebase Storage ve Blaze (kullandıkça öde) planı gerekir.
 
 ## Sonra
+- Görevleri iki partnerin sevgi diline göre seçmek (ör. "Can'ın sevgi dili birlikte zaman")
+- Yaşa ve ilişki durumuna göre görev paketleri (gençlere sosyal/eğlenceli, evlilere derin)
+- Yıl dönümü ve doğum günü hatırlatmaları
 - Aşk kuponları (kendi kuponunu yaz, partnerinkini puanla aç)
 - Görev çarkı, görev arşivi ve favoriler
 - Canlı oyunlar: Beni ne kadar tanıyorsun?, Bu mu o mu?, Anı eşleştirme
