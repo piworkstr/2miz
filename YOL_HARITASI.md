@@ -37,3 +37,19 @@
 - **Date ortaklıkları:** kafe, sinema, restoran indirimleri ve sponsorlu date önerileri.
 - **Büyüme:** polaroidleri Instagram'da paylaşma (köşede küçük logo).
 - **Yaş sınırı:** 18+ (ya da 17+), fotoğraf ve kişisel veri nedeniyle.
+
+## Ücretsiz / Premium
+| Özellik | Ücretsiz | Premium |
+|---|---|---|
+| Günlük görev, date günü | Var | Var |
+| 3 tema | Var | Var + yeni temalar |
+| Anı albümü | Tamamı | Tamamı + özel çerçeveler |
+| Sürpriz görev | Günde 1 | Sınırsız |
+| Görev çarkı | Haftada 1 | Sınırsız |
+| Oyunlar | 1 oyun | 3 oyun + yenileri |
+| Aşk kuponları | 3 aktif kupon | Sınırsız |
+| Özel görev paketleri | Yok | Var |
+| Ödüllü reklam | İsteğe bağlı | Yok |
+
+İlke: albüm ve günlük görev hiç kısıtlanmaz. Kısıtlar kodda tek bir anahtarla açılıp kapanır;
+ilk yayında kapalı başlar.
