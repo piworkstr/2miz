@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMember(coupleId) {
+      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.members;
+    }
+
+    // Herkes sadece kendi profilini okuyup yazabilir.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Davet kodları: kodu bilen okuyabilir, liste halinde görülemez.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn();
+    }
+
+    // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
+    match /couples/{coupleId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.members.size() == 2
+        && request.auth.uid in request.resource.data.members;
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.members == resource.data.members;
+
+      match /days/{dayId} {
+        allow read, write: if isMember(coupleId);
+      }
+    }
+  }
+}
