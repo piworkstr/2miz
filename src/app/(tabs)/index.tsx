@@ -1,16 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, Card, ErrorText, Input, Loading, Muted, Screen } from '../../components/ui';
+import { Text, View } from 'react-native';
+import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { useSession } from '../../lib/session';
 import { categoryLabels, randomTask, taskById, type Task } from '../../lib/tasks';
-import { colors, fonts } from '../../lib/theme';
+import { tx } from '../../lib/theme';
+import { useTheme } from '../../lib/useTheme';
 
 export default function Today() {
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
+  const t = useTheme();
 
   if (!user || !couple || !partnerId || !day) return <Loading />;
 
@@ -20,25 +22,19 @@ export default function Today() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.hello}>Merhaba {profile?.name ?? ''}</Text>
-          <Muted>
-            {prettyDate(key)} · {partnerName} ile
-          </Muted>
-        </View>
+      <View style={{ gap: 2, marginTop: 4 }}>
+        <Title>{t.copy.hello(profile?.name ?? '')}</Title>
+        <Muted>{tx(t, t.copy.dateLine(prettyDate(key), partnerName))}</Muted>
       </View>
 
-      <View style={styles.stats}>
-        <Stat icon="flame-outline" value={streakAlive ? couple.streak : 0} label="gün seri" />
-        <Stat icon="star-outline" value={couple.points} label="puan" />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Stat icon={t.id === 'asko' ? 'heart' : 'flame-outline'} value={streakAlive ? couple.streak : 0} label={t.copy.streak} />
+        <Stat icon={t.id === 'asko' ? 'happy-outline' : 'star-outline'} value={couple.points} label={t.copy.points} />
       </View>
 
-      {mode === 'pending' && (
+      {mode === 'pending' ? (
         <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />
-      )}
-
-      {mode !== 'pending' && (
+      ) : (
         <TaskCard
           day={day}
           uid={uid}
@@ -56,24 +52,42 @@ export default function Today() {
   );
 }
 
-function Stat({ icon, value, label }: { icon: 'flame-outline' | 'star-outline'; value: number; label: string }) {
+function Stat({ icon, value, label }: { icon: 'flame-outline' | 'star-outline' | 'heart' | 'happy-outline'; value: number; label: string }) {
+  const t = useTheme();
+  const boxed = t.accentBar;
   return (
-    <View style={styles.stat}>
-      <Ionicons name={icon} size={22} color={colors.primary} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: boxed ? 'transparent' : t.id === 'asko' ? t.colors.card : t.colors.primarySoft,
+        borderWidth: boxed ? 1 : 0,
+        borderColor: t.colors.border,
+        borderRadius: t.radius.card,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+      }}
+    >
+      <Ionicons name={icon} size={22} color={t.colors.primary} />
+      <Text style={{ fontSize: 20, fontWeight: '700', color: boxed ? t.colors.primary : t.colors.text, fontFamily: t.fonts.button }}>
+        {value}
+      </Text>
+      <Muted style={{ flex: 1, fontSize: 12, lineHeight: 15 }}>{tx(t, label)}</Muted>
     </View>
   );
 }
 
 function TaskTitle({ task, label }: { task: Task; label: string }) {
+  const t = useTheme();
   return (
     <View style={{ gap: 6 }}>
-      <View style={styles.pillRow}>
-        <Text style={styles.pill}>{label}</Text>
-        <Text style={styles.pillMuted}>{categoryLabels[task.category]}</Text>
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <Pill>{label}</Pill>
+        <Muted style={{ fontSize: 12 }}>{tx(t, categoryLabels[task.category])}</Muted>
       </View>
-      <Text style={styles.taskTitle}>{task.title}</Text>
+      <Display>{task.title}</Display>
     </View>
   );
 }
@@ -81,9 +95,9 @@ function TaskTitle({ task, label }: { task: Task; label: string }) {
 type PendingProps = { day: DayDoc; uid: string; partnerName: string; coupleId: string; dayId: string };
 
 function PendingCard({ day, uid, partnerName, coupleId, dayId }: PendingProps) {
+  const t = useTheme();
   const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
   const mine = day.responses[uid];
-  const task = taskById(day.sharedTaskId);
 
   async function answer(value: 'accept' | 'decline') {
     setBusy(value);
@@ -95,20 +109,15 @@ function PendingCard({ day, uid, partnerName, coupleId, dayId }: PendingProps) {
   }
 
   return (
-    <Card>
-      <TaskTitle task={task} label="Bugünün ortak görevi" />
+    <Card accent>
+      <TaskTitle task={taskById(day.sharedTaskId)} label={t.copy.sharedLabel} />
       {mine === 'accept' ? (
-        <Muted>Sen hazırsın. {partnerName} cevap verince görev başlayacak.</Muted>
+        <Muted>{t.copy.waiting(partnerName)}</Muted>
       ) : (
         <>
-          <Muted>Bunu birlikte yapmak ister misin? Biriniz istemezse ikinize de ayrı görev gelir.</Muted>
-          <Button label="Birlikte yapalım" onPress={() => answer('accept')} busy={busy === 'accept'} />
-          <Button
-            label="Başka görev istiyorum"
-            variant="secondary"
-            onPress={() => answer('decline')}
-            busy={busy === 'decline'}
-          />
+          <Muted>{t.copy.sharedHint}</Muted>
+          <Button label={t.copy.accept} onPress={() => answer('accept')} busy={busy === 'accept'} />
+          <Button label={t.copy.decline} variant="secondary" onPress={() => answer('decline')} busy={busy === 'decline'} />
         </>
       )}
     </Card>
@@ -127,6 +136,7 @@ type TaskCardProps = {
 };
 
 function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members, dayId }: TaskCardProps) {
+  const t = useTheme();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -138,7 +148,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 
   async function finish() {
     setError('');
-    if (!note.trim()) return setError('Bugüne küçük bir not bırak.');
+    if (!note.trim()) return setError(t.copy.noteRequired);
     setBusy(true);
     try {
       await completeTask(coupleId, dayId, uid, members, note);
@@ -151,55 +161,58 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 
   return (
     <>
-      <Card>
-        <TaskTitle task={myTask} label={shared ? 'Ortak görev' : 'Senin görevin'} />
+      <Card accent>
+        <TaskTitle task={myTask} label={shared ? t.copy.sharedTask : t.copy.myTask} />
 
         {myDone ? (
-          <View style={styles.doneBox}>
-            <Text style={styles.doneLabel}>Tamamladın</Text>
-            <Text style={styles.handNote}>{myDone.note}</Text>
+          <View style={{ backgroundColor: t.colors.successSoft, borderRadius: Math.min(t.radius.card, 12), padding: 14, gap: 4 }}>
+            <T style={{ color: t.colors.success, fontWeight: '600' }}>{tx(t, t.copy.completed)}</T>
+            <T style={{ fontFamily: t.fonts.note, fontSize: 24 }}>{myDone.note}</T>
           </View>
         ) : (
           <>
-            <View style={styles.selfieSlot}>
-              <Ionicons name="camera-outline" size={28} color={colors.muted} />
-              <Muted style={{ textAlign: 'center' }}>Selfie çekimi bir sonraki güncellemede burada olacak.</Muted>
+            <View
+              style={{
+                borderWidth: 1.5,
+                borderStyle: 'dashed',
+                borderColor: t.colors.border,
+                borderRadius: Math.min(t.radius.card, 14),
+                padding: 20,
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Ionicons name="camera-outline" size={28} color={t.colors.muted} />
+              <Muted style={{ textAlign: 'center' }}>{t.copy.selfieSoon}</Muted>
             </View>
-            <Input
-              placeholder="Bugünden küçük bir not..."
-              value={note}
-              onChangeText={setNote}
-              maxLength={80}
-            />
+            <Input placeholder={t.copy.notePlaceholder} value={note} onChangeText={setNote} maxLength={80} />
             <ErrorText>{error}</ErrorText>
-            <Button label="Görevi tamamla" onPress={finish} busy={busy} />
+            <Button label={t.copy.complete} onPress={finish} busy={busy} />
           </>
         )}
       </Card>
 
       {!shared && (
         <Card style={{ gap: 6 }}>
-          <Muted>Partnerinin görevi</Muted>
-          <Text style={styles.partnerTask}>{partnerTask.title}</Text>
+          <Muted>{tx(t, t.copy.partnerTask)}</Muted>
+          <Display style={{ fontSize: t.displaySize * 0.8 }}>{partnerTask.title}</Display>
         </Card>
       )}
 
-      <Card style={styles.statusRow}>
+      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14 }}>
         <Ionicons
           name={partnerDone ? 'checkmark-circle' : 'time-outline'}
           size={22}
-          color={partnerDone ? colors.success : colors.muted}
+          color={partnerDone ? t.colors.success : t.colors.muted}
         />
-        <Text style={{ flex: 1, color: colors.text }}>
-          {partnerDone ? `${partnerName} görevini tamamladı` : `${partnerName} henüz tamamlamadı`}
-        </Text>
+        <T style={{ flex: 1 }}>{partnerDone ? t.copy.partnerDone(partnerName) : t.copy.partnerNotDone(partnerName)}</T>
       </Card>
 
       {day.rewarded && (
-        <Card style={{ backgroundColor: colors.successSoft, borderColor: colors.successSoft }}>
-          <Text style={styles.reward}>
-            Bugünü birlikte tamamladınız! +{shared ? POINTS.shared : POINTS.separate} puan
-          </Text>
+        <Card style={{ backgroundColor: t.colors.successSoft, borderColor: t.colors.successSoft }}>
+          <T style={{ color: t.colors.success, fontWeight: '600', fontSize: 16, textAlign: 'center' }}>
+            {tx(t, t.copy.reward(shared ? POINTS.shared : POINTS.separate))}
+          </T>
         </Card>
       )}
     </>
@@ -207,67 +220,17 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 }
 
 function SurpriseCard() {
+  const t = useTheme();
   const [task, setTask] = useState<Task | null>(null);
   return (
     <Card>
-      <Text style={styles.surpriseTitle}>Canın mı sıkıldı?</Text>
-      {task ? (
-        <TaskTitle task={task} label="Sürpriz görev" />
-      ) : (
-        <Muted>Ekstra bir şey yapmak istersen rastgele bir görev çek.</Muted>
-      )}
+      <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.surpriseTitle)}</T>
+      {task ? <TaskTitle task={task} label={t.copy.surpriseLabel} /> : <Muted>{t.copy.surpriseHint}</Muted>}
       <Button
-        label={task ? 'Başka bir tane' : 'Sürpriz görev çek'}
+        label={task ? t.copy.surpriseAgain : t.copy.surpriseBtn}
         variant="secondary"
         onPress={() => setTask(randomTask(task?.id))}
       />
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  hello: { fontFamily: fonts.handBold, fontSize: 38, color: colors.text },
-  stats: { flexDirection: 'row', gap: 12 },
-  stat: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.primarySoft,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  statValue: { fontSize: 20, fontWeight: '700', color: colors.text },
-  statLabel: { fontSize: 14, color: colors.muted },
-  pillRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  pill: {
-    backgroundColor: colors.primarySoft,
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '600',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  pillMuted: { fontSize: 12, color: colors.muted },
-  taskTitle: { fontFamily: fonts.handBold, fontSize: 30, lineHeight: 34, color: colors.text },
-  selfieSlot: {
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 20,
-    alignItems: 'center',
-    gap: 6,
-  },
-  doneBox: { backgroundColor: colors.successSoft, borderRadius: 12, padding: 14, gap: 4 },
-  doneLabel: { color: colors.success, fontWeight: '600' },
-  handNote: { fontFamily: fonts.hand, fontSize: 24, color: colors.text },
-  partnerTask: { fontFamily: fonts.hand, fontSize: 24, color: colors.text },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14 },
-  reward: { color: colors.success, fontWeight: '600', fontSize: 16, textAlign: 'center' },
-  surpriseTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
-});

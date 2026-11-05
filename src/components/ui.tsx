@@ -3,40 +3,107 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
   type TextInputProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts, radius } from '../lib/theme';
+import { tx } from '../lib/theme';
+import { useTheme } from '../lib/useTheme';
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({ children }: { children: ReactNode }) {
+  const t = useTheme();
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={styles.content}>{children}</View>
-      )}
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-export function Title({ children }: { children: ReactNode }) {
-  return <Text style={styles.title}>{children}</Text>;
+// Temanın gövde fontu ve rengiyle yazı.
+export function T({ children, style }: { children: ReactNode; style?: TextStyle | TextStyle[] }) {
+  const t = useTheme();
+  return <Text style={[{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }, style as TextStyle]}>{children}</Text>;
 }
 
-export function Muted({ children, style }: { children: ReactNode; style?: object }) {
-  return <Text style={[styles.muted, style]}>{children}</Text>;
+export function Title({ children }: { children: string }) {
+  const t = useTheme();
+  return (
+    <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize, color: t.colors.text, lineHeight: t.titleSize * 1.15 }}>
+      {tx(t, children)}
+    </Text>
+  );
 }
 
-export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function Display({ children, style }: { children: string; style?: TextStyle }) {
+  const t = useTheme();
+  return (
+    <Text
+      style={[
+        { fontFamily: t.fonts.display, fontSize: t.displaySize, color: t.colors.text, lineHeight: t.displaySize * 1.15 },
+        style,
+      ]}
+    >
+      {tx(t, children)}
+    </Text>
+  );
+}
+
+export function Muted({ children, style }: { children: ReactNode; style?: TextStyle }) {
+  const t = useTheme();
+  return (
+    <Text style={[{ fontSize: 14, color: t.colors.muted, lineHeight: 20, fontFamily: t.fonts.body }, style]}>{children}</Text>
+  );
+}
+
+export function Pill({ children }: { children: string }) {
+  const t = useTheme();
+  return (
+    <Text
+      style={{
+        alignSelf: 'flex-start',
+        backgroundColor: t.accentBar ? 'transparent' : t.colors.primarySoft,
+        color: t.colors.primary,
+        fontSize: 12,
+        fontWeight: '600',
+        fontFamily: t.fonts.button,
+        letterSpacing: t.upper ? 1.5 : 0,
+        paddingHorizontal: t.accentBar ? 0 : 10,
+        paddingVertical: t.accentBar ? 0 : 4,
+        borderRadius: t.radius.pill,
+        overflow: 'hidden',
+      }}
+    >
+      {tx(t, children)}
+    </Text>
+  );
+}
+
+export function Card({ children, style, accent }: { children: ReactNode; style?: ViewStyle; accent?: boolean }) {
+  const t = useTheme();
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: t.colors.card,
+          borderRadius: t.radius.card,
+          borderWidth: t.id === 'asko' ? 2 : 1,
+          borderColor: t.colors.border,
+          padding: 18,
+          gap: 12,
+        },
+        accent && t.accentBar && { borderLeftWidth: 3, borderLeftColor: t.colors.primary },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 type ButtonProps = {
@@ -48,76 +115,81 @@ type ButtonProps = {
 };
 
 export function Button({ label, onPress, variant = 'primary', busy, style }: ButtonProps) {
+  const t = useTheme();
   const primary = variant === 'primary';
+  const fg = primary ? t.colors.onPrimary : t.colors.onPrimarySoft;
   return (
     <Pressable
       onPress={busy ? undefined : onPress}
       style={({ pressed }) => [
-        styles.button,
-        primary ? styles.buttonPrimary : styles.buttonSecondary,
+        {
+          minHeight: 52,
+          borderRadius: t.radius.button,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          backgroundColor: primary ? t.colors.primary : t.accentBar ? 'transparent' : t.colors.primarySoft,
+          borderWidth: !primary && t.accentBar ? 1 : 0,
+          borderColor: t.colors.border,
+        },
         pressed && { opacity: 0.85 },
         style,
       ]}
     >
       {busy ? (
-        <ActivityIndicator color={primary ? colors.onPrimary : colors.primary} />
+        <ActivityIndicator color={fg} />
       ) : (
-        <Text style={[styles.buttonText, { color: primary ? colors.onPrimary : colors.primary }]}>{label}</Text>
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: t.fonts.button ? undefined : '600',
+            fontFamily: t.fonts.button,
+            letterSpacing: t.upper ? 1.5 : 0,
+            color: fg,
+          }}
+        >
+          {tx(t, label)}
+        </Text>
       )}
     </Pressable>
   );
 }
 
 export function Input(props: TextInputProps) {
-  return <TextInput placeholderTextColor={colors.muted} {...props} style={[styles.input, props.style]} />;
-}
-
-export function ErrorText({ children }: { children: ReactNode }) {
-  if (!children) return null;
-  return <Text style={styles.error}>{children}</Text>;
-}
-
-export function Loading() {
+  const t = useTheme();
   return (
-    <View style={styles.loading}>
-      <ActivityIndicator color={colors.primary} size="large" />
-    </View>
+    <TextInput
+      placeholderTextColor={t.colors.muted}
+      {...props}
+      style={[
+        {
+          backgroundColor: t.id === 'agir' ? t.colors.bg : t.colors.card,
+          borderWidth: 1,
+          borderColor: t.colors.border,
+          borderRadius: Math.min(t.radius.card, 14),
+          paddingHorizontal: 14,
+          paddingVertical: 14,
+          fontSize: 16,
+          fontFamily: t.fonts.body,
+          color: t.colors.text,
+        },
+        props.style,
+      ]}
+    />
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 20, gap: 16, flexGrow: 1 },
-  title: { fontFamily: fonts.handBold, fontSize: 40, color: colors.text },
-  muted: { fontSize: 15, color: colors.muted, lineHeight: 21 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 18,
-    gap: 12,
-  },
-  button: {
-    minHeight: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  buttonPrimary: { backgroundColor: colors.primary },
-  buttonSecondary: { backgroundColor: colors.primarySoft },
-  buttonText: { fontSize: 16, fontWeight: '600' },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.text,
-  },
-  error: { color: colors.primary, fontSize: 14 },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
-});
+export function ErrorText({ children }: { children: ReactNode }) {
+  const t = useTheme();
+  if (!children) return null;
+  return <Text style={{ color: t.colors.primary, fontSize: 14, fontFamily: t.fonts.body }}>{children}</Text>;
+}
+
+export function Loading() {
+  const t = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.bg }}>
+      <ActivityIndicator color={t.colors.primary} size="large" />
+    </View>
+  );
+}

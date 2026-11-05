@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, ErrorText, Input, Muted, Screen } from '../components/ui';
 import { auth, db } from '../lib/firebase';
-import { colors, fonts } from '../lib/theme';
+import { THEMES } from '../lib/theme';
+
+// Giriş ve eşleşme, tema seçilmeden önce görüldüğü için Standart temayla çizilir.
+const { colors, fonts } = THEMES.standart;
 
 function friendlyError(code: string): string {
   switch (code) {
@@ -88,7 +91,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   hero: { alignItems: 'center', marginTop: 48, marginBottom: 24, gap: 6 },
-  logo: { fontFamily: fonts.handBold, fontSize: 64, color: colors.primary },
+  logo: { fontFamily: fonts.title, fontSize: 64, color: colors.primary },
   switch: { alignItems: 'center', padding: 8 },
   switchText: { color: colors.primary, fontSize: 15 },
 });

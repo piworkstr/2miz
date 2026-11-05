@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '../lib/theme';
+import { useTheme } from '../lib/useTheme';
 import { Card, Muted, Screen, Title } from './ui';
 
 type Props = {
@@ -11,12 +11,13 @@ type Props = {
 };
 
 export function ComingSoon({ title, icon, text }: Props) {
+  const t = useTheme();
   return (
     <Screen>
       <Title>{title}</Title>
       <Card style={styles.card}>
-        <View style={styles.iconWrap}>
-          <Ionicons name={icon} size={32} color={colors.primary} />
+        <View style={[styles.iconWrap, { backgroundColor: t.colors.primarySoft }]}>
+          <Ionicons name={icon} size={32} color={t.colors.primary} />
         </View>
         <Muted style={{ textAlign: 'center' }}>{text}</Muted>
       </Card>
@@ -30,7 +31,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

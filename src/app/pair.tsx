@@ -5,7 +5,10 @@ import { Button, Card, ErrorText, Input, Muted, Screen, Title } from '../compone
 import { auth } from '../lib/firebase';
 import { createInvite, joinInvite } from '../lib/pairing';
 import { useSession } from '../lib/session';
-import { colors, fonts } from '../lib/theme';
+import { THEMES } from '../lib/theme';
+
+// Giriş ve eşleşme, tema seçilmeden önce görüldüğü için Standart temayla çizilir.
+const { colors, fonts } = THEMES.standart;
 
 export default function Pair() {
   const { profile, user } = useSession();
@@ -88,7 +91,7 @@ export default function Pair() {
 
 const styles = StyleSheet.create({
   cardTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
-  code: { fontFamily: fonts.handBold, fontSize: 52, letterSpacing: 6, color: colors.primary, textAlign: 'center' },
+  code: { fontFamily: fonts.title, fontSize: 52, letterSpacing: 6, color: colors.primary, textAlign: 'center' },
   codeInput: { fontSize: 22, letterSpacing: 6, textAlign: 'center' },
   or: { textAlign: 'center', color: colors.muted },
 });

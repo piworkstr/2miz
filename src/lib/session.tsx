@@ -3,7 +3,7 @@ import { collection, doc, limit, onSnapshot, query, where } from 'firebase/fires
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { auth, db } from './firebase';
 
-export type Profile = { name: string };
+export type Profile = { name: string; theme?: string };
 
 export type Couple = {
   id: string;
