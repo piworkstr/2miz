@@ -1,12 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { THIS_THAT } from '../../lib/gameData';
 import { answerThisThat, type GameProps } from '../../lib/games';
 import { useTheme } from '../../lib/useTheme';
-import { Card, Muted } from '../ui';
-import { BigChoice, Done, Progress, ResultHeader, useFinishOnce } from './shared';
+import { Card } from '../ui';
+import { Done, Progress, ResultHeader, useFinishOnce } from './shared';
 
+const REVEAL_MS = 2200;
+
+// Soru soru birlikte ilerlenir: üstte senin seçimin, altta partnerinin cevabı.
+// İkiniz de seçince cevaplar kısa süre açık kalır, sonra sonraki soruya geçilir.
 export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }: GameProps) {
   const t = useTheme();
   const [busy, setBusy] = useState(false);
@@ -14,11 +18,24 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
   const total = pairs.length;
   const mine = game.answers?.[uid] ?? [];
   const theirs = game.answers?.[partnerId] ?? [];
-  const bothDone = mine.length >= total && theirs.length >= total;
+  const both = Math.min(mine.length, theirs.length); // ikinizin de cevapladığı soru sayısı
+  const bothDone = both >= total;
   useFinishOnce(bothDone, game, coupleId, uid);
 
+  // Yeni bir soru ikiniz tarafından da cevaplandığında, o sorunun sonucunu biraz göster.
+  const [reveal, setReveal] = useState<number | null>(null);
+  const seen = useRef(both);
+  useEffect(() => {
+    if (both > seen.current) {
+      setReveal(both - 1);
+      seen.current = both;
+      const tm = setTimeout(() => setReveal(null), REVEAL_MS);
+      return () => clearTimeout(tm);
+    }
+  }, [both]);
+
   async function choose(choice: number) {
-    if (busy) return;
+    if (busy || mine.length > both) return; // bu soruya zaten cevap verdin
     setBusy(true);
     try {
       await answerThisThat(coupleId, game, uid, choice);
@@ -27,28 +44,79 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
     }
   }
 
-  if (mine.length < total) {
-    const [a, b] = THIS_THAT[pairs[mine.length]];
+  if (!bothDone || reveal !== null) {
+    const index = reveal ?? both;
+    const [a, b] = THIS_THAT[pairs[index]];
+    const myPick = mine[index];
+    const theirPick = theirs[index];
+    const revealed = myPick !== undefined && theirPick !== undefined;
+    const match = revealed && myPick === theirPick;
+
     return (
       <>
-        <Progress value={mine.length} total={total} label={`Sen ${mine.length}/${total} · ${partnerName} ${Math.min(theirs.length, total)}/${total}`} />
-        <Muted style={{ textAlign: 'center' }}>Hızlı ol, düşünme!</Muted>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <BigChoice label={a} onPress={() => choose(0)} disabled={busy} />
-          <BigChoice label={b} onPress={() => choose(1)} disabled={busy} />
-        </View>
-      </>
-    );
-  }
+        <Progress value={both} total={total} label={`Soru ${index + 1}/${total}`} />
 
-  if (!bothDone) {
-    return (
-      <Card style={{ alignItems: 'center', gap: 12, paddingVertical: 28 }}>
-        <ActivityIndicator color={t.colors.primary} />
-        <Muted style={{ textAlign: 'center' }}>
-          Sen bitirdin. {partnerName} {theirs.length}/{total} soruda, sonuçlar onun bitirmesini bekliyor.
-        </Muted>
-      </Card>
+        <Half title="Senin cevabın" highlight={!revealed && myPick === undefined}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[a, b].map((label, i) => (
+              <Choice
+                key={label}
+                label={label}
+                state={myPick === undefined ? 'open' : myPick === i ? 'picked' : 'dim'}
+                onPress={() => choose(i)}
+                disabled={busy || myPick !== undefined}
+              />
+            ))}
+          </View>
+        </Half>
+
+        {revealed && (
+          <View style={{ alignItems: 'center', marginVertical: -4 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: match ? t.colors.primary : t.colors.card,
+                borderWidth: 1,
+                borderColor: match ? t.colors.primary : t.colors.border,
+                borderRadius: 20,
+                paddingHorizontal: 14,
+                paddingVertical: 6,
+              }}
+            >
+              <Ionicons name={match ? 'heart' : 'swap-vertical'} size={16} color={match ? t.colors.onPrimary : t.colors.muted} />
+              <Text style={{ color: match ? t.colors.onPrimary : t.colors.muted, fontWeight: '600' }}>{match ? 'Aynı!' : 'Farklı'}</Text>
+            </View>
+          </View>
+        )}
+
+        <Half title={`${partnerName}'in cevabı`} partner>
+          {revealed ? (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {[a, b].map((label, i) => (
+                <Choice key={label} label={label} state={theirPick === i ? 'picked' : 'dim'} partner />
+              ))}
+            </View>
+          ) : (
+            <View style={{ minHeight: 96, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {theirPick === undefined ? (
+                <>
+                  <ActivityIndicator color={t.colors.muted} />
+                  <Text style={{ color: t.colors.muted, fontFamily: t.fonts.body }}>{partnerName} düşünüyor…</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="lock-closed-outline" size={22} color={t.colors.primary} />
+                  <Text style={{ color: t.colors.muted, fontFamily: t.fonts.body, textAlign: 'center' }}>
+                    {partnerName} seçti. Sen seçince görünecek.
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
+        </Half>
+      </>
     );
   }
 
@@ -75,5 +143,74 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
         );
       })}
     </Done>
+  );
+}
+
+function Half({ title, partner, highlight, children }: { title: string; partner?: boolean; highlight?: boolean; children: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        backgroundColor: partner ? t.colors.primarySoft : t.colors.card,
+        borderRadius: Math.max(t.radius.card, 6),
+        borderWidth: highlight ? 2 : 1,
+        borderColor: highlight ? t.colors.primary : t.colors.border,
+        padding: 14,
+        gap: 12,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name={partner ? 'heart-outline' : 'person-outline'} size={18} color={t.colors.primary} />
+        <Text style={{ color: t.colors.text, fontWeight: '700', fontSize: 15, fontFamily: t.fonts.button }}>{title}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function Choice({
+  label,
+  state,
+  onPress,
+  disabled,
+  partner,
+}: {
+  label: string;
+  state: 'open' | 'picked' | 'dim';
+  onPress?: () => void;
+  disabled?: boolean;
+  partner?: boolean;
+}) {
+  const t = useTheme();
+  const picked = state === 'picked';
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled || !onPress}
+      style={({ pressed }) => ({
+        flex: 1,
+        minHeight: 96,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        borderRadius: Math.max(t.radius.card - 4, 4),
+        borderWidth: 2,
+        borderColor: picked || pressed ? t.colors.primary : t.colors.border,
+        backgroundColor: picked ? t.colors.primary : partner ? t.colors.card : t.colors.bg,
+        opacity: state === 'dim' ? 0.4 : 1,
+      })}
+    >
+      <Text
+        style={{
+          fontFamily: t.fonts.display,
+          fontSize: 24,
+          lineHeight: 30,
+          color: picked ? t.colors.onPrimary : t.colors.text,
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
