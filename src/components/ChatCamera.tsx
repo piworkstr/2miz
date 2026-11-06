@@ -14,6 +14,19 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
   const [busy, setBusy] = useState(false);
   const camera = useRef<CameraView>(null);
 
+  function flip() {
+    setReady(false);
+    setFacing((f) => (f === 'back' ? 'front' : 'back'));
+  }
+
+  // Önizlemeye çift dokununca kamera döner.
+  const lastTap = useRef(0);
+  function doubleTapFlip() {
+    const now = Date.now();
+    if (now - lastTap.current < 300) flip();
+    lastTap.current = now;
+  }
+
   function close() {
     setShot(null);
     setReady(false);
@@ -61,24 +74,21 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
             <Pressable onPress={close} hitSlop={12} accessibilityLabel="Kapat">
               <Ionicons name="close" size={30} color="#fff" />
             </Pressable>
-            {!shot && (
-              <Pressable onPress={() => setFacing(facing === 'back' ? 'front' : 'back')} hitSlop={12} accessibilityLabel="Kamerayı çevir">
-                <Ionicons name="camera-reverse-outline" size={30} color="#fff" />
-              </Pressable>
-            )}
           </View>
 
           <View style={{ flex: 1, marginHorizontal: 12, borderRadius: 18, overflow: 'hidden', backgroundColor: '#111' }}>
             {shot ? (
               <Image source={{ uri: `data:image/jpeg;base64,${shot}` }} style={{ flex: 1 }} resizeMode="cover" />
             ) : permission?.granted ? (
-              <CameraView
-                ref={camera}
-                style={{ flex: 1 }}
-                facing={facing}
-                mirror={facing === 'front'}
-                onCameraReady={() => setReady(true)}
-              />
+              <Pressable style={{ flex: 1 }} onPress={doubleTapFlip}>
+                <CameraView
+                  ref={camera}
+                  style={{ flex: 1 }}
+                  facing={facing}
+                  mirror={facing === 'front'}
+                  onCameraReady={() => setReady(true)}
+                />
+              </Pressable>
             ) : (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 }}>
                 <Text style={{ color: '#fff', textAlign: 'center' }}>Fotoğraf göndermek için kamera izni gerekli.</Text>
@@ -102,13 +112,19 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
                 </Pressable>
               </>
             ) : (
-              <Pressable
-                onPress={take}
-                accessibilityLabel="Çek"
-                style={{ width: 76, height: 76, borderRadius: 38, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {busy ? <ActivityIndicator color="#fff" /> : <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: '#fff' }} />}
-              </Pressable>
+              <>
+                <View style={{ width: 56 }} />
+                <Pressable
+                  onPress={take}
+                  accessibilityLabel="Çek"
+                  style={{ width: 76, height: 76, borderRadius: 38, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {busy ? <ActivityIndicator color="#fff" /> : <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: '#fff' }} />}
+                </Pressable>
+                <Pressable onPress={flip} hitSlop={10} style={round('rgba(255,255,255,0.18)')} accessibilityLabel="Kamerayı çevir">
+                  <Ionicons name="camera-reverse-outline" size={28} color="#fff" />
+                </Pressable>
+              </>
             )}
           </View>
         </SafeAreaView>
