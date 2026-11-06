@@ -36,6 +36,15 @@ service cloud.firestore {
       match /dates/{dateId} {
         allow read, write: if isMember(coupleId);
       }
+
+      // Selfieler: sadece çiftin üyeleri görebilir; herkes yalnızca kendi fotoğrafını yazar.
+      match /photos/{photoId} {
+        allow read: if isMember(coupleId);
+        allow create, update: if isMember(coupleId)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.data.size() < 900000;
+        allow delete: if isMember(coupleId) && resource.data.uid == request.auth.uid;
+      }
     }
   }
 }

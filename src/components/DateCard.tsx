@@ -2,11 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { dayKey, prettyDate } from '../lib/date';
-import { cancelDate, confirmDate, nextDays, proposeDate, useUpcomingDates, type DatePlan } from '../lib/dates';
+import { cancelDate, confirmDate, markDateSelfie, nextDays, proposeDate, useUpcomingDates, type DatePlan } from '../lib/dates';
+import { saveDatePhoto } from '../lib/photos';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
-import { Button, Card, Display, Muted, T } from './ui';
+import { SelfieCamera } from './SelfieCamera';
+import { Button, Card, Display, ErrorText, Input, Muted, T } from './ui';
 
 export function DateCard() {
   const { user, couple, partnerName } = useSession();
@@ -33,7 +35,7 @@ export function DateCard() {
   return (
     <>
       {todayPlan?.status === 'confirmed' ? (
-        <DateToday />
+        <DateToday plan={todayPlan} coupleId={couple.id} uid={uid} />
       ) : todayPlan && todayPlan.by !== uid ? (
         <Card accent style={{ borderColor: t.colors.primary }}>
           <T>{t.copy.date.partnerSaysToday(partnerName)}</T>
@@ -137,44 +139,55 @@ function UpcomingRow({ plan, uid, busy, onConfirm, onCancel }: { plan: DatePlan;
   );
 }
 
-// Date günü kesinleştiğinde çıkan özel kart.
-function DateToday() {
+// Date günü kesinleştiğinde çıkan özel kart. İkinizin aynı karede olduğu tek bir selfie zorunlu.
+function DateToday({ plan, coupleId, uid }: { plan: DatePlan; coupleId: string; uid: string }) {
   const t = useTheme();
+  const { partnerName } = useSession();
+  const [selfie, setSelfie] = useState<string | null>(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const on = t.colors.onPrimary;
+
+  async function save() {
+    setError('');
+    if (!selfie) return setError('Önce birlikte bir selfie çekin.');
+    if (!note.trim()) return setError('Bu date için küçük bir not yaz.');
+    setBusy(true);
+    try {
+      await saveDatePhoto(coupleId, plan.id, uid, note, selfie);
+      await markDateSelfie(coupleId, plan.id, uid);
+    } catch {
+      setError('Kaydedilemedi, tekrar dene.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <View
-      style={{
-        backgroundColor: t.colors.primary,
-        borderRadius: t.radius.card,
-        padding: 18,
-        gap: 12,
-      }}
-    >
+    <View style={{ backgroundColor: t.colors.primary, borderRadius: t.radius.card, padding: 18, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ionicons name={t.id === 'agir' ? 'flash' : 'heart'} size={22} color={t.colors.onPrimary} />
-        <Text style={{ color: t.colors.onPrimary, fontFamily: t.fonts.button, fontWeight: t.fonts.button ? undefined : '600', letterSpacing: t.upper ? 1.5 : 0 }}>
+        <Ionicons name={t.id === 'agir' ? 'flash' : 'heart'} size={22} color={on} />
+        <Text style={{ color: on, fontFamily: t.fonts.button, fontWeight: t.fonts.button ? undefined : '600', letterSpacing: t.upper ? 1.5 : 0 }}>
           {tx(t, 'Date günü')}
         </Text>
       </View>
-      <Display style={{ color: t.colors.onPrimary }}>{t.copy.date.today}</Display>
-      <Text style={{ color: t.colors.onPrimary, fontFamily: t.fonts.body, fontSize: 14, lineHeight: 20, opacity: 0.9 }}>
-        {t.copy.date.selfieHint}
-      </Text>
-      <View
-        style={{
-          borderWidth: 1.5,
-          borderStyle: 'dashed',
-          borderColor: t.colors.onPrimary,
-          borderRadius: Math.min(t.radius.card, 14),
-          padding: 18,
-          alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        <Ionicons name="people-outline" size={28} color={t.colors.onPrimary} />
-        <Text style={{ color: t.colors.onPrimary, fontFamily: t.fonts.body, fontSize: 13, textAlign: 'center' }}>
-          Ortak selfie çekimi selfie güncellemesiyle burada açılacak.
-        </Text>
-      </View>
+      <Display style={{ color: on }}>{t.copy.date.today}</Display>
+
+      {plan.selfie ? (
+        <View style={{ backgroundColor: t.colors.card, borderRadius: Math.min(t.radius.card, 14), padding: 14, gap: 4 }}>
+          <T style={{ color: t.colors.success, fontWeight: '600' }}>Ortak selfieniz albüme eklendi</T>
+          <Muted>Albüm sekmesinde bu güne özel geniş bir polaroid olarak duruyor.</Muted>
+        </View>
+      ) : (
+        <View style={{ backgroundColor: t.colors.card, borderRadius: Math.min(t.radius.card, 14), padding: 14, gap: 10 }}>
+          <Muted>{t.copy.date.selfieHint} Biriniz çekmesi yeterli, {partnerName} da görecek.</Muted>
+          <SelfieCamera value={selfie} onChange={setSelfie} aspect={4 / 3} />
+          <Input placeholder="Bu date'ten bir not..." value={note} onChangeText={setNote} maxLength={80} />
+          <ErrorText>{error}</ErrorText>
+          <Button label="Albüme ekle" onPress={save} busy={busy} />
+        </View>
+      )}
     </View>
   );
 }

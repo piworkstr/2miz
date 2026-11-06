@@ -21,7 +21,7 @@ export type DatePlan = {
   status: 'proposed' | 'confirmed';
   by: string; // öneren kişi
   instant: boolean; // "Bugün date'teyiz" ile mi başladı
-  selfie: string | null; // ortak selfie (selfie adımında dolacak)
+  selfie: string | null; // ortak selfieyi ekleyen kişi (fotoğrafın kendisi photos koleksiyonunda)
 };
 
 function datesCol(coupleId: string) {
@@ -56,6 +56,10 @@ export async function proposeDate(coupleId: string, key: string, uid: string, in
 
 export async function confirmDate(coupleId: string, key: string) {
   await updateDoc(doc(datesCol(coupleId), key), { status: 'confirmed' });
+}
+
+export async function markDateSelfie(coupleId: string, key: string, uid: string) {
+  await updateDoc(doc(datesCol(coupleId), key), { selfie: uid });
 }
 
 export async function cancelDate(coupleId: string, key: string) {

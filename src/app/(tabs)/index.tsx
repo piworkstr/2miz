@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
+import { SelfieCamera } from '../../components/SelfieCamera';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
+import { saveTaskPhoto } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { categoryLabels, randomTask, taskById, type Task } from '../../lib/tasks';
 import { tx } from '../../lib/theme';
@@ -146,6 +148,7 @@ type TaskCardProps = {
 function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members, dayId }: TaskCardProps) {
   const t = useTheme();
   const [note, setNote] = useState('');
+  const [selfie, setSelfie] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -156,9 +159,12 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 
   async function finish() {
     setError('');
+    if (!selfie) return setError('Görevi tamamlamak için bir selfie çek.');
     if (!note.trim()) return setError(t.copy.noteRequired);
     setBusy(true);
     try {
+      // Önce fotoğraf kaydedilir; görev ancak selfie yerine ulaştıysa tamamlanır.
+      await saveTaskPhoto(coupleId, dayId, uid, myTask.id, note, selfie);
       await completeTask(coupleId, dayId, uid, members, note);
     } catch {
       setError('Kaydedilemedi, tekrar dene.');
@@ -179,20 +185,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           </View>
         ) : (
           <>
-            <View
-              style={{
-                borderWidth: 1.5,
-                borderStyle: 'dashed',
-                borderColor: t.colors.border,
-                borderRadius: Math.min(t.radius.card, 14),
-                padding: 20,
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Ionicons name="camera-outline" size={28} color={t.colors.muted} />
-              <Muted style={{ textAlign: 'center' }}>{t.copy.selfieSoon}</Muted>
-            </View>
+            <SelfieCamera value={selfie} onChange={setSelfie} hint="Bu an albümünüze polaroid olarak girecek." />
             <Input placeholder={t.copy.notePlaceholder} value={note} onChangeText={setNote} maxLength={80} />
             <ErrorText>{error}</ErrorText>
             <Button label={t.copy.complete} onPress={finish} busy={busy} />
