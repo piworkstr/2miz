@@ -82,6 +82,12 @@ service cloud.firestore {
           && request.resource.data.data.size() < 900000;
       }
 
+      match /messageAudio/{audioId} {
+        allow read, delete: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.from == request.auth.uid
+          && request.resource.data.data.size() < 900000;
+      }
+
       // Seyahat albümleri: iki üye de seyahat açar, fotoğraf ekler, not yazar ve silebilir.
       match /trips/{tripId} {
         allow read, write: if isMember(coupleId);

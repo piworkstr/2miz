@@ -58,6 +58,12 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "UsDaily, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
+        }
       ]
     ],
     "scheme": "usdaily"

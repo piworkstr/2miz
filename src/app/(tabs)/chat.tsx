@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -17,7 +17,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
-import { addToAlbum, deleteMessage, markRead, removeFromAlbum, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
+import { fmt, useVoice, VoicePlayer } from '../../components/Voice';
+import {
+  addToAlbum,
+  deleteMessage,
+  markRead,
+  REACTIONS,
+  reactToMessage,
+  removeFromAlbum,
+  reportMessage,
+  sendMessage,
+  sendVoice,
+  useMessagePhoto,
+  useMessages,
+  useVoiceFile,
+  type Message,
+} from '../../lib/chat';
 import { setChatOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
@@ -30,6 +45,13 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [menu, setMenu] = useState<Message | null>(null);
+  const startY = useRef(0);
+  const voice = useVoice((uri, ms) => {
+    if (!couple || !user) return;
+    sendVoice(couple.id, user.uid, uri, ms, { to: partnerId, fromName: profile?.name ?? 'Partnerin' }).catch(() =>
+      voice.setHint('Sesli mesaj gönderilemedi, tekrar dene.'),
+    );
+  });
 
   // Sekme açıkken gelen mesajlar okundu sayılır.
   const [focused, setFocused] = useState(false);
@@ -56,6 +78,12 @@ export default function Chat() {
   const deliveredAt = Math.max((partnerId && couple.lastDelivered?.[partnerId]) || 0, readAt);
   const statusOf = (m: Message): MsgState =>
     m.pending ? 'sending' : readAt >= m.createdAtMs ? 'read' : deliveredAt >= m.createdAtMs ? 'delivered' : 'sent';
+
+  // Çift dokunma: kalp bırak (tekrar çift dokununca kalkar).
+  function react(m: Message, emoji: string) {
+    if (!couple) return;
+    reactToMessage(couple.id, m, uid, emoji, { to: partnerId, fromName: profile?.name ?? 'Partnerin' }).catch(() => {});
+  }
 
   async function send() {
     if (!text.trim() || sending || !couple) return;
@@ -101,6 +129,7 @@ export default function Chat() {
               showTime={index === 0 || visible[index - 1]?.from !== item.from}
               status={item.from === uid ? statusOf(item) : null}
               onLong={() => setMenu(item)}
+              onDoubleTap={() => react(item, '❤️')}
             />
           )}
         />
@@ -116,6 +145,14 @@ export default function Chat() {
             backgroundColor: t.colors.card,
           }}
         >
+          {voice.recording ? (
+            <View style={{ flex: 1, minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#E53935' }} />
+              <Text style={{ fontSize: 16, fontWeight: '600', color: t.colors.text, fontVariant: ['tabular-nums'] }}>{fmt(voice.ms)}</Text>
+              <Muted style={{ flex: 1, fontSize: 12 }}>Bırakınca gönderilir · iptal için yukarı kaydır</Muted>
+            </View>
+          ) : (
+          <>
           <Pressable onPress={() => router.push('/camera')} hitSlop={8} accessibilityLabel="Anlık fotoğraf gönder" style={{ padding: 8 }}>
             <Ionicons name="camera" size={26} color={t.colors.primary} />
           </Pressable>
@@ -140,21 +177,50 @@ export default function Chat() {
               fontFamily: t.fonts.body,
             }}
           />
-          <Pressable
-            onPress={send}
-            accessibilityLabel="Gönder"
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 21,
-              backgroundColor: text.trim() ? t.colors.primary : t.colors.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {sending ? <ActivityIndicator color={t.colors.onPrimary} /> : <Ionicons name="send" size={18} color={t.colors.onPrimary} />}
-          </Pressable>
+          </>
+          )}
+          {text.trim() && !voice.recording ? (
+            <Pressable
+              onPress={send}
+              accessibilityLabel="Gönder"
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: text.trim() ? t.colors.primary : t.colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {sending ? <ActivityIndicator color={t.colors.onPrimary} /> : <Ionicons name="send" size={18} color={t.colors.onPrimary} />}
+            </Pressable>
+          ) : (
+            <Pressable
+              onPressIn={(e) => {
+                startY.current = e.nativeEvent.pageY;
+                voice.start();
+              }}
+              onPressOut={(e) => voice.stop(startY.current - e.nativeEvent.pageY < 60)}
+              accessibilityLabel="Basılı tutarak sesli mesaj kaydet"
+              style={{
+                width: voice.recording ? 54 : 42,
+                height: voice.recording ? 54 : 42,
+                borderRadius: 27,
+                marginTop: voice.recording ? -12 : 0,
+                backgroundColor: voice.recording ? '#E53935' : t.colors.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="mic" size={voice.recording ? 26 : 20} color="#fff" />
+            </Pressable>
+          )}
         </View>
+        {!!voice.hint && (
+          <Pressable onPress={() => voice.setHint('')} style={{ paddingHorizontal: 14, paddingBottom: 8, backgroundColor: t.colors.card }}>
+            <Muted style={{ fontSize: 12, textAlign: 'center' }}>{voice.hint}</Muted>
+          </Pressable>
+        )}
       </KeyboardAvoidingView>
 
       <MessageMenu m={menu} uid={uid} coupleId={couple.id} partnerName={partnerName} onClose={() => setMenu(null)} />
@@ -184,6 +250,7 @@ function Bubble({
   showTime,
   status,
   onLong,
+  onDoubleTap,
 }: {
   m: Message;
   mine: boolean;
@@ -191,8 +258,41 @@ function Bubble({
   showTime: boolean;
   status: MsgState | null;
   onLong: () => void;
+  onDoubleTap: () => void;
 }) {
   const t = useTheme();
+  const lastTap = useRef(0);
+  const tap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      lastTap.current = 0;
+      onDoubleTap();
+    } else lastTap.current = now;
+  };
+  const reactions = Object.values(m.reactions ?? {});
+  const badge = reactions.length > 0 && (
+    <View
+      style={{
+        flexDirection: 'row',
+        gap: 1,
+        marginTop: -10,
+        marginHorizontal: 10,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 12,
+        backgroundColor: t.colors.card,
+        borderWidth: 1,
+        borderColor: t.colors.border,
+        zIndex: 2,
+      }}
+    >
+      {reactions.map((e, i) => (
+        <Text key={i} style={{ fontSize: 14 }}>
+          {e}
+        </Text>
+      ))}
+    </View>
+  );
   const photo = useMessagePhoto(coupleId, m.id, m.hasPhoto);
   const time = new Date(m.createdAtMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
@@ -201,6 +301,7 @@ function Bubble({
     return (
       <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', paddingVertical: 6, paddingHorizontal: 6 }}>
         <Pressable
+          onPress={tap}
           onLongPress={onLong}
           delayLongPress={350}
           style={{
@@ -234,6 +335,7 @@ function Bubble({
             <Text style={{ fontFamily: handFont, fontSize: 19, color: inkColor, textAlign: 'center' }}>{m.text}</Text>
           )}
         </Pressable>
+        {badge}
       </View>
     );
   }
@@ -241,6 +343,7 @@ function Bubble({
   return (
     <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
       <Pressable
+        onPress={tap}
         onLongPress={onLong}
         delayLongPress={350}
         style={{
@@ -254,19 +357,24 @@ function Bubble({
           overflow: 'hidden',
         }}
       >
-        <Text
-          style={{
-            color: mine ? t.colors.onPrimary : t.colors.text,
-            fontSize: 16,
-            lineHeight: 22,
-            paddingHorizontal: 14,
-            paddingVertical: 9,
-            fontFamily: t.fonts.body,
-          }}
-        >
-          {m.text}
-        </Text>
+        {m.audioMs ? (
+          <VoicePlayer coupleId={coupleId} m={m} mine={mine} />
+        ) : (
+          <Text
+            style={{
+              color: mine ? t.colors.onPrimary : t.colors.text,
+              fontSize: 16,
+              lineHeight: 22,
+              paddingHorizontal: 14,
+              paddingVertical: 9,
+              fontFamily: t.fonts.body,
+            }}
+          >
+            {m.text}
+          </Text>
+        )}
       </Pressable>
+      {badge}
       {(showTime || status) && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 6 }}>
           {showTime && <Text style={{ fontSize: 11, color: t.colors.muted }}>{time}</Text>}
@@ -311,6 +419,34 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
       setBusy(false);
     }
   }
+
+  const { partnerId, profile } = useSession();
+  const emojiRow = m && (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 12, paddingVertical: 10 }}>
+      {REACTIONS.map((e) => {
+        const on = m.reactions?.[uid] === e;
+        return (
+          <Pressable
+            key={e}
+            onPress={() => {
+              reactToMessage(coupleId, m, uid, e, { to: partnerId, fromName: profile?.name ?? 'Partnerin' }).catch(() => {});
+              close();
+            }}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: on ? t.colors.primarySoft : 'transparent',
+            }}
+          >
+            <Text style={{ fontSize: 26 }}>{e}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 
   const albumRow = m?.hasPhoto
     ? m.inAlbum
@@ -392,15 +528,17 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
             </>
           ) : m?.from === uid ? (
             <>
+              {emojiRow}
               {albumRow}
               {row('Mesajı sil', async () => {
-                if (m) await deleteMessage(coupleId, m.id, m.hasPhoto);
+                if (m) await deleteMessage(coupleId, m);
                 close();
               }, true)}
               {row('Vazgeç', close)}
             </>
           ) : (
             <>
+              {emojiRow}
               {albumRow}
               {row(`${partnerName}'in mesajını şikayet et`, () => setReporting(true), true)}
               {row('Vazgeç', close)}

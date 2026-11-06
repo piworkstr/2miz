@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   limit,
@@ -12,6 +13,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
+import * as FS from 'expo-file-system/legacy';
 import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { db } from './firebase';
@@ -27,9 +29,11 @@ export type Message = {
   from: string;
   text: string;
   hasPhoto: boolean;
+  audioMs?: number; // sesli mesajsa süresi
   createdAtMs: number;
   hiddenFor?: Record<string, boolean>; // şikayet edenin ekranından kalkar
   inAlbum?: boolean;
+  reactions?: Record<string, string>; // kişi başı bir emoji
   pending?: boolean; // henüz sunucuya ulaşmadı (sadece gönderenin ekranında)
 };
 
@@ -38,6 +42,9 @@ function messagesCol(coupleId: string) {
 }
 function photosCol(coupleId: string) {
   return collection(db, 'couples', coupleId, 'messagePhotos');
+}
+function audioCol(coupleId: string) {
+  return collection(db, 'couples', coupleId, 'messageAudio');
 }
 
 export function useMessages(coupleId: string | undefined, max = 150) {
@@ -75,9 +82,61 @@ export async function sendMessage(
   if (notify?.to) notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
 }
 
-export async function deleteMessage(coupleId: string, id: string, hasPhoto: boolean) {
-  if (hasPhoto) await deleteDoc(doc(photosCol(coupleId), id)).catch(() => {});
-  await deleteDoc(doc(messagesCol(coupleId), id));
+export async function deleteMessage(coupleId: string, m: Pick<Message, 'id' | 'hasPhoto' | 'audioMs'>) {
+  if (m.hasPhoto) await deleteDoc(doc(photosCol(coupleId), m.id)).catch(() => {});
+  if (m.audioMs) await deleteDoc(doc(audioCol(coupleId), m.id)).catch(() => {});
+  await deleteDoc(doc(messagesCol(coupleId), m.id));
+}
+
+// Sesli mesaj: kayıt dosyası base64 olarak ayrı bir belgede (en fazla ~1 dk, düşük bit hızı).
+export const VOICE_MAX_MS = 60_000;
+
+export async function sendVoice(
+  coupleId: string,
+  from: string,
+  uri: string,
+  durationMs: number,
+  notify?: { to: string | null; fromName: string },
+) {
+  const data = await FS.readAsStringAsync(uri, { encoding: FS.EncodingType.Base64 });
+  if (data.length > 900_000) throw new Error('too-long');
+  const ref = await addDoc(messagesCol(coupleId), {
+    from,
+    text: '',
+    hasPhoto: false,
+    audioMs: Math.round(durationMs),
+    createdAtMs: Date.now(),
+    createdAt: serverTimestamp(),
+  });
+  await setDoc(doc(audioCol(coupleId), ref.id), { from, data });
+  logActivity(coupleId, from, 'voice');
+  if (notify?.to) notifyPartner(notify.to, notify.fromName, '🎤 Sesli mesaj gönderdi', { type: 'message', url: '/chat' });
+}
+
+// Sesli mesajı yalnızca gerektiğinde indirir ve telefonda geçici bir dosyaya yazar.
+const voiceCache = new Map<string, string>();
+export function useVoiceFile(coupleId: string, id: string, enabled: boolean) {
+  const [uri, setUri] = useState<string | null>(voiceCache.get(id) ?? null);
+  useEffect(() => {
+    if (!enabled || voiceCache.has(id)) return;
+    let alive = true;
+    (async () => {
+      const path = `${FS.cacheDirectory}voice_${id}.m4a`;
+      const info = await FS.getInfoAsync(path);
+      if (!info.exists) {
+        const s = await getDoc(doc(audioCol(coupleId), id));
+        const d = (s.data() as { data?: string } | undefined)?.data;
+        if (!d) return;
+        await FS.writeAsStringAsync(path, d, { encoding: FS.EncodingType.Base64 });
+      }
+      voiceCache.set(id, path);
+      if (alive) setUri(path);
+    })().catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [coupleId, id, enabled]);
+  return uri;
 }
 
 // Fotoğraf verisini sadece ekranda gösterilecekken indirir ve bellekte tutar.
@@ -133,6 +192,24 @@ export async function addToAlbum(coupleId: string, msg: Message, uid: string, no
 export async function removeFromAlbum(coupleId: string, messageId: string) {
   await deleteDoc(doc(albumCol(coupleId), momentId(messageId)));
   await updateDoc(doc(messagesCol(coupleId), messageId), { inAlbum: false }).catch(() => {});
+}
+
+// Mesaja tepki: kişi başı tek emoji; aynısına tekrar basınca kalkar.
+export const REACTIONS = ['❤️', '😂', '😍', '😮', '😢', '👍', '🔥'];
+
+export async function reactToMessage(
+  coupleId: string,
+  msg: Message,
+  uid: string,
+  emoji: string,
+  notify?: { to: string | null; fromName: string },
+) {
+  const remove = msg.reactions?.[uid] === emoji;
+  await updateDoc(doc(messagesCol(coupleId), msg.id), { [`reactions.${uid}`]: remove ? deleteField() : emoji });
+  if (!remove && notify?.to && msg.from === notify.to) {
+    const what = msg.hasPhoto ? 'fotoğrafına' : msg.audioMs ? 'sesli mesajına' : `"${msg.text.slice(0, 40)}" mesajına`;
+    notifyPartner(notify.to, notify.fromName, `${what} ${emoji} bıraktı`, { type: 'message', url: '/chat' });
+  }
 }
 
 // Şikayet: mesaj şikayet edenin ekranından kalkar ve inceleme için ayrı bir kayda yazılır.

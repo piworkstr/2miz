@@ -10,6 +10,7 @@ import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { Polaroid } from '../../components/Polaroid';
 import { SelfieCamera } from '../../components/SelfieCamera';
+import { SpecialDays } from '../../components/SpecialDays';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
@@ -76,6 +77,8 @@ export default function Today() {
       )}
 
       <DateCard mode="banner" />
+
+      <SpecialDays />
 
       {mode === 'pending' ? (
         <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />

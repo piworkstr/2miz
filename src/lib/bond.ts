@@ -6,8 +6,8 @@ import type { Couple } from './session';
 
 // "Kalp" ve iletişim serisi (Snapchat'teki alev gibi).
 // Her etkileşim çift belgesine günlük bir sayaç olarak yazılır: activity.YYYY-MM-DD.uid
-// Puanlar: mesaj 1, anlık fotoğraf 2, görev 3, oyun 3, bonus 2, albüm/seyahat/kupon 1.
-export const WEIGHT = { message: 1, photo: 2, task: 3, game: 3, bonus: 2, album: 1, trip: 1, coupon: 1 };
+// Puanlar: mesaj 1, sesli mesaj 2, anlık fotoğraf 2, görev 3, oyun 3, bonus 2, albüm/seyahat/kupon 1.
+export const WEIGHT = { message: 1, voice: 2, photo: 2, task: 3, game: 3, bonus: 2, album: 1, trip: 1, coupon: 1 };
 export type ActivityKind = keyof typeof WEIGHT;
 
 export async function logActivity(coupleId: string, uid: string, kind: ActivityKind, times = 1) {
