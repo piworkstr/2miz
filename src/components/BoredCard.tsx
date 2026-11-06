@@ -52,7 +52,7 @@ export function BoredCard() {
     <Card accent>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Ionicons name="game-controller-outline" size={24} color={t.colors.primary} />
-        <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Canım sıkıldı')}</T>
+        <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Birlikte oyna')}</T>
       </View>
       {choosing ? (
         <>
@@ -87,7 +87,7 @@ export function BoredCard() {
         </>
       ) : (
         <>
-          <Muted>{partnerName}'i kısa bir oyuna davet et. Günün ilk oyunu ikinize de puan kazandırır.</Muted>
+          <Muted>{partnerName}'i 2-3 dakikalık canlı bir oyuna davet et. Günün ilk oyunu ikinize de +10 puan kazandırır.</Muted>
           <Button label="Oyun daveti gönder" onPress={() => setChoosing(true)} />
         </>
       )}

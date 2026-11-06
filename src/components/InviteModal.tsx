@@ -61,10 +61,10 @@ export function InviteModal() {
             <Ionicons name={game.icon as ComponentProps<typeof Ionicons>['name']} size={32} color={t.colors.primary} />
           </View>
           <Text style={{ fontFamily: t.fonts.title, fontSize: 30, lineHeight: 36, color: t.colors.text, textAlign: 'center' }}>
-            {partnerName}'in canı sıkıldı
+            {partnerName} seni oyuna çağırıyor
           </Text>
           <Muted style={{ textAlign: 'center' }}>
-            Seni {game.name} oynamaya davet ediyor. {game.blurb}
+            {game.name} · {game.blurb}
           </Muted>
           <Button style={{ alignSelf: 'stretch' }} label="Hadi oynayalım" onPress={go} busy={busy === 'go'} />
           {left > 0 ? (

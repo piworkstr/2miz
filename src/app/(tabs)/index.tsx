@@ -1,47 +1,58 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { router } from 'expo-router';
+import type React from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { BoredCard } from '../../components/BoredCard';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
+import { Polaroid } from '../../components/Polaroid';
 import { SelfieCamera } from '../../components/SelfieCamera';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
-import { saveTaskPhoto } from '../../lib/photos';
+import { saveTaskPhoto, usePhotos } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { categoryLabels, randomTask, taskById, type Task } from '../../lib/tasks';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
+type Panel = 'play' | 'bonus' | 'date' | null;
+
 export default function Today() {
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
   const t = useTheme();
+  const [panel, setPanel] = useState<Panel>(null);
 
   if (!user || !couple || !partnerId || !day) return <Loading />;
 
   const uid = user.uid;
   const mode = modeOf(day, couple.members);
   const streakAlive = couple.lastCompleteDay === dayKey() || couple.lastCompleteDay === yesterdayKey();
+  const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
 
   return (
     <Screen>
       <View style={{ gap: 2, marginTop: 4 }}>
         <Title>{t.copy.hello(profile?.name ?? '')}</Title>
-        <Muted>{tx(t, t.copy.dateLine(prettyDate(key), partnerName))}</Muted>
-        {couple.startDate && (
-          <Muted style={{ color: t.colors.primary }}>{tx(t, `${daysTogether(couple.startDate)}. gününüz`)}</Muted>
-        )}
+        <Muted>
+          {tx(t, t.copy.dateLine(prettyDate(key), partnerName))}
+          {couple.startDate ? ` · ${daysTogether(couple.startDate)}. gününüz` : ''}
+        </Muted>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Stat icon={t.id === 'asko' ? 'heart' : 'flame-outline'} value={streakAlive ? couple.streak : 0} label={t.copy.streak} />
-        <Stat icon={t.id === 'asko' ? 'happy-outline' : 'star-outline'} value={couple.points} label={t.copy.points} />
-      </View>
+      <TodayStrip
+        day={day}
+        uid={uid}
+        partnerId={partnerId}
+        myName={profile?.name ?? 'Sen'}
+        partnerName={partnerName}
+        streak={streakAlive ? couple.streak : 0}
+        points={couple.points}
+      />
 
-      <CoupleInfoCard />
-      <DateCard />
+      <DateCard mode="banner" />
 
       {mode === 'pending' ? (
         <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />
@@ -58,36 +69,180 @@ export default function Today() {
         />
       )}
 
-      <BoredCard />
-      <SurpriseCard />
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
+        <Shortcut icon="dice-outline" label={t.copy.surpriseTitle} active={panel === 'bonus'} onPress={() => toggle('bonus')} />
+        <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
+      </View>
+      {panel === 'play' && <BoredCard />}
+      {panel === 'bonus' && <SurpriseCard />}
+      {panel === 'date' && (
+        <Card>
+          <DateCard mode="planner" />
+        </Card>
+      )}
+
+      <MemoryCorner />
+      <CoupleInfoCard />
     </Screen>
   );
 }
 
-function Stat({ icon, value, label }: { icon: 'flame-outline' | 'star-outline' | 'heart' | 'happy-outline'; value: number; label: string }) {
+// İkinizin bugünkü durumu: kim görevi bitirdi, seri ve puan.
+function TodayStrip(props: {
+  day: DayDoc;
+  uid: string;
+  partnerId: string;
+  myName: string;
+  partnerName: string;
+  streak: number;
+  points: number;
+}) {
   const t = useTheme();
-  const boxed = t.accentBar;
+  const { day, uid, partnerId } = props;
+  const both = !!day.completions[uid] && !!day.completions[partnerId];
   return (
     <View
       style={{
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        backgroundColor: boxed ? 'transparent' : t.id === 'asko' ? t.colors.card : t.colors.primarySoft,
-        borderWidth: boxed ? 1 : 0,
+        gap: 12,
+        backgroundColor: t.colors.card,
+        borderWidth: 1,
         borderColor: t.colors.border,
         borderRadius: t.radius.card,
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        padding: 14,
       }}
     >
-      <Ionicons name={icon} size={22} color={t.colors.primary} />
-      <Text style={{ fontSize: 20, fontWeight: '700', color: boxed ? t.colors.primary : t.colors.text, fontFamily: t.fonts.button }}>
-        {value}
-      </Text>
-      <Muted style={{ flex: 1, fontSize: 12, lineHeight: 15 }}>{tx(t, label)}</Muted>
+      <Person name={props.myName} done={!!day.completions[uid]} />
+      <Ionicons name={both ? 'heart' : 'heart-outline'} size={22} color={t.colors.primary} />
+      <Person name={props.partnerName} done={!!day.completions[partnerId]} />
+      <View style={{ flex: 1, alignItems: 'flex-end', gap: 4 }}>
+        <Chip icon={t.id === 'asko' ? 'heart' : 'flame'} text={`${props.streak} ${t.copy.streak}`} />
+        <Chip icon={t.id === 'asko' ? 'happy-outline' : 'star'} text={`${props.points} ${t.copy.points}`} />
+      </View>
     </View>
+  );
+}
+
+function Person({ name, done }: { name: string; done: boolean }) {
+  const t = useTheme();
+  return (
+    <View style={{ alignItems: 'center', gap: 4, width: 58 }}>
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: done ? t.colors.primary : t.colors.primarySoft,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {done ? (
+          <Ionicons name="checkmark" size={24} color={t.colors.onPrimary} />
+        ) : (
+          <Text style={{ color: t.colors.primary, fontWeight: '700', fontSize: 17 }}>{name.slice(0, 1).toLocaleUpperCase('tr-TR')}</Text>
+        )}
+      </View>
+      <Text numberOfLines={1} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
+        {done ? 'Tamam' : name}
+      </Text>
+    </View>
+  );
+}
+
+function Chip({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <Ionicons name={icon} size={14} color={t.colors.primary} />
+      <Text style={{ fontSize: 13, color: t.colors.text, fontWeight: '600', fontFamily: t.fonts.body }}>{tx(t, text)}</Text>
+    </View>
+  );
+}
+
+function Shortcut({
+  icon,
+  label,
+  active,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flex: 1,
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 14,
+        paddingHorizontal: 6,
+        borderRadius: t.radius.card,
+        borderWidth: active ? 2 : 1,
+        borderColor: active || pressed ? t.colors.primary : t.colors.border,
+        backgroundColor: active ? t.colors.primarySoft : t.colors.card,
+      })}
+    >
+      <Ionicons name={icon} size={24} color={t.colors.primary} />
+      <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
+        {tx(t, label)}
+      </Text>
+    </Pressable>
+  );
+}
+
+// Albümden her gün değişen bir anı ("12 gün önce"). Geçmiş anılara geri çağırır.
+function MemoryCorner() {
+  const t = useTheme();
+  const { user, couple, partnerName, profile } = useSession();
+  const photos = usePhotos(couple?.id, 30);
+  if (!photos || !user) return null;
+  const today = dayKey();
+  const days = [...new Set(photos.filter((p) => p.day !== today).map((p) => p.day))];
+  if (!days.length) return null;
+
+  let h = 0;
+  for (const c of today) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const pick = days[h % days.length];
+  const dayPhotos = photos.filter((p) => p.day === pick);
+  const datePhoto = dayPhotos.find((p) => p.kind === 'date');
+  const mine = dayPhotos.find((p) => p.kind === 'task' && p.uid === user.uid);
+  const theirs = dayPhotos.find((p) => p.kind === 'task' && p.uid !== user.uid);
+  const [y, m, d] = pick.split('-').map(Number);
+  const now = new Date();
+  const ago = Math.round(
+    (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(y, m - 1, d).getTime()) / 86400000,
+  );
+  const taskId = (mine ?? theirs)?.taskId;
+  const caption = datePhoto ? 'Date gününüz' : taskId ? taskById(taskId).title : '';
+  const myName = profile?.name ?? 'Sen';
+
+  return (
+    <Pressable onPress={() => router.push('/album')} style={{ gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Anı köşesi')}</T>
+        <Muted style={{ fontSize: 13 }}>{ago === 1 ? 'Dün' : `${ago} gün önce`}</Muted>
+      </View>
+      <View style={{ backgroundColor: '#FBF7F2', borderRadius: 8, padding: 16, gap: 10 }}>
+        {datePhoto ? (
+          <Polaroid photo={datePhoto} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
+        ) : (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Polaroid style={{ flex: 1 }} photo={mine} name={myName} tilt={-3} />
+            <Polaroid style={{ flex: 1, marginTop: 10 }} photo={theirs} name={partnerName} tilt={2.5} />
+          </View>
+        )}
+        {!!caption && (
+          <Text style={{ fontFamily: 'Caveat_500Medium', fontSize: 22, color: '#2B1D22', textAlign: 'center' }}>{caption}</Text>
+        )}
+      </View>
+    </Pressable>
   );
 }
 
@@ -157,7 +312,6 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
   const myTask = taskById(shared ? day.sharedTaskId : day.separate[uid]);
   const partnerTask = taskById(day.separate[partnerId]);
   const myDone = day.completions[uid];
-  const partnerDone = day.completions[partnerId];
 
   async function finish() {
     setError('');
@@ -202,14 +356,6 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
         </Card>
       )}
 
-      <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14 }}>
-        <Ionicons
-          name={partnerDone ? 'checkmark-circle' : 'time-outline'}
-          size={22}
-          color={partnerDone ? t.colors.success : t.colors.muted}
-        />
-        <T style={{ flex: 1 }}>{partnerDone ? t.copy.partnerDone(partnerName) : t.copy.partnerNotDone(partnerName)}</T>
-      </Card>
 
       {day.rewarded && (
         <Card style={{ backgroundColor: t.colors.successSoft, borderColor: t.colors.successSoft }}>

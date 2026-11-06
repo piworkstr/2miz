@@ -10,7 +10,10 @@ import { useTheme } from '../lib/useTheme';
 import { SelfieCamera } from './SelfieCamera';
 import { Button, Card, Display, ErrorText, Input, Muted, T } from './ui';
 
-export function DateCard() {
+// mode "banner": ana ekranın üstünde, sadece yapılacak bir şey varken görünür
+// (bugünün onayı, bugünün ortak selfiesi, partnerin önerdiği bir date'i onaylamak).
+// mode "planner": "Date" kısayolunun açtığı planlama alanı.
+export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
   const { user, couple, partnerName } = useSession();
   const t = useTheme();
   const dates = useUpcomingDates(couple?.id);
@@ -32,10 +35,33 @@ export function DateCard() {
     }
   }
 
+  if (mode === 'banner') {
+    const toConfirm = later.filter((d) => d.status === 'proposed' && d.by !== uid);
+    return (
+      <>
+        {todayPlan?.status === 'confirmed' && !todayPlan.selfie && <DateToday plan={todayPlan} coupleId={couple.id} uid={uid} />}
+        {todayPlan?.status === 'proposed' && todayPlan.by !== uid && (
+          <Card accent style={{ borderColor: t.colors.primary }}>
+            <T>{t.copy.date.partnerSaysToday(partnerName)}</T>
+            <Button label={t.copy.date.confirmToday} busy={busy === 'today'} onPress={() => run('today', () => confirmDate(couple.id, today))} />
+          </Card>
+        )}
+        {toConfirm.map((d) => (
+          <Card key={d.id} accent style={{ borderColor: t.colors.primary }}>
+            <T>{t.copy.date.partnerPlanned(partnerName, prettyDate(d.id))}</T>
+            <Button label={t.copy.date.confirm} busy={busy === d.id} onPress={() => run(d.id, () => confirmDate(couple.id, d.id))} />
+          </Card>
+        ))}
+      </>
+    );
+  }
+
   return (
     <>
       {todayPlan?.status === 'confirmed' ? (
-        <DateToday plan={todayPlan} coupleId={couple.id} uid={uid} />
+        <Muted>
+          {todayPlan.selfie ? 'Bugünkü date anınız albüme eklendi. Bir sonrakini planlayın:' : 'Bugün date gününüz! Ortak selfie kartı yukarıda.'}
+        </Muted>
       ) : todayPlan && todayPlan.by !== uid ? (
         <Card accent style={{ borderColor: t.colors.primary }}>
           <T>{t.copy.date.partnerSaysToday(partnerName)}</T>
@@ -60,6 +86,10 @@ export function DateCard() {
           />
           <Button style={{ flex: 1 }} label={t.copy.date.plan} variant="secondary" onPress={() => setPicking(!picking)} />
         </View>
+      )}
+
+      {todayPlan?.status === 'confirmed' && (
+        <Button label={t.copy.date.plan} variant="secondary" onPress={() => setPicking(!picking)} />
       )}
 
       {picking && (
