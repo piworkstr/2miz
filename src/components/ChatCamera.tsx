@@ -12,10 +12,10 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
   const [ready, setReady] = useState(false);
   const [shot, setShot] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const camera = useRef<CameraView>(null);
 
   function flip() {
-    setReady(false);
     setFacing((f) => (f === 'back' ? 'front' : 'back'));
   }
 
@@ -30,15 +30,22 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
   function close() {
     setShot(null);
     setReady(false);
+    setError('');
     onClose();
   }
 
+  // Kamera çevrildiğinde "hazır" olayı her cihazda tekrar gelmeyebiliyor; bu yüzden hazır
+  // bilgisini beklemeden çekmeyi deneriz ve hata olursa ekranda gösteririz.
   async function take() {
-    if (!camera.current || !ready || busy) return;
+    if (!camera.current || busy) return;
+    setError('');
     setBusy(true);
     try {
       const pic = await camera.current.takePictureAsync({ quality: 0.8 });
+      if (!pic?.uri) throw new Error('no-uri');
       setShot(await shrink(pic.uri));
+    } catch {
+      setError(ready ? 'Fotoğraf çekilemedi, tekrar dene.' : 'Kamera hazırlanıyor, bir saniye sonra tekrar dene.');
     } finally {
       setBusy(false);
     }
@@ -101,6 +108,7 @@ export function ChatCamera({ open, onClose, onSend }: { open: boolean; onClose: 
             )}
           </View>
 
+          {!!error && <Text style={{ color: '#FF8FA3', textAlign: 'center', marginTop: 10 }}>{error}</Text>}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 40, paddingVertical: 24 }}>
             {shot ? (
               <>
