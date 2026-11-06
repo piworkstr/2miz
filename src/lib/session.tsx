@@ -29,6 +29,7 @@ export type Couple = {
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
   favorites?: string[]; // favori görevler (arşiv ve çark)
   lastBonusDay?: string; // bonus görev puanı günde bir kez
+  openBonus?: { id: string; taskId: string; by: string; atMs: number }[]; // kabul edilmiş, bekleyen bonus görevler
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };

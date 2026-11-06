@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { Animated, Easing, Pressable, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { BONUS_POINTS, completeBonus, toggleFavorite } from '../lib/archive';
 import { handFont } from './Polaroid';
-import { answerSpin, saveSpin, useToday, type WheelSpin } from '../lib/daily';
+import { answerSpin, decideSpin, saveSpin, useToday, type WheelSpin } from '../lib/daily';
+import { ANSWER_TASKS } from '../lib/taskKinds';
 import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
 import { useSession } from '../lib/session';
@@ -60,7 +62,12 @@ export function TaskWheel() {
     angle.current = target;
     setSpinning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    Animated.timing(rot, { toValue: target, duration: 3200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
+    Animated.timing(rot, {
+      toValue: target,
+      duration: 3200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
       setSpinning(false);
       done();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -125,6 +132,24 @@ export function TaskWheel() {
     animateTo(n, k, jitter, () => setShown(s));
   }
 
+  // Yapılacak görev: kabul edilirse görev listenize eklenir, reddedilirse yeniden çevrilir.
+  async function decide(accept: boolean) {
+    if (!shown || busy) return;
+    setBusy(true);
+    try {
+      const ok = await decideSpin(coupleId, key, shown.spinId, uid, accept);
+      if (ok && accept && partnerId) {
+        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi kabul etti 🎯`, taskById(shown.taskId).title, {
+          type: 'wheel',
+          url: '/',
+        });
+      }
+      if (ok && !accept) spin();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Cevap yaz: partner cevapladıysa ikisi açılır ve bonus puanı (günde bir kez) gelir.
   async function sendAnswer(text: string) {
     if (!shown || busy || !text.trim()) return;
@@ -146,7 +171,10 @@ export function TaskWheel() {
   const task = shown ? taskById(shown.taskId) : null;
   // Cevaplar canlı gelsin diye gösterilen çevirmenin güncel hali.
   const live = shown && remote?.spinId === shown.spinId ? remote : null;
-  const spinDeg = rot.interpolate({ inputRange: [0, 360], outputRange: ['0deg', '360deg'] });
+  const spinDeg = rot.interpolate({
+    inputRange: [0, 360],
+    outputRange: ['0deg', '360deg'],
+  });
   const isFav = !!task && favorites.includes(task.id);
 
   return (
@@ -155,7 +183,7 @@ export function TaskWheel() {
       <Muted>
         {doneToday
           ? 'Bugünün bonus puanını aldınız. Yine de çevirip bir görev daha yapabilirsiniz.'
-          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. İkiniz de cevabınızı yazınca +${BONUS_POINTS} puan (günde bir kez).`}
+          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. Tamamlayınca +${BONUS_POINTS} puan (günde bir kez).`}
       </Muted>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -180,14 +208,23 @@ export function TaskWheel() {
                 opacity: disabled ? 0.45 : 1,
               }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: t.colors.text,
+                  fontFamily: t.fonts.button,
+                }}
+              >
                 {m === 'all' ? tx(t, 'Tüm görevler') : tx(t, `Favorilerimiz (${favTasks.length})`)}
               </Text>
             </Pressable>
           );
         })}
       </View>
-      {!canFav && <Muted style={{ fontSize: 12 }}>Görevlerdeki kalbe dokunarak favori ekleyin; 2 favoriden sonra favori çarkı açılır.</Muted>}
+      {!canFav && (
+        <Muted style={{ fontSize: 12 }}>Görevlerdeki kalbe dokunarak favori ekleyin; 2 favoriden sonra favori çarkı açılır.</Muted>
+      )}
 
       <View style={{ alignItems: 'center', paddingVertical: 8 }}>
         {/* Üstteki ok */}
@@ -206,7 +243,13 @@ export function TaskWheel() {
           }}
         />
         <View style={{ width: SIZE, height: SIZE }}>
-          <Animated.View style={{ width: SIZE, height: SIZE, transform: [{ rotate: spinDeg }] }}>
+          <Animated.View
+            style={{
+              width: SIZE,
+              height: SIZE,
+              transform: [{ rotate: spinDeg }],
+            }}
+          >
             <Svg width={SIZE} height={SIZE}>
               {slices.length === 1 ? (
                 <Circle cx={R} cy={R} r={R} fill={categoryStyle[slices[0]].color} />
@@ -263,7 +306,14 @@ export function TaskWheel() {
               opacity: pressed || spinning ? 0.8 : 1,
             })}
           >
-            <Text style={{ fontWeight: '800', fontSize: 14, color: t.colors.primary, fontFamily: t.fonts.button }}>
+            <Text
+              style={{
+                fontWeight: '800',
+                fontSize: 14,
+                color: t.colors.primary,
+                fontFamily: t.fonts.button,
+              }}
+            >
               {spinning ? '…' : tx(t, 'ÇEVİR')}
             </Text>
           </Pressable>
@@ -283,16 +333,20 @@ export function TaskWheel() {
             </Pressable>
           </View>
           <Display>{task.title}</Display>
-          <Answers
-            key={shown.spinId}
-            spin={live ?? shown}
-            uid={uid}
-            partnerName={partnerName}
-            myName={profile?.name ?? 'Sen'}
-            doneToday={doneToday}
-            onSend={sendAnswer}
-            busy={busy}
-          />
+          {!ANSWER_TASKS.has(task.id) ? (
+            <DecideBox spin={live ?? shown} uid={uid} partnerName={partnerName} onDecide={decide} busy={busy} />
+          ) : (
+            <Answers
+              key={shown.spinId}
+              spin={live ?? shown}
+              uid={uid}
+              partnerName={partnerName}
+              myName={profile?.name ?? 'Sen'}
+              doneToday={doneToday}
+              onSend={sendAnswer}
+              busy={busy}
+            />
+          )}
         </View>
       )}
     </Card>
@@ -324,9 +378,34 @@ function Answers({
   const theirs = Object.entries(answers).find(([k]) => k !== uid)?.[1];
 
   const bubble = (name: string, body: string) => (
-    <View style={{ backgroundColor: t.colors.primarySoft, borderRadius: 14, padding: 12, gap: 4 }}>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: t.colors.muted, fontFamily: t.fonts.button }}>{name}</Text>
-      <Text style={{ fontSize: 21, lineHeight: 25, color: t.colors.text, fontFamily: handFont }}>{body}</Text>
+    <View
+      style={{
+        backgroundColor: t.colors.primarySoft,
+        borderRadius: 14,
+        padding: 12,
+        gap: 4,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 12,
+          fontWeight: '600',
+          color: t.colors.muted,
+          fontFamily: t.fonts.button,
+        }}
+      >
+        {name}
+      </Text>
+      <Text
+        style={{
+          fontSize: 21,
+          lineHeight: 25,
+          color: t.colors.text,
+          fontFamily: handFont,
+        }}
+      >
+        {body}
+      </Text>
     </View>
   );
 
@@ -335,7 +414,9 @@ function Answers({
       <View style={{ gap: 8 }}>
         {bubble(myName, mine.text)}
         {bubble(partnerName, theirs.text)}
-        <Muted style={{ fontSize: 13 }}>{doneToday ? 'İkiniz de cevapladınız, bugünün bonusu tamam 🎉' : 'İkiniz de cevapladınız 🎉'}</Muted>
+        <Muted style={{ fontSize: 13 }}>
+          {doneToday ? 'İkiniz de cevapladınız, bugünün bonusu tamam 🎉' : 'İkiniz de cevapladınız 🎉'}
+        </Muted>
       </View>
     );
   }
@@ -383,6 +464,56 @@ function Answers({
               : `${partnerName} da cevap yazacak; ikiniz de yazınca cevaplar açılır.`}
         </Muted>
       </View>
+    </View>
+  );
+}
+
+// Yapılacak bonus görev: cevap yazılmaz. Kabul edilirse ana sayfadaki görevlere eklenir,
+// yapınca orada "Tamamladım" denir.
+function DecideBox({
+  spin,
+  uid,
+  partnerName,
+  onDecide,
+  busy,
+}: {
+  spin: WheelSpin;
+  uid: string;
+  partnerName: string;
+  onDecide: (accept: boolean) => void;
+  busy: boolean;
+}) {
+  const t = useTheme();
+  if (spin.decision === 'accepted') {
+    return (
+      <View style={{ gap: 8 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: t.colors.primarySoft,
+            borderRadius: 14,
+            padding: 12,
+          }}
+        >
+          <Ionicons name="checkmark-circle" size={22} color="#4FA37E" />
+          <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
+            {spin.decidedBy === uid ? 'Kabul ettin' : `${partnerName} kabul etti`}. Görev ana sayfadaki görevlerinize eklendi; yapınca orada
+            "Tamamladım" deyin.
+          </Text>
+        </View>
+        <Button label="Ana sayfaya dön" variant="secondary" onPress={() => router.back()} />
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Button label="Kabul et" onPress={() => onDecide(true)} busy={busy} style={{ flex: 1 }} />
+        <Button label="Reddet" variant="secondary" onPress={() => onDecide(false)} style={{ flex: 1 }} />
+      </View>
+      <Muted style={{ fontSize: 12 }}>Reddedersen çark yeniden döner. Kabul edilen görev ikinizin görev listesine eklenir.</Muted>
     </View>
   );
 }

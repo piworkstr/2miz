@@ -27,7 +27,50 @@ export type WheelSpin = {
   k: number; // durduğu dilim
   jitter: number; // dilim içindeki küçük kayma, iki ekranda aynı yerde dursun diye
   answers?: Record<string, { text: string; atMs: number }>; // ikisi de yazınca açılır
+  decision?: 'accepted' | 'rejected'; // yapılacak görevlerde kabul / ret
+  decidedBy?: string;
 };
+
+// Yapılacak bonus görev: biri kabul ederse görev listenize eklenir, reddederse yeniden çevrilir.
+export async function decideSpin(coupleId: string, key: string, spinId: string, uid: string, accept: boolean) {
+  const ref = dayRef(coupleId, key);
+  const coupleRef = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const [snap, c] = [await tx.get(ref), await tx.get(coupleRef)];
+    const w = (snap.data() as DayDoc | undefined)?.wheel;
+    if (!w || w.spinId !== spinId || w.decision || !c.exists()) return false;
+    tx.update(ref, { 'wheel.decision': accept ? 'accepted' : 'rejected', 'wheel.decidedBy': uid });
+    if (accept) {
+      const open = ((c.data() as { openBonus?: OpenBonus[] }).openBonus ?? []).filter((o) => o.taskId !== w.taskId);
+      tx.update(coupleRef, { openBonus: [...open, { id: spinId, taskId: w.taskId, by: uid, atMs: Date.now() }].slice(-10) });
+    }
+    return true;
+  });
+}
+
+export type OpenBonus = { id: string; taskId: string; by: string; atMs: number };
+
+// Kabul edilen bonus görev tamamlandı: listeden çıkar, puan günde bir kez.
+export async function finishOpenBonus(coupleId: string, id: string, uid: string, bonusPoints: number) {
+  const key = dayKey();
+  const ref = dayRef(coupleId, key);
+  const coupleRef = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const [c, d] = [await tx.get(coupleRef), await tx.get(ref)];
+    if (!c.exists()) return false;
+    const data = c.data() as { points: number; lastBonusDay?: string; openBonus?: OpenBonus[] };
+    const item = (data.openBonus ?? []).find((o) => o.id === id);
+    if (!item) return false;
+    const update: Record<string, unknown> = { openBonus: (data.openBonus ?? []).filter((o) => o.id !== id) };
+    if (data.lastBonusDay !== key) {
+      update.points = data.points + bonusPoints;
+      update.lastBonusDay = key;
+    }
+    tx.update(coupleRef, update);
+    if (d.exists()) tx.update(ref, { bonus: { taskId: item.taskId, by: uid, atMs: Date.now() } });
+    return true;
+  });
+}
 
 // Bonus göreve cevap: aynı çevirmeye aitse kaydedilir. İkinci cevap gelince ikisi de açılır.
 export async function answerSpin(coupleId: string, key: string, spinId: string, uid: string, text: string) {

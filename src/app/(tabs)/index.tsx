@@ -14,7 +14,9 @@ import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { saveTaskPhoto, usePhotos } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { categoryLabels, taskById, type Task } from '../../lib/tasks';
-import { toggleFavorite } from '../../lib/archive';
+import { BONUS_POINTS, toggleFavorite } from '../../lib/archive';
+import { finishOpenBonus } from '../../lib/daily';
+import { notifyPartner } from '../../lib/push';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
@@ -69,6 +71,8 @@ export default function Today() {
           dayId={key}
         />
       )}
+
+      <OpenBonusCard />
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
@@ -392,3 +396,46 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
   );
 }
 
+
+// Çarktan çıkıp kabul edilen bonus görevler. Yapınca biriniz "Tamamladım" der.
+function OpenBonusCard() {
+  const t = useTheme();
+  const { user, couple, partnerId, partnerName, profile } = useSession();
+  const [busy, setBusy] = useState<string | null>(null);
+  const open = couple?.openBonus ?? [];
+  if (!user || !couple || open.length === 0) return null;
+  const doneToday = couple.lastBonusDay === dayKey();
+
+  async function finish(id: string, taskId: string) {
+    if (!user || !couple || busy) return;
+    setBusy(id);
+    try {
+      const ok = await finishOpenBonus(couple.id, id, user.uid, BONUS_POINTS);
+      if (ok && partnerId) {
+        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi tamamladı 🎉`, taskById(taskId).title, { type: 'wheel', url: '/' });
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="color-wand-outline" size={20} color={t.colors.primary} />
+        <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.surpriseTitle.endsWith('bonus') ? `${t.copy.surpriseTitle.slice(0, -5)}bonuslarınız` : `${t.copy.surpriseTitle}leriniz`)}</T>
+      </View>
+      {open.map((o) => (
+        <View key={o.id} style={{ gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.colors.border }}>
+          <Display style={{ fontSize: t.displaySize * 0.8 }}>{taskById(o.taskId).title}</Display>
+          <Muted style={{ fontSize: 12 }}>{o.by === user.uid ? 'Sen kabul ettin' : `${partnerName} kabul etti`}</Muted>
+          <Button
+            label={doneToday ? 'Tamamladım' : `Tamamladım · +${BONUS_POINTS} puan`}
+            onPress={() => finish(o.id, o.taskId)}
+            busy={busy === o.id}
+          />
+        </View>
+      ))}
+    </Card>
+  );
+}
