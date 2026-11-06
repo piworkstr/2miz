@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import type React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Avatar } from '../../components/Avatar';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
+import { MoodSheet } from '../../components/MoodSheet';
+import { activeMood, MOODS } from '../../lib/avatar';
 import { BoredCard } from '../../components/BoredCard';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
@@ -15,7 +18,7 @@ import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, 
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { saveTaskPhoto, usePhotos } from '../../lib/photos';
-import { useSession } from '../../lib/session';
+import { useSession, type Profile } from '../../lib/session';
 import { categoryLabels, taskById, type Task } from '../../lib/tasks';
 import { BONUS_POINTS, toggleFavorite } from '../../lib/archive';
 import { finishOpenBonus } from '../../lib/daily';
@@ -63,6 +66,29 @@ export default function Today() {
         streak={streakAlive ? couple.streak : 0}
         points={couple.points}
       />
+
+      {!profile?.avatar && (
+        <Pressable
+          onPress={() => router.push('/avatar')}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            padding: 12,
+            borderRadius: t.radius.card,
+            borderWidth: 1.5,
+            borderStyle: 'dashed',
+            borderColor: t.colors.primary,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
+          <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
+            Avatarını oluştur; ruh haline göre yüz ifaden değişsin.
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
+        </Pressable>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
@@ -121,6 +147,8 @@ function TodayStrip(props: {
 }) {
   const t = useTheme();
   const { day, uid, partnerId } = props;
+  const { profile, partnerProfile } = useSession();
+  const [moodOpen, setMoodOpen] = useState(false);
   return (
     <View
       style={{
@@ -134,9 +162,10 @@ function TodayStrip(props: {
         padding: 14,
       }}
     >
-      <Person name={props.myName} done={!!day.completions[uid]} />
+      <Person p={profile} name={props.myName} done={!!day.completions[uid]} onPress={() => setMoodOpen(true)} />
       <BondHeart />
-      <Person name={props.partnerName} done={!!day.completions[partnerId]} />
+      <Person p={partnerProfile} name={props.partnerName} done={!!day.completions[partnerId]} />
+      <MoodSheet open={moodOpen} onClose={() => setMoodOpen(false)} />
       <View style={{ flex: 1, alignItems: 'flex-end', gap: 4 }}>
         <BondStreak />
         <Chip icon={t.id === 'asko' ? 'happy-outline' : 'star'} text={`${props.points} ${t.copy.points}`} />
@@ -145,30 +174,37 @@ function TodayStrip(props: {
   );
 }
 
-function Person({ name, done }: { name: string; done: boolean }) {
+function Person({ p, name, done, onPress }: { p: Profile | null; name: string; done: boolean; onPress?: () => void }) {
   const t = useTheme();
+  const mood = activeMood(p?.mood);
   return (
-    <View style={{ alignItems: 'center', gap: 4, width: 58 }}>
-      <View
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          backgroundColor: done ? t.colors.primary : t.colors.primarySoft,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {done ? (
-          <Ionicons name="checkmark" size={24} color={t.colors.onPrimary} />
-        ) : (
-          <Text style={{ color: t.colors.primary, fontWeight: '700', fontSize: 17 }}>{name.slice(0, 1).toLocaleUpperCase('tr-TR')}</Text>
+    <Pressable onPress={onPress} disabled={!onPress} style={{ alignItems: 'center', gap: 4, width: 58 }}>
+      <View>
+        <Avatar p={p} name={name} size={48} />
+        {done && (
+          <View
+            style={{
+              position: 'absolute',
+              right: -3,
+              top: -3,
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              backgroundColor: '#4FA37E',
+              borderWidth: 2,
+              borderColor: t.colors.card,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="checkmark" size={12} color="#fff" />
+          </View>
         )}
       </View>
       <Text numberOfLines={1} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
-        {done ? 'Tamam' : name}
+        {mood ? MOODS[mood].label : done ? 'Tamam' : name}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

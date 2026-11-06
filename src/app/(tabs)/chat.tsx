@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Avatar } from '../../components/Avatar';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
@@ -44,7 +45,7 @@ import { useTheme } from '../../lib/useTheme';
 
 export default function Chat() {
   const t = useTheme();
-  const { user, couple, partnerName, partnerId, profile } = useSession();
+  const { user, couple, partnerName, partnerId, profile, partnerProfile } = useSession();
   const messages = useMessages(couple?.id);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -143,6 +144,7 @@ export default function Chat() {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
       <View style={{ paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: t.colors.border }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Avatar p={partnerProfile} name={partnerName} size={40} />
           <Text style={{ flex: 1, fontFamily: t.fonts.title, fontSize: t.titleSize * 0.8, lineHeight: t.titleSize, color: t.colors.text }}>
             {tx(t, partnerName)}
           </Text>

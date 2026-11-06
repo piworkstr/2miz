@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@dicebear/avataaars": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@expo-google-fonts/baloo-2": "^0.4.2",
     "@expo-google-fonts/caveat": "^0.4.2",
     "@expo-google-fonts/oswald": "^0.4.2",

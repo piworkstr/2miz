@@ -1,12 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Avatar } from '../../components/Avatar';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DeleteAccount } from '../../components/DeleteAccount';
 import { EndCouple } from '../../components/EndCouple';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
+import { activeMood, MOODS } from '../../lib/avatar';
 import { prettyDate } from '../../lib/date';
 import { useUpcomingDates } from '../../lib/dates';
 import { auth } from '../../lib/firebase';
@@ -192,7 +195,14 @@ function PersonCard({ name, p, partner }: { name: string; p: Profile | null; par
   const bday = p?.birthDate ? daysUntilYearly(p.birthDate) : null;
   return (
     <Card style={{ flex: 1, gap: 8, padding: 14, backgroundColor: partner ? t.colors.primarySoft : t.colors.card }}>
+      <Pressable onPress={partner ? undefined : () => router.push('/avatar')} disabled={partner} style={{ alignItems: 'center', gap: 4 }}>
+        <Avatar p={p} name={name} size={64} />
+        {!partner && <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>{p?.avatar ? 'Avatarı düzenle' : 'Avatar oluştur'}</Text>}
+      </Pressable>
       <T style={{ fontWeight: '700', fontSize: 16 }} >{name}</T>
+      {activeMood(p?.mood) && (
+        <Line icon="happy-outline" label="Ruh hali" value={`${MOODS[activeMood(p?.mood)!].emoji} ${MOODS[activeMood(p?.mood)!].label}`} />
+      )}
       <Line icon="heart-outline" label="Sevgi dili" value={lang?.name ?? 'Test çözülmedi'} />
       {p?.birthDate && (
         <Line

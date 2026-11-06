@@ -11,6 +11,8 @@ export type Profile = {
   interests?: string[];
   notifyTime?: 'sabah' | 'ogle' | 'aksam';
   onboarded?: boolean;
+  avatar?: import('./avatar').AvatarData;
+  mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
 };
 
 export type Couple = {

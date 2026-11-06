@@ -36,6 +36,14 @@ export async function shrink(uri: string): Promise<string> {
   return result.base64;
 }
 
+// Profil fotoğrafı gibi küçük görseller için.
+export async function shrinkTo(uri: string, width: number, compress = 0.6): Promise<string> {
+  const rendered = await ImageManipulator.manipulate(uri).resize({ width }).renderAsync();
+  const result = await rendered.saveAsync({ compress, format: SaveFormat.JPEG, base64: true });
+  if (!result.base64) throw new Error('Fotoğraf işlenemedi.');
+  return result.base64;
+}
+
 export function photoUri(p: Pick<Photo, 'data'>) {
   return `data:image/jpeg;base64,${p.data}`;
 }
