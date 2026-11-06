@@ -384,6 +384,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
   const [selfie, setSelfie] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [open, setOpen] = useState(false);
 
   const myTask = taskById(shared ? day.sharedTaskId : day.separate[uid]);
   const partnerTask = taskById(day.separate[partnerId]);
@@ -405,24 +406,66 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
     }
   }
 
+  // Görevini tamamladıysan büyük kart küçülür: tek bir özet, dokununca notlar açılır.
+  if (myDone) {
+    const theirDone = day.completions[partnerId];
+    const rows = shared
+      ? [{ who: null as string | null, task: myTask, note: myDone.note, theirNote: theirDone?.note }]
+      : [
+          { who: 'Sen', task: myTask, note: myDone.note, theirNote: undefined },
+          { who: partnerName, task: partnerTask, note: theirDone?.note, theirNote: undefined },
+        ];
+    return (
+      <Pressable onPress={() => setOpen((o) => !o)}>
+        <Card style={{ gap: 10, backgroundColor: day.rewarded ? t.colors.successSoft : t.colors.card, borderColor: day.rewarded ? t.colors.successSoft : t.colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Ionicons name={day.rewarded ? 'checkmark-done-circle' : 'checkmark-circle'} size={26} color={t.colors.success} />
+            <View style={{ flex: 1 }}>
+              <T style={{ fontWeight: '700', color: t.colors.success }}>
+                {day.rewarded
+                  ? tx(t, t.copy.reward(shared ? POINTS.shared : POINTS.separate))
+                  : tx(t, `Görevini tamamladın · ${partnerName} bekleniyor`)}
+              </T>
+            </View>
+            <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={t.colors.muted} />
+          </View>
+          {rows.map((r) => (
+            <View key={r.who ?? 'shared'} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+              <Ionicons
+                name={(r.who === partnerName ? theirDone : myDone) ? 'checkmark' : 'ellipse-outline'}
+                size={16}
+                color={(r.who === partnerName ? theirDone : myDone) ? t.colors.success : t.colors.muted}
+                style={{ marginTop: 2 }}
+              />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
+                  {r.who ? <Text style={{ color: t.colors.muted }}>{r.who}: </Text> : null}
+                  {r.task.title}
+                </Text>
+                {open && !!r.note && <T style={{ fontFamily: t.fonts.note, fontSize: 21 }}>“{r.note}”</T>}
+                {open && !!r.theirNote && (
+                  <T style={{ fontFamily: t.fonts.note, fontSize: 21 }}>
+                    {partnerName}: “{r.theirNote}”
+                  </T>
+                )}
+              </View>
+            </View>
+          ))}
+          {!open && <Muted style={{ fontSize: 12 }}>Notları görmek için dokun</Muted>}
+        </Card>
+      </Pressable>
+    );
+  }
+
   return (
     <>
       <Card accent>
         <TaskTitle task={myTask} label={shared ? t.copy.sharedTask : t.copy.myTask} />
 
-        {myDone ? (
-          <View style={{ backgroundColor: t.colors.successSoft, borderRadius: Math.min(t.radius.card, 12), padding: 14, gap: 4 }}>
-            <T style={{ color: t.colors.success, fontWeight: '600' }}>{tx(t, t.copy.completed)}</T>
-            <T style={{ fontFamily: t.fonts.note, fontSize: 24 }}>{myDone.note}</T>
-          </View>
-        ) : (
-          <>
-            <SelfieCamera value={selfie} onChange={setSelfie} hint="Bu an albümünüze polaroid olarak girecek." />
-            <Input placeholder={t.copy.notePlaceholder} value={note} onChangeText={setNote} maxLength={80} />
-            <ErrorText>{error}</ErrorText>
-            <Button label={t.copy.complete} onPress={finish} busy={busy} />
-          </>
-        )}
+        <SelfieCamera value={selfie} onChange={setSelfie} hint="Bu an albümünüze polaroid olarak girecek." />
+        <Input placeholder={t.copy.notePlaceholder} value={note} onChangeText={setNote} maxLength={80} />
+        <ErrorText>{error}</ErrorText>
+        <Button label={t.copy.complete} onPress={finish} busy={busy} />
       </Card>
 
       {!shared && (
@@ -433,13 +476,6 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
       )}
 
 
-      {day.rewarded && (
-        <Card style={{ backgroundColor: t.colors.successSoft, borderColor: t.colors.successSoft }}>
-          <T style={{ color: t.colors.success, fontWeight: '600', fontSize: 16, textAlign: 'center' }}>
-            {tx(t, t.copy.reward(shared ? POINTS.shared : POINTS.separate))}
-          </T>
-        </Card>
-      )}
     </>
   );
 }
