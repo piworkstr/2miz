@@ -14,11 +14,12 @@ type Props = {
   aspect?: number; // genişlik / yükseklik
 };
 
-// Sadece ön kamera; galeriden seçim yok, böylece fotoğraf gerçekten o güne ait olur.
+// O an çekilen fotoğraf (ön ya da arka kamera); galeriden seçim yok, böylece fotoğraf gerçekten o güne ait olur.
 export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
   const t = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [open, setOpen] = useState(false);
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -39,14 +40,15 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
   }
 
   async function shoot() {
-    if (!camera.current || !ready || busy) return;
+    if (!camera.current || busy) return;
     setBusy(true);
     try {
       const pic = await camera.current.takePictureAsync({ quality: 0.8 });
+      if (!pic?.uri) throw new Error('no-uri');
       onChange(await shrink(pic.uri));
       setOpen(false);
     } catch {
-      setError('Fotoğraf çekilemedi, tekrar dene.');
+      setError(ready ? 'Fotoğraf çekilemedi, tekrar dene.' : 'Kamera hazırlanıyor, bir saniye sonra tekrar dene.');
     } finally {
       setBusy(false);
     }
@@ -73,10 +75,29 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
           <CameraView
             ref={camera}
             style={{ flex: 1 }}
-            facing="front"
-            mirror
+            facing={facing}
+            mirror={facing === 'front'}
             onCameraReady={() => setReady(true)}
           />
+          {/* Kamerayı çevir: önizlemenin üstünde ayrı bir düğme (kamerayı saran dokunma alanı dokunmaları yutabiliyor). */}
+          <Pressable
+            onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
+            hitSlop={10}
+            accessibilityLabel="Kamerayı çevir"
+            style={({ pressed }) => ({
+              position: 'absolute',
+              right: 12,
+              bottom: 12,
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              backgroundColor: pressed ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.45)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            })}
+          >
+            <Ionicons name="camera-reverse-outline" size={28} color="#fff" />
+          </Pressable>
           {!ready && (
             <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
               <ActivityIndicator color="#fff" />
@@ -106,7 +127,7 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
         })}
       >
         <Ionicons name="camera-outline" size={30} color={t.colors.primary} />
-        <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>Selfie çek</Text>
+        <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>Fotoğraf çek</Text>
         {hint && <Muted style={{ textAlign: 'center', paddingHorizontal: 12 }}>{hint}</Muted>}
       </Pressable>
       {!!error && (
