@@ -15,7 +15,22 @@ export type DayDoc = {
   completions: Record<string, Completion>;
   rewarded: boolean;
   bonus?: { taskId: string; by: string; atMs: number }; // çarktan çıkıp yapılan bonus görev
+  wheel?: WheelSpin; // ortak çark: son çevirme, iki telefonda da aynı görünür
 };
+
+export type WheelSpin = {
+  spinId: string;
+  by: string;
+  atMs: number;
+  taskId: string;
+  slices: string[]; // çevrildiği andaki dilimler (kategoriler)
+  k: number; // durduğu dilim
+  jitter: number; // dilim içindeki küçük kayma, iki ekranda aynı yerde dursun diye
+};
+
+export async function saveSpin(coupleId: string, key: string, spin: WheelSpin) {
+  await updateDoc(dayRef(coupleId, key), { wheel: spin });
+}
 
 export type DayMode = 'pending' | 'shared' | 'separate';
 

@@ -11,7 +11,7 @@ import { db } from './firebase';
 // Şimdilik sunucumuz yok: gönderen telefon, partnerin cihaz anahtarına doğrudan bildirim yollar.
 // Uygulama büyüyünce bu iş Firebase Functions'a taşınır (bkz. YOL_HARITASI.md).
 
-export type PushData = { url: string; type: 'message' | 'game' | 'trip' };
+export type PushData = { url: string; type: 'message' | 'game' | 'trip' | 'wheel' };
 
 // Sohbet ekranı açıkken yeni mesaj bildirimi üstte çıkmasın (WhatsApp gibi).
 let chatOpen = false;

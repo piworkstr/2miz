@@ -1,12 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { useMemo, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { BONUS_POINTS, completeBonus, toggleFavorite } from '../lib/archive';
+import { saveSpin, useToday, type WheelSpin } from '../lib/daily';
 import { dayKey } from '../lib/date';
+import { notifyPartner } from '../lib/push';
 import { useSession } from '../lib/session';
-import { CATEGORIES, categoryLabels, categoryStyle, TASKS, type Category, type Task } from '../lib/tasks';
+import { CATEGORIES, categoryLabels, categoryStyle, taskById, TASKS, type Category, type Task } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, Display, Muted, Pill, T } from './ui';
@@ -26,62 +28,110 @@ function slicePath(i: number, n: number) {
   return `M${R},${R} L${x0},${y0} A${R},${R} 0 ${360 / n > 180 ? 1 : 0} 1 ${x1},${y1} Z`;
 }
 
-// Bonus görev çarkı: kategori dilimleri döner, durduğu kategoriden bir görev çıkar.
+// Bonus görev çarkı (ortak): kim çevirirse çevirsin sonuç günün belgesine yazılır,
+// iki telefonda da aynı görev görünür; sayfa açıksa partner çarkın döndüğünü canlı izler.
 // "Favorilerimiz" seçiliyse sadece favori görevler arasından seçer.
 export function TaskWheel() {
   const t = useTheme();
-  const { user, couple } = useSession();
+  const { user, couple, partnerId, partnerName, profile } = useSession();
+  const { day, key } = useToday(couple?.id, couple?.members);
   const [mode, setMode] = useState<'all' | 'fav'>('all');
-  const [task, setTask] = useState<Task | null>(null);
+  const [shown, setShown] = useState<WheelSpin | null>(null); // dönmesi bitmiş, ekranda gösterilen sonuç
+  const [display, setDisplay] = useState<Category[] | null>(null); // çarkta çizili dilimler
   const [spinning, setSpinning] = useState(false);
   const [busy, setBusy] = useState(false);
   const rot = useRef(new Animated.Value(0)).current;
   const angle = useRef(0);
+  const lastSpin = useRef<string | null>(null);
 
   const favorites = couple?.favorites ?? [];
   const favTasks = useMemo(() => TASKS.filter((x) => favorites.includes(x.id)), [favorites.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
-  const slices: Category[] = mode === 'fav' ? CATEGORIES.filter((c) => favTasks.some((x) => x.category === c)) : CATEGORIES;
+  const modeSlices: Category[] = mode === 'fav' ? CATEGORIES.filter((c) => favTasks.some((x) => x.category === c)) : CATEGORIES;
+  const slices = display ?? modeSlices;
   const canFav = favTasks.length >= 2;
   const doneToday = couple?.lastBonusDay === dayKey();
 
+  function animateTo(n: number, k: number, jitter: number, done: () => void) {
+    const seg = 360 / n;
+    const center = (k + 0.5) * seg;
+    const cur = angle.current;
+    const target = cur + 360 * 5 + ((((360 - center + jitter - cur) % 360) + 360) % 360);
+    angle.current = target;
+    setSpinning(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Animated.timing(rot, { toValue: target, duration: 3200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
+      setSpinning(false);
+      done();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    });
+  }
+
+  // Ortak sonucu izler: ilk açılışta son çevirmeyi direkt gösterir,
+  // partner az önce çevirdiyse çarkı onunla aynı yere döndürür.
+  const remote = day?.wheel;
+  useEffect(() => {
+    if (!remote || remote.spinId === lastSpin.current) return;
+    const first = lastSpin.current === null;
+    lastSpin.current = remote.spinId;
+    const fresh = Date.now() - remote.atMs < 60_000;
+    if (!first && remote.by !== user?.uid && fresh) {
+      setShown(null);
+      setDisplay(remote.slices as Category[]);
+      animateTo(remote.slices.length, remote.k, remote.jitter, () => setShown(remote));
+    } else if (first) {
+      setShown(remote);
+      setDisplay(remote.slices as Category[]);
+      const seg = 360 / remote.slices.length;
+      angle.current = 360 - (remote.k + 0.5) * seg + remote.jitter;
+      rot.setValue(angle.current);
+    }
+  }, [remote?.spinId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!user || !couple) return null;
   const coupleId = couple.id;
+  const uid = user.uid;
 
   function pickFrom(cat: Category): Task {
     const seen = couple?.seenTasks ?? [];
     const pool = mode === 'fav' ? favTasks.filter((x) => x.category === cat) : TASKS.filter((x) => x.category === cat);
-    const fresh = pool.filter((x) => x.id !== task?.id && (mode === 'fav' || !seen.includes(x.id)));
+    const fresh = pool.filter((x) => x.id !== shown?.taskId && (mode === 'fav' || !seen.includes(x.id)));
     const list = fresh.length ? fresh : pool;
     return list[Math.floor(Math.random() * list.length)];
   }
 
   function spin() {
-    if (spinning || slices.length < 1) return;
-    const n = slices.length;
+    if (spinning || modeSlices.length < 1 || !day) return;
+    const n = modeSlices.length;
     const k = Math.floor(Math.random() * n);
-    const seg = 360 / n;
-    const center = (k + 0.5) * seg;
-    const jitter = (Math.random() - 0.5) * seg * 0.6;
-    const cur = angle.current;
-    const target = cur + 360 * 5 + ((((360 - center + jitter - cur) % 360) + 360) % 360);
-    angle.current = target;
-    setSpinning(true);
-    setTask(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    Animated.timing(rot, { toValue: target, duration: 3200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
-      setSpinning(false);
-      setTask(pickFrom(slices[k]));
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    });
+    const jitter = (Math.random() - 0.5) * (360 / n) * 0.6;
+    const task = pickFrom(modeSlices[k]);
+    const s: WheelSpin = {
+      spinId: `${uid}-${Date.now()}`,
+      by: uid,
+      atMs: Date.now(),
+      taskId: task.id,
+      slices: modeSlices,
+      k,
+      jitter,
+    };
+    lastSpin.current = s.spinId;
+    setShown(null);
+    setDisplay(modeSlices);
+    saveSpin(coupleId, key, s).catch(() => {});
+    if (partnerId) {
+      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus çarkını çevirdi 🎡`, task.title, { type: 'wheel', url: '/wheel' });
+    }
+    animateTo(n, k, jitter, () => setShown(s));
   }
 
   async function done() {
-    if (!task || busy || !user) return;
+    if (!shown || busy) return;
     setBusy(true);
-    await completeBonus(coupleId, task.id, user.uid).catch(() => false);
+    await completeBonus(coupleId, shown.taskId, uid).catch(() => false);
     setBusy(false);
   }
 
+  const task = shown ? taskById(shown.taskId) : null;
   const spinDeg = rot.interpolate({ inputRange: [0, 360], outputRange: ['0deg', '360deg'] });
   const isFav = !!task && favorites.includes(task.id);
 
@@ -91,7 +141,7 @@ export function TaskWheel() {
       <Muted>
         {doneToday
           ? 'Bugünün bonus puanını aldınız. Yine de çevirip bir görev daha yapabilirsiniz.'
-          : `Çarkı çevirin, çıkan görevi yapın: +${BONUS_POINTS} puan (günde bir kez).`}
+          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. Yapınca +${BONUS_POINTS} puan (günde bir kez).`}
       </Muted>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -104,7 +154,7 @@ export function TaskWheel() {
               disabled={disabled || spinning}
               onPress={() => {
                 setMode(m);
-                setTask(null);
+                setDisplay(null);
               }}
               style={{
                 paddingVertical: 7,
@@ -206,8 +256,11 @@ export function TaskWheel() {
         </View>
       </View>
 
-      {task && (
+      {task && shown && (
         <View style={{ gap: 10 }}>
+          <Muted style={{ fontSize: 12 }}>
+            {shown.by === uid ? 'Sen çevirdin' : `${partnerName} çevirdi`} · ikinizde de bu görev görünüyor
+          </Muted>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pill>{t.copy.surpriseLabel}</Pill>
             <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabels[task.category])}</Muted>
