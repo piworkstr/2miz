@@ -81,6 +81,20 @@ service cloud.firestore {
         allow create: if isMember(coupleId) && request.resource.data.from == request.auth.uid
           && request.resource.data.data.size() < 900000;
       }
+
+      // Seyahat albümleri: iki üye de seyahat açar, fotoğraf ekler, not yazar ve silebilir.
+      match /trips/{tripId} {
+        allow read, write: if isMember(coupleId);
+      }
+      match /tripPhotos/{photoId} {
+        allow read, delete: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.uid == request.auth.uid
+          && request.resource.data.data.size() < 900000;
+        // Not eklenebilir ama fotoğrafın kendisi ve sahibi değişmez.
+        allow update: if isMember(coupleId)
+          && request.resource.data.data == resource.data.data
+          && request.resource.data.uid == resource.data.uid;
+      }
     }
   }
 }

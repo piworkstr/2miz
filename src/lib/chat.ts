@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { db } from './firebase';
+import { notifyPartner } from './push';
 import { photosCol as albumCol } from './photos';
 import { useSession } from './session';
 
@@ -50,7 +51,14 @@ export function useMessages(coupleId: string | undefined, max = 150) {
   return messages;
 }
 
-export async function sendMessage(coupleId: string, from: string, text: string, photo: string | null) {
+// notify: partnere bildirim (uygulama kapalıyken de gelir).
+export async function sendMessage(
+  coupleId: string,
+  from: string,
+  text: string,
+  photo: string | null,
+  notify?: { to: string | null; fromName: string },
+) {
   const ref = await addDoc(messagesCol(coupleId), {
     from,
     text: text.trim(),
@@ -59,6 +67,7 @@ export async function sendMessage(coupleId: string, from: string, text: string, 
     createdAt: serverTimestamp(),
   });
   if (photo) await setDoc(doc(photosCol(coupleId), ref.id), { from, data: photo });
+  if (notify?.to) notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
 }
 
 export async function deleteMessage(coupleId: string, id: string, hasPhoto: boolean) {

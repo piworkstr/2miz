@@ -2,6 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/tabs';
 import { InviteModal } from '../../components/InviteModal';
 import { useUnreadCount } from '../../lib/chat';
+import { usePushSetup } from '../../lib/push';
+import { useSession } from '../../lib/session';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 import { tx, type ThemeId } from '../../lib/theme';
@@ -26,6 +28,8 @@ export default function TabsLayout() {
   const t = useTheme();
   const [today, chat, album, coupons, us] = ICONS[t.id];
   const unread = useUnreadCount();
+  const { user } = useSession();
+  usePushSetup(user?.uid);
   const label = (s: string) => tx(t, s);
 
   return (

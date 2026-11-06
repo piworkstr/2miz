@@ -11,7 +11,7 @@ import { useSession } from '../lib/session';
 // Mesajlar için tam ekran anlık kamera (galeriden seçim yok).
 // Ayrı bir sayfa olarak açılır; açılır pencere içinde iPhone kamerası dokunmaları yutabiliyor.
 export default function CameraScreen() {
-  const { user, couple } = useSession();
+  const { user, couple, partnerId, profile } = useSession();
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [ready, setReady] = useState(false);
@@ -46,7 +46,7 @@ export default function CameraScreen() {
     setBusy(true);
     setError('');
     try {
-      await sendMessage(couple.id, user.uid, '', shot);
+      await sendMessage(couple.id, user.uid, '', shot, { to: partnerId, fromName: profile?.name ?? 'Partnerin' });
       close();
     } catch {
       setError('Gönderilemedi, tekrar dene.');

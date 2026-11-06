@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { notifyPartner } from '../lib/push';
 import { GAMES, sendInvite, useMyOpenInvite, type GameType } from '../lib/games';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -13,7 +14,7 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 // "Canım sıkıldı": partnere canlı oyun daveti gönderir.
 export function BoredCard() {
   const t = useTheme();
-  const { user, couple, partnerId, partnerName } = useSession();
+  const { user, couple, partnerId, partnerName, profile } = useSession();
   const open = useMyOpenInvite(couple?.id, user?.uid);
   const [choosing, setChoosing] = useState(false);
   const [busy, setBusy] = useState<GameType | null>(null);
@@ -27,6 +28,7 @@ export function BoredCard() {
     setBusy(type);
     try {
       const id = await sendInvite(couple.id, user.uid, partnerId, type);
+      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} seni oyuna çağırıyor 🎲`, `${GAMES[type].name} · 15 dakika içinde katıl`, { type: 'game', url: '/' });
       setChoosing(false);
       router.push({ pathname: '/game/[id]', params: { id } });
     } catch {

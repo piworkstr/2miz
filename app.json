@@ -41,6 +41,20 @@
           "resizeMode": "contain",
           "backgroundColor": "#FFF8F3"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E8516A"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UsDaily, seyahat albümünüze eklemek için seçtiğiniz fotoğraflara erişir.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "scheme": "usdaily"

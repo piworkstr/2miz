@@ -6,6 +6,9 @@ import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
 import { removeFromAlbum } from '../../lib/chat';
 import { usePhotos, type Photo } from '../../lib/photos';
+import { useTrips, type Trip } from '../../lib/trips';
+import { TripCover } from '../../components/TripCover';
+import { router } from 'expo-router';
 import { useSession } from '../../lib/session';
 import { taskById } from '../../lib/tasks';
 import { useTheme } from '../../lib/useTheme';
@@ -13,20 +16,23 @@ import { useTheme } from '../../lib/useTheme';
 type Page =
   | { kind: 'date'; day: string; photo: Photo }
   | { kind: 'task'; day: string; mine?: Photo; theirs?: Photo }
-  | { kind: 'moment'; day: string; photo: Photo };
+  | { kind: 'moment'; day: string; photo: Photo }
+  | { kind: 'trip'; day: string; trip: Trip };
 
-type Filter = 'all' | 'tasks' | 'moments';
+type Filter = 'all' | 'tasks' | 'moments' | 'trips';
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'Tümü' },
   { key: 'tasks', label: 'Görevler' },
   { key: 'moments', label: 'Anılar' },
+  { key: 'trips', label: 'Seyahatler' },
 ];
-const ORDER = { date: 0, task: 1, moment: 2 };
+const ORDER = { trip: -1, date: 0, task: 1, moment: 2 };
 
 export default function Album() {
   const t = useTheme();
   const { user, couple, partnerName, profile } = useSession();
   const photos = usePhotos(couple?.id);
+  const trips = useTrips(couple?.id);
   const [filter, setFilter] = useState<Filter>('all');
   const [removing, setRemoving] = useState<string | null>(null);
 
@@ -46,11 +52,20 @@ export default function Album() {
       byDay.set(p.day, slot);
     }
     byDay.forEach((v, day) => out.push({ kind: 'task', day, ...v }));
+    for (const trip of trips ?? []) out.push({ kind: 'trip', day: trip.end, trip });
     // Aynı gün önce date, sonra görev, sonra anılar.
     return out.sort((a, b) => (a.day === b.day ? ORDER[a.kind] - ORDER[b.kind] : a.day < b.day ? 1 : -1));
-  }, [photos, user]);
+  }, [photos, trips, user]);
 
-  const shown = pages.filter((p) => filter === 'all' || (filter === 'moments' ? p.kind === 'moment' : p.kind !== 'moment'));
+  const shown = pages.filter((p) =>
+    filter === 'all'
+      ? true
+      : filter === 'moments'
+        ? p.kind === 'moment'
+        : filter === 'trips'
+          ? p.kind === 'trip'
+          : p.kind === 'task' || p.kind === 'date',
+  );
 
   if (photos === null) return <Loading />;
   const myName = profile?.name ?? 'Sen';
@@ -65,22 +80,22 @@ export default function Album() {
           : 'Görevleri selfieyle tamamladıkça anılarınız burada polaroid olarak birikecek.'}
       </Muted>
 
-      {pages.length === 0 && (
+      {pages.length === 0 && filter === 'all' && (
         <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
           <Ionicons name="images-outline" size={34} color={t.colors.primary} />
           <Muted style={{ textAlign: 'center' }}>İlk polaroidiniz bugünün görevinden gelecek.</Muted>
         </Card>
       )}
 
-      {pages.length > 0 && (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+      {(
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {FILTERS.map((f) => (
             <Pressable
               key={f.key}
               onPress={() => setFilter(f.key)}
               style={{
                 paddingVertical: 8,
-                paddingHorizontal: 16,
+                paddingHorizontal: 14,
                 borderRadius: 20,
                 backgroundColor: filter === f.key ? t.colors.primary : t.colors.card,
                 borderWidth: 1,
@@ -95,15 +110,41 @@ export default function Album() {
         </View>
       )}
 
-      {pages.length > 0 && shown.length === 0 && (
+      {(filter === 'all' || filter === 'trips') && (
+        <Pressable
+          onPress={() => router.push('/trip/new')}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 12,
+            borderRadius: 12,
+            borderWidth: 1.5,
+            borderStyle: 'dashed',
+            borderColor: t.colors.primary,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Ionicons name="airplane-outline" size={18} color={t.colors.primary} />
+          <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>Seyahat albümü oluştur</Text>
+        </Pressable>
+      )}
+
+      {shown.length === 0 && filter !== 'all' && (
         <Muted style={{ textAlign: 'center', paddingVertical: 20 }}>
           {filter === 'moments'
             ? 'Mesajlarda bir fotoğrafa uzun basıp "Albüme ekle" dediğinde burada anı olarak görünür.'
-            : 'Henüz görev fotoğrafı yok.'}
+            : filter === 'trips'
+              ? 'Tatilde çektiğiniz fotoğraflar için bir seyahat albümü oluşturun.'
+              : 'Henüz görev fotoğrafı yok.'}
         </Muted>
       )}
 
-      {shown.map((page) => (
+      {shown.map((page) =>
+        page.kind === 'trip' ? (
+          <TripCover key={`trip-${page.trip.id}`} trip={page.trip} coupleId={couple!.id} />
+        ) : (
         <Pressable
           key={page.kind === 'task' ? `task-${page.day}` : page.photo.id}
           onLongPress={page.kind === 'moment' ? () => setRemoving(page.photo.id) : undefined}
@@ -159,7 +200,8 @@ export default function Album() {
           )}
           <Text style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>{prettyDate(page.day)}</Text>
         </Pressable>
-      ))}
+        ),
+      )}
     </Screen>
   );
 }

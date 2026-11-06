@@ -17,13 +17,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
 import { addToAlbum, deleteMessage, markRead, removeFromAlbum, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
+import { setChatOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
 export default function Chat() {
   const t = useTheme();
-  const { user, couple, partnerName } = useSession();
+  const { user, couple, partnerName, partnerId, profile } = useSession();
   const messages = useMessages(couple?.id);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -34,7 +35,11 @@ export default function Chat() {
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
-      return () => setFocused(false);
+      setChatOpen(true);
+      return () => {
+        setFocused(false);
+        setChatOpen(false);
+      };
     }, []),
   );
   const newest = messages?.[0]?.createdAtMs;
@@ -50,7 +55,7 @@ export default function Chat() {
     if (!text.trim() || sending || !couple) return;
     setSending(true);
     try {
-      await sendMessage(couple.id, uid, text, null);
+      await sendMessage(couple.id, uid, text, null, { to: partnerId, fromName: profile?.name ?? 'Partnerin' });
       setText('');
     } finally {
       setSending(false);
