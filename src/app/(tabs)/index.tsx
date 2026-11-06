@@ -453,6 +453,28 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           ))}
           {!open && <Muted style={{ fontSize: 12 }}>Notları görmek için dokun</Muted>}
         </Card>
+        {/* Post-it: ne durumda olduğunu bir bakışta söyler. */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: -12,
+            backgroundColor: day.rewarded ? '#FFF2A8' : '#FFD9E2',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            transform: [{ rotate: '5deg' }],
+            shadowColor: '#000',
+            shadowOpacity: 0.15,
+            shadowRadius: 3,
+            shadowOffset: { width: 1, height: 2 },
+            elevation: 3,
+          }}
+        >
+          <Text style={{ fontFamily: 'Caveat_700Bold', fontSize: 20, color: '#2B1D22' }}>
+            {day.rewarded ? 'Bugün tamam! ✓' : `${partnerName} bekleniyor…`}
+          </Text>
+        </View>
       </Pressable>
     );
   }
