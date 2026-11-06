@@ -13,7 +13,9 @@ import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '..
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { saveTaskPhoto, usePhotos } from '../../lib/photos';
 import { useSession } from '../../lib/session';
-import { categoryLabels, randomTask, taskById, type Task } from '../../lib/tasks';
+import { categoryLabels, taskById, type Task } from '../../lib/tasks';
+import { toggleFavorite } from '../../lib/archive';
+import { TaskWheel } from '../../components/TaskWheel';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
@@ -71,16 +73,21 @@ export default function Today() {
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
-        <Shortcut icon="dice-outline" label={t.copy.surpriseTitle} active={panel === 'bonus'} onPress={() => toggle('bonus')} />
+        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={panel === 'bonus'} onPress={() => toggle('bonus')} />
         <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
       </View>
       {panel === 'play' && <BoredCard />}
-      {panel === 'bonus' && <SurpriseCard />}
+      {panel === 'bonus' && <TaskWheel />}
       {panel === 'date' && (
         <Card>
           <DateCard mode="planner" />
         </Card>
       )}
+
+      <Pressable onPress={() => router.push('/archive')} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}>
+        <Ionicons name="time-outline" size={16} color={t.colors.primary} />
+        <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Görev arşivi ve favoriler')}</Text>
+      </Pressable>
 
       <MemoryCorner />
       <CoupleInfoCard />
@@ -257,11 +264,18 @@ function MemoryCorner() {
 
 function TaskTitle({ task, label }: { task: Task; label: string }) {
   const t = useTheme();
+  const { couple } = useSession();
+  const fav = !!couple?.favorites?.includes(task.id);
   return (
     <View style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
         <Pill>{label}</Pill>
-        <Muted style={{ fontSize: 12 }}>{tx(t, categoryLabels[task.category])}</Muted>
+        <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabels[task.category])}</Muted>
+        {couple && (
+          <Pressable onPress={() => toggleFavorite(couple.id, task.id, !fav).catch(() => {})} hitSlop={10} accessibilityLabel="Favori">
+            <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.colors.primary} />
+          </Pressable>
+        )}
       </View>
       <Display>{task.title}</Display>
     </View>
@@ -377,19 +391,3 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
   );
 }
 
-function SurpriseCard() {
-  const t = useTheme();
-  const { couple } = useSession();
-  const [task, setTask] = useState<Task | null>(null);
-  return (
-    <Card>
-      <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.surpriseTitle)}</T>
-      {task ? <TaskTitle task={task} label={t.copy.surpriseLabel} /> : <Muted>{t.copy.surpriseHint}</Muted>}
-      <Button
-        label={task ? t.copy.surpriseAgain : t.copy.surpriseBtn}
-        variant="secondary"
-        onPress={() => setTask(randomTask([...(couple?.seenTasks ?? []), ...(task ? [task.id] : [])]))}
-      />
-    </Card>
-  );
-}

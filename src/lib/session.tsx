@@ -27,6 +27,8 @@ export type Couple = {
   bestStreak?: number;
   lastRead?: Record<string, number>; // mesajları en son ne zaman okudu
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
+  favorites?: string[]; // favori görevler (arşiv ve çark)
+  lastBonusDay?: string; // bonus görev puanı günde bir kez
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };

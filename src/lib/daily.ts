@@ -14,6 +14,7 @@ export type DayDoc = {
   responses: Record<string, Response>;
   completions: Record<string, Completion>;
   rewarded: boolean;
+  bonus?: { taskId: string; by: string; atMs: number }; // çarktan çıkıp yapılan bonus görev
 };
 
 export type DayMode = 'pending' | 'shared' | 'separate';

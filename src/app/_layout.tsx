@@ -45,6 +45,7 @@ function RootNavigator() {
         <Stack.Protected guard={!!user && ready && !!couple}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="game/[id]" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="archive" />
           <Stack.Screen name="trip/new" />
           <Stack.Screen name="trip/[id]" />
           <Stack.Screen name="camera" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

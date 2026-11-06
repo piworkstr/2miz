@@ -8,6 +8,18 @@ export type Task = {
   category: Category;
 };
 
+// Çarkta ve arşivde kategorilerin rengi ve simgesi.
+export const categoryStyle: Record<Category, { color: string; icon: string }> = {
+  iletisim: { color: '#5B8DB8', icon: 'chatbubbles' },
+  minnet: { color: '#E0A43A', icon: 'sunny' },
+  romantik: { color: '#E8516A', icon: 'heart' },
+  eglence: { color: '#8C6BC2', icon: 'happy' },
+  yeni: { color: '#4FA37E', icon: 'compass' },
+  surpriz: { color: '#E07A45', icon: 'gift' },
+};
+
+export const CATEGORIES: Category[] = ['romantik', 'iletisim', 'eglence', 'minnet', 'yeni', 'surpriz'];
+
 export const categoryLabels: Record<Category, string> = {
   iletisim: 'İletişim',
   minnet: 'Minnet',
