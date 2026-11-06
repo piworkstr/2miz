@@ -30,7 +30,7 @@ const THEMES = [
 const FIXED = new Set(['cover', 'opening', 'stats', 'end']);
 
 // Albüm oluşturucu: dönem, boyut, tema seç; sayfa sayfa önizle, istemediğini çıkar, baskı talebi bırak.
-// Önizlemede indirme ya da paylaşma yok: baskı yalnızca UsDaily üzerinden yapılır.
+// Önizlemede indirme ya da paylaşma yok: baskı yalnızca biz üzerinden yapılır.
 export default function AlbumBuilder() {
   const t = useTheme();
   const { user, couple, profile, partnerProfile, partnerId, partnerName } = useSession();

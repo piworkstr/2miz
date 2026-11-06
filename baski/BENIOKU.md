@@ -1,4 +1,4 @@
-# UsDaily Baskı Merkezi
+# biz Baskı Merkezi
 
 Albüm baskı dosyaları yalnızca burada üretilir; uygulama kullanıcıya hiçbir zaman PDF vermez.
 

@@ -8,8 +8,7 @@ export default function Welcome() {
   return (
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, paddingVertical: 40 }}>
-        <Image source={require('../../assets/icon.png')} style={{ width: 120, height: 120, borderRadius: 28 }} />
-        <Image source={require('../../assets/wordmark.png')} style={{ width: 240, height: 68 }} resizeMode="contain" accessibilityLabel="us.daily" />
+        <Image source={require('../../assets/icon.png')} style={{ width: 132, height: 132, borderRadius: 30 }} accessibilityLabel="biz" />
         <Muted style={{ textAlign: 'center', fontSize: 16, lineHeight: 23 }}>
           Her gün küçük bir görev, birlikte büyüyen bir hikaye.
         </Muted>

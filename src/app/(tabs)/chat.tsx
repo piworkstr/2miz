@@ -609,7 +609,7 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
             <View style={{ padding: 20, gap: 8 }}>
               <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Şikayetin alındı</Text>
               <Muted>
-                Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan Biz
+                Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan İkimiz
                 ekranından eşleşmeni bitirebilirsin.
               </Muted>
               {row('Tamam', close)}

@@ -373,7 +373,7 @@ function ShareSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       else await stopCalendarShare(couple.id, user.uid);
       onClose();
     } catch (e) {
-      setError((e as Error).message === 'permission' ? 'Takvim izni verilmedi. Ayarlar > UsDaily > Takvimler bölümünden açabilirsin.' : 'Olmadı, tekrar dene.');
+      setError((e as Error).message === 'permission' ? 'Takvim izni verilmedi. Ayarlar > biz > Takvimler bölümünden açabilirsin.' : 'Olmadı, tekrar dene.');
     } finally {
       setBusy(null);
     }

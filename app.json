@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "UsDaily",
+    "name": "biz",
     "slug": "usdaily",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +15,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E8516A",
+        "backgroundColor": "#ED1C24",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -32,7 +32,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Görevleri tamamlarken selfie çekebilmen için UsDaily kameraya erişmek istiyor.",
+          "cameraPermission": "biz, görevleri tamamlarken ve partnerine anlık fotoğraf gönderirken kamerayı kullanır.",
           "recordAudioAndroid": false
         }
       ],
@@ -48,13 +48,13 @@
       [
         "expo-notifications",
         {
-          "color": "#E8516A"
+          "color": "#ED1C24"
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "UsDaily, seyahat albümünüze eklemek için seçtiğiniz fotoğraflara erişir.",
+          "photosPermission": "biz, seyahat albümünüze ve profil fotoğrafına eklemek için yalnızca seçtiğin fotoğraflara erişir.",
           "cameraPermission": false,
           "microphonePermission": false
         }
@@ -62,13 +62,13 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "UsDaily, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
+          "microphonePermission": "biz, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
         }
       ],
       [
         "expo-calendar",
         {
-          "calendarPermission": "UsDaily, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
+          "calendarPermission": "biz, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
           "remindersPermission": false
         }
       ]

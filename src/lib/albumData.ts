@@ -40,7 +40,7 @@ export async function loadAlbumInput(
   return { people, startDate, photos, trips };
 }
 
-// Baskı talebi: sadece seçimler kaydedilir; baskı dosyası UsDaily'nin Baskı Merkezi'nde üretilir.
+// Baskı talebi: sadece seçimler kaydedilir; baskı dosyası bizim Baskı Merkezi'mizde üretilir.
 export async function saveAlbumRequest(coupleId: string, uid: string, opts: AlbumOptions, pageCount: number) {
   await addDoc(collection(db, 'couples', coupleId, 'albumOrders'), {
     by: uid,

@@ -6,7 +6,7 @@ import type { LoveLanguage } from './loveLanguage';
 
 export type CoupleStats = { days: number; games: number; photos: number; coupons: number };
 
-// Biz ekranına her girildiğinde sayıları sunucudan sayar (belgeleri indirmeden).
+// İkimiz ekranına her girildiğinde sayıları sunucudan sayar (belgeleri indirmeden).
 export function useCoupleStats(coupleId: string | undefined) {
   const [stats, setStats] = useState<CoupleStats | null>(null);
   useFocusEffect(
