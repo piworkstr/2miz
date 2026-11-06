@@ -88,6 +88,12 @@ service cloud.firestore {
           && request.resource.data.data.size() < 900000;
       }
 
+      // Albüm baskı talepleri: üyeler oluşturur ve görür; durumu yalnızca UsDaily (Baskı Merkezi) değiştirir.
+      match /albumOrders/{orderId} {
+        allow read: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid;
+      }
+
       // Ortak takvim: planları iki üye de ekler ve siler.
       match /events/{eventId} {
         allow read, write: if isMember(coupleId);

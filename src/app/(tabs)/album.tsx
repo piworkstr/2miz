@@ -110,6 +110,26 @@ export default function Album() {
         </View>
       )}
 
+      <Pressable
+        onPress={() => router.push('/album-builder')}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          padding: 16,
+          borderRadius: t.radius.card,
+          backgroundColor: t.colors.primary,
+          opacity: pressed ? 0.85 : 1,
+        })}
+      >
+        <Ionicons name="book" size={26} color={t.colors.onPrimary} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}>Albümünü bastır</Text>
+          <Text style={{ color: t.colors.onPrimary, opacity: 0.9, fontSize: 13 }}>Anılarınız gerçek bir albüm olsun: 21×21 ya da A4</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimary} />
+      </Pressable>
+
       {(filter === 'all' || filter === 'trips') && (
         <Pressable
           onPress={() => router.push('/trip/new')}

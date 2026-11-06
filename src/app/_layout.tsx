@@ -46,6 +46,7 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="game/[id]" options={{ gestureEnabled: false }} />
           <Stack.Screen name="archive" />
+          <Stack.Screen name="album-builder" />
           <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
           <Stack.Screen name="trip/new" />

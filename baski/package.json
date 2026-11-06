@@ -1,0 +1,14 @@
+{
+  "name": "usdaily-baski-merkezi",
+  "private": true,
+  "description": "UsDaily Baskı Merkezi: albüm baskı dosyalarını (iç sayfalar + kapak, 300 dpi PDF) üretir. Yalnızca UsDaily ekibinin bilgisayarında çalışır.",
+  "scripts": {
+    "ornek": "tsx ornek.ts",
+    "siparis": "tsx index.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "14.5.0",
+    "playwright": "1.63.0",
+    "tsx": "4.23.15"
+  }
+}
