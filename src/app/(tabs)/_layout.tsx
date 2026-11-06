@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/tabs';
 import { InviteModal } from '../../components/InviteModal';
+import { useUnreadCount } from '../../lib/chat';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 import { tx, type ThemeId } from '../../lib/theme';
@@ -9,10 +10,10 @@ import { useTheme } from '../../lib/useTheme';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 // Her temanın kendi sekme simgeleri var.
-const ICONS: Record<ThemeId, [IconName, IconName, IconName, IconName]> = {
-  standart: ['heart-outline', 'images-outline', 'gift-outline', 'people-outline'],
-  agir: ['flash-outline', 'archive-outline', 'ticket-outline', 'shield-outline'],
-  asko: ['heart', 'images', 'gift', 'happy-outline'],
+const ICONS: Record<ThemeId, [IconName, IconName, IconName, IconName, IconName]> = {
+  standart: ['heart-outline', 'chatbubbles-outline', 'images-outline', 'gift-outline', 'people-outline'],
+  agir: ['flash-outline', 'radio-outline', 'archive-outline', 'ticket-outline', 'shield-outline'],
+  asko: ['heart', 'chatbubble-ellipses', 'images', 'gift', 'happy-outline'],
 };
 
 function icon(name: IconName) {
@@ -23,7 +24,8 @@ function icon(name: IconName) {
 
 export default function TabsLayout() {
   const t = useTheme();
-  const [today, album, coupons, us] = ICONS[t.id];
+  const [today, chat, album, coupons, us] = ICONS[t.id];
+  const unread = useUnreadCount();
   const label = (s: string) => tx(t, s);
 
   return (
@@ -40,6 +42,15 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: label(t.copy.tabs.today), tabBarIcon: icon(today) }} />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: label(t.copy.tabs.chat),
+          tabBarIcon: icon(chat),
+          tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined,
+          tabBarBadgeStyle: { backgroundColor: t.colors.primary, color: t.colors.onPrimary },
+        }}
+      />
       <Tabs.Screen name="album" options={{ title: label(t.copy.tabs.album), tabBarIcon: icon(album) }} />
       <Tabs.Screen name="coupons" options={{ title: label(t.copy.tabs.coupons), tabBarIcon: icon(coupons) }} />
       <Tabs.Screen name="profile" options={{ title: label(t.copy.tabs.us), tabBarIcon: icon(us) }} />

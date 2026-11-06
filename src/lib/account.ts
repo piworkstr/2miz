@@ -12,6 +12,23 @@ async function wipe(path: string[]) {
   }
 }
 
+const COUPLE_PARTS = ['photos', 'days', 'dates', 'coupons', 'games', 'messages', 'messagePhotos'];
+
+// Çiftin tüm ortak verilerini ve çift belgesini siler. Kimse yeniden davet kodu olmadan
+// eşleşemez; bu yüzden eşleşmeyi bitirmek aynı zamanda engellemek demektir.
+async function wipeCouple(coupleId: string) {
+  for (const sub of COUPLE_PARTS) await wipe(['couples', coupleId, sub]);
+  await deleteDoc(doc(db, 'couples', coupleId));
+}
+
+// Eşleşmeyi bitir: iki hesap da açık kalır, ikisi de eşleşme ekranına döner.
+export async function endCouple(password: string, coupleId: string) {
+  const user = auth.currentUser;
+  if (!user || !user.email) throw new Error('Oturum bulunamadı.');
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+  await wipeCouple(coupleId);
+}
+
 // Hesabı ve kişisel verileri kalıcı olarak siler (App Store kuralı 5.1.1(v)).
 // Çiftin ortak verileri (görev günleri, date'ler, albüm fotoğrafları ve kuponlar) da silinir;
 // partnerin hesabı açık kalır ve yeniden eşleşme ekranına döner.
@@ -22,12 +39,7 @@ export async function deleteAccount(password: string, coupleId: string | null) {
   // Firebase, hesap silmeden önce yakın zamanda giriş yapılmasını ister.
   await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
 
-  if (coupleId) {
-    for (const sub of ['photos', 'days', 'dates', 'coupons', 'games']) {
-      await wipe(['couples', coupleId, sub]);
-    }
-    await deleteDoc(doc(db, 'couples', coupleId));
-  }
+  if (coupleId) await wipeCouple(coupleId);
   await deleteDoc(doc(db, 'users', user.uid));
   await deleteUser(user);
 }

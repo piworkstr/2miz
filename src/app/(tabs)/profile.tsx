@@ -4,6 +4,7 @@ import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DeleteAccount } from '../../components/DeleteAccount';
+import { EndCouple } from '../../components/EndCouple';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
@@ -110,6 +111,7 @@ export default function Profile() {
       </Section>
 
       <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth)} />
+      <EndCouple />
       <DeleteAccount />
     </Screen>
   );

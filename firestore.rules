@@ -23,6 +23,11 @@ service cloud.firestore {
       allow delete: if signedIn();
     }
 
+    // Şikayetler: kullanıcı yazabilir ama okuyamaz; ekip Firebase konsolundan inceler.
+    match /reports/{reportId} {
+      allow create: if signedIn() && request.resource.data.reporter == request.auth.uid;
+    }
+
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
@@ -63,6 +68,18 @@ service cloud.firestore {
       // Canlı oyunlar ve davetler.
       match /games/{gameId} {
         allow read, write: if isMember(coupleId);
+      }
+
+      // Mesajlar: herkes yalnızca kendi adına yazar; şikayet için "hiddenFor" güncellenebilir.
+      match /messages/{messageId} {
+        allow read, update, delete: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.from == request.auth.uid
+          && request.resource.data.text.size() <= 1000;
+      }
+      match /messagePhotos/{photoId} {
+        allow read, delete: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.from == request.auth.uid
+          && request.resource.data.data.size() < 900000;
       }
     }
   }

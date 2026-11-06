@@ -25,6 +25,7 @@ export type Couple = {
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
   bestStreak?: number;
+  lastRead?: Record<string, number>; // mesajları en son ne zaman okudu
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';

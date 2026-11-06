@@ -41,7 +41,7 @@ type Copy = {
   surpriseLabel: string;
   surpriseBtn: string;
   surpriseAgain: string;
-  tabs: { today: string; album: string; coupons: string; us: string };
+  tabs: { today: string; chat: string; album: string; coupons: string; us: string };
   date: {
     today: string;
     selfieHint: string;
@@ -128,7 +128,7 @@ const standart: Theme = {
     surpriseLabel: 'Bonus görev',
     surpriseBtn: 'Bonus görev çek',
     surpriseAgain: 'Başka bir tane',
-    tabs: { today: 'Bugün', album: 'Albüm', coupons: 'Kuponlar', us: 'Biz' },
+    tabs: { today: 'Bugün', chat: 'Mesajlar', album: 'Albüm', coupons: 'Kuponlar', us: 'Biz' },
     date: {
       today: 'Bugün date günü!',
       selfieHint: 'İkinizin aynı karede olduğu bir selfie çekin, albüme özel bir sayfa olarak girecek.',
@@ -201,7 +201,7 @@ const agir: Theme = {
     surpriseLabel: 'Ekstra iş',
     surpriseBtn: 'Ekstra iş çek',
     surpriseAgain: 'Başkası',
-    tabs: { today: 'Bugün', album: 'Arşiv', coupons: 'Fişler', us: 'Ekip' },
+    tabs: { today: 'Bugün', chat: 'Telsiz', album: 'Arşiv', coupons: 'Fişler', us: 'Ekip' },
     date: {
       today: 'Bugün date var',
       selfieHint: 'Aynı karede bir selfie. Albüme özel sayfa olarak girer.',
@@ -275,7 +275,7 @@ const asko: Theme = {
     surpriseLabel: 'Tatlı bonus',
     surpriseBtn: 'Bonus çek',
     surpriseAgain: 'Bir tane daha',
-    tabs: { today: 'Bugün', album: 'Anılar', coupons: 'Kuponlar', us: 'Biz' },
+    tabs: { today: 'Bugün', chat: 'Fısıltı', album: 'Anılar', coupons: 'Kuponlar', us: 'Biz' },
     date: {
       today: 'Bugün date günümüz!',
       selfieHint: 'Yanak yanağa bir selfie çekin, albümde kocaman özel bir sayfa olacak.',
