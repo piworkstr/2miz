@@ -70,14 +70,16 @@ export async function sendMessage(
   photo: string | null,
   notify?: { to: string | null; fromName: string },
 ) {
-  const ref = await addDoc(messagesCol(coupleId), {
+  // Önce fotoğraf yüklenir, mesaj sonra yazılır: karşı taraf mesajı gördüğünde fotoğraf hazırdır.
+  const ref = doc(messagesCol(coupleId));
+  if (photo) await setDoc(doc(photosCol(coupleId), ref.id), { from, data: photo });
+  await setDoc(ref, {
     from,
     text: text.trim(),
     hasPhoto: !!photo,
     createdAtMs: Date.now(),
     createdAt: serverTimestamp(),
   });
-  if (photo) await setDoc(doc(photosCol(coupleId), ref.id), { from, data: photo });
   logActivity(coupleId, from, photo ? 'photo' : 'message');
   if (notify?.to) notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
 }
@@ -87,6 +89,8 @@ export async function deleteMessage(coupleId: string, m: Pick<Message, 'id' | 'h
   if (m.audioMs) await deleteDoc(doc(audioCol(coupleId), m.id)).catch(() => {});
   await deleteDoc(doc(messagesCol(coupleId), m.id));
 }
+
+const voiceCache = new Map<string, string>();
 
 // Sesli mesaj: kayıt dosyası base64 olarak ayrı bir belgede (en fazla ~1 dk, düşük bit hızı).
 export const VOICE_MAX_MS = 60_000;
@@ -100,7 +104,10 @@ export async function sendVoice(
 ) {
   const data = await FS.readAsStringAsync(uri, { encoding: FS.EncodingType.Base64 });
   if (data.length > 900_000) throw new Error('too-long');
-  const ref = await addDoc(messagesCol(coupleId), {
+  // Önce ses yüklenir, mesaj sonra yazılır: karşı taraf mesajı gördüğünde ses hazırdır.
+  const ref = doc(messagesCol(coupleId));
+  await setDoc(doc(audioCol(coupleId), ref.id), { from, data });
+  await setDoc(ref, {
     from,
     text: '',
     hasPhoto: false,
@@ -108,13 +115,16 @@ export async function sendVoice(
     createdAtMs: Date.now(),
     createdAt: serverTimestamp(),
   });
-  await setDoc(doc(audioCol(coupleId), ref.id), { from, data });
+  // Gönderenin telefonunda ses zaten var: tekrar indirmesin.
+  const local = `${FS.cacheDirectory}voice_${ref.id}.m4a`;
+  await FS.copyAsync({ from: uri, to: local })
+    .then(() => voiceCache.set(ref.id, local))
+    .catch(() => {});
   logActivity(coupleId, from, 'voice');
   if (notify?.to) notifyPartner(notify.to, notify.fromName, '🎤 Sesli mesaj gönderdi', { type: 'message', url: '/chat' });
 }
 
 // Sesli mesajı yalnızca gerektiğinde indirir ve telefonda geçici bir dosyaya yazar.
-const voiceCache = new Map<string, string>();
 export function useVoiceFile(coupleId: string, id: string, enabled: boolean) {
   const [uri, setUri] = useState<string | null>(voiceCache.get(id) ?? null);
   useEffect(() => {
@@ -124,8 +134,13 @@ export function useVoiceFile(coupleId: string, id: string, enabled: boolean) {
       const path = `${FS.cacheDirectory}voice_${id}.m4a`;
       const info = await FS.getInfoAsync(path);
       if (!info.exists) {
-        const s = await getDoc(doc(audioCol(coupleId), id));
-        const d = (s.data() as { data?: string } | undefined)?.data;
+        // Ses henüz yüklenmemişse birkaç kez tekrar dener.
+        let d: string | undefined;
+        for (let i = 0; i < 8 && alive && !d; i++) {
+          const s = await getDoc(doc(audioCol(coupleId), id)).catch(() => null);
+          d = (s?.data() as { data?: string } | undefined)?.data;
+          if (!d) await new Promise((r) => setTimeout(r, 1500 + i * 1000));
+        }
         if (!d) return;
         await FS.writeAsStringAsync(path, d, { encoding: FS.EncodingType.Base64 });
       }
@@ -146,15 +161,19 @@ export function useMessagePhoto(coupleId: string, id: string, enabled: boolean) 
   useEffect(() => {
     if (!enabled || cache.has(id)) return;
     let alive = true;
-    getDoc(doc(photosCol(coupleId), id))
-      .then((s) => {
-        const d = (s.data() as { data?: string } | undefined)?.data;
+    // Eski sürümlerden gelen mesajlarda fotoğraf biraz geç yüklenebilir: birkaç kez tekrar dener.
+    (async () => {
+      for (let i = 0; i < 8 && alive; i++) {
+        const s = await getDoc(doc(photosCol(coupleId), id)).catch(() => null);
+        const d = (s?.data() as { data?: string } | undefined)?.data;
         if (d) {
           cache.set(id, d);
           if (alive) setData(d);
+          return;
         }
-      })
-      .catch(() => {});
+        await new Promise((r) => setTimeout(r, 1500 + i * 1000));
+      }
+    })();
     return () => {
       alive = false;
     };

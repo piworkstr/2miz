@@ -48,9 +48,10 @@ export default function Chat() {
   const startY = useRef(0);
   const voice = useVoice((uri, ms) => {
     if (!couple || !user) return;
-    sendVoice(couple.id, user.uid, uri, ms, { to: partnerId, fromName: profile?.name ?? 'Partnerin' }).catch(() =>
-      voice.setHint('Sesli mesaj gönderilemedi, tekrar dene.'),
-    );
+    voice.setHint('Sesli mesaj gönderiliyor…');
+    sendVoice(couple.id, user.uid, uri, ms, { to: partnerId, fromName: profile?.name ?? 'Partnerin' })
+      .then(() => voice.setHint(''))
+      .catch(() => voice.setHint('Sesli mesaj gönderilemedi, tekrar dene.'));
   });
 
   // Sekme açıkken gelen mesajlar okundu sayılır.
