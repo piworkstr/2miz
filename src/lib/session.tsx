@@ -22,6 +22,8 @@ export type Couple = {
   lastCompleteDay: string | null;
   startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
+  passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
+  lastGameDay?: string; // günün oyun puanı bir kez verilsin
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };
 

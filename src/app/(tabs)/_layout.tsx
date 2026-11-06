@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/tabs';
+import { InviteModal } from '../../components/InviteModal';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 import { tx, type ThemeId } from '../../lib/theme';
@@ -26,6 +27,8 @@ export default function TabsLayout() {
   const label = (s: string) => tx(t, s);
 
   return (
+    <>
+    <InviteModal />
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -41,5 +44,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="coupons" options={{ title: label(t.copy.tabs.coupons), tabBarIcon: icon(coupons) }} />
       <Tabs.Screen name="profile" options={{ title: label(t.copy.tabs.us), tabBarIcon: icon(us) }} />
     </Tabs>
+    </>
   );
 }

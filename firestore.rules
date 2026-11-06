@@ -55,6 +55,11 @@ service cloud.firestore {
         allow create: if isMember(coupleId) && request.resource.data.owner == request.auth.uid;
         allow delete: if isMember(coupleId);
       }
+
+      // Canlı oyunlar ve davetler.
+      match /games/{gameId} {
+        allow read, write: if isMember(coupleId);
+      }
     }
   }
 }

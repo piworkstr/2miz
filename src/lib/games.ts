@@ -1,0 +1,290 @@
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  query,
+  runTransaction,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { dayKey } from './date';
+import { db } from './firebase';
+import { KNOW_ME, THIS_THAT } from './gameData';
+import type { Couple } from './session';
+
+export type GameType = 'thisthat' | 'knowme' | 'memory';
+export type GameStatus = 'invited' | 'declined' | 'playing' | 'done' | 'cancelled';
+
+export const GAMES: Record<GameType, { name: string; blurb: string; icon: string }> = {
+  thisthat: { name: 'Bu mu, o mu?', blurb: '10 hızlı seçim · 2 dk', icon: 'git-compare-outline' },
+  knowme: { name: 'Beni ne kadar tanıyorsun?', blurb: '5 soru · 3 dk', icon: 'help-circle-outline' },
+  memory: { name: 'Anı eşleştirme', blurb: 'Selfielerinizle hafıza oyunu · 3 dk', icon: 'grid-outline' },
+};
+
+export const INVITE_MINUTES = 15;
+export const WEEKLY_PASSES = 3;
+export const GAME_POINTS = 10;
+
+export type MemoryState = {
+  deck: string[]; // her kart: fotoğraf id'si ya da "icon:heart"
+  matched: number[];
+  flipped: number[];
+  turn: string;
+  scores: Record<string, number>;
+};
+
+export type Game = {
+  id: string;
+  type: GameType;
+  from: string;
+  to: string;
+  status: GameStatus;
+  expiresAt: number;
+  // Bu mu o mu: seçilen sorular ve cevaplar (0 ya da 1)
+  pairs?: number[];
+  answers?: Record<string, number[]>;
+  // Tanıma oyunu: sorular, kendi cevapların, partner tahminlerin
+  questions?: number[];
+  self?: Record<string, number[]>;
+  guess?: Record<string, number[]>;
+  memory?: MemoryState;
+  finished?: Record<string, boolean>;
+};
+
+export type GameProps = {
+  game: Game;
+  coupleId: string;
+  uid: string;
+  partnerId: string;
+  partnerName: string;
+  myName: string;
+};
+
+function gamesCol(coupleId: string) {
+  return collection(db, 'couples', coupleId, 'games');
+}
+
+// Aynı oyunda iki telefon da aynı soruları görsün diye tohumlu karıştırma.
+export function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
+    const j = h % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function pick(count: number, total: number): number[] {
+  const all = Array.from({ length: total }, (_, i) => i);
+  return seededShuffle(all, `${Date.now()}-${Math.random()}`).slice(0, count);
+}
+
+// ---------- "Şimdi olmaz" hakları (haftada 3, pazartesi sıfırlanır) ----------
+
+export function weekKey(d = new Date()): string {
+  const day = (d.getDay() + 6) % 7; // pazartesi = 0
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
+  return dayKey(monday);
+}
+
+export function passesLeft(couple: Couple, uid: string): number {
+  const p = couple.passes?.[uid];
+  const used = p && p.week === weekKey() ? p.used : 0;
+  return Math.max(0, WEEKLY_PASSES - used);
+}
+
+// ---------- Davet ----------
+
+// Hafıza oyunu için son fotoğrafların kimlikleri.
+async function recentPhotoIds(coupleId: string): Promise<string[]> {
+  const snap = await getDocs(query(collection(db, 'couples', coupleId, 'photos'), limit(12)));
+  return snap.docs.map((d) => d.id);
+}
+
+export async function sendInvite(coupleId: string, from: string, to: string, type: GameType) {
+  const base = { type, from, to, status: 'invited' as GameStatus, expiresAt: Date.now() + INVITE_MINUTES * 60_000, createdAt: serverTimestamp() };
+  let extra: Partial<Game> = {};
+  if (type === 'thisthat') extra = { pairs: pick(10, THIS_THAT.length), answers: {} };
+  if (type === 'knowme') extra = { questions: pick(5, KNOW_ME.length), self: {}, guess: {} };
+  if (type === 'memory') extra = { memory: newMemory(await recentPhotoIds(coupleId), from, to) };
+  const ref = await addDoc(gamesCol(coupleId), { ...base, ...extra, finished: {} });
+  return ref.id;
+}
+
+export async function acceptInvite(coupleId: string, id: string) {
+  await updateDoc(doc(gamesCol(coupleId), id), { status: 'playing', startedAt: serverTimestamp() });
+}
+
+export async function cancelInvite(coupleId: string, id: string) {
+  await updateDoc(doc(gamesCol(coupleId), id), { status: 'cancelled' });
+}
+
+// "Şimdi olmaz": hakkı düşer, davet kapanır. Hak yoksa reddedilemez.
+export async function declineInvite(coupleId: string, id: string, uid: string) {
+  const coupleRef = doc(db, 'couples', coupleId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(coupleRef);
+    if (!snap.exists()) return;
+    const couple = snap.data() as Couple;
+    if (passesLeft(couple, uid) <= 0) throw new Error('Bu haftaki "şimdi olmaz" hakların bitti.');
+    const week = weekKey();
+    const prev = couple.passes?.[uid];
+    const used = prev && prev.week === week ? prev.used + 1 : 1;
+    tx.update(coupleRef, { [`passes.${uid}`]: { week, used } });
+    tx.update(doc(gamesCol(coupleId), id), { status: 'declined' });
+  });
+}
+
+export function isExpired(g: Game) {
+  return g.status === 'invited' && Date.now() > g.expiresAt;
+}
+
+// ---------- Canlı dinleme ----------
+
+export function useGame(coupleId: string | undefined, id: string | undefined) {
+  const [game, setGame] = useState<Game | null | undefined>(undefined);
+  useEffect(() => {
+    if (!coupleId || !id) return;
+    return onSnapshot(
+      doc(gamesCol(coupleId), id),
+      (s) => setGame(s.exists() ? ({ id: s.id, ...(s.data() as Omit<Game, 'id'>) }) : null),
+      () => setGame(null),
+    );
+  }, [coupleId, id]);
+  return game;
+}
+
+// Bana gelen ve süresi dolmamış son davet.
+export function useIncomingInvite(coupleId: string | undefined, uid: string | undefined) {
+  const [invite, setInvite] = useState<Game | null>(null);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!coupleId || !uid) return;
+    const q = query(gamesCol(coupleId), where('to', '==', uid), where('status', '==', 'invited'), limit(5));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }));
+        list.sort((a, b) => b.expiresAt - a.expiresAt);
+        setInvite(list[0] ?? null);
+      },
+      () => setInvite(null),
+    );
+  }, [coupleId, uid]);
+  // Süre dolunca pencere kendiliğinden kapansın.
+  useEffect(() => {
+    if (!invite) return;
+    const t = setTimeout(() => tick((n) => n + 1), Math.max(0, invite.expiresAt - Date.now()) + 500);
+    return () => clearTimeout(t);
+  }, [invite]);
+  return invite && !isExpired(invite) ? invite : null;
+}
+
+// Benim gönderdiğim, hâlâ açık olan davet (aynı anda tek davet).
+export function useMyOpenInvite(coupleId: string | undefined, uid: string | undefined) {
+  const [game, setGame] = useState<Game | null>(null);
+  useEffect(() => {
+    if (!coupleId || !uid) return;
+    // İki eşitlik filtresi ek indeks gerektirmez; sıralama telefonda yapılır.
+    const q = query(gamesCol(coupleId), where('from', '==', uid), where('status', '==', 'invited'), limit(5));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }));
+        list.sort((a, b) => b.expiresAt - a.expiresAt);
+        setGame(list[0] ?? null);
+      },
+      () => setGame(null),
+    );
+  }, [coupleId, uid]);
+  return game && game.status === 'invited' && !isExpired(game) ? game : null;
+}
+
+// ---------- Bitirme ve puan ----------
+
+// Herkes kendi bitişini işaretler; ikisi de bitirince oyun kapanır ve günün ilk oyunu puan kazandırır.
+export async function finishGame(coupleId: string, id: string, uid: string) {
+  const gameRef = doc(gamesCol(coupleId), id);
+  const coupleRef = doc(db, 'couples', coupleId);
+  await runTransaction(db, async (tx) => {
+    const g = await tx.get(gameRef);
+    const c = await tx.get(coupleRef);
+    if (!g.exists() || !c.exists()) return;
+    const game = g.data() as Game;
+    const couple = c.data() as Couple;
+    const finished = { ...(game.finished ?? {}), [uid]: true };
+    const both = [game.from, game.to].every((m) => finished[m]);
+    tx.update(gameRef, { [`finished.${uid}`]: true, ...(both ? { status: 'done' } : {}) });
+    if (both && game.status !== 'done' && couple.lastGameDay !== dayKey()) {
+      tx.update(coupleRef, { points: (couple.points ?? 0) + GAME_POINTS, lastGameDay: dayKey() });
+    }
+  });
+}
+
+// ---------- Bu mu, o mu? ----------
+
+export async function answerThisThat(coupleId: string, game: Game, uid: string, choice: number) {
+  const mine = [...(game.answers?.[uid] ?? []), choice];
+  await updateDoc(doc(gamesCol(coupleId), game.id), { [`answers.${uid}`]: mine });
+}
+
+// ---------- Beni ne kadar tanıyorsun? ----------
+
+export async function answerKnowMe(coupleId: string, game: Game, uid: string, self: number, guess: number) {
+  await updateDoc(doc(gamesCol(coupleId), game.id), {
+    [`self.${uid}`]: [...(game.self?.[uid] ?? []), self],
+    [`guess.${uid}`]: [...(game.guess?.[uid] ?? []), guess],
+  });
+}
+
+// ---------- Anı eşleştirme ----------
+
+function newMemory(photoIds: string[], from: string, to: string): MemoryState {
+  const faces = seededShuffle(photoIds, `${Date.now()}`).slice(0, 6);
+  const icons = ['heart', 'star', 'cafe', 'musical-notes', 'airplane', 'pizza', 'moon', 'flower'];
+  while (faces.length < 6) faces.push(`icon:${icons[faces.length]}`);
+  const deck = seededShuffle([...faces, ...faces], `${Math.random()}`);
+  return { deck, matched: [], flipped: [], turn: to, scores: { [from]: 0, [to]: 0 } };
+}
+
+export async function flipCard(coupleId: string, id: string, uid: string, index: number) {
+  const ref = doc(gamesCol(coupleId), id);
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    if (!s.exists()) return 'none' as const;
+    const m = (s.data() as Game).memory!;
+    if (m.turn !== uid || m.flipped.length >= 2 || m.flipped.includes(index) || m.matched.includes(index)) {
+      return 'none' as const;
+    }
+    const flipped = [...m.flipped, index];
+    if (flipped.length < 2) {
+      tx.update(ref, { 'memory.flipped': flipped });
+      return 'first' as const;
+    }
+    const [a, b] = flipped;
+    if (m.deck[a] === m.deck[b]) {
+      // Eşleşti: kartlar açık kalır, puan alır, sıra yine onda.
+      tx.update(ref, {
+        'memory.flipped': [],
+        'memory.matched': [...m.matched, a, b],
+        [`memory.scores.${uid}`]: (m.scores[uid] ?? 0) + 1,
+      });
+      return 'match' as const;
+    }
+    tx.update(ref, { 'memory.flipped': flipped });
+    return 'miss' as const;
+  });
+}
+
+// Eşleşmeyen iki kart bir süre açık kalır, sonra kapanır ve sıra diğerine geçer.
+export async function endTurn(coupleId: string, id: string, next: string) {
+  await updateDoc(doc(gamesCol(coupleId), id), { 'memory.flipped': [], 'memory.turn': next });
+}

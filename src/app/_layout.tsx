@@ -44,6 +44,7 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={!!user && ready && !!couple}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="game/[id]" options={{ gestureEnabled: false }} />
         </Stack.Protected>
       </Stack>
     </>

@@ -12,6 +12,8 @@
 - Zorunlu selfie, date günü ortak selfie, polaroid albüm (fotoğraflar şimdilik küçültülüp Firestore'da)
 - Hesap silme (App Store 5.1.1(v))
 - Aşk kuponları: kupon yaz, partnerinkini puanla aç, "yerine getirdim" işareti, kişisel cüzdan
+- Canlı oyunlar: Bu mu o mu?, Beni ne kadar tanıyorsun?, Anı eşleştirme (albüm selfieleriyle)
+- "Canım sıkıldı" daveti (uygulama içi), "Şimdi olmaz" haftada 3 hak, 15 dk davet süresi, günün ilk oyunu +10 puan
 - Date günü: önceden planlama + anlık "Bugün date'teyiz", partner onayı, o gün özel date kartı
 
 ## Sıradaki adım: selfie ve albüm
@@ -26,8 +28,7 @@
 - Yaşa ve ilişki durumuna göre görev paketleri (gençlere sosyal/eğlenceli, evlilere derin)
 - Yıl dönümü ve doğum günü hatırlatmaları
 - Görev çarkı, görev arşivi ve favoriler
-- Canlı oyunlar: Beni ne kadar tanıyorsun?, Bu mu o mu?, Anı eşleştirme
-- "Canım sıkıldı" bildirimi, "Şimdi olmaz" hakkı (haftada 3)
+- Telefon kilitliyken gelen bildirimler (oyun daveti, günlük görev hatırlatması): Apple hesabı + development build gerekli
 - Bildirim metinleri alıcının temasına göre
 
 ## İleri sürümler

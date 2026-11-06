@@ -23,7 +23,7 @@ export async function deleteAccount(password: string, coupleId: string | null) {
   await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
 
   if (coupleId) {
-    for (const sub of ['photos', 'days', 'dates', 'coupons']) {
+    for (const sub of ['photos', 'days', 'dates', 'coupons', 'games']) {
       await wipe(['couples', coupleId, sub]);
     }
     await deleteDoc(doc(db, 'couples', coupleId));

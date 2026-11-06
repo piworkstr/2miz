@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { BoredCard } from '../../components/BoredCard';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { SelfieCamera } from '../../components/SelfieCamera';
@@ -57,6 +58,7 @@ export default function Today() {
         />
       )}
 
+      <BoredCard />
       <SurpriseCard />
     </Screen>
   );
