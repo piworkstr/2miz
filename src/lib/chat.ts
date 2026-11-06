@@ -13,7 +13,9 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { dayKey } from './date';
 import { db } from './firebase';
+import { photosCol as albumCol } from './photos';
 import { useSession } from './session';
 
 // Mesajlar sadece eşleşmiş iki kişi arasında. Fotoğrafın kendisi ayrı bir belgede tutulur,
@@ -25,6 +27,7 @@ export type Message = {
   hasPhoto: boolean;
   createdAtMs: number;
   hiddenFor?: Record<string, boolean>; // şikayet edenin ekranından kalkar
+  inAlbum?: boolean;
 };
 
 function messagesCol(coupleId: string) {
@@ -84,6 +87,37 @@ export function useMessagePhoto(coupleId: string, id: string, enabled: boolean) 
     };
   }, [coupleId, id, enabled]);
   return data;
+}
+
+async function photoData(coupleId: string, id: string) {
+  if (cache.has(id)) return cache.get(id)!;
+  const d = (await getDoc(doc(photosCol(coupleId), id))).data() as { data?: string } | undefined;
+  if (!d?.data) throw new Error('Fotoğraf bulunamadı.');
+  return d.data;
+}
+
+// Mesajdaki fotoğraf albüme ayrı bir kopya olarak eklenir; mesaj silinse de albümde kalır.
+export const momentId = (messageId: string) => `moment_${messageId}`;
+
+export async function addToAlbum(coupleId: string, msg: Message, uid: string, note: string) {
+  const data = await photoData(coupleId, msg.id);
+  await setDoc(doc(albumCol(coupleId), momentId(msg.id)), {
+    kind: 'moment',
+    day: dayKey(new Date(msg.createdAtMs)),
+    uid,
+    from: msg.from,
+    messageId: msg.id,
+    taskId: null,
+    note: note.trim().slice(0, 80),
+    data,
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(messagesCol(coupleId), msg.id), { inAlbum: true }).catch(() => {});
+}
+
+export async function removeFromAlbum(coupleId: string, messageId: string) {
+  await deleteDoc(doc(albumCol(coupleId), momentId(messageId)));
+  await updateDoc(doc(messagesCol(coupleId), messageId), { inAlbum: false }).catch(() => {});
 }
 
 // Şikayet: mesaj şikayet edenin ekranından kalkar ve inceleme için ayrı bir kayda yazılır.

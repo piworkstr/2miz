@@ -17,9 +17,11 @@ import { db } from './firebase';
 // Firebase Storage'a taşınacak (bkz. YOL_HARITASI.md).
 export type Photo = {
   id: string;
-  kind: 'task' | 'date';
+  kind: 'task' | 'date' | 'moment'; // moment: mesajlardan albüme eklenen anı
   day: string; // YYYY-MM-DD
-  uid: string;
+  uid: string; // albüme ekleyen (görevde fotoğrafı çeken)
+  from?: string; // anıda fotoğrafı çeken
+  messageId?: string;
   taskId: string | null;
   note: string;
   data: string; // base64 JPEG
@@ -38,7 +40,7 @@ export function photoUri(p: Pick<Photo, 'data'>) {
   return `data:image/jpeg;base64,${p.data}`;
 }
 
-function photosCol(coupleId: string) {
+export function photosCol(coupleId: string) {
   return collection(db, 'couples', coupleId, 'photos');
 }
 

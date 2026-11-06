@@ -214,13 +214,14 @@ function MemoryCorner() {
   const datePhoto = dayPhotos.find((p) => p.kind === 'date');
   const mine = dayPhotos.find((p) => p.kind === 'task' && p.uid === user.uid);
   const theirs = dayPhotos.find((p) => p.kind === 'task' && p.uid !== user.uid);
+  const moment = !datePhoto && !mine && !theirs ? dayPhotos.find((p) => p.kind === 'moment') : undefined;
   const [y, m, d] = pick.split('-').map(Number);
   const now = new Date();
   const ago = Math.round(
     (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(y, m - 1, d).getTime()) / 86400000,
   );
   const taskId = (mine ?? theirs)?.taskId;
-  const caption = datePhoto ? 'Date gününüz' : taskId ? taskById(taskId).title : '';
+  const caption = datePhoto ? 'Date gününüz' : taskId ? taskById(taskId).title : moment ? 'Bir anı' : '';
   const myName = profile?.name ?? 'Sen';
 
   return (
@@ -232,6 +233,14 @@ function MemoryCorner() {
       <View style={{ backgroundColor: '#FBF7F2', borderRadius: 8, padding: 16, gap: 10 }}>
         {datePhoto ? (
           <Polaroid photo={datePhoto} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
+        ) : moment ? (
+          <Polaroid
+            photo={moment}
+            name={moment.from === user.uid ? myName : partnerName}
+            aspect={3 / 4}
+            tilt={1.5}
+            style={{ alignSelf: 'center', width: '64%' }}
+          />
         ) : (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Polaroid style={{ flex: 1 }} photo={mine} name={myName} tilt={-3} />

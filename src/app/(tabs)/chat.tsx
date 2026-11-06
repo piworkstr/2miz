@@ -14,8 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
-import { deleteMessage, markRead, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
+import { addToAlbum, deleteMessage, markRead, removeFromAlbum, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
@@ -149,6 +150,48 @@ function Bubble({ m, mine, coupleId, showTime, onLong }: { m: Message; mine: boo
   const t = useTheme();
   const photo = useMessagePhoto(coupleId, m.id, m.hasPhoto);
   const time = new Date(m.createdAtMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  // Fotoğraflar sohbette de polaroid olarak görünür; albüme eklenenlerde küçük bir kalp olur.
+  if (m.hasPhoto) {
+    return (
+      <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', paddingVertical: 6, paddingHorizontal: 6 }}>
+        <Pressable
+          onLongPress={onLong}
+          delayLongPress={350}
+          style={{
+            width: 216,
+            backgroundColor: '#FFFFFF',
+            padding: 8,
+            paddingBottom: 6,
+            borderWidth: 1,
+            borderColor: '#E9DED8',
+            transform: [{ rotate: `${mine ? 2 : -2}deg` }],
+            shadowColor: '#000',
+            shadowOpacity: 0.14,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 3,
+          }}
+        >
+          {photo ? (
+            <Image source={{ uri: `data:image/jpeg;base64,${photo}` }} style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: '#eee' }} />
+          ) : (
+            <View style={{ width: '100%', aspectRatio: 3 / 4, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3ECE8' }}>
+              <ActivityIndicator color="#E8516A" />
+            </View>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 6, minHeight: 30 }}>
+            <Text style={{ fontFamily: handFont, fontSize: 20, color: inkColor }}>{time}</Text>
+            {m.inAlbum && <Ionicons name="heart" size={15} color="#E8516A" />}
+          </View>
+          {!!m.text && (
+            <Text style={{ fontFamily: handFont, fontSize: 19, color: inkColor, textAlign: 'center' }}>{m.text}</Text>
+          )}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
       <Pressable
@@ -162,32 +205,21 @@ function Bubble({ m, mine, coupleId, showTime, onLong }: { m: Message; mine: boo
           borderRadius: 18,
           borderBottomRightRadius: mine ? 4 : 18,
           borderBottomLeftRadius: mine ? 18 : 4,
-          padding: m.hasPhoto ? 4 : 0,
           overflow: 'hidden',
         }}
       >
-        {m.hasPhoto &&
-          (photo ? (
-            <Image source={{ uri: `data:image/jpeg;base64,${photo}` }} style={{ width: 220, height: 290, borderRadius: 14 }} />
-          ) : (
-            <View style={{ width: 220, height: 290, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.primarySoft }}>
-              <ActivityIndicator color={t.colors.primary} />
-            </View>
-          ))}
-        {!!m.text && (
-          <Text
-            style={{
-              color: mine ? t.colors.onPrimary : t.colors.text,
-              fontSize: 16,
-              lineHeight: 22,
-              paddingHorizontal: 14,
-              paddingVertical: 9,
-              fontFamily: t.fonts.body,
-            }}
-          >
-            {m.text}
-          </Text>
-        )}
+        <Text
+          style={{
+            color: mine ? t.colors.onPrimary : t.colors.text,
+            fontSize: 16,
+            lineHeight: 22,
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            fontFamily: t.fonts.body,
+          }}
+        >
+          {m.text}
+        </Text>
       </Pressable>
       {showTime && <Text style={{ fontSize: 11, color: t.colors.muted, marginHorizontal: 6 }}>{time}</Text>}
     </View>
@@ -202,12 +234,41 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
   const [reporting, setReporting] = useState(false);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [note, setNote] = useState('');
+  const [err, setErr] = useState('');
 
   function close() {
     setReporting(false);
     setDone(false);
+    setAdding(false);
+    setNote('');
+    setErr('');
     onClose();
   }
+
+  async function add() {
+    if (!m || busy) return;
+    setBusy(true);
+    setErr('');
+    try {
+      await addToAlbum(coupleId, m, uid, note);
+      close();
+    } catch {
+      setErr('Eklenemedi, tekrar dene.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const albumRow = m?.hasPhoto
+    ? m.inAlbum
+      ? row('Albümden çıkar', async () => {
+          if (m) await removeFromAlbum(coupleId, m.id).catch(() => {});
+          close();
+        })
+      : row('Albüme ekle', () => setAdding(true))
+    : null;
 
   async function report(reason: string) {
     if (!m) return;
@@ -220,17 +281,50 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
     }
   }
 
-  const row = (label: string, onPress: () => void, danger?: boolean) => (
-    <Pressable key={label} onPress={onPress} style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? t.colors.primarySoft : 'transparent' })}>
-      <Text style={{ fontSize: 16, color: danger ? '#C0392B' : t.colors.text, fontFamily: t.fonts.body }}>{label}</Text>
-    </Pressable>
-  );
+  function row(label: string, onPress: () => void, danger?: boolean) {
+    return (
+      <Pressable key={label} onPress={onPress} style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? t.colors.primarySoft : 'transparent' })}>
+        <Text style={{ fontSize: 16, color: danger ? '#C0392B' : t.colors.text, fontFamily: t.fonts.body }}>{label}</Text>
+      </Pressable>
+    );
+  }
 
   return (
     <Modal visible={!!m} transparent animationType="fade" onRequestClose={close}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Pressable onPress={close} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
         <Pressable style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 34, paddingTop: 8 }}>
-          {done ? (
+          {adding ? (
+            <View style={{ padding: 20, gap: 12 }}>
+              <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Albüme anı olarak ekle</Text>
+              <Muted>Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).</Muted>
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder="Örn. O akşamki gün batımı"
+                placeholderTextColor={t.colors.muted}
+                maxLength={80}
+                autoFocus
+                style={{
+                  backgroundColor: t.colors.bg,
+                  borderRadius: 12,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  fontSize: 22,
+                  color: inkColor,
+                  fontFamily: handFont,
+                }}
+              />
+              {!!err && <Text style={{ color: '#C0392B' }}>{err}</Text>}
+              <Pressable
+                onPress={add}
+                style={{ backgroundColor: t.colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
+              >
+                {busy ? <ActivityIndicator color={t.colors.onPrimary} /> : <Text style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600' }}>Albüme ekle</Text>}
+              </Pressable>
+              {row('Vazgeç', close)}
+            </View>
+          ) : done ? (
             <View style={{ padding: 20, gap: 8 }}>
               <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Şikayetin alındı</Text>
               <Muted>
@@ -247,6 +341,7 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
             </>
           ) : m?.from === uid ? (
             <>
+              {albumRow}
               {row('Mesajı sil', async () => {
                 if (m) await deleteMessage(coupleId, m.id, m.hasPhoto);
                 close();
@@ -255,12 +350,14 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
             </>
           ) : (
             <>
+              {albumRow}
               {row(`${partnerName}'in mesajını şikayet et`, () => setReporting(true), true)}
               {row('Vazgeç', close)}
             </>
           )}
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
