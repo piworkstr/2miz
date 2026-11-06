@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { BONUS_POINTS, completeBonus, toggleFavorite } from '../lib/archive';
-import { saveSpin, useToday, type WheelSpin } from '../lib/daily';
+import { handFont } from './Polaroid';
+import { answerSpin, saveSpin, useToday, type WheelSpin } from '../lib/daily';
 import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
 import { useSession } from '../lib/session';
@@ -124,14 +125,27 @@ export function TaskWheel() {
     animateTo(n, k, jitter, () => setShown(s));
   }
 
-  async function done() {
-    if (!shown || busy) return;
+  // Cevap yaz: partner cevapladıysa ikisi açılır ve bonus puanı (günde bir kez) gelir.
+  async function sendAnswer(text: string) {
+    if (!shown || busy || !text.trim()) return;
     setBusy(true);
-    await completeBonus(coupleId, shown.taskId, uid).catch(() => false);
-    setBusy(false);
+    try {
+      const res = await answerSpin(coupleId, key, shown.spinId, uid, text);
+      if (res.ok && res.both) await completeBonus(coupleId, shown.taskId, uid).catch(() => false);
+      if (res.ok && !res.both && partnerId) {
+        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus göreve cevap verdi ✍️`, 'Görmek için sen de cevabını yaz.', {
+          type: 'wheel',
+          url: '/wheel',
+        });
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   const task = shown ? taskById(shown.taskId) : null;
+  // Cevaplar canlı gelsin diye gösterilen çevirmenin güncel hali.
+  const live = shown && remote?.spinId === shown.spinId ? remote : null;
   const spinDeg = rot.interpolate({ inputRange: [0, 360], outputRange: ['0deg', '360deg'] });
   const isFav = !!task && favorites.includes(task.id);
 
@@ -141,7 +155,7 @@ export function TaskWheel() {
       <Muted>
         {doneToday
           ? 'Bugünün bonus puanını aldınız. Yine de çevirip bir görev daha yapabilirsiniz.'
-          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. Yapınca +${BONUS_POINTS} puan (günde bir kez).`}
+          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. İkiniz de cevabınızı yazınca +${BONUS_POINTS} puan (günde bir kez).`}
       </Muted>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -221,7 +235,7 @@ export function TaskWheel() {
                 >
                   <Ionicons name={categoryStyle[c].icon as IconName} size={22} color="#fff" />
                   <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
-                    {categoryLabels[c]}
+                    {c === 'yeni' ? 'Yeni' : categoryLabels[c]}
                   </Text>
                 </View>
               );
@@ -269,10 +283,106 @@ export function TaskWheel() {
             </Pressable>
           </View>
           <Display>{task.title}</Display>
-          {!doneToday && <Button label={`Yaptık! +${BONUS_POINTS} puan`} onPress={done} busy={busy} />}
-          {doneToday && <Muted style={{ fontSize: 13 }}>Bugünün bonusu tamam 🎉</Muted>}
+          <Answers
+            key={shown.spinId}
+            spin={live ?? shown}
+            uid={uid}
+            partnerName={partnerName}
+            myName={profile?.name ?? 'Sen'}
+            doneToday={doneToday}
+            onSend={sendAnswer}
+            busy={busy}
+          />
         </View>
       )}
     </Card>
+  );
+}
+
+// Bonus görev cevapları: kendi cevabını yazmadan partnerinkini göremezsin.
+function Answers({
+  spin,
+  uid,
+  myName,
+  partnerName,
+  doneToday,
+  onSend,
+  busy,
+}: {
+  spin: WheelSpin;
+  uid: string;
+  myName: string;
+  partnerName: string;
+  doneToday: boolean;
+  onSend: (text: string) => void;
+  busy: boolean;
+}) {
+  const t = useTheme();
+  const [text, setText] = useState('');
+  const answers = spin.answers ?? {};
+  const mine = answers[uid];
+  const theirs = Object.entries(answers).find(([k]) => k !== uid)?.[1];
+
+  const bubble = (name: string, body: string) => (
+    <View style={{ backgroundColor: t.colors.primarySoft, borderRadius: 14, padding: 12, gap: 4 }}>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: t.colors.muted, fontFamily: t.fonts.button }}>{name}</Text>
+      <Text style={{ fontSize: 21, lineHeight: 25, color: t.colors.text, fontFamily: handFont }}>{body}</Text>
+    </View>
+  );
+
+  if (mine && theirs) {
+    return (
+      <View style={{ gap: 8 }}>
+        {bubble(myName, mine.text)}
+        {bubble(partnerName, theirs.text)}
+        <Muted style={{ fontSize: 13 }}>{doneToday ? 'İkiniz de cevapladınız, bugünün bonusu tamam 🎉' : 'İkiniz de cevapladınız 🎉'}</Muted>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 8 }}>
+      {mine ? (
+        bubble(myName, mine.text)
+      ) : (
+        <>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Cevabını ya da nasıl geçtiğini yaz…"
+            placeholderTextColor={t.colors.muted}
+            multiline
+            maxLength={500}
+            style={{
+              minHeight: 70,
+              backgroundColor: t.colors.bg,
+              borderWidth: 1,
+              borderColor: t.colors.border,
+              borderRadius: 14,
+              padding: 12,
+              fontSize: 20,
+              color: t.colors.text,
+              fontFamily: handFont,
+              textAlignVertical: 'top',
+            }}
+          />
+          <Button
+            label={doneToday ? 'Cevabımı gönder' : `Cevabımı gönder · +${BONUS_POINTS} puan`}
+            onPress={() => onSend(text)}
+            busy={busy}
+          />
+        </>
+      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Ionicons name={theirs ? 'lock-closed' : 'time-outline'} size={14} color={t.colors.muted} />
+        <Muted style={{ fontSize: 12, flex: 1 }}>
+          {theirs
+            ? `${partnerName} cevapladı. Görmek için sen de yaz.`
+            : mine
+              ? `${partnerName}'in cevabı bekleniyor. O da yazınca ikiniz de görürsünüz.`
+              : `${partnerName} da cevap yazacak; ikiniz de yazınca cevaplar açılır.`}
+        </Muted>
+      </View>
+    </View>
   );
 }

@@ -26,7 +26,21 @@ export type WheelSpin = {
   slices: string[]; // çevrildiği andaki dilimler (kategoriler)
   k: number; // durduğu dilim
   jitter: number; // dilim içindeki küçük kayma, iki ekranda aynı yerde dursun diye
+  answers?: Record<string, { text: string; atMs: number }>; // ikisi de yazınca açılır
 };
+
+// Bonus göreve cevap: aynı çevirmeye aitse kaydedilir. İkinci cevap gelince ikisi de açılır.
+export async function answerSpin(coupleId: string, key: string, spinId: string, uid: string, text: string) {
+  const ref = dayRef(coupleId, key);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const w = (snap.data() as DayDoc | undefined)?.wheel;
+    if (!w || w.spinId !== spinId) return { ok: false, both: false };
+    tx.update(ref, { [`wheel.answers.${uid}`]: { text: text.trim().slice(0, 500), atMs: Date.now() } });
+    const others = Object.keys(w.answers ?? {}).filter((k) => k !== uid);
+    return { ok: true, both: others.length > 0 };
+  });
+}
 
 export async function saveSpin(coupleId: string, key: string, spin: WheelSpin) {
   await updateDoc(dayRef(coupleId, key), { wheel: spin });
