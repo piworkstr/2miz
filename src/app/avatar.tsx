@@ -17,6 +17,9 @@ const CATS: { key: Cat; label: string; color?: boolean }[] = [
   { key: 'skin', label: 'Ten', color: true },
   { key: 'top', label: 'Saç' },
   { key: 'hairColor', label: 'Saç rengi', color: true },
+  { key: 'eyes', label: 'Gözler' },
+  { key: 'eyebrows', label: 'Kaşlar' },
+  { key: 'mouth', label: 'Ağız' },
   { key: 'facialHair', label: 'Sakal' },
   { key: 'accessories', label: 'Gözlük' },
   { key: 'clothing', label: 'Kıyafet' },
@@ -36,7 +39,8 @@ export default function AvatarScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const preview = useMemo(() => avatarSvg(opts, 'mutlu'), [opts]);
+  const preview = useMemo(() => avatarSvg(opts), [opts]);
+  const faceCat = cat === 'eyes' || cat === 'eyebrows' || cat === 'mouth';
   const catInfo = CATS.find((c) => c.key === cat)!;
 
   async function pick(camera: boolean) {
@@ -134,7 +138,7 @@ export default function AvatarScreen() {
                     (v === 'none' ? (
                       <Ionicons name="close" size={26} color={t.colors.muted} />
                     ) : (
-                      <SvgXml xml={avatarSvg({ ...opts, [cat]: v }, null, false)} width={68} height={68} />
+                      <SvgXml xml={avatarSvg({ ...opts, [cat]: v }, null, false, faceCat)} width={68} height={68} />
                     ))}
                 </Pressable>
               );

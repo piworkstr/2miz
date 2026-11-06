@@ -15,6 +15,9 @@ export type AvatarOpts = {
   clothing: string;
   clothesColor: string;
   bg: string;
+  eyes?: string; // ruh hali yokkenki yüz
+  eyebrows?: string;
+  mouth?: string;
 };
 
 export type AvatarData = { kind: 'drawn'; opts: AvatarOpts } | { kind: 'photo'; photo: string };
@@ -33,6 +36,12 @@ export const OPTIONS = {
   clothing: ['hoodie', 'shirtCrewNeck', 'shirtScoopNeck', 'shirtVNeck', 'graphicShirt', 'collarAndSweater', 'blazerAndShirt', 'blazerAndSweater', 'overall'],
   clothesColor: ['ff488e', 'ff5c5c', 'ffafb9', 'ffffb1', 'a7ffc4', 'b1e2ff', '65c9ff', '5199e4', '25557c', '3c4f5c', '262e33', '929598', 'e6e6e6', 'ffffff'],
   bg: ['ffd5dc', 'ffdfbf', 'fff3b0', 'd1f2d9', 'c0e8f9', 'd9d2f5', 'f4f0ec', 'e8516a'],
+  eyes: ['default', 'happy', 'wink', 'winkWacky', 'side', 'squint', 'surprised', 'hearts', 'eyeRoll', 'closed'],
+  eyebrows: [
+    'defaultNatural', 'default', 'flatNatural', 'raisedExcitedNatural', 'raisedExcited', 'upDownNatural', 'upDown',
+    'frownNatural', 'angryNatural', 'unibrowNatural',
+  ],
+  mouth: ['smile', 'default', 'twinkle', 'tongue', 'serious', 'eating', 'disbelief', 'grimace', 'concerned'],
 } satisfies Record<keyof AvatarOpts, string[]>;
 
 export const DEFAULT_OPTS: AvatarOpts = {
@@ -44,6 +53,9 @@ export const DEFAULT_OPTS: AvatarOpts = {
   clothing: 'hoodie',
   clothesColor: 'ff488e',
   bg: 'ffd5dc',
+  eyes: 'default',
+  eyebrows: 'defaultNatural',
+  mouth: 'smile',
 };
 
 export function randomOpts(): AvatarOpts {
@@ -57,6 +69,9 @@ export function randomOpts(): AvatarOpts {
     clothing: pick(OPTIONS.clothing),
     clothesColor: pick(OPTIONS.clothesColor),
     bg: pick(OPTIONS.bg),
+    eyes: pick(['default', 'happy', 'wink', 'side', 'squint']),
+    eyebrows: pick(['defaultNatural', 'default', 'raisedExcitedNatural', 'flatNatural']),
+    mouth: pick(['smile', 'default', 'twinkle', 'tongue']),
   };
 }
 
@@ -82,11 +97,14 @@ export function activeMood(m?: { key: MoodKey; atMs: number } | null): MoodKey |
 
 const svgCache = new Map<string, string>();
 
-export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = true): string {
-  const key = JSON.stringify([o, mood, withBg]);
+// face: sadece yüzü yakından gösteren önizleme (göz/kaş/ağız seçimi için).
+export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = true, face = false): string {
+  const key = JSON.stringify([o, mood, withBg, face]);
   const hit = svgCache.get(key);
   if (hit) return hit;
-  const [eyes, mouth, eyebrows] = mood ? MOODS[mood].face : ['default', 'smile', 'defaultNatural'];
+  const [eyes, mouth, eyebrows] = mood
+    ? MOODS[mood].face
+    : [o.eyes ?? 'default', o.mouth ?? 'smile', o.eyebrows ?? 'defaultNatural'];
   let svg = createAvatar(avataaars, {
     seed: 'usdaily',
     style: ['circle'],
@@ -111,6 +129,7 @@ export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = t
   }).toString();
   // react-native-svg <metadata> etiketini tanımıyor.
   svg = svg.replace(/<metadata[\s\S]*?<\/metadata>/, '');
+  if (face) svg = svg.replace('viewBox="0 0 280 280"', 'viewBox="80 70 120 120"');
   if (svgCache.size > 300) svgCache.clear();
   svgCache.set(key, svg);
   return svg;
