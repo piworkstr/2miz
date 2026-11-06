@@ -14,6 +14,7 @@ export function PetNames() {
   const { user, profile, partnerProfile, partnerName } = useSession();
   const mine = profile?.petNames ?? [];
   const [text, setText] = useState('');
+  const [editing, setEditing] = useState(false);
   if (!user) return null;
 
   const save = (names: string[]) => savePetNames(user.uid, names).catch(() => {});
@@ -47,9 +48,37 @@ export function PetNames() {
     </View>
   );
 
+  // Kısa özet: kim kime nasıl hitap ediyor. Düzenle'ye basınca ekleme alanı açılır.
+  if (!editing) {
+    return (
+      <Pressable onPress={() => setEditing(true)}>
+        <Card style={{ gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color={t.colors.primary} />
+            <T style={{ flex: 1, fontWeight: '600' }}>Hitaplarınız</T>
+            <Text style={{ color: t.colors.primary, fontWeight: '600' }}>{mine.length ? 'Düzenle' : 'Ekle'}</Text>
+          </View>
+          <Text style={{ fontSize: 14, color: t.colors.text }}>
+            <Text style={{ color: t.colors.muted }}>Sen → {partnerName}: </Text>
+            {mine.length ? mine.join(', ') : 'henüz yok'}
+          </Text>
+          <Text style={{ fontSize: 14, color: t.colors.text }}>
+            <Text style={{ color: t.colors.muted }}>{partnerName} → sen: </Text>
+            {partnerProfile?.petNames?.length ? partnerProfile.petNames.join(', ') : 'henüz yok'}
+          </Text>
+        </Card>
+      </Pressable>
+    );
+  }
+
   return (
     <Card>
-      <T style={{ fontWeight: '600' }}>{partnerName}'e nasıl hitap edersin?</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <T style={{ flex: 1, fontWeight: '600' }}>{partnerName}'e nasıl hitap edersin?</T>
+        <Pressable onPress={() => setEditing(false)} hitSlop={10}>
+          <Text style={{ color: t.colors.primary, fontWeight: '600' }}>Bitti</Text>
+        </Pressable>
+      </View>
       <Muted style={{ fontSize: 13 }}>
         Yazdıkların {partnerName}'in ana ekranında "Günaydın aşkım" gibi selamlamada çıkar. En fazla {PET_MAX} tane.
       </Muted>
@@ -97,14 +126,6 @@ export function PetNames() {
           </View>
         </>
       )}
-      <View style={{ gap: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: t.colors.border }}>
-        <Muted style={{ fontSize: 13 }}>{partnerName} sana nasıl hitap ediyor:</Muted>
-        {partnerProfile?.petNames?.length ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{partnerProfile.petNames.map((n) => chip(n))}</View>
-        ) : (
-          <Muted style={{ fontSize: 13, fontStyle: 'italic' }}>Henüz eklemedi.</Muted>
-        )}
-      </View>
     </Card>
   );
 }

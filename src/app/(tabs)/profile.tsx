@@ -55,16 +55,11 @@ export default function Profile() {
     <Screen>
       <Title>{t.copy.tabs.us}</Title>
 
-      <StoryCard couple={couple} myName={myName} partnerName={partnerName} />
+      <StoryCard couple={couple} myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
       <CoupleInfoCard />
 
       <Section title="Birbirinizi tanıyın">
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <PersonCard name={myName} p={profile} />
-          <PersonCard name={partnerName} p={partnerProfile} partner />
-        </View>
-        <PetNames />
-        <SharedInterests a={profile?.interests} b={partnerProfile?.interests} />
+        <AboutUs myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
         {partnerProfile?.loveLanguage && (
           <Card style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: t.colors.primarySoft, borderColor: t.colors.primarySoft }}>
             <Ionicons name="bulb-outline" size={20} color={t.colors.primary} />
@@ -73,6 +68,7 @@ export default function Profile() {
             </T>
           </Card>
         )}
+        <PetNames />
       </Section>
 
       <Section title="Hikayeniz rakamlarla">
@@ -133,7 +129,19 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 // Üst kart: isimler, ilişki durumu, gün sayacı ve sıradaki özel gün.
-function StoryCard({ couple, myName, partnerName }: { couple: Couple; myName: string; partnerName: string }) {
+function StoryCard({
+  couple,
+  myName,
+  partnerName,
+  me,
+  partner,
+}: {
+  couple: Couple;
+  myName: string;
+  partnerName: string;
+  me: Profile | null;
+  partner: Profile | null;
+}) {
   const t = useTheme();
   const on = t.colors.onPrimary;
   const count = couple.startDate ? daysTogether(couple.startDate) : null;
@@ -152,6 +160,14 @@ function StoryCard({ couple, myName, partnerName }: { couple: Couple; myName: st
 
   return (
     <View style={{ backgroundColor: t.colors.primary, borderRadius: Math.max(t.radius.card, 6), padding: 20, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ borderRadius: 32, borderWidth: 3, borderColor: on, backgroundColor: on }}>
+          <Avatar p={me} name={myName} size={56} showMood={false} />
+        </View>
+        <View style={{ marginLeft: -12, borderRadius: 32, borderWidth: 3, borderColor: on, backgroundColor: on }}>
+          <Avatar p={partner} name={partnerName} size={56} showMood={false} />
+        </View>
+      </View>
       <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize * 0.95, lineHeight: t.titleSize * 1.15, color: on }}>
         {tx(t, `${myName} & ${partnerName}`)}
       </Text>
@@ -174,9 +190,9 @@ function StoryCard({ couple, myName, partnerName }: { couple: Couple; myName: st
       )}
       {count ? (
         <>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8 }}>
             <Text style={{ fontSize: 44, fontWeight: '800', color: on, fontVariant: ['tabular-nums'] }}>{count}</Text>
-            <Text style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>gündür birliktesiniz</Text>
+            <Text style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>gündür birlikte</Text>
           </View>
           <Text style={{ color: on, opacity: 0.9, fontSize: 14, fontFamily: t.fonts.body }}>
             Başlangıç: {prettyDate(couple.startDate!)}{upcoming ? `\n${upcoming}` : ''}
@@ -191,79 +207,104 @@ function StoryCard({ couple, myName, partnerName }: { couple: Couple; myName: st
   );
 }
 
-function PersonCard({ name, p, partner }: { name: string; p: Profile | null; partner?: boolean }) {
+// İkinizi yan yana karşılaştıran tek kart: avatar ve ruh hali, sevgi dili, doğum günü, sevdikleri.
+function AboutUs({ myName, partnerName, me, partner }: { myName: string; partnerName: string; me: Profile | null; partner: Profile | null }) {
   const t = useTheme();
-  const lang = p?.loveLanguage ? LOVE_LANGUAGES[p.loveLanguage as LoveLanguage] : null;
-  const bday = p?.birthDate ? daysUntilYearly(p.birthDate) : null;
+  const people = [
+    { name: myName, p: me, mine: true },
+    { name: partnerName, p: partner, mine: false },
+  ];
+  const lang = (p: Profile | null) => (p?.loveLanguage ? LOVE_LANGUAGES[p.loveLanguage as LoveLanguage]?.name : null) ?? 'Test çözülmedi';
+  const bday = (p: Profile | null) => {
+    if (!p?.birthDate) return '–';
+    const d = daysUntilYearly(p.birthDate);
+    return `${birthdayLabel(p.birthDate)}\n${d.days === 0 ? 'bugün! 🎂' : `${d.days} gün kaldı`}`;
+  };
+  const common = (me?.interests ?? []).filter((x) => partner?.interests?.includes(x));
+
+  const row = (icon: IconName, label: string, values: [string, string]) => (
+    <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <Ionicons name={icon} size={14} color={t.colors.muted} />
+        <Muted style={{ fontSize: 12 }}>{label}</Muted>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {values.map((v, i) => (
+          <Text key={i} style={{ flex: 1, fontSize: 14, lineHeight: 19, color: t.colors.text, fontFamily: t.fonts.body }}>
+            {v}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+
   return (
-    <Card style={{ flex: 1, gap: 8, padding: 14, backgroundColor: partner ? t.colors.primarySoft : t.colors.card }}>
-      <Pressable onPress={partner ? undefined : () => router.push('/avatar')} disabled={partner} style={{ alignItems: 'center', gap: 4 }}>
-        <Avatar p={p} name={name} size={64} />
-        {!partner && <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>{p?.avatar ? 'Avatarı düzenle' : 'Avatar oluştur'}</Text>}
-      </Pressable>
-      <T style={{ fontWeight: '700', fontSize: 16 }} >{name}</T>
-      {activeMood(p?.mood) && (
-        <Line icon="happy-outline" label="Ruh hali" value={`${MOODS[activeMood(p?.mood)!].emoji} ${MOODS[activeMood(p?.mood)!].label}`} />
+    <Card style={{ gap: 12 }}>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {people.map(({ name, p, mine }) => {
+          const mood = activeMood(p?.mood);
+          return (
+            <Pressable key={name} disabled={!mine} onPress={() => router.push('/avatar')} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+              <View>
+                <Avatar p={p} name={name} size={64} />
+                {mine && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: -2,
+                      bottom: -2,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: t.colors.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: t.colors.card,
+                    }}
+                  >
+                    <Ionicons name="pencil" size={12} color={t.colors.onPrimary} />
+                  </View>
+                )}
+              </View>
+              <T style={{ fontWeight: '700', fontSize: 16 }}>{name}</T>
+              <Muted style={{ fontSize: 12 }}>{mood ? `${MOODS[mood].emoji} ${MOODS[mood].label}` : mine ? 'Avatarı düzenle' : ' '}</Muted>
+            </Pressable>
+          );
+        })}
+      </View>
+      {row('heart-outline', 'Sevgi dili', [lang(me), lang(partner)])}
+      {row('gift-outline', 'Doğum günü', [bday(me), bday(partner)])}
+      {row('sparkles-outline', 'Sevdikleri', [me?.interests?.slice(0, 4).join(', ') || '–', partner?.interests?.slice(0, 4).join(', ') || '–'])}
+      {!!common.length && (
+        <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>
+          <Muted style={{ fontSize: 12 }}>İkinizin de sevdikleri</Muted>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {common.map((c) => (
+              <Text
+                key={c}
+                style={{
+                  color: t.colors.primary,
+                  backgroundColor: t.colors.primarySoft,
+                  fontWeight: '600',
+                  fontSize: 13,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                }}
+              >
+                {c}
+              </Text>
+            ))}
+          </View>
+        </View>
       )}
-      <Line icon="heart-outline" label="Sevgi dili" value={lang?.name ?? 'Test çözülmedi'} />
-      {p?.birthDate && (
-        <Line
-          icon="gift-outline"
-          label="Doğum günü"
-          value={`${birthdayLabel(p.birthDate)}${bday ? (bday.days === 0 ? ' · bugün!' : ` · ${bday.days} gün`) : ''}`}
-        />
-      )}
-      {!!p?.interests?.length && <Line icon="sparkles-outline" label="Sevdikleri" value={p.interests.slice(0, 4).join(', ')} />}
     </Card>
   );
 }
 
-function Line({ icon, label, value }: { icon: IconName; label: string; value: string }) {
-  const t = useTheme();
-  return (
-    <View style={{ gap: 1 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-        <Ionicons name={icon} size={13} color={t.colors.muted} />
-        <Muted style={{ fontSize: 12 }}>{label}</Muted>
-      </View>
-      <T style={{ fontSize: 14 }}>{value}</T>
-    </View>
-  );
-}
 
-function SharedInterests({ a, b }: { a?: string[]; b?: string[] }) {
-  const t = useTheme();
-  if (!a?.length || !b?.length) return null;
-  const common = a.filter((x) => b.includes(x));
-  return (
-    <View style={{ gap: 6 }}>
-      <Muted style={{ fontSize: 13 }}>
-        {common.length ? 'İkinizin de sevdikleri' : 'Ortak ilgi alanınız henüz yok, birbirinizinkini keşfedin'}
-      </Muted>
-      {!!common.length && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {common.map((c) => (
-            <Text
-              key={c}
-              style={{
-                color: t.colors.primary,
-                backgroundColor: t.colors.primarySoft,
-                fontWeight: '600',
-                fontSize: 13,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: t.radius.pill + 6,
-                overflow: 'hidden',
-              }}
-            >
-              {c}
-            </Text>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
 
 function Stat({ icon, value, label }: { icon: IconName; value: number | undefined; label: string }) {
   const t = useTheme();
