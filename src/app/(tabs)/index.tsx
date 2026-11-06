@@ -14,6 +14,7 @@ import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { Polaroid } from '../../components/Polaroid';
 import { SelfieCamera } from '../../components/SelfieCamera';
+import { SharedCalendar } from '../../components/SharedCalendar';
 import { SpecialDays } from '../../components/SpecialDays';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
@@ -123,6 +124,8 @@ export default function Today() {
       )}
 
       <OpenBonusCard />
+
+      <SharedCalendar />
 
 
       <Pressable onPress={() => router.push('/archive')} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}>
@@ -416,8 +419,8 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           { who: partnerName, task: partnerTask, note: theirDone?.note, theirNote: undefined },
         ];
     return (
-      <Pressable onPress={() => setOpen((o) => !o)}>
-        <Card style={{ gap: 10, backgroundColor: day.rewarded ? t.colors.successSoft : t.colors.card, borderColor: day.rewarded ? t.colors.successSoft : t.colors.border }}>
+      <Pressable onPress={() => setOpen((o) => !o)} style={{ marginTop: 10 }}>
+        <Card style={{ gap: 10, paddingTop: 30, backgroundColor: day.rewarded ? t.colors.successSoft : t.colors.card, borderColor: day.rewarded ? t.colors.successSoft : t.colors.border }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Ionicons name={day.rewarded ? 'checkmark-done-circle' : 'checkmark-circle'} size={26} color={t.colors.success} />
             <View style={{ flex: 1 }}>
@@ -458,8 +461,8 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           pointerEvents="none"
           style={{
             position: 'absolute',
-            right: 10,
-            top: -12,
+            right: 12,
+            top: -14,
             backgroundColor: day.rewarded ? '#FFF2A8' : '#FFD9E2',
             paddingHorizontal: 12,
             paddingVertical: 6,

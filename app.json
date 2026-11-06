@@ -64,6 +64,13 @@
         {
           "microphonePermission": "UsDaily, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
         }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "UsDaily, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
+          "remindersPermission": false
+        }
       ]
     ],
     "scheme": "usdaily"

@@ -12,7 +12,7 @@ async function wipe(path: string[]) {
   }
 }
 
-const COUPLE_PARTS = ['photos', 'days', 'dates', 'coupons', 'games', 'messages', 'messagePhotos', 'messageAudio', 'presence', 'trips', 'tripPhotos'];
+const COUPLE_PARTS = ['photos', 'days', 'dates', 'coupons', 'games', 'messages', 'messagePhotos', 'messageAudio', 'presence', 'events', 'busy', 'trips', 'tripPhotos'];
 
 // Çiftin tüm ortak verilerini ve çift belgesini siler. Kimse yeniden davet kodu olmadan
 // eşleşemez; bu yüzden eşleşmeyi bitirmek aynı zamanda engellemek demektir.

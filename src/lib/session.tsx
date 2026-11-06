@@ -13,6 +13,7 @@ export type Profile = {
   onboarded?: boolean;
   avatar?: import('./avatar').AvatarData;
   petNames?: string[]; // partnerine nasıl hitap ettiği
+  calendarShare?: 'titles' | 'busy' | null; // telefon takvimini paylaşıyor mu
   mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
 };
 
