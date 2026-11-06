@@ -12,6 +12,7 @@ export type Profile = {
   notifyTime?: 'sabah' | 'ogle' | 'aksam';
   onboarded?: boolean;
   avatar?: import('./avatar').AvatarData;
+  petNames?: string[]; // partnerine nasıl hitap ettiği
   mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
 };
 

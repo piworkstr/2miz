@@ -7,6 +7,7 @@ import { Avatar } from '../../components/Avatar';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
 import { MoodSheet } from '../../components/MoodSheet';
 import { activeMood, MOODS } from '../../lib/avatar';
+import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
@@ -29,7 +30,7 @@ import { useTheme } from '../../lib/useTheme';
 type Panel = 'play' | 'bonus' | 'date' | null;
 
 export default function Today() {
-  const { user, couple, partnerId, partnerName, profile } = useSession();
+  const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
   const t = useTheme();
   const [panel, setPanel] = useState<Panel>(null);
@@ -50,7 +51,7 @@ export default function Today() {
   return (
     <Screen>
       <View style={{ gap: 2, marginTop: 4 }}>
-        <Title>{t.copy.hello(profile?.name ?? '')}</Title>
+        <Title>{greeting(t.id, profile?.name ?? '', partnerProfile?.petNames)}</Title>
         <Muted>
           {tx(t, t.copy.dateLine(prettyDate(key), partnerName))}
           {couple.startDate ? ` · ${daysTogether(couple.startDate)}. gününüz` : ''}

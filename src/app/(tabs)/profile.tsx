@@ -7,6 +7,7 @@ import { Avatar } from '../../components/Avatar';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DeleteAccount } from '../../components/DeleteAccount';
 import { EndCouple } from '../../components/EndCouple';
+import { PetNames } from '../../components/PetNames';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
 import { activeMood, MOODS } from '../../lib/avatar';
@@ -62,6 +63,7 @@ export default function Profile() {
           <PersonCard name={myName} p={profile} />
           <PersonCard name={partnerName} p={partnerProfile} partner />
         </View>
+        <PetNames />
         <SharedInterests a={profile?.interests} b={partnerProfile?.interests} />
         {partnerProfile?.loveLanguage && (
           <Card style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: t.colors.primarySoft, borderColor: t.colors.primarySoft }}>
