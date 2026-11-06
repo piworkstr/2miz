@@ -3,6 +3,7 @@ import { Caveat_500Medium, Caveat_700Bold, useFonts } from '@expo-google-fonts/c
 import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '../components/ui';
 import { OnboardingProvider } from '../lib/onboarding';
@@ -10,10 +11,17 @@ import { SessionProvider, useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 
 function RootNavigator() {
-  const { loading, user, couple, profile } = useSession();
-  const ready = !!profile?.onboarded;
+  const session = useSession();
   const theme = useTheme();
-  if (loading) return <Loading />;
+
+  // İlk açılışta yükleme ekranı gösterilir. Sonraki geçişlerde (kayıt, giriş, eşleşme)
+  // ekranlar kaldırılmaz; veriler gelene kadar son bilinen durum kullanılır.
+  const stable = useRef<{ user: typeof session.user; couple: typeof session.couple; profile: typeof session.profile } | null>(null);
+  if (!session.loading) stable.current = { user: session.user, couple: session.couple, profile: session.profile };
+  if (!stable.current) return <Loading />;
+
+  const { user, couple, profile } = stable.current;
+  const ready = !!profile?.onboarded;
 
   // Hesap yok → hoş geldin + sevgi dili testi + kayıt
   // Hesap var, tanışma bitmedi → ilgi alanları
