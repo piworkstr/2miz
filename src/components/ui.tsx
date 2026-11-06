@@ -34,7 +34,7 @@ export function T({ children, style }: { children: ReactNode; style?: TextStyle 
 export function Title({ children }: { children: string }) {
   const t = useTheme();
   return (
-    <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize, color: t.colors.text, lineHeight: t.titleSize * 1.15 }}>
+    <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize, color: t.colors.text, lineHeight: t.titleSize * (t.upper ? 1.4 : 1.15) }}>
       {tx(t, children)}
     </Text>
   );
@@ -45,7 +45,7 @@ export function Display({ children, style }: { children: string; style?: TextSty
   return (
     <Text
       style={[
-        { fontFamily: t.fonts.display, fontSize: t.displaySize, color: t.colors.text, lineHeight: t.displaySize * 1.15 },
+        { fontFamily: t.fonts.display, fontSize: t.displaySize, color: t.colors.text, lineHeight: t.displaySize * (t.upper ? 1.4 : 1.15) },
         style,
       ]}
     >
