@@ -15,7 +15,6 @@ import { saveTaskPhoto, usePhotos } from '../../lib/photos';
 import { useSession } from '../../lib/session';
 import { categoryLabels, taskById, type Task } from '../../lib/tasks';
 import { toggleFavorite } from '../../lib/archive';
-import { TaskWheel } from '../../components/TaskWheel';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
@@ -73,11 +72,10 @@ export default function Today() {
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
-        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={panel === 'bonus'} onPress={() => toggle('bonus')} />
+        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
         <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
       </View>
       {panel === 'play' && <BoredCard />}
-      {panel === 'bonus' && <TaskWheel />}
       {panel === 'date' && (
         <Card>
           <DateCard mode="planner" />
@@ -188,8 +186,8 @@ function Shortcut({
         flex: 1,
         alignItems: 'center',
         gap: 6,
-        paddingVertical: 14,
-        paddingHorizontal: 6,
+        paddingVertical: 12,
+        paddingHorizontal: 4,
         borderRadius: t.radius.card,
         borderWidth: active ? 2 : 1,
         borderColor: active || pressed ? t.colors.primary : t.colors.border,
@@ -197,7 +195,10 @@ function Shortcut({
       })}
     >
       <Ionicons name={icon} size={24} color={t.colors.primary} />
-      <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
+      <Text
+        numberOfLines={2}
+        style={{ fontSize: 13, lineHeight: 16, fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button, textAlign: 'center' }}
+      >
         {tx(t, label)}
       </Text>
     </Pressable>
