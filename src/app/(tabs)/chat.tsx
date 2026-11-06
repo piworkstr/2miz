@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +14,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChatCamera } from '../../components/ChatCamera';
 import { Loading, Muted } from '../../components/ui';
 import { deleteMessage, markRead, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
 import { useSession } from '../../lib/session';
@@ -27,7 +26,6 @@ export default function Chat() {
   const messages = useMessages(couple?.id);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [camera, setCamera] = useState(false);
   const [menu, setMenu] = useState<Message | null>(null);
 
   // Sekme açıkken gelen mesajlar okundu sayılır.
@@ -101,7 +99,7 @@ export default function Chat() {
             backgroundColor: t.colors.card,
           }}
         >
-          <Pressable onPress={() => setCamera(true)} hitSlop={8} accessibilityLabel="Anlık fotoğraf gönder" style={{ padding: 8 }}>
+          <Pressable onPress={() => router.push('/camera')} hitSlop={8} accessibilityLabel="Anlık fotoğraf gönder" style={{ padding: 8 }}>
             <Ionicons name="camera" size={26} color={t.colors.primary} />
           </Pressable>
           <TextInput
@@ -142,7 +140,6 @@ export default function Chat() {
         </View>
       </KeyboardAvoidingView>
 
-      <ChatCamera open={camera} onClose={() => setCamera(false)} onSend={(data) => sendMessage(couple.id, uid, '', data)} />
       <MessageMenu m={menu} uid={uid} coupleId={couple.id} partnerName={partnerName} onClose={() => setMenu(null)} />
     </SafeAreaView>
   );
