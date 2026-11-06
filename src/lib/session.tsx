@@ -21,6 +21,7 @@ export type Couple = {
   streak: number;
   lastCompleteDay: string | null;
   startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
+  spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };
 

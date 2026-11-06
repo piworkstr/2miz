@@ -9,6 +9,9 @@
 - Tanışma akışı: hoş geldin → 5 soruluk sevgi dili testi → tema önerisi (uygulama anında o temaya geçer)
   → kayıt (ad, doğum tarihi, 18+ kontrolü) → ilgi alanları ve bildirim saati (atlanabilir) → eşleşme
 - Çift bilgileri: birliktelik tarihi, ilişki durumu, "X. gününüz" sayacı
+- Zorunlu selfie, date günü ortak selfie, polaroid albüm (fotoğraflar şimdilik küçültülüp Firestore'da)
+- Hesap silme (App Store 5.1.1(v))
+- Aşk kuponları: kupon yaz, partnerinkini puanla aç, "yerine getirdim" işareti, kişisel cüzdan
 - Date günü: önceden planlama + anlık "Bugün date'teyiz", partner onayı, o gün özel date kartı
 
 ## Sıradaki adım: selfie ve albüm
@@ -22,7 +25,6 @@
 - Görevleri iki partnerin sevgi diline göre seçmek (ör. "Can'ın sevgi dili birlikte zaman")
 - Yaşa ve ilişki durumuna göre görev paketleri (gençlere sosyal/eğlenceli, evlilere derin)
 - Yıl dönümü ve doğum günü hatırlatmaları
-- Aşk kuponları (kendi kuponunu yaz, partnerinkini puanla aç)
 - Görev çarkı, görev arşivi ve favoriler
 - Canlı oyunlar: Beni ne kadar tanıyorsun?, Bu mu o mu?, Anı eşleştirme
 - "Canım sıkıldı" bildirimi, "Şimdi olmaz" hakkı (haftada 3)

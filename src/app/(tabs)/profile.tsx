@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
 import { auth } from '../../lib/firebase';
 import { useSession } from '../../lib/session';
+import { DeleteAccount } from '../../components/DeleteAccount';
 import { ThemeOption } from '../../components/ThemeOption';
 import { LOVE_LANGUAGES, type LoveLanguage } from '../../lib/loveLanguage';
 import { THEME_LIST, tx, type Theme } from '../../lib/theme';
@@ -57,6 +58,7 @@ export default function Profile() {
       ))}
 
       <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth)} />
+      <DeleteAccount />
     </Screen>
   );
 }

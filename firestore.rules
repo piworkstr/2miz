@@ -28,6 +28,8 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.auth.uid in resource.data.members
         && request.resource.data.members == resource.data.members;
+      // Hesap silinirken çift belgesi de silinir.
+      allow delete: if signedIn() && request.auth.uid in resource.data.members;
 
       match /days/{dayId} {
         allow read, write: if isMember(coupleId);
@@ -43,7 +45,15 @@ service cloud.firestore {
         allow create, update: if isMember(coupleId)
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.data.size() < 900000;
-        allow delete: if isMember(coupleId) && resource.data.uid == request.auth.uid;
+        // Hesap silinirken iki kişinin fotoğrafları da silinebilsin.
+        allow delete: if isMember(coupleId);
+      }
+
+      // Aşk kuponları: yazan kişi oluşturur ve kaldırır, partneri puanla açar.
+      match /coupons/{couponId} {
+        allow read, update: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.owner == request.auth.uid;
+        allow delete: if isMember(coupleId);
       }
     }
   }
