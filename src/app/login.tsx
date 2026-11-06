@@ -47,7 +47,7 @@ export default function Login() {
       if (!name.trim()) return setError('Partnerinin göreceği adını yaz.');
       birthDate = toDateKey(birth);
       if (!birthDate) return setError('Doğum tarihini gün / ay / yıl olarak gir.');
-      if (ageFrom(birthDate) < 18) return setError('biz, 18 yaş ve üzeri içindir.');
+      if (ageFrom(birthDate) < 18) return setError('2miz, 18 yaş ve üzeri içindir.');
     }
     if (!email.trim() || !password) return setError('E-posta ve şifre gerekli.');
 

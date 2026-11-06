@@ -128,7 +128,7 @@ const standart: Theme = {
     surpriseLabel: 'Bonus görev',
     surpriseBtn: 'Bonus görev çek',
     surpriseAgain: 'Başka bir tane',
-    tabs: { today: 'Bugün', chat: 'Mesajlar', album: 'Albüm', coupons: 'Kuponlar', us: 'İkimiz' },
+    tabs: { today: 'Bugün', chat: 'Mesajlar', album: 'Albüm', coupons: 'Kuponlar', us: 'Biz' },
     date: {
       today: 'Bugün date günü!',
       selfieHint: 'İkinizin aynı karede olduğu bir selfie çekin, albüme özel bir sayfa olarak girecek.',
@@ -275,7 +275,7 @@ const asko: Theme = {
     surpriseLabel: 'Tatlı bonus',
     surpriseBtn: 'Bonus çek',
     surpriseAgain: 'Bir tane daha',
-    tabs: { today: 'Bugün', chat: 'Fısıltı', album: 'Anılar', coupons: 'Kuponlar', us: 'İkimiz' },
+    tabs: { today: 'Bugün', chat: 'Fısıltı', album: 'Anılar', coupons: 'Kuponlar', us: 'Biz' },
     date: {
       today: 'Bugün date günümüz!',
       selfieHint: 'Yanak yanağa bir selfie çekin, albümde kocaman özel bir sayfa olacak.',

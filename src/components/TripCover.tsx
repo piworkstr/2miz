@@ -88,7 +88,7 @@ export function Stamp({ style }: { style?: object }) {
       ]}
     >
       <Ionicons name="airplane" size={20} color="#C0566A" />
-      <Text style={{ fontSize: 8, fontWeight: '700', letterSpacing: 1, color: '#C0566A' }}>BİZ</Text>
+      <Text style={{ fontSize: 8, fontWeight: '700', letterSpacing: 1, color: '#C0566A' }}>2MİZ</Text>
     </View>
   );
 }

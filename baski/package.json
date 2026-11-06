@@ -1,7 +1,7 @@
 {
   "name": "usdaily-baski-merkezi",
   "private": true,
-  "description": "biz Baskı Merkezi: albüm baskı dosyalarını (iç sayfalar + kapak, 300 dpi PDF) üretir. Yalnızca biz ekibinin bilgisayarında çalışır.",
+  "description": "2miz Baskı Merkezi: albüm baskı dosyalarını (iç sayfalar + kapak, 300 dpi PDF) üretir. Yalnızca 2miz ekibinin bilgisayarında çalışır.",
   "scripts": {
     "ornek": "tsx ornek.ts",
     "siparis": "tsx index.ts"

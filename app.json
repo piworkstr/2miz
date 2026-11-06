@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "biz",
+    "name": "2miz",
     "slug": "usdaily",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +15,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#ED1C24",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -32,7 +32,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "biz, görevleri tamamlarken ve partnerine anlık fotoğraf gönderirken kamerayı kullanır.",
+          "cameraPermission": "2miz, görevleri tamamlarken ve partnerine anlık fotoğraf gönderirken kamerayı kullanır.",
           "recordAudioAndroid": false
         }
       ],
@@ -54,7 +54,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "biz, seyahat albümünüze ve profil fotoğrafına eklemek için yalnızca seçtiğin fotoğraflara erişir.",
+          "photosPermission": "2miz, seyahat albümünüze ve profil fotoğrafına eklemek için yalnızca seçtiğin fotoğraflara erişir.",
           "cameraPermission": false,
           "microphonePermission": false
         }
@@ -62,13 +62,13 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "biz, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
+          "microphonePermission": "2miz, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
         }
       ],
       [
         "expo-calendar",
         {
-          "calendarPermission": "biz, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
+          "calendarPermission": "2miz, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
           "remindersPermission": false
         }
       ]

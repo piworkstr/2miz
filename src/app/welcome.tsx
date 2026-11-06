@@ -8,7 +8,7 @@ export default function Welcome() {
   return (
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, paddingVertical: 40 }}>
-        <Image source={require('../../assets/icon.png')} style={{ width: 132, height: 132, borderRadius: 30 }} accessibilityLabel="biz" />
+        <Image source={require('../../assets/icon.png')} style={{ width: 132, height: 132, borderRadius: 30 }} accessibilityLabel="2miz" />
         <Muted style={{ textAlign: 'center', fontSize: 16, lineHeight: 23 }}>
           Her gün küçük bir görev, birlikte büyüyen bir hikaye.
         </Muted>
