@@ -30,6 +30,7 @@ export type Message = {
   createdAtMs: number;
   hiddenFor?: Record<string, boolean>; // şikayet edenin ekranından kalkar
   inAlbum?: boolean;
+  pending?: boolean; // henüz sunucuya ulaşmadı (sadece gönderenin ekranında)
 };
 
 function messagesCol(coupleId: string) {
@@ -45,7 +46,9 @@ export function useMessages(coupleId: string | undefined, max = 150) {
     if (!coupleId) return;
     return onSnapshot(
       query(messagesCol(coupleId), orderBy('createdAtMs', 'desc'), limit(max)),
-      (snap) => setMessages(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Message, 'id'>) }))),
+      { includeMetadataChanges: true },
+      (snap) =>
+        setMessages(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Message, 'id'>), pending: d.metadata.hasPendingWrites }))),
       () => setMessages([]),
     );
   }, [coupleId, max]);
@@ -163,6 +166,14 @@ export function useUnreadCount() {
       () => setLatest([]),
     );
   }, [couple?.id]);
+  // Uygulama açıkken (hangi sekmede olursa olsun) partnerden gelen mesajlar "ulaştı" sayılır.
+  const newestFromPartner = latest.find((m) => m.from === partnerId)?.createdAtMs ?? 0;
+  const delivered = (user && couple?.lastDelivered?.[user.uid]) ?? 0;
+  useEffect(() => {
+    if (!couple?.id || !user || newestFromPartner <= delivered) return;
+    updateDoc(doc(db, 'couples', couple.id), { [`lastDelivered.${user.uid}`]: newestFromPartner }).catch(() => {});
+  }, [couple?.id, user?.uid, newestFromPartner, delivered]);
+
   if (!user || !partnerId) return 0;
   const lastRead = (couple?.lastRead ?? {})[user.uid] ?? 0;
   return latest.filter((m) => m.from === partnerId && m.createdAtMs > lastRead).length;

@@ -26,6 +26,7 @@ export type Couple = {
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
   bestStreak?: number;
   lastRead?: Record<string, number>; // mesajları en son ne zaman okudu
+  lastDelivered?: Record<string, number>; // telefonuna en son hangi mesaj ulaştı (mesaj zamanı)
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
   favorites?: string[]; // favori görevler (arşiv ve çark)
   lastBonusDay?: string; // bonus görev puanı günde bir kez

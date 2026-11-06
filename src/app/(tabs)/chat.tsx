@@ -51,6 +51,11 @@ export default function Chat() {
   if (!user || !couple || messages === null) return <Loading />;
   const uid = user.uid;
   const visible = messages.filter((m) => !m.hiddenFor?.[uid]);
+  // Kendi mesajlarının durumu: gönderiliyor → gönderildi (tik) → ulaştı (boş kalp) → okundu (dolu kalp).
+  const readAt = (partnerId && couple.lastRead?.[partnerId]) || 0;
+  const deliveredAt = Math.max((partnerId && couple.lastDelivered?.[partnerId]) || 0, readAt);
+  const statusOf = (m: Message): MsgState =>
+    m.pending ? 'sending' : readAt >= m.createdAtMs ? 'read' : deliveredAt >= m.createdAtMs ? 'delivered' : 'sent';
 
   async function send() {
     if (!text.trim() || sending || !couple) return;
@@ -94,6 +99,7 @@ export default function Chat() {
               mine={item.from === uid}
               coupleId={couple.id}
               showTime={index === 0 || visible[index - 1]?.from !== item.from}
+              status={item.from === uid ? statusOf(item) : null}
               onLong={() => setMenu(item)}
             />
           )}
@@ -156,7 +162,36 @@ export default function Chat() {
   );
 }
 
-function Bubble({ m, mine, coupleId, showTime, onLong }: { m: Message; mine: boolean; coupleId: string; showTime: boolean; onLong: () => void }) {
+type MsgState = 'sending' | 'sent' | 'delivered' | 'read';
+
+// WhatsApp'taki tikler yerine: tik (gönderildi), boş kalp (ulaştı), kırmızı dolu kalp (okundu).
+function StatusIcon({ state, size = 13 }: { state: MsgState; size?: number }) {
+  const t = useTheme();
+  const map = {
+    sending: { name: 'time-outline', color: t.colors.muted, label: 'Gönderiliyor' },
+    sent: { name: 'checkmark', color: t.colors.muted, label: 'Gönderildi' },
+    delivered: { name: 'heart-outline', color: t.colors.muted, label: 'Ulaştı' },
+    read: { name: 'heart', color: '#E8516A', label: 'Okundu' },
+  } as const;
+  const s = map[state];
+  return <Ionicons name={s.name} size={size} color={s.color} accessibilityLabel={s.label} />;
+}
+
+function Bubble({
+  m,
+  mine,
+  coupleId,
+  showTime,
+  status,
+  onLong,
+}: {
+  m: Message;
+  mine: boolean;
+  coupleId: string;
+  showTime: boolean;
+  status: MsgState | null;
+  onLong: () => void;
+}) {
   const t = useTheme();
   const photo = useMessagePhoto(coupleId, m.id, m.hasPhoto);
   const time = new Date(m.createdAtMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -192,7 +227,8 @@ function Bubble({ m, mine, coupleId, showTime, onLong }: { m: Message; mine: boo
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 6, minHeight: 30 }}>
             <Text style={{ fontFamily: handFont, fontSize: 20, color: inkColor }}>{time}</Text>
-            {m.inAlbum && <Ionicons name="heart" size={15} color="#E8516A" />}
+            {m.inAlbum && <Ionicons name="bookmark" size={14} color="#E8516A" />}
+            {status && <StatusIcon state={status} size={15} />}
           </View>
           {!!m.text && (
             <Text style={{ fontFamily: handFont, fontSize: 19, color: inkColor, textAlign: 'center' }}>{m.text}</Text>
@@ -231,7 +267,12 @@ function Bubble({ m, mine, coupleId, showTime, onLong }: { m: Message; mine: boo
           {m.text}
         </Text>
       </Pressable>
-      {showTime && <Text style={{ fontSize: 11, color: t.colors.muted, marginHorizontal: 6 }}>{time}</Text>}
+      {(showTime || status) && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 6 }}>
+          {showTime && <Text style={{ fontSize: 11, color: t.colors.muted }}>{time}</Text>}
+          {status && <StatusIcon state={status} />}
+        </View>
+      )}
     </View>
   );
 }
