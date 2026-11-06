@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import type React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { BondHeart, BondStreak } from '../../components/BondHeart';
 import { BoredCard } from '../../components/BoredCard';
+import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { Polaroid } from '../../components/Polaroid';
@@ -27,6 +29,12 @@ export default function Today() {
   const { day, key } = useToday(couple?.id, couple?.members);
   const t = useTheme();
   const [panel, setPanel] = useState<Panel>(null);
+
+  // Seri varken bugün henüz bir şey yapmadıysan akşam 21:00'de hatırlatma kurulur.
+  const bond = bondOf(couple, user?.uid, partnerId);
+  useEffect(() => {
+    scheduleRiskReminder(bond, partnerName);
+  }, [bond.streak, bond.meToday > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || !couple || !partnerId || !day) return <Loading />;
 
@@ -110,7 +118,6 @@ function TodayStrip(props: {
 }) {
   const t = useTheme();
   const { day, uid, partnerId } = props;
-  const both = !!day.completions[uid] && !!day.completions[partnerId];
   return (
     <View
       style={{
@@ -125,10 +132,10 @@ function TodayStrip(props: {
       }}
     >
       <Person name={props.myName} done={!!day.completions[uid]} />
-      <Ionicons name={both ? 'heart' : 'heart-outline'} size={22} color={t.colors.primary} />
+      <BondHeart />
       <Person name={props.partnerName} done={!!day.completions[partnerId]} />
       <View style={{ flex: 1, alignItems: 'flex-end', gap: 4 }}>
-        <Chip icon={t.id === 'asko' ? 'heart' : 'flame'} text={`${props.streak} ${t.copy.streak}`} />
+        <BondStreak />
         <Chip icon={t.id === 'asko' ? 'happy-outline' : 'star'} text={`${props.points} ${t.copy.points}`} />
       </View>
     </View>

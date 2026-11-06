@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { db } from './firebase';
+import { logActivity } from './bond';
 import { notifyPartner } from './push';
 import { photosCol as albumCol } from './photos';
 import { useSession } from './session';
@@ -67,6 +68,7 @@ export async function sendMessage(
     createdAt: serverTimestamp(),
   });
   if (photo) await setDoc(doc(photosCol(coupleId), ref.id), { from, data: photo });
+  logActivity(coupleId, from, photo ? 'photo' : 'message');
   if (notify?.to) notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
 }
 
@@ -122,6 +124,7 @@ export async function addToAlbum(coupleId: string, msg: Message, uid: string, no
     createdAt: serverTimestamp(),
   });
   await updateDoc(doc(messagesCol(coupleId), msg.id), { inAlbum: true }).catch(() => {});
+  logActivity(coupleId, uid, 'album');
 }
 
 export async function removeFromAlbum(coupleId: string, messageId: string) {

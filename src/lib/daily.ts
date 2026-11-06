@@ -2,6 +2,7 @@ import { doc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from 'fir
 import { useEffect, useState } from 'react';
 import { dayKey, yesterdayKey } from './date';
 import { db } from './firebase';
+import { logActivity } from './bond';
 import { pickTask, TASKS, trimSeen } from './tasks';
 
 export type Response = 'accept' | 'decline';
@@ -55,7 +56,7 @@ export async function finishOpenBonus(coupleId: string, id: string, uid: string,
   const key = dayKey();
   const ref = dayRef(coupleId, key);
   const coupleRef = doc(db, 'couples', coupleId);
-  return runTransaction(db, async (tx) => {
+  const ok = await runTransaction(db, async (tx) => {
     const [c, d] = [await tx.get(coupleRef), await tx.get(ref)];
     if (!c.exists()) return false;
     const data = c.data() as { points: number; lastBonusDay?: string; openBonus?: OpenBonus[] };
@@ -70,12 +71,14 @@ export async function finishOpenBonus(coupleId: string, id: string, uid: string,
     if (d.exists()) tx.update(ref, { bonus: { taskId: item.taskId, by: uid, atMs: Date.now() } });
     return true;
   });
+  if (ok) logActivity(coupleId, uid, 'bonus');
+  return ok;
 }
 
 // Bonus göreve cevap: aynı çevirmeye aitse kaydedilir. İkinci cevap gelince ikisi de açılır.
 export async function answerSpin(coupleId: string, key: string, spinId: string, uid: string, text: string) {
   const ref = dayRef(coupleId, key);
-  return runTransaction(db, async (tx) => {
+  const res = await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     const w = (snap.data() as DayDoc | undefined)?.wheel;
     if (!w || w.spinId !== spinId) return { ok: false, both: false };
@@ -83,6 +86,8 @@ export async function answerSpin(coupleId: string, key: string, spinId: string, 
     const others = Object.keys(w.answers ?? {}).filter((k) => k !== uid);
     return { ok: true, both: others.length > 0 };
   });
+  if (res.ok) logActivity(coupleId, uid, 'bonus');
+  return res;
 }
 
 export async function saveSpin(coupleId: string, key: string, spin: WheelSpin) {
@@ -188,4 +193,5 @@ export async function completeTask(
       tx.update(coupleRef, { points: c.points + earned, streak, bestStreak: best, lastCompleteDay: key });
     }
   });
+  logActivity(coupleId, uid, 'task');
 }

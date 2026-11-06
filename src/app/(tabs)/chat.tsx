@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BondHeart, BondStreak } from '../../components/BondHeart';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
 import { addToAlbum, deleteMessage, markRead, removeFromAlbum, reportMessage, sendMessage, useMessagePhoto, useMessages, type Message } from '../../lib/chat';
@@ -65,9 +66,13 @@ export default function Chat() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
       <View style={{ paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: t.colors.border }}>
-        <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize * 0.8, lineHeight: t.titleSize, color: t.colors.text }}>
-          {tx(t, partnerName)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ flex: 1, fontFamily: t.fonts.title, fontSize: t.titleSize * 0.8, lineHeight: t.titleSize, color: t.colors.text }}>
+            {tx(t, partnerName)}
+          </Text>
+          <BondStreak compact />
+          <BondHeart box={40} max={30} showLabel={false} />
+        </View>
         <Muted style={{ fontSize: 12 }}>Sadece ikiniz görürsünüz. Fotoğraflar anlık çekilir.</Muted>
       </View>
 

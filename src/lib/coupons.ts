@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
+import { logActivity } from './bond';
 import type { Couple } from './session';
 
 // Kuponu yazan kişi "owner"dır; partneri puan harcayarak kuponu açar,
@@ -66,6 +67,7 @@ export function useCoupons(coupleId: string | undefined) {
 
 export async function createCoupon(coupleId: string, owner: string, title: string, cost: number) {
   await addDoc(col(coupleId), { owner, title: title.trim(), cost, status: 'active', createdAt: serverTimestamp() });
+  logActivity(coupleId, owner, 'coupon');
 }
 
 export async function removeCoupon(coupleId: string, id: string) {

@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
+import { logActivity } from './bond';
 import { shrink } from './photos';
 
 // Seyahat albümleri: galeriden seçilen fotoğraflar. Anlık selfie kuralı görevlerde ve sohbette kalır.
@@ -125,6 +126,7 @@ export async function addTripPhotos(
     done++;
     onProgress?.(done);
   }
+  if (done) logActivity(coupleId, uid, 'trip', Math.min(done, 5));
   return done;
 }
 

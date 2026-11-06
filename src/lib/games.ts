@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { db } from './firebase';
+import { logActivity } from './bond';
 import { KNOW_ME, THIS_THAT } from './gameData';
 import type { Couple } from './session';
 
@@ -257,6 +258,7 @@ export async function finishGame(coupleId: string, id: string, uid: string) {
       tx.update(coupleRef, { points: (couple.points ?? 0) + GAME_POINTS, lastGameDay: dayKey() });
     }
   });
+  logActivity(coupleId, uid, 'game');
 }
 
 // ---------- Bu mu, o mu? ----------
