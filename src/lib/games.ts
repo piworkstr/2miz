@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   onSnapshot,
@@ -82,9 +83,26 @@ export function seededShuffle<T>(arr: T[], seed: string): T[] {
   return out;
 }
 
-function pick(count: number, total: number): number[] {
-  const all = Array.from({ length: total }, (_, i) => i);
-  return seededShuffle(all, `${Date.now()}-${Math.random()}`).slice(0, count);
+// Önce bu çiftin hiç görmediği sorular seçilir; yetmezse en eski görülenlerden tamamlanır.
+function pickFresh(count: number, total: number, seen: number[]): number[] {
+  const seenSet = new Set(seen);
+  const fresh = seededShuffle(
+    Array.from({ length: total }, (_, i) => i).filter((i) => !seenSet.has(i)),
+    `${Date.now()}-${Math.random()}`,
+  );
+  const picked = fresh.slice(0, count);
+  for (const i of seen) {
+    if (picked.length >= count) break;
+    if (!picked.includes(i)) picked.push(i);
+  }
+  return picked;
+}
+
+// Görülenler listesine ekler; havuzun en az bir oyunluk kısmı her zaman yeni kalır.
+function nextSeen(seen: number[], picked: number[], total: number, count: number): number[] {
+  const list = [...seen.filter((i) => !picked.includes(i)), ...picked];
+  const keep = Math.max(0, total - count);
+  return list.length > keep ? list.slice(list.length - keep) : list;
 }
 
 // ---------- "Şimdi olmaz" hakları (haftada 3, pazartesi sıfırlanır) ----------
@@ -111,9 +129,21 @@ async function recentPhotoIds(coupleId: string): Promise<string[]> {
 
 export async function sendInvite(coupleId: string, from: string, to: string, type: GameType) {
   const base = { type, from, to, status: 'invited' as GameStatus, expiresAt: Date.now() + INVITE_MINUTES * 60_000, createdAt: serverTimestamp() };
+  const coupleRef = doc(db, 'couples', coupleId);
+  const coupleSnap = await getDoc(coupleRef);
+  const seen = (coupleSnap.data() as Couple | undefined)?.seenGames ?? {};
+
   let extra: Partial<Game> = {};
-  if (type === 'thisthat') extra = { pairs: pick(10, THIS_THAT.length), answers: {} };
-  if (type === 'knowme') extra = { questions: pick(5, KNOW_ME.length), self: {}, guess: {} };
+  if (type === 'thisthat') {
+    const pairs = pickFresh(10, THIS_THAT.length, seen.thisthat ?? []);
+    extra = { pairs, answers: {} };
+    await updateDoc(coupleRef, { 'seenGames.thisthat': nextSeen(seen.thisthat ?? [], pairs, THIS_THAT.length, 10) });
+  }
+  if (type === 'knowme') {
+    const questions = pickFresh(5, KNOW_ME.length, seen.knowme ?? []);
+    extra = { questions, self: {}, guess: {} };
+    await updateDoc(coupleRef, { 'seenGames.knowme': nextSeen(seen.knowme ?? [], questions, KNOW_ME.length, 5) });
+  }
   if (type === 'memory') extra = { memory: newMemory(await recentPhotoIds(coupleId), from, to) };
   const ref = await addDoc(gamesCol(coupleId), { ...base, ...extra, finished: {} });
   return ref.id;

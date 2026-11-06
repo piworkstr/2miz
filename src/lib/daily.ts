@@ -1,8 +1,8 @@
-import { doc, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { dayKey, yesterdayKey } from './date';
 import { db } from './firebase';
-import { pickTask } from './tasks';
+import { pickTask, TASKS, trimSeen } from './tasks';
 
 export type Response = 'accept' | 'decline';
 
@@ -24,15 +24,32 @@ function dayRef(coupleId: string, key: string) {
   return doc(db, 'couples', coupleId, 'days', key);
 }
 
-// Görevler gün + çift kimliğinden hesaplanır; iki telefon da aynı belgeyi
-// oluştursa bile içerik birebir aynı olur, çakışma yaşanmaz.
-function buildDay(coupleId: string, members: string[], key: string): DayDoc {
-  const shared = pickTask(`${coupleId}:${key}:shared`);
+// Görevler gün + çift kimliğinden seçilir ve çiftin yakın zamanda gördüğü görevler hariç tutulur.
+function buildDay(coupleId: string, members: string[], key: string, seen: string[]): DayDoc {
+  const shared = pickTask(`${coupleId}:${key}:shared`, seen);
   const separate: Record<string, string> = {};
   members.forEach((m) => {
-    separate[m] = pickTask(`${coupleId}:${key}:${m}`, [shared.id, ...Object.values(separate)]).id;
+    separate[m] = pickTask(`${coupleId}:${key}:${m}`, [...seen, shared.id, ...Object.values(separate)]).id;
   });
   return { sharedTaskId: shared.id, separate, responses: {}, completions: {}, rewarded: false };
+}
+
+// Günün belgesini yalnızca yoksa oluşturur (iki telefon aynı anda açsa bile tek kez)
+// ve seçilen görevleri çiftin "görülenler" listesine ekler.
+async function createDay(coupleId: string, members: string[], key: string) {
+  const ref = dayRef(coupleId, key);
+  const coupleRef = doc(db, 'couples', coupleId);
+  await runTransaction(db, async (tx) => {
+    const [daySnap, coupleSnap] = [await tx.get(ref), await tx.get(coupleRef)];
+    if (daySnap.exists() || !coupleSnap.exists()) return;
+    const seen: string[] = (coupleSnap.data() as { seenTasks?: string[] }).seenTasks ?? [];
+    const day = buildDay(coupleId, members, key, seen);
+    const picked = [day.sharedTaskId, ...Object.values(day.separate)];
+    // Havuzun en az üçte biri her zaman seçilebilir kalsın.
+    const keep = Math.max(0, TASKS.length - Math.ceil(TASKS.length / 3));
+    tx.set(ref, day);
+    tx.update(coupleRef, { seenTasks: trimSeen([...seen.filter((id) => !picked.includes(id)), ...picked], keep) });
+  });
 }
 
 export function modeOf(day: DayDoc, members: string[]): DayMode {
@@ -53,7 +70,7 @@ export function useToday(coupleId: string | undefined, members: string[] | undef
       if (snap.exists()) {
         setDay(snap.data() as DayDoc);
       } else {
-        setDoc(ref, buildDay(coupleId, members, key)).catch(() => {});
+        createDay(coupleId, members, key).catch(() => {});
       }
     });
     // members dizisi her render'da yeni olabilir; kimlik değişmedikçe yeniden abone olmayız.

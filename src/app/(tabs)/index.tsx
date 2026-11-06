@@ -224,6 +224,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 
 function SurpriseCard() {
   const t = useTheme();
+  const { couple } = useSession();
   const [task, setTask] = useState<Task | null>(null);
   return (
     <Card>
@@ -232,7 +233,7 @@ function SurpriseCard() {
       <Button
         label={task ? t.copy.surpriseAgain : t.copy.surpriseBtn}
         variant="secondary"
-        onPress={() => setTask(randomTask(task?.id))}
+        onPress={() => setTask(randomTask([...(couple?.seenTasks ?? []), ...(task ? [task.id] : [])]))}
       />
     </Card>
   );

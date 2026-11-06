@@ -1,3 +1,5 @@
+import { extraTasks } from './taskBank';
+
 export type Category = 'iletisim' | 'minnet' | 'romantik' | 'eglence' | 'yeni' | 'surpriz';
 
 export type Task = {
@@ -15,8 +17,8 @@ export const categoryLabels: Record<Category, string> = {
   surpriz: 'Sürpriz',
 };
 
-// Başlangıç görev bankası. İleride Firestore'a taşınıp topluluk görevleriyle büyüyecek.
-export const TASKS: Task[] = [
+// İlk görev bankası (kimlikleri t01–t36). Ek görevler taskBank.ts dosyasında.
+const BASE: Task[] = [
   { id: 't01', title: 'Birbirinizin sevdiğiniz bir huyunu söyleyin', category: 'minnet' },
   { id: 't02', title: 'İlk buluşmanızdan bir anıyı birlikte hatırlayın', category: 'romantik' },
   { id: 't03', title: '10 dakika telefonsuz yürüyüşe çıkın', category: 'yeni' },
@@ -55,8 +57,12 @@ export const TASKS: Task[] = [
   { id: 't36', title: 'Partnerinin en sevdiği şarkıyı ona söyle', category: 'surpriz' },
 ];
 
+// Aktif görevler (seçimde kullanılır) ve kaldırılanlar dahil tümü (eski günleri göstermek için).
+export const TASKS: Task[] = [...BASE, ...extraTasks()];
+const ALL: Task[] = [...BASE, ...extraTasks(true)];
+
 export function taskById(id: string): Task {
-  return TASKS.find((t) => t.id === id) ?? TASKS[0];
+  return ALL.find((t) => t.id === id) ?? TASKS[0];
 }
 
 // Aynı tohumdan her telefonda aynı sonucu veren basit hash,
@@ -76,7 +82,13 @@ export function pickTask(seed: string, excludeIds: string[] = []): Task {
   return list[hash(seed) % list.length];
 }
 
-export function randomTask(excludeId?: string): Task {
-  const pool = TASKS.filter((t) => t.id !== excludeId);
-  return pool[Math.floor(Math.random() * pool.length)];
+export function randomTask(excludeIds: string[] = []): Task {
+  const pool = TASKS.filter((t) => !excludeIds.includes(t.id));
+  const list = pool.length ? pool : TASKS;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// Görülen listesini havuz büyüklüğüne göre kırpar: havuz bitmeye yakınken en eski görülenler tekrar açılır.
+export function trimSeen(seen: string[], keep: number): string[] {
+  return seen.length > keep ? seen.slice(seen.length - keep) : seen;
 }

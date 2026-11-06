@@ -24,6 +24,8 @@ export type Couple = {
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
+  seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
+  seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
 };
 
