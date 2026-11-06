@@ -55,6 +55,18 @@ export default function Today() {
         points={couple.points}
       />
 
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
+        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
+        <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
+      </View>
+      {panel === 'play' && <BoredCard />}
+      {panel === 'date' && (
+        <Card>
+          <DateCard mode="planner" />
+        </Card>
+      )}
+
       <DateCard mode="banner" />
 
       {mode === 'pending' ? (
@@ -74,17 +86,6 @@ export default function Today() {
 
       <OpenBonusCard />
 
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
-        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
-        <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
-      </View>
-      {panel === 'play' && <BoredCard />}
-      {panel === 'date' && (
-        <Card>
-          <DateCard mode="planner" />
-        </Card>
-      )}
 
       <Pressable onPress={() => router.push('/archive')} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}>
         <Ionicons name="time-outline" size={16} color={t.colors.primary} />
