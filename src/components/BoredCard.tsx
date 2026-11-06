@@ -4,6 +4,7 @@ import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { notifyPartner } from '../lib/push';
 import { GAMES, sendInvite, useMyOpenInvite, type GameType } from '../lib/games';
+import { countGame, FREE, gamesToday, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
@@ -19,16 +20,22 @@ export function BoredCard() {
   const [choosing, setChoosing] = useState(false);
   const [busy, setBusy] = useState<GameType | null>(null);
   const [error, setError] = useState('');
+  const plus = usePlus();
 
   if (!user || !couple || !partnerId) return null;
 
   async function invite(type: GameType) {
     if (!user || !couple || !partnerId) return;
+    if (!plus.active && gamesToday(couple) >= FREE.gamesPerDay) return openPlus('game');
     setError('');
     setBusy(type);
     try {
       const id = await sendInvite(couple.id, user.uid, partnerId, type);
-      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} seni oyuna çağırıyor 🎲`, `${GAMES[type].name} · 15 dakika içinde katıl`, { type: 'game', url: '/' });
+      countGame(couple.id, couple).catch(() => {});
+      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} seni oyuna çağırıyor 🎲`, `${GAMES[type].name} · 15 dakika içinde katıl`, {
+        type: 'game',
+        url: '/',
+      });
       setChoosing(false);
       router.push({ pathname: '/game/[id]', params: { id } });
     } catch {

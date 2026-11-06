@@ -6,6 +6,7 @@ import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
 import { removeFromAlbum } from '../../lib/chat';
 import { usePhotos, type Photo } from '../../lib/photos';
+import { FREE, openPlus, usePlus } from '../../lib/plus';
 import { useTrips, type Trip } from '../../lib/trips';
 import { TripCover } from '../../components/TripCover';
 import { router } from 'expo-router';
@@ -33,6 +34,7 @@ export default function Album() {
   const { user, couple, partnerName, profile } = useSession();
   const photos = usePhotos(couple?.id);
   const trips = useTrips(couple?.id);
+  const plus = usePlus();
   const [filter, setFilter] = useState<Filter>('all');
   const [removing, setRemoving] = useState<string | null>(null);
 
@@ -87,7 +89,7 @@ export default function Album() {
         </Card>
       )}
 
-      {(
+      {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {FILTERS.map((f) => (
             <Pressable
@@ -108,7 +110,7 @@ export default function Album() {
             </Pressable>
           ))}
         </View>
-      )}
+      }
 
       <Pressable
         onPress={() => router.push('/album-builder')}
@@ -132,7 +134,7 @@ export default function Album() {
 
       {(filter === 'all' || filter === 'trips') && (
         <Pressable
-          onPress={() => router.push('/trip/new')}
+          onPress={() => (!plus.active && (trips?.length ?? 0) >= FREE.trips ? openPlus('trip') : router.push('/trip/new'))}
           style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
@@ -165,61 +167,64 @@ export default function Album() {
         page.kind === 'trip' ? (
           <TripCover key={`trip-${page.trip.id}`} trip={page.trip} coupleId={couple!.id} />
         ) : (
-        <Pressable
-          key={page.kind === 'task' ? `task-${page.day}` : page.photo.id}
-          onLongPress={page.kind === 'moment' ? () => setRemoving(page.photo.id) : undefined}
-          delayLongPress={400}
-          style={{ backgroundColor: '#FBF7F2', borderRadius: 6, paddingVertical: 22, paddingHorizontal: 16, gap: 16 }}
-        >
-          {page.kind === 'moment' ? (
-            <>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>Anı</Text>
-              </View>
-              <Polaroid
-                photo={page.photo}
-                name={`${nameOf(page.photo.from)} çekti`}
-                aspect={3 / 4}
-                tilt={1.5}
-                style={{ alignSelf: 'center', width: '74%' }}
-              />
-              {removing === page.photo.id && (
-                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
-                  <Pressable
-                    onPress={() => {
-                      setRemoving(null);
-                      removeFromAlbum(couple!.id, page.photo.messageId ?? page.photo.id.replace(/^moment_/, '')).catch(() => {});
-                    }}
-                    style={{ backgroundColor: '#C0392B', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '600' }}>Albümden çıkar</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setRemoving(null)} style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#D9CCC6' }}>
-                    <Text style={{ color: inkColor, fontWeight: '600' }}>Vazgeç</Text>
-                  </Pressable>
+          <Pressable
+            key={page.kind === 'task' ? `task-${page.day}` : page.photo.id}
+            onLongPress={page.kind === 'moment' ? () => setRemoving(page.photo.id) : undefined}
+            delayLongPress={400}
+            style={{ backgroundColor: '#FBF7F2', borderRadius: 6, paddingVertical: 22, paddingHorizontal: 16, gap: 16 }}
+          >
+            {page.kind === 'moment' ? (
+              <>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>Anı</Text>
                 </View>
-              )}
-            </>
-          ) : page.kind === 'date' ? (
-            <>
-              <View style={{ alignItems: 'center', gap: 2 }}>
-                <Text style={{ fontFamily: handFont, fontSize: 18, color: '#E8516A' }}>Date günü</Text>
-              </View>
-              <Polaroid photo={page.photo} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
-            </>
-          ) : (
-            <>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
-                <Polaroid style={{ flex: 1, marginTop: 12 }} photo={page.theirs} name={partnerName} tilt={2.5} />
-              </View>
-              <Text style={{ fontFamily: handFont, fontSize: 25, lineHeight: 28, color: inkColor, textAlign: 'center' }}>
-                {taskTitle(page)}
-              </Text>
-            </>
-          )}
-          <Text style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>{prettyDate(page.day)}</Text>
-        </Pressable>
+                <Polaroid
+                  photo={page.photo}
+                  name={`${nameOf(page.photo.from)} çekti`}
+                  aspect={3 / 4}
+                  tilt={1.5}
+                  style={{ alignSelf: 'center', width: '74%' }}
+                />
+                {removing === page.photo.id && (
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
+                    <Pressable
+                      onPress={() => {
+                        setRemoving(null);
+                        removeFromAlbum(couple!.id, page.photo.messageId ?? page.photo.id.replace(/^moment_/, '')).catch(() => {});
+                      }}
+                      style={{ backgroundColor: '#C0392B', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '600' }}>Albümden çıkar</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setRemoving(null)}
+                      style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#D9CCC6' }}
+                    >
+                      <Text style={{ color: inkColor, fontWeight: '600' }}>Vazgeç</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </>
+            ) : page.kind === 'date' ? (
+              <>
+                <View style={{ alignItems: 'center', gap: 2 }}>
+                  <Text style={{ fontFamily: handFont, fontSize: 18, color: '#E8516A' }}>Date günü</Text>
+                </View>
+                <Polaroid photo={page.photo} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
+              </>
+            ) : (
+              <>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
+                  <Polaroid style={{ flex: 1, marginTop: 12 }} photo={page.theirs} name={partnerName} tilt={2.5} />
+                </View>
+                <Text style={{ fontFamily: handFont, fontSize: 25, lineHeight: 28, color: inkColor, textAlign: 'center' }}>
+                  {taskTitle(page)}
+                </Text>
+              </>
+            )}
+            <Text style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>{prettyDate(page.day)}</Text>
+          </Pressable>
         ),
       )}
     </Screen>

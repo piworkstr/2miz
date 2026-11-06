@@ -31,12 +31,15 @@ service cloud.firestore {
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
+      // plus alanını yalnızca ödeme sunucusu (yönetici anahtarı) yazar; uygulama kendine Plus veremez.
       allow create: if signedIn()
         && request.resource.data.members.size() == 2
-        && request.auth.uid in request.resource.data.members;
+        && request.auth.uid in request.resource.data.members
+        && !('plus' in request.resource.data);
       allow update: if signedIn()
         && request.auth.uid in resource.data.members
-        && request.resource.data.members == resource.data.members;
+        && request.resource.data.members == resource.data.members
+        && request.resource.data.get('plus', null) == resource.data.get('plus', null);
       // Hesap silinirken çift belgesi de silinir.
       allow delete: if signedIn() && request.auth.uid in resource.data.members;
 

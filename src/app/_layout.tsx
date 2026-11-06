@@ -49,6 +49,7 @@ function RootNavigator() {
           <Stack.Screen name="album-builder" />
           <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
+          <Stack.Screen name="plus" options={{ presentation: 'modal' }} />
           <Stack.Screen name="trip/new" />
           <Stack.Screen name="trip/[id]" />
           <Stack.Screen name="camera" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

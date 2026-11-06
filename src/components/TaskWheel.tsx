@@ -10,6 +10,7 @@ import { answerSpin, decideSpin, saveSpin, useToday, type WheelSpin } from '../l
 import { ANSWER_TASKS } from '../lib/taskKinds';
 import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
+import { FREE, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { CATEGORIES, categoryLabels, categoryStyle, taskById, TASKS, type Category, type Task } from '../lib/tasks';
 import { tx } from '../lib/theme';
@@ -38,6 +39,7 @@ export function TaskWheel() {
   const t = useTheme();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
+  const plus = usePlus();
   const [mode, setMode] = useState<'all' | 'fav'>('all');
   const [shown, setShown] = useState<WheelSpin | null>(null); // dönmesi bitmiş, ekranda gösterilen sonuç
   const [display, setDisplay] = useState<Category[] | null>(null); // çarkta çizili dilimler
@@ -107,8 +109,10 @@ export function TaskWheel() {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  function spin() {
+  // Ücretsizde günde bir çevirme; reddedilen görevin yeniden çevrilmesi sayılmaz.
+  function spin(reroll = false) {
     if (spinning || modeSlices.length < 1 || !day) return;
+    if (!reroll && !plus.active && (day.spins ?? (day.wheel ? 1 : 0)) >= FREE.spinsPerDay) return openPlus('wheel');
     const n = modeSlices.length;
     const k = Math.floor(Math.random() * n);
     const jitter = (Math.random() - 0.5) * (360 / n) * 0.6;
@@ -125,7 +129,7 @@ export function TaskWheel() {
     lastSpin.current = s.spinId;
     setShown(null);
     setDisplay(modeSlices);
-    saveSpin(coupleId, key, s).catch(() => {});
+    saveSpin(coupleId, key, s, !reroll).catch(() => {});
     if (partnerId) {
       notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus çarkını çevirdi 🎡`, task.title, { type: 'wheel', url: '/wheel' });
     }
@@ -144,7 +148,7 @@ export function TaskWheel() {
           url: '/',
         });
       }
-      if (ok && !accept) spin();
+      if (ok && !accept) spin(true);
     } finally {
       setBusy(false);
     }
@@ -285,7 +289,7 @@ export function TaskWheel() {
             })}
           </Animated.View>
           <Pressable
-            onPress={spin}
+            onPress={() => spin()}
             style={({ pressed }) => ({
               position: 'absolute',
               left: R - 38,

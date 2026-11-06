@@ -2,11 +2,23 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { KRAFT, Stamp } from '../../components/TripCover';
 import { Loading } from '../../components/ui';
+import { openPlus, tripPhotoLimit, usePlus } from '../../lib/plus';
 import { notifyPartner } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import {
@@ -14,7 +26,6 @@ import {
   deleteTrip,
   deleteTripPhoto,
   setTripPhotoNote,
-  TRIP_LIMIT,
   tripDates,
   useTrip,
   useTripPhotos,
@@ -33,6 +44,8 @@ export default function TripScreen() {
   const [menu, setMenu] = useState<TripPhoto | null>(null);
   const [viewing, setViewing] = useState<TripPhoto | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const plus = usePlus();
+  const LIMIT = tripPhotoLimit(plus);
 
   if (trip === null) {
     // Seyahat silindiyse (ya da partner sildiyse) albüme dön.
@@ -48,12 +61,15 @@ export default function TripScreen() {
   if (!trip || !photos || !user || !couple) return <Loading />;
 
   const myName = profile?.name ?? 'Sen';
-  const room = TRIP_LIMIT - trip.count;
+  const room = LIMIT - trip.count;
 
   async function pick() {
     if (!trip || !user || !couple || adding) return;
     setError('');
-    if (room <= 0) return setError(`Bir seyahate en fazla ${TRIP_LIMIT} fotoğraf eklenebiliyor.`);
+    if (room <= 0) {
+      if (!plus.active) return openPlus('tripPhotos');
+      return setError(`Bir seyahate en fazla ${LIMIT} fotoğraf eklenebiliyor.`);
+    }
     // iPhone'un kendi seçicisi: tüm galeriye erişim istemez, yalnızca seçilen fotoğraflar gelir.
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -66,7 +82,7 @@ export default function TripScreen() {
     const uris = res.assets.map((a) => a.uri).slice(0, room);
     setAdding({ done: 0, total: uris.length });
     try {
-      const n = await addTripPhotos(couple.id, trip, user.uid, uris, (done) => setAdding({ done, total: uris.length }));
+      const n = await addTripPhotos(couple.id, trip, user.uid, uris, LIMIT, (done) => setAdding({ done, total: uris.length }));
       if (n > 0 && partnerId) {
         notifyPartner(partnerId, `${myName} seyahat albümünüze ekledi ✈️`, `${trip.name}: ${n} yeni fotoğraf`, {
           type: 'trip',
@@ -104,7 +120,7 @@ export default function TripScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            backgroundColor: room > 0 ? '#C0566A' : '#B9A88F',
+            backgroundColor: room > 0 || !plus.active ? '#C0566A' : '#B9A88F',
             borderRadius: 14,
             paddingVertical: 14,
             opacity: pressed ? 0.85 : 1,
@@ -121,13 +137,13 @@ export default function TripScreen() {
             <>
               <Ionicons name="images-outline" size={20} color="#fff" />
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-                {room > 0 ? 'Galeriden fotoğraf ekle' : 'Sınır doldu'}
+                {room > 0 ? 'Galeriden fotoğraf ekle' : plus.active ? 'Sınır doldu' : "Plus'la 100 fotoğrafa çıkar"}
               </Text>
             </>
           )}
         </Pressable>
         <Text style={{ fontSize: 12, color: '#7A6650', textAlign: 'center', marginTop: -10 }}>
-          {trip.count}/{TRIP_LIMIT} fotoğraf · Uzun basarak not yazabilir ya da silebilirsiniz
+          {trip.count}/{LIMIT} fotoğraf · Uzun basarak not yazabilir ya da silebilirsiniz
         </Text>
         {!!error && <Text style={{ color: '#A93246', textAlign: 'center' }}>{error}</Text>}
 
@@ -157,8 +173,22 @@ export default function TripScreen() {
                   elevation: 3,
                 }}
               >
-                <Image source={{ uri: `data:image/jpeg;base64,${p.data}` }} style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }} />
-                <Text style={{ fontFamily: handFont, fontSize: 18, lineHeight: 20, color: inkColor, textAlign: 'center', marginTop: 6, minHeight: 20 }} numberOfLines={2}>
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${p.data}` }}
+                  style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }}
+                />
+                <Text
+                  style={{
+                    fontFamily: handFont,
+                    fontSize: 18,
+                    lineHeight: 20,
+                    color: inkColor,
+                    textAlign: 'center',
+                    marginTop: 6,
+                    minHeight: 20,
+                  }}
+                  numberOfLines={2}
+                >
                   {p.note || ' '}
                 </Text>
                 <Text style={{ fontSize: 10, color: '#9C8C87', textAlign: 'center' }}>{p.uid === user.uid ? myName : partnerName}</Text>
@@ -183,7 +213,10 @@ export default function TripScreen() {
                 >
                   <Text style={{ color: '#fff', fontWeight: '600' }}>Evet, sil</Text>
                 </Pressable>
-                <Pressable onPress={() => setConfirmDelete(false)} style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#B9A88F' }}>
+                <Pressable
+                  onPress={() => setConfirmDelete(false)}
+                  style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#B9A88F' }}
+                >
                   <Text style={{ color: inkColor, fontWeight: '600' }}>Vazgeç</Text>
                 </Pressable>
               </View>
@@ -199,11 +232,20 @@ export default function TripScreen() {
       <PhotoMenu photo={menu} coupleId={couple.id} onClose={() => setMenu(null)} />
 
       <Modal visible={!!viewing} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
-        <Pressable onPress={() => setViewing(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', padding: 16, gap: 12 }}>
+        <Pressable
+          onPress={() => setViewing(null)}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', padding: 16, gap: 12 }}
+        >
           {viewing && (
             <>
-              <Image source={{ uri: `data:image/jpeg;base64,${viewing.data}` }} style={{ width: '100%', aspectRatio: 3 / 4 }} resizeMode="contain" />
-              {!!viewing.note && <Text style={{ fontFamily: handFont, fontSize: 24, color: '#fff', textAlign: 'center' }}>{viewing.note}</Text>}
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${viewing.data}` }}
+                style={{ width: '100%', aspectRatio: 3 / 4 }}
+                resizeMode="contain"
+              />
+              {!!viewing.note && (
+                <Text style={{ fontFamily: handFont, fontSize: 24, color: '#fff', textAlign: 'center' }}>{viewing.note}</Text>
+              )}
             </>
           )}
         </Pressable>
@@ -222,7 +264,11 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
   }
 
   const row = (label: string, onPress: () => void, danger?: boolean) => (
-    <Pressable key={label} onPress={onPress} style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? '#F5EDE3' : 'transparent' })}>
+    <Pressable
+      key={label}
+      onPress={onPress}
+      style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? '#F5EDE3' : 'transparent' })}
+    >
       <Text style={{ fontSize: 16, color: danger ? '#A93246' : inkColor }}>{label}</Text>
     </Pressable>
   );
@@ -231,7 +277,9 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
     <Modal visible={!!photo} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable onPress={close} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: '#FFFBF6', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 34, paddingTop: 8 }}>
+          <Pressable
+            style={{ backgroundColor: '#FFFBF6', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 34, paddingTop: 8 }}
+          >
             {note !== null ? (
               <View style={{ padding: 20, gap: 12 }}>
                 <Text style={{ fontSize: 17, fontWeight: '600', color: inkColor }}>Polaroidin altına not</Text>
@@ -242,7 +290,15 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
                   placeholderTextColor="#B9A9A3"
                   maxLength={80}
                   autoFocus
-                  style={{ backgroundColor: '#F3ECE4', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 22, color: inkColor, fontFamily: handFont }}
+                  style={{
+                    backgroundColor: '#F3ECE4',
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 22,
+                    color: inkColor,
+                    fontFamily: handFont,
+                  }}
                 />
                 <Pressable
                   onPress={async () => {
@@ -254,17 +310,25 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
                   }}
                   style={{ backgroundColor: '#C0566A', borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
                 >
-                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kaydet</Text>}
+                  {busy ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kaydet</Text>
+                  )}
                 </Pressable>
                 {row('Vazgeç', close)}
               </View>
             ) : (
               <>
                 {row(photo?.note ? 'Notu düzenle' : 'Not yaz', () => setNote(photo?.note ?? ''))}
-                {row('Fotoğrafı sil', async () => {
-                  if (photo) await deleteTripPhoto(coupleId, photo).catch(() => {});
-                  close();
-                }, true)}
+                {row(
+                  'Fotoğrafı sil',
+                  async () => {
+                    if (photo) await deleteTripPhoto(coupleId, photo).catch(() => {});
+                    close();
+                  },
+                  true,
+                )}
                 {row('Vazgeç', close)}
               </>
             )}

@@ -1,4 +1,4 @@
-import { doc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, increment, onSnapshot, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { dayKey, yesterdayKey } from './date';
 import { db } from './firebase';
@@ -17,6 +17,7 @@ export type DayDoc = {
   rewarded: boolean;
   bonus?: { taskId: string; by: string; atMs: number }; // çarktan çıkıp yapılan bonus görev
   wheel?: WheelSpin; // ortak çark: son çevirme, iki telefonda da aynı görünür
+  spins?: number; // bugün kaç kez çevrildi (ret sonrası yeniden çevirme sayılmaz)
 };
 
 export type WheelSpin = {
@@ -90,8 +91,8 @@ export async function answerSpin(coupleId: string, key: string, spinId: string, 
   return res;
 }
 
-export async function saveSpin(coupleId: string, key: string, spin: WheelSpin) {
-  await updateDoc(dayRef(coupleId, key), { wheel: spin });
+export async function saveSpin(coupleId: string, key: string, spin: WheelSpin, counted = true) {
+  await updateDoc(dayRef(coupleId, key), counted ? { wheel: spin, spins: increment(1) } : { wheel: spin });
 }
 
 export type DayMode = 'pending' | 'shared' | 'separate';
@@ -162,13 +163,7 @@ export async function respond(coupleId: string, key: string, uid: string, value:
   await updateDoc(dayRef(coupleId, key), { [`responses.${uid}`]: value });
 }
 
-export async function completeTask(
-  coupleId: string,
-  key: string,
-  uid: string,
-  members: string[],
-  note: string,
-) {
+export async function completeTask(coupleId: string, key: string, uid: string, members: string[], note: string) {
   const coupleRef = doc(db, 'couples', coupleId);
   const ref = dayRef(coupleId, key);
 

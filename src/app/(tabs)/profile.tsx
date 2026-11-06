@@ -15,6 +15,7 @@ import { prettyDate } from '../../lib/date';
 import { useUpcomingDates } from '../../lib/dates';
 import { auth } from '../../lib/firebase';
 import { LOVE_LANGUAGES, type LoveLanguage } from '../../lib/loveLanguage';
+import { openPlus, usePlus } from '../../lib/plus';
 import { useSession, type Couple, type Profile } from '../../lib/session';
 import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
 import { THEME_LIST, tx, type Theme } from '../../lib/theme';
@@ -57,15 +58,22 @@ export default function Profile() {
 
       <StoryCard couple={couple} myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
       <CoupleInfoCard />
+      <PlusCard />
 
       <Section title="Birbirinizi tanıyın">
         <AboutUs myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
         {partnerProfile?.loveLanguage && (
-          <Card style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: t.colors.primarySoft, borderColor: t.colors.primarySoft }}>
+          <Card
+            style={{
+              flexDirection: 'row',
+              gap: 10,
+              alignItems: 'flex-start',
+              backgroundColor: t.colors.primarySoft,
+              borderColor: t.colors.primarySoft,
+            }}
+          >
             <Ionicons name="bulb-outline" size={20} color={t.colors.primary} />
-            <T style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>
-              {LOVE_TIPS[partnerProfile.loveLanguage as LoveLanguage]?.(partnerName)}
-            </T>
+            <T style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>{LOVE_TIPS[partnerProfile.loveLanguage as LoveLanguage]?.(partnerName)}</T>
           </Card>
         )}
         <PetNames />
@@ -105,7 +113,13 @@ export default function Profile() {
           <>
             <Muted>Tema sadece senin telefonunu değiştirir, {partnerName} kendi temasını seçer.</Muted>
             {THEME_LIST.map((theme) => (
-              <ThemeOption key={theme.id} theme={theme} selected={theme.id === t.id} saving={saving === theme.id} onPress={() => choose(theme)} />
+              <ThemeOption
+                key={theme.id}
+                theme={theme}
+                selected={theme.id === t.id}
+                saving={saving === theme.id}
+                onPress={() => choose(theme)}
+              />
             ))}
           </>
         )}
@@ -115,6 +129,40 @@ export default function Profile() {
       <EndCouple />
       <DeleteAccount />
     </Screen>
+  );
+}
+
+// Her zaman görünen 2miz Plus kartı: açıksa kimin hediye ettiği ve bitiş tarihi.
+function PlusCard() {
+  const t = useTheme();
+  const { user, partnerName } = useSession();
+  const plus = usePlus();
+  const until = plus.until ? new Date(plus.until).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) : '';
+  const line = plus.paid
+    ? `${plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
+    : plus.beta
+      ? 'Beta boyunca her şey açık'
+      : 'Sınırsız çark, oyun ve seyahat albümü';
+  return (
+    <Pressable
+      onPress={() => openPlus('card')}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 16,
+        borderRadius: t.radius.card,
+        backgroundColor: t.colors.primarySoft,
+        opacity: pressed ? 0.85 : 1,
+      })}
+    >
+      <Ionicons name={plus.paid ? 'gift' : 'heart'} size={24} color={t.colors.primary} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: t.colors.onPrimarySoft, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}>2miz Plus</Text>
+        <Text style={{ color: t.colors.onPrimarySoft, fontSize: 13, opacity: 0.85 }}>{line}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimarySoft} />
+    </Pressable>
   );
 }
 
@@ -195,7 +243,8 @@ function StoryCard({
             <Text style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>gündür birlikte</Text>
           </View>
           <Text style={{ color: on, opacity: 0.9, fontSize: 14, fontFamily: t.fonts.body }}>
-            Başlangıç: {prettyDate(couple.startDate!)}{upcoming ? `\n${upcoming}` : ''}
+            Başlangıç: {prettyDate(couple.startDate!)}
+            {upcoming ? `\n${upcoming}` : ''}
           </Text>
         </>
       ) : (
@@ -208,7 +257,17 @@ function StoryCard({
 }
 
 // İkinizi yan yana karşılaştıran tek kart: avatar ve ruh hali, sevgi dili, doğum günü, sevdikleri.
-function AboutUs({ myName, partnerName, me, partner }: { myName: string; partnerName: string; me: Profile | null; partner: Profile | null }) {
+function AboutUs({
+  myName,
+  partnerName,
+  me,
+  partner,
+}: {
+  myName: string;
+  partnerName: string;
+  me: Profile | null;
+  partner: Profile | null;
+}) {
   const t = useTheme();
   const people = [
     { name: myName, p: me, mine: true },
@@ -275,7 +334,10 @@ function AboutUs({ myName, partnerName, me, partner }: { myName: string; partner
       </View>
       {row('heart-outline', 'Sevgi dili', [lang(me), lang(partner)])}
       {row('gift-outline', 'Doğum günü', [bday(me), bday(partner)])}
-      {row('sparkles-outline', 'Sevdikleri', [me?.interests?.slice(0, 4).join(', ') || '–', partner?.interests?.slice(0, 4).join(', ') || '–'])}
+      {row('sparkles-outline', 'Sevdikleri', [
+        me?.interests?.slice(0, 4).join(', ') || '–',
+        partner?.interests?.slice(0, 4).join(', ') || '–',
+      ])}
       {!!common.length && (
         <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>
           <Muted style={{ fontSize: 12 }}>İkinizin de sevdikleri</Muted>
@@ -303,8 +365,6 @@ function AboutUs({ myName, partnerName, me, partner }: { myName: string; partner
     </Card>
   );
 }
-
-
 
 function Stat({ icon, value, label }: { icon: IconName; value: number | undefined; label: string }) {
   const t = useTheme();

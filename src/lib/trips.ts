@@ -19,8 +19,7 @@ import { logActivity } from './bond';
 import { shrink } from './photos';
 
 // Seyahat albümleri: galeriden seçilen fotoğraflar. Anlık selfie kuralı görevlerde ve sohbette kalır.
-// Fotoğraflar şimdilik Firestore'da; bu yüzden seyahat başına sınır var (premium'da yükselecek).
-export const TRIP_LIMIT = 20;
+// Fotoğraflar şimdilik Firestore'da; bu yüzden seyahat başına sınır var (ücretsiz 20, Plus 100; bkz. plus.ts).
 
 export type Trip = {
   id: string;
@@ -114,9 +113,10 @@ export async function addTripPhotos(
   trip: Trip,
   uid: string,
   uris: string[],
+  max: number,
   onProgress?: (done: number) => void,
 ) {
-  const room = Math.max(0, TRIP_LIMIT - trip.count);
+  const room = Math.max(0, max - trip.count);
   const list = uris.slice(0, room);
   let done = 0;
   for (const uri of list) {
