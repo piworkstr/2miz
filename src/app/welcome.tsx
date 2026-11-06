@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { Button, Muted, Screen } from '../components/ui';
 import { useTheme } from '../lib/useTheme';
 
@@ -8,7 +8,8 @@ export default function Welcome() {
   return (
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, paddingVertical: 40 }}>
-        <Text style={{ fontFamily: t.fonts.title, fontSize: 68, color: t.colors.primary }}>UsDaily</Text>
+        <Image source={require('../../assets/icon.png')} style={{ width: 120, height: 120, borderRadius: 28 }} />
+        <Image source={require('../../assets/wordmark.png')} style={{ width: 240, height: 68 }} resizeMode="contain" accessibilityLabel="us.daily" />
         <Muted style={{ textAlign: 'center', fontSize: 16, lineHeight: 23 }}>
           Her gün küçük bir görev, birlikte büyüyen bir hikaye.
         </Muted>
