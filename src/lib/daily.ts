@@ -111,7 +111,8 @@ export async function completeTask(
       const earned = modeOf(day, members) === 'shared' ? POINTS.shared : POINTS.separate;
       const streak = c.lastCompleteDay === yesterdayKey() ? c.streak + 1 : c.lastCompleteDay === key ? c.streak : 1;
       tx.update(ref, { rewarded: true });
-      tx.update(coupleRef, { points: c.points + earned, streak, lastCompleteDay: key });
+      const best = Math.max((c as { bestStreak?: number }).bestStreak ?? 0, streak);
+      tx.update(coupleRef, { points: c.points + earned, streak, bestStreak: best, lastCompleteDay: key });
     }
   });
 }

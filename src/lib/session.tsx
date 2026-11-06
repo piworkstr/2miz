@@ -24,6 +24,7 @@ export type Couple = {
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
+  bestStreak?: number;
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
@@ -36,6 +37,7 @@ type Session = {
   couple: Couple | null;
   partnerId: string | null;
   partnerName: string;
+  partnerProfile: Profile | null;
 };
 
 const SessionContext = createContext<Session>({
@@ -45,6 +47,7 @@ const SessionContext = createContext<Session>({
   couple: null,
   partnerId: null,
   partnerName: '',
+  partnerProfile: null,
 });
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -102,9 +105,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const partnerId = couple && user ? couple.members.find((m) => m !== user.uid) ?? null : null;
   const partnerName = (partnerId && couple?.names[partnerId]) || 'Partnerin';
 
+  // Partnerin profili (sevgi dili, doğum günü, ilgi alanları). Kurallar bunu sadece eşleşmiş partnere açar.
+  const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
+  useEffect(() => {
+    if (!partnerId) {
+      setPartnerProfile(null);
+      return;
+    }
+    return onSnapshot(
+      doc(db, 'users', partnerId),
+      (snap) => setPartnerProfile(snap.exists() ? (snap.data() as Profile) : null),
+      () => setPartnerProfile(null),
+    );
+  }, [partnerId]);
+
   return (
     <SessionContext.Provider
-      value={{ loading: !authReady || !coupleReady || !profileReady, user, profile, couple, partnerId, partnerName }}
+      value={{ loading: !authReady || !coupleReady || !profileReady, user, profile, couple, partnerId, partnerName, partnerProfile }}
     >
       {children}
     </SessionContext.Provider>

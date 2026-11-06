@@ -10,6 +10,10 @@ service cloud.firestore {
     // Herkes sadece kendi profilini okuyup yazabilir.
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
+      // Eşleşmiş partner profili okuyabilir (çift kimliği "davetEden_katılan" biçiminde).
+      allow read: if signedIn() && (
+        exists(/databases/$(database)/documents/couples/$(request.auth.uid + '_' + uid)) ||
+        exists(/databases/$(database)/documents/couples/$(uid + '_' + request.auth.uid)));
     }
 
     // Davet kodları: kodu bilen okuyabilir, liste halinde görülemez.
