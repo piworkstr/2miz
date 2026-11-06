@@ -3,6 +3,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -28,6 +30,8 @@ import {
   reportMessage,
   sendMessage,
   sendVoice,
+  setTyping,
+  usePartnerTyping,
   useMessagePhoto,
   useMessages,
   useVoiceFile,
@@ -46,6 +50,8 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [menu, setMenu] = useState<Message | null>(null);
   const startY = useRef(0);
+  const partnerTyping = usePartnerTyping(couple?.id, partnerId);
+  const lastTyping = useRef(0);
   const voice = useVoice((uri, ms) => {
     if (!couple || !user) return;
     voice.setHint('Sesli mesaj gönderiliyor…');
@@ -63,6 +69,10 @@ export default function Chat() {
       return () => {
         setFocused(false);
         setChatOpen(false);
+        if (couple && user && lastTyping.current) {
+          lastTyping.current = 0;
+          setTyping(couple.id, user.uid, null);
+        }
       };
     }, []),
   );
@@ -70,6 +80,22 @@ export default function Chat() {
   useEffect(() => {
     if (focused && couple && user) markRead(couple.id, user.uid);
   }, [focused, newest, couple?.id, user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Ses kaydederken partnere "ses kaydediyor…" gösterilir; 3 saniyede bir tazelenir.
+  useEffect(() => {
+    if (!couple || !user) return;
+    if (!voice.recording) {
+      if (lastTyping.current) {
+        lastTyping.current = 0;
+        setTyping(couple.id, user.uid, null);
+      }
+      return;
+    }
+    lastTyping.current = Date.now();
+    setTyping(couple.id, user.uid, 'voice');
+    const i = setInterval(() => setTyping(couple.id, user.uid, 'voice'), 3000);
+    return () => clearInterval(i);
+  }, [voice.recording]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || !couple || messages === null) return <Loading />;
   const uid = user.uid;
@@ -86,10 +112,26 @@ export default function Chat() {
     reactToMessage(couple.id, m, uid, emoji, { to: partnerId, fromName: profile?.name ?? 'Partnerin' }).catch(() => {});
   }
 
+  // Yazarken partnere "yazıyor…" gösterilir (en fazla 3 saniyede bir yazılır).
+  function onType(v: string) {
+    setText(v);
+    if (!couple) return;
+    const now = Date.now();
+    if (v.trim() && now - lastTyping.current > 3000) {
+      lastTyping.current = now;
+      setTyping(couple.id, uid, 'text');
+    } else if (!v.trim() && lastTyping.current) {
+      lastTyping.current = 0;
+      setTyping(couple.id, uid, null);
+    }
+  }
+
   async function send() {
     if (!text.trim() || sending || !couple) return;
     setSending(true);
     try {
+      lastTyping.current = 0;
+      setTyping(couple.id, uid, null);
       await sendMessage(couple.id, uid, text, null, { to: partnerId, fromName: profile?.name ?? 'Partnerin' });
       setText('');
     } finally {
@@ -107,7 +149,13 @@ export default function Chat() {
           <BondStreak compact />
           <BondHeart box={40} max={30} showLabel={false} />
         </View>
-        <Muted style={{ fontSize: 12 }}>Sadece ikiniz görürsünüz. Fotoğraflar anlık çekilir.</Muted>
+        {partnerTyping ? (
+          <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
+            {partnerTyping === 'voice' ? '🎤 ses kaydediyor…' : 'yazıyor…'}
+          </Text>
+        ) : (
+          <Muted style={{ fontSize: 12 }}>Sadece ikiniz görürsünüz. Fotoğraflar anlık çekilir.</Muted>
+        )}
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -116,6 +164,7 @@ export default function Chat() {
           data={visible}
           keyExtractor={(m) => m.id}
           contentContainerStyle={{ padding: 14, gap: 6 }}
+          ListHeaderComponent={partnerTyping ? <TypingBubble kind={partnerTyping} name={partnerName} /> : undefined}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', gap: 8, padding: 30, transform: [{ scaleY: -1 }] }}>
               <Ionicons name="chatbubbles-outline" size={36} color={t.colors.primary} />
@@ -159,7 +208,7 @@ export default function Chat() {
           </Pressable>
           <TextInput
             value={text}
-            onChangeText={setText}
+            onChangeText={onType}
             placeholder="Mesaj yaz…"
             placeholderTextColor={t.colors.muted}
             multiline
@@ -226,6 +275,48 @@ export default function Chat() {
 
       <MessageMenu m={menu} uid={uid} coupleId={couple.id} partnerName={partnerName} onClose={() => setMenu(null)} />
     </SafeAreaView>
+  );
+}
+
+// Partner yazarken ya da ses kaydederken listenin en altında beliren balon (üç nokta atar).
+function TypingBubble({ kind, name }: { kind: 'text' | 'voice'; name: string }) {
+  const t = useTheme();
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.timing(anim, { toValue: 1, duration: 1200, easing: Easing.linear, useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [anim]);
+  const dot = (i: number) => ({
+    opacity: anim.interpolate({ inputRange: [0, (i + 0.5) / 4, (i + 1.5) / 4, 1], outputRange: [0.3, 1, 0.3, 0.3], extrapolate: 'clamp' as const }),
+  });
+  return (
+    <View style={{ alignItems: 'flex-start', paddingTop: 4 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          backgroundColor: t.colors.card,
+          borderWidth: 1,
+          borderColor: t.colors.border,
+          borderRadius: 18,
+          borderBottomLeftRadius: 4,
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+        }}
+      >
+        {kind === 'voice' ? (
+          <>
+            <Ionicons name="mic" size={16} color={t.colors.primary} />
+            <Text style={{ fontSize: 13, color: t.colors.muted }}>{name} ses kaydediyor</Text>
+          </>
+        ) : null}
+        {[0, 1, 2].map((i) => (
+          <Animated.View key={i} style={[{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.colors.primary }, dot(i)]} />
+        ))}
+      </View>
+    </View>
   );
 }
 

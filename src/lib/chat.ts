@@ -213,6 +213,35 @@ export async function removeFromAlbum(coupleId: string, messageId: string) {
   await updateDoc(doc(messagesCol(coupleId), messageId), { inAlbum: false }).catch(() => {});
 }
 
+// "Yazıyor…" / "Ses kaydediyor…": kişi başı tek küçük belge; birkaç saniyede bir tazelenir.
+export type Typing = 'text' | 'voice' | null;
+const TYPING_FRESH_MS = 6000;
+
+export async function setTyping(coupleId: string, uid: string, kind: Typing) {
+  await setDoc(doc(db, 'couples', coupleId, 'presence', uid), { kind, atMs: Date.now() }).catch(() => {});
+}
+
+// Partnerin şu an yazıp yazmadığı. Tazelenmeyen durum 6 saniye sonra kendiliğinden kaybolur.
+export function usePartnerTyping(coupleId: string | undefined, partnerId: string | null): Typing {
+  const [state, setState] = useState<{ kind: Typing; atMs: number } | null>(null);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!coupleId || !partnerId) return;
+    return onSnapshot(
+      doc(db, 'couples', coupleId, 'presence', partnerId),
+      (s) => setState((s.data() as { kind: Typing; atMs: number } | undefined) ?? null),
+      () => setState(null),
+    );
+  }, [coupleId, partnerId]);
+  const active = !!state?.kind && Date.now() - state.atMs < TYPING_FRESH_MS;
+  useEffect(() => {
+    if (!active) return;
+    const i = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(i);
+  }, [active]);
+  return active ? state!.kind : null;
+}
+
 // Mesaja tepki: kişi başı tek emoji; aynısına tekrar basınca kalkar.
 export const REACTIONS = ['❤️', '😂', '😍', '😮', '😢', '👍', '🔥'];
 
