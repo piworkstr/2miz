@@ -73,6 +73,17 @@
         }
       ]
     ],
-    "scheme": "usdaily"
+    "scheme": "usdaily",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "61b32801-60da-4f82-8f2a-a26940aaf8df"
+      }
+    },
+    "owner": "tanerbentesens-team"
   }
 }
