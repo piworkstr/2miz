@@ -9,6 +9,7 @@ import { MoodSheet } from '../../components/MoodSheet';
 import { activeMood, MOODS } from '../../lib/avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
+import { GardenCard } from '../../components/GardenCard';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
@@ -125,10 +126,14 @@ export default function Today() {
 
       <OpenBonusCard />
 
+      <GardenCard />
+
       <SharedCalendar />
 
-
-      <Pressable onPress={() => router.push('/archive')} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}>
+      <Pressable
+        onPress={() => router.push('/archive')}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}
+      >
         <Ionicons name="time-outline" size={16} color={t.colors.primary} />
         <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Görev arşivi ve favoriler')}</Text>
       </Pressable>
@@ -420,7 +425,14 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
         ];
     return (
       <Pressable onPress={() => setOpen((o) => !o)} style={{ marginTop: 10 }}>
-        <Card style={{ gap: 10, paddingTop: 30, backgroundColor: day.rewarded ? t.colors.successSoft : t.colors.card, borderColor: day.rewarded ? t.colors.successSoft : t.colors.border }}>
+        <Card
+          style={{
+            gap: 10,
+            paddingTop: 30,
+            backgroundColor: day.rewarded ? t.colors.successSoft : t.colors.card,
+            borderColor: day.rewarded ? t.colors.successSoft : t.colors.border,
+          }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Ionicons name={day.rewarded ? 'checkmark-done-circle' : 'checkmark-circle'} size={26} color={t.colors.success} />
             <View style={{ flex: 1 }}>
@@ -499,12 +511,9 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           <Display style={{ fontSize: t.displaySize * 0.8 }}>{partnerTask.title}</Display>
         </Card>
       )}
-
-
     </>
   );
 }
-
 
 // Çarktan çıkıp kabul edilen bonus görevler. Yapınca biriniz "Tamamladım" der.
 function OpenBonusCard() {
@@ -521,7 +530,10 @@ function OpenBonusCard() {
     try {
       const ok = await finishOpenBonus(couple.id, id, user.uid, BONUS_POINTS);
       if (ok && partnerId) {
-        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi tamamladı 🎉`, taskById(taskId).title, { type: 'wheel', url: '/' });
+        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi tamamladı 🎉`, taskById(taskId).title, {
+          type: 'wheel',
+          url: '/',
+        });
       }
     } finally {
       setBusy(null);
@@ -532,7 +544,12 @@ function OpenBonusCard() {
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name="color-wand-outline" size={20} color={t.colors.primary} />
-        <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.surpriseTitle.endsWith('bonus') ? `${t.copy.surpriseTitle.slice(0, -5)}bonuslarınız` : `${t.copy.surpriseTitle}leriniz`)}</T>
+        <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
+          {tx(
+            t,
+            t.copy.surpriseTitle.endsWith('bonus') ? `${t.copy.surpriseTitle.slice(0, -5)}bonuslarınız` : `${t.copy.surpriseTitle}leriniz`,
+          )}
+        </T>
       </View>
       {open.map((o) => (
         <View key={o.id} style={{ gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.colors.border }}>

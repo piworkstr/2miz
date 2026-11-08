@@ -18,9 +18,10 @@ import { db } from './firebase';
 import { logActivity } from './bond';
 import { applyMove, newBlocks, type BlocksState } from './blocks';
 import { KNOW_ME, THIS_THAT } from './gameData';
+import { diceOf, fromView, legalMoves, newTavla, toView, type TavlaState, type View } from './tavla';
 import type { Couple } from './session';
 
-export type GameType = 'thisthat' | 'knowme' | 'memory' | 'blocks';
+export type GameType = 'thisthat' | 'knowme' | 'memory' | 'blocks' | 'tavla';
 export type GameStatus = 'invited' | 'declined' | 'playing' | 'done' | 'cancelled';
 
 export const GAMES: Record<GameType, { name: string; blurb: string; icon: string }> = {
@@ -28,6 +29,7 @@ export const GAMES: Record<GameType, { name: string; blurb: string; icon: string
   knowme: { name: 'Beni ne kadar tanıyorsun?', blurb: '5 soru · 3 dk', icon: 'help-circle-outline' },
   memory: { name: 'Anı eşleştirme', blurb: 'Selfielerinizle hafıza oyunu · 3 dk', icon: 'grid-outline' },
   blocks: { name: 'Birlikte Blok', blurb: 'Ortak tahta, sırayla hamle · aynı takımdasınız', icon: 'apps-outline' },
+  tavla: { name: 'Tavla', blurb: 'Klasik tavla, sırayla zar · kim kazanacak?', icon: 'dice-outline' },
 };
 
 export const INVITE_MINUTES = 15;
@@ -58,6 +60,7 @@ export type Game = {
   guess?: Record<string, number[]>;
   memory?: MemoryState;
   blocks?: BlocksState;
+  tavla?: TavlaState;
   finished?: Record<string, boolean>;
 };
 
@@ -157,6 +160,7 @@ export async function sendInvite(coupleId: string, from: string, to: string, typ
   }
   if (type === 'memory') extra = { memory: newMemory(await recentPhotoIds(coupleId), from, to) };
   if (type === 'blocks') extra = { blocks: newBlocks(to) };
+  if (type === 'tavla') extra = { tavla: newTavla(to) };
   const ref = await addDoc(gamesCol(coupleId), { ...base, ...extra, finished: {} });
   return ref.id;
 }
@@ -355,8 +359,12 @@ export async function placeBlock(coupleId: string, id: string, uid: string, slot
   });
 }
 
-// Devam eden Birlikte Blok oyunu (bildirim kaçarsa ana ekrandan geri dönülsün).
-export function useActiveBlocks(coupleId: string | undefined) {
+// Devam eden sıralı oyun (Birlikte Blok, Tavla): bildirim kaçarsa ana ekrandan geri dönülsün.
+export function turnOf(g: Game) {
+  return g.blocks?.turn ?? g.tavla?.turn ?? '';
+}
+
+export function useActiveTurnGame(coupleId: string | undefined) {
   const [game, setGame] = useState<Game | null>(null);
   useEffect(() => {
     if (!coupleId) return;
@@ -366,7 +374,7 @@ export function useActiveBlocks(coupleId: string | undefined) {
       (snap) => {
         const list = snap.docs
           .map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }))
-          .filter((g) => g.type === 'blocks' && g.blocks && !g.blocks.over);
+          .filter((g) => (g.type === 'blocks' && g.blocks && !g.blocks.over) || (g.type === 'tavla' && g.tavla && !g.tavla.winner));
         list.sort((a, b) => b.expiresAt - a.expiresAt);
         setGame(list[0] ?? null);
       },
@@ -374,4 +382,59 @@ export function useActiveBlocks(coupleId: string | undefined) {
     );
   }, [coupleId]);
   return game;
+}
+
+// ---------- Tavla ----------
+
+export const sideOf = (game: Game, uid: string) => (uid === game.from ? 'a' : 'b') as 'a' | 'b';
+
+// Zar atılır. Oynanacak hamle yoksa sıra hemen geçer.
+export async function rollTavla(coupleId: string, id: string, uid: string) {
+  const ref = doc(gamesCol(coupleId), id);
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    if (!s.exists()) return null;
+    const game = s.data() as Game;
+    const tv = game.tavla;
+    if (!tv || tv.turn !== uid || tv.rolled.length || tv.winner) return null;
+    const rolled = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    const blocked = legalMoves(toView(tv, sideOf(game, uid)), diceOf(rolled)).length === 0;
+    const next = uid === game.from ? game.to : game.from;
+    tx.update(
+      ref,
+      blocked ? { 'tavla.rolled': [], 'tavla.turn': next, 'tavla.last': { by: uid, dice: rolled, moves: 0 } } : { 'tavla.rolled': rolled },
+    );
+    return { rolled, blocked };
+  });
+}
+
+// Turun hamleleri telefonda yapılır (geri alınabilir), "Hamleyi bitir" ile tek seferde kaydedilir.
+export async function commitTavla(coupleId: string, id: string, uid: string, view: View, moves: number) {
+  const ref = doc(gamesCol(coupleId), id);
+  const coupleRef = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    const cs = await tx.get(coupleRef);
+    if (!s.exists()) return null;
+    const game = s.data() as Game;
+    const tv = game.tavla;
+    if (!tv || tv.turn !== uid || !tv.rolled.length || tv.winner) return null;
+    const next = uid === game.from ? game.to : game.from;
+    const won = view.offMe === 15;
+    const mars = won && view.offOpp === 0;
+    const state: TavlaState = {
+      ...tv,
+      ...fromView(view, sideOf(game, uid)),
+      turn: next,
+      rolled: [],
+      last: { by: uid, dice: tv.rolled, moves },
+      ...(won ? { winner: uid, mars } : {}),
+    };
+    tx.update(ref, { tavla: state });
+    if (won) {
+      const wins = (cs.data() as Couple | undefined)?.tavlaWins ?? {};
+      tx.update(coupleRef, { [`tavlaWins.${uid}`]: (wins[uid] ?? 0) + (mars ? 2 : 1) });
+    }
+    return state;
+  });
 }

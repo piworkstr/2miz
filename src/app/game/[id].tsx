@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Blocks } from '../../components/games/Blocks';
+import { Tavla } from '../../components/games/Tavla';
 import { KnowMe } from '../../components/games/KnowMe';
 import { Memory } from '../../components/games/Memory';
 import { ThisThat } from '../../components/games/ThisThat';
@@ -66,6 +67,7 @@ export default function GameScreen() {
       {game.type === 'knowme' && <KnowMe {...props} />}
       {game.type === 'memory' && <Memory {...props} />}
       {game.type === 'blocks' && <Blocks {...props} />}
+      {game.type === 'tavla' && <Tavla {...props} />}
     </Screen>
   );
 }

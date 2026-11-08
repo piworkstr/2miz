@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { notifyPartner } from '../lib/push';
-import { GAMES, sendInvite, useActiveBlocks, useMyOpenInvite, type GameType } from '../lib/games';
+import { GAMES, sendInvite, turnOf, useActiveTurnGame, useMyOpenInvite, type GameType } from '../lib/games';
 import { countGame, FREE, gamesToday, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -17,7 +17,7 @@ export function BoredCard() {
   const t = useTheme();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const open = useMyOpenInvite(couple?.id, user?.uid);
-  const active = useActiveBlocks(couple?.id);
+  const active = useActiveTurnGame(couple?.id);
   const [choosing, setChoosing] = useState(false);
   const [busy, setBusy] = useState<GameType | null>(null);
   const [error, setError] = useState('');
@@ -47,17 +47,19 @@ export function BoredCard() {
   }
 
   if (active && user) {
-    const mine = active.blocks!.turn === user.uid;
+    const mine = turnOf(active) === user.uid;
+    const name = GAMES[active.type].name;
     return (
       <Card accent>
         <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
-          {tx(t, mine ? 'Birlikte Blok: sıra sende' : 'Birlikte Blok sürüyor')}
+          {tx(t, mine ? `${name}: sıra sende` : `${name} sürüyor`)}
         </T>
         <Muted>
-          Ortak skorunuz {active.blocks!.score}. {mine ? `${partnerName} hamlesini yaptı.` : `${partnerName}'in hamlesi bekleniyor.`}
+          {active.blocks ? `Ortak skorunuz ${active.blocks.score}. ` : ''}
+          {mine ? `${partnerName} hamlesini yaptı.` : `${partnerName}'in hamlesi bekleniyor.`}
         </Muted>
         <Button
-          label={mine ? 'Hamleni yap' : 'Tahtaya bak'}
+          label={mine ? 'Hamleni yap' : 'Oyuna bak'}
           variant={mine ? 'primary' : 'secondary'}
           onPress={() => router.push({ pathname: '/game/[id]', params: { id: active.id } })}
         />
