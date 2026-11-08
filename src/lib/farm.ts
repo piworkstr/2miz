@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { doc, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
+import { dayKey } from './date';
 import type { Couple } from './session';
 
 // Bizim Çiftlik: çiftin ortak çiftliği (2.5D). Amaç: birlikte emek vermek ve emeğin meyvesini birlikte görmek.
@@ -63,6 +64,23 @@ export type Tile =
   | { k: 'decor'; item: DecorId };
 
 export type FarmLog = { by: string; text: string; at: number };
+// Kasaba siparişi: 1–3 ürün; depodan teslim edilir, ikisi de katkı yaparsa ortak hasat sayılır.
+export type Order = {
+  id: string;
+  items: Record<string, number>; // ürün → istenen
+  given: Record<string, number>; // ürün → teslim edilen
+  by: string[]; // katkı yapanlar
+  coins: number;
+  xp: number;
+  openAt: number; // bu zamandan önce görünmez (tamamlanan siparişin yerine 20 dk sonra yenisi)
+};
+// Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
+export type FarmNote = { by: string; text: string; at: number };
+export const NOTE_TREE = 3; // (0,3) karesi
+export const NOTE_MAX = 300;
+export const NOTES_PER_DAY = 10;
+export const ORDER_SLOTS = 3;
+export const ORDER_REFILL = 20 * MIN;
 // pos: herkesin en son çalıştığı kare; partnerin avatarı orada durur.
 // stock: depo (ürün adı → adet); harvests: ortak hasat sayısı (arazi bununla açılır).
 export type Farm = {
@@ -75,6 +93,8 @@ export type Farm = {
   pos: Record<string, number>;
   stock: Record<string, number>;
   harvests: number;
+  orders: Order[];
+  notes: FarmNote[];
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -108,13 +128,15 @@ export function newFarm(): Farm {
       if (ch === 'F') t = { k: 'decor', item: 'cesme' };
       tiles.push(t);
     }
-  return { v: 2, coins: 100, xp: 0, bought: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0 };
+  return { v: 2, coins: 100, xp: 0, bought: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
 }
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
   const f = couple?.farm as Farm | undefined;
-  return f && f.v === 2 ? { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0 } : newFarm();
+  return f && f.v === 2
+    ? { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0, orders: f.orders ?? [], notes: f.notes ?? [] }
+    : newFarm();
 }
 
 export const levelStart = (l: number) => 15 * l * (l - 1);
@@ -156,6 +178,44 @@ export const stockValue = (f: Farm, bonus = 1) =>
   Math.round(Object.entries(f.stock).reduce((a, [k, n]) => a + (PRICE[k] ?? 0) * n, 0) * bonus);
 export const bigReady = (f: Farm, now: number) =>
   f.tiles.map((t, i) => (t.k === 'crop' && CROPS[t.crop].big && cropReady(t, now) ? i : -1)).filter((i) => i >= 0);
+
+// ---------- Siparişler ----------
+// Çiftin şu an üretebildiği ürünlerden rastgele bir sipariş. Ödül: ham değerin 1,4 katı altın; her kalem 5 + her adet 3 tecrübe.
+export function makeOrder(f: Farm, now: number, openAt = now): Order {
+  const lv = levelOf(f.xp).level;
+  const pool: string[] = (Object.keys(CROPS) as CropId[]).filter((c) => CROPS[c].lvl <= lv && !CROPS[c].big);
+  for (const t of f.tiles) if (t.k === 'animal' && !pool.includes(ANIMALS[t.item].product)) pool.push(ANIMALS[t.item].product);
+  const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
+  const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
+  const items: Record<string, number> = {};
+  let value = 0;
+  let qty = 0;
+  for (const k of picks) {
+    const q = 1 + Math.floor(Math.random() * (PRICE[k] >= 40 ? 2 : 5));
+    items[k] = q;
+    value += PRICE[k] * q;
+    qty += q;
+  }
+  return {
+    id: `${now.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`,
+    items,
+    given: {},
+    by: [],
+    coins: Math.round(value * 1.4),
+    xp: 5 * picks.length + 3 * qty,
+    openAt,
+  };
+}
+export const orderDone = (o: Order) => Object.entries(o.items).every(([k, q]) => (o.given[k] ?? 0) >= q);
+export const orderLeft = (o: Order) => Object.fromEntries(Object.entries(o.items).map(([k, q]) => [k, Math.max(0, q - (o.given[k] ?? 0))]));
+// Depodan bu siparişe verilebilecek adet (kısmi teslim olur).
+export const canGive = (f: Farm, o: Order) => Object.entries(orderLeft(o)).reduce((a, [k, q]) => a + Math.min(q, f.stock[k] ?? 0), 0);
+// Pano hep ORDER_SLOTS sipariş tutar; eksikse üretilir.
+export function fillOrders(f: Farm, now: number) {
+  while (f.orders.length < ORDER_SLOTS) f.orders.push(makeOrder(f, now));
+}
+export const notesToday = (f: Farm, uid: string, now = Date.now()) =>
+  f.notes.filter((n) => n.by === uid && dayKey(new Date(n.at)) === dayKey(new Date(now))).length;
 
 export const cropReady = (t: Extract<Tile, { k: 'crop' }>, now: number) => now >= t.ready;
 export const animalReady = (t: Extract<Tile, { k: 'animal' }>, now: number) => now >= t.last + ANIMALS[t.item].mins * MIN;
@@ -199,7 +259,11 @@ export type Action =
   // Hasat günü: iki kişilik sahne canlıyken bütün hazır büyük ürünler toplanır.
   | { a: 'harvestDay'; i: number; scene: string }
   // Depoyu sat; pazar sahnesi canlıysa (hafta sonu, ikiniz) bir buçuk kat.
-  | { a: 'sell'; i: number; scene?: string };
+  | { a: 'sell'; i: number; scene?: string }
+  // Siparişe depodan teslim (kısmi olabilir); tamamlanınca ödül, ikisi de katkı yaptıysa ortak hasat.
+  | { a: 'deliver'; i: number; order: string }
+  // Not Ağacı'na not.
+  | { a: 'note'; i: number; text: string };
 
 export type Result = { farm: Farm; text: string; gained: number; ready?: number };
 
@@ -215,8 +279,17 @@ export function applyAction(
   now: number,
   live?: { kind: string } | null, // doğrulanmış canlı sahne (hasat günü / pazar)
 ): Result | string {
-  const f: Farm = { ...f0, tiles: [...f0.tiles], log: [...f0.log], pos: { ...f0.pos }, stock: { ...f0.stock } };
+  const f: Farm = {
+    ...f0,
+    tiles: [...f0.tiles],
+    log: [...f0.log],
+    pos: { ...f0.pos },
+    stock: { ...f0.stock },
+    orders: f0.orders.map((o) => ({ ...o, given: { ...o.given }, by: [...o.by] })),
+    notes: [...f0.notes],
+  };
   const put = (k: string, n = 1) => (f.stock[k] = (f.stock[k] ?? 0) + n);
+  fillOrders(f, now);
   const t = f.tiles[act.i];
   if (!t) return 'Böyle bir yer yok.';
   const lv = levelOf(f.xp).level;
@@ -312,6 +385,7 @@ export function applyAction(
     }
     case 'remove': {
       if (t.k !== 'animal' && t.k !== 'decor') return 'Kaldırılacak bir şey yok.';
+      if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
       const cost = t.k === 'animal' ? ANIMALS[t.item].cost : DECOR[t.item].cost;
       gained = Math.floor(cost / 2);
       f.coins += gained;
@@ -345,6 +419,45 @@ export function applyAction(
       f.coins += gained;
       f.stock = {};
       text = market ? `Pazar günü: ${n} ürün tezgâhta ${gained} altına gitti 🧺` : `${name} ${n} ürünü ${gained} altına sattı`;
+      break;
+    }
+    case 'deliver': {
+      const k = f.orders.findIndex((o) => o.id === act.order);
+      if (k < 0) return 'Bu sipariş artık yok.';
+      const o = f.orders[k];
+      if (o.openAt > now) return 'Bu sipariş henüz açılmadı.';
+      let moved = 0;
+      for (const [key, left] of Object.entries(orderLeft(o))) {
+        const n = Math.min(left, f.stock[key] ?? 0);
+        if (n <= 0) continue;
+        f.stock[key] = (f.stock[key] ?? 0) - n;
+        if (f.stock[key] <= 0) delete f.stock[key];
+        o.given[key] = (o.given[key] ?? 0) + n;
+        moved += n;
+      }
+      if (!moved) return 'Depoda bu siparişe uygun ürün yok.';
+      if (!o.by.includes(uid)) o.by.push(uid);
+      if (orderDone(o)) {
+        f.coins += o.coins;
+        f.xp += o.xp;
+        gained = o.coins;
+        const both = o.by.length >= 2;
+        if (both) f.harvests += 1;
+        f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
+        text = `${name} siparişi tamamladı: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
+      } else {
+        const left = Object.values(orderLeft(o)).reduce((a, b) => a + b, 0);
+        text = `${name} siparişe ${moved} ürün verdi; ${left} ürün kaldı`;
+      }
+      break;
+    }
+    case 'note': {
+      if (act.i !== NOTE_TREE) return 'Notlar yalnız Not Ağacı’na asılır.';
+      const txt = act.text.trim().slice(0, NOTE_MAX);
+      if (!txt) return 'Boş not olmaz.';
+      if (notesToday(f0, uid, now) >= NOTES_PER_DAY) return 'Bugünlük notlar doldu.';
+      f.notes = [{ by: uid, text: txt, at: now }, ...f.notes].slice(0, 40);
+      text = `${name} Not Ağacı’na bir not astı 🍃`;
       break;
     }
   }

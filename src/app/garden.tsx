@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, Path, Pattern, Polygon, Rect } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
@@ -11,6 +11,7 @@ import {
   ANIMALS,
   animalReady,
   bigReady,
+  canGive,
   CROPS,
   cropReady,
   DECOR,
@@ -23,6 +24,11 @@ import {
   MARKET_BONUS,
   MIN,
   N,
+  NOTE_MAX,
+  NOTE_TREE,
+  NOTES_PER_DAY,
+  notesToday,
+  orderLeft,
   parcelNeed,
   parcelOf,
   parcelTiles,
@@ -40,6 +46,7 @@ import {
   type CropId,
   type DecorId,
   type Farm,
+  type Order,
   type Season,
   type Tile,
 } from '../lib/farm';
@@ -395,6 +402,7 @@ export default function GardenScreen() {
   const [shop, setShop] = useState<Shop>('crop');
   const [plantAll, setPlantAll] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState('');
@@ -454,6 +462,7 @@ export default function GardenScreen() {
           const i = tileAt((e.nativeEvent.locationX - c.tx) / c.s, (e.nativeEvent.locationY - c.ty) / c.s);
           setSel((old) => (i < 0 || old === i ? null : i));
           setShowLog(false);
+          setShowOrders(false);
           setPlantAll(false);
         },
       }),
@@ -512,6 +521,9 @@ export default function GardenScreen() {
             planted++;
             plantedCrop = job.crop;
           }
+          if (job.a === 'note')
+            notifyPartner(partnerId, `${myName} Not Ağacı’na bir not astı 🍃`, job.text.slice(0, 80), { type: 'mood', url: '/garden' });
+          if (job.a === 'deliver' && r.gained) notifyPartner(partnerId, r.text, 'Bizim Çiftlik', { type: 'mood', url: '/garden' });
           if (job.a === 'water' && before.k === 'crop') {
             notifyPartner(
               before.by,
@@ -794,6 +806,10 @@ export default function GardenScreen() {
             plantAll={plantAll}
             setPlantAll={setPlantAll}
             showLog={showLog}
+            showOrders={showOrders}
+            onOrders={() => setShowOrders(true)}
+            onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
+            onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
             ready={ready.length}
             thirsty={thirsty}
             fields={fields}
@@ -806,6 +822,7 @@ export default function GardenScreen() {
             onClose={() => {
               setSel(null);
               setShowLog(false);
+              setShowOrders(false);
             }}
             onLog={() => setShowLog(true)}
             onAll={() =>
@@ -841,6 +858,10 @@ type SheetProps = {
   plantAll: boolean;
   setPlantAll: (v: boolean) => void;
   showLog: boolean;
+  showOrders: boolean;
+  onOrders: () => void;
+  onDeliver: (orderId: string) => void;
+  onNote: (text: string) => void;
   ready: number;
   thirsty: number;
   fields: number;
@@ -985,6 +1006,11 @@ function Sheet(p: SheetProps) {
   const { farm, sel, now } = p;
   const level = levelOf(farm.xp).level;
 
+  if (p.showOrders)
+    return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
+  if (sel === NOTE_TREE)
+    return <NoteTree farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onNote={p.onNote} />;
+
   if (p.showLog)
     return (
       <>
@@ -1006,6 +1032,7 @@ function Sheet(p: SheetProps) {
     const big = bigReady(farm, now).length;
     const weekend = isWeekend(now);
     const small = p.ready - big;
+    const deliverable = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
     return (
       <>
         <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>
@@ -1019,13 +1046,21 @@ function Sheet(p: SheetProps) {
         {big > 0 && <Btn kind="accent" label={`Hasat günü · ${p.partnerName}’i çağır`} onPress={() => p.onScene('harvest')} />}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Btn flex label={`Topla${small > 0 ? ` (${small})` : ''}`} onPress={p.onAll} disabled={small <= 0} />
+          <Btn
+            flex
+            kind={deliverable ? 'accent' : 'soft'}
+            label={`Siparişler${deliverable ? ` (${deliverable})` : ''}`}
+            onPress={p.onOrders}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
           {n > 0 &&
             (weekend ? (
               <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
             ) : (
               <Btn flex kind="soft" label={`Sat · ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
-          <Btn kind="soft" label="Günlük" onPress={p.onLog} />
+          <Btn flex kind="soft" label="Günlük" onPress={p.onLog} />
         </View>
         {n > 0 && (
           <Note>
@@ -1234,6 +1269,151 @@ function Sheet(p: SheetProps) {
         }
       />
       <Items list={placeList()} level={level} coins={farm.coins} onPick={(a) => p.onAct(a)} />
+    </>
+  );
+}
+
+// Kasaba siparişleri: 3 açık sipariş; depodan teslim edilir, ikisi de katkı verirse ortak hasat sayılır.
+function Orders({
+  farm,
+  now,
+  uid,
+  partnerName,
+  onClose,
+  onDeliver,
+}: {
+  farm: Farm;
+  now: number;
+  uid: string;
+  partnerName: string;
+  onClose: () => void;
+  onDeliver: (id: string) => void;
+}) {
+  const who = (o: Order) => (o.by.length ? o.by.map((b) => (b === uid ? 'sen' : partnerName)).join(' + ') : '');
+  return (
+    <>
+      <Head title="Kasaba siparişleri" onClose={onClose} />
+      <Note>Siparişi depodan teslim edin; ikiniz de katkı verirseniz ortak hasat sayılır. Ödül ham satışın 1,4 katı.</Note>
+      <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
+        {farm.orders.length === 0 && <Note>Kasaba ilk işinizden sonra sipariş göndermeye başlar.</Note>}
+        {farm.orders.map((o) => {
+          const open = o.openAt <= now;
+          const give = canGive(farm, o);
+          const left = orderLeft(o);
+          return (
+            <View
+              key={o.id}
+              style={{ borderWidth: 1, borderColor: '#F0E2DC', borderRadius: 14, padding: 10, gap: 6, opacity: open ? 1 : 0.55 }}
+            >
+              {open ? (
+                <>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                    {Object.entries(o.items).map(([k, q]) => (
+                      <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        {ART[k] && <Image source={ART[k].src} style={{ width: 22, height: 22 }} resizeMode="contain" />}
+                        <Text style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
+                          {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ flex: 1, color: MUTED, fontSize: 12 }}>
+                      +{o.coins} altın · +{o.xp} tecrübe{who(o) ? ` · ${who(o)}` : ''}
+                    </Text>
+                    <Btn
+                      kind={give ? 'green' : 'soft'}
+                      label={give ? `Teslim et (${give})` : 'Depoda yok'}
+                      onPress={() => onDeliver(o.id)}
+                      disabled={!give}
+                    />
+                  </View>
+                </>
+              ) : (
+                <Text style={{ color: MUTED, fontSize: 13 }}>Yeni sipariş {timeLeft(o.openAt - now)} sonra</Text>
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </>
+  );
+}
+
+// Not Ağacı: evin yanındaki ağaç. Kısa notlar; yalnız ikiniz görürsünüz.
+function NoteTree({
+  farm,
+  now,
+  uid,
+  partnerName,
+  onClose,
+  onNote,
+}: {
+  farm: Farm;
+  now: number;
+  uid: string;
+  partnerName: string;
+  onClose: () => void;
+  onNote: (text: string) => void;
+}) {
+  const [text, setText] = useState('');
+  const leftToday = NOTES_PER_DAY - notesToday(farm, uid, now);
+  return (
+    <>
+      <Head art="tree" title="Not Ağacı" onClose={onClose} />
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder={farm.notes.length ? 'Bir not as…' : 'İlk notu sen as: “Bugün seni düşündüm.”'}
+          placeholderTextColor={MUTED}
+          maxLength={NOTE_MAX}
+          multiline
+          style={{
+            flex: 1,
+            minHeight: 44,
+            maxHeight: 90,
+            borderWidth: 1,
+            borderColor: '#F0E2DC',
+            borderRadius: 12,
+            padding: 10,
+            color: INK,
+            fontSize: 14,
+          }}
+        />
+        <Btn
+          label="As"
+          disabled={!text.trim() || leftToday <= 0}
+          onPress={() => {
+            onNote(text);
+            setText('');
+          }}
+        />
+      </View>
+      <ScrollView style={{ maxHeight: 170 }} contentContainerStyle={{ gap: 6 }}>
+        {farm.notes.length === 0 && <Note>Ağaç boş. Birbirinize kısa notlar bırakın; yalnız ikiniz görürsünüz.</Note>}
+        {farm.notes.map((n, k) => {
+          const mine = n.by === uid;
+          return (
+            <View
+              key={k}
+              style={{
+                alignSelf: mine ? 'flex-end' : 'flex-start',
+                maxWidth: '85%',
+                backgroundColor: mine ? '#EAF6DF' : '#FFF4E6',
+                borderRadius: 12,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ color: INK, fontSize: 14 }}>{n.text}</Text>
+              <Text style={{ color: MUTED, fontSize: 10, textAlign: mine ? 'right' : 'left' }}>
+                {mine ? 'sen' : partnerName} · {ago(now - n.at)}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
     </>
   );
 }
