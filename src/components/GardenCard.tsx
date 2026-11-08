@@ -1,14 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { ANIMALS, COLS, CROPS, DECOR, farmOf, farmSummary, levelOf, type Tile } from '../lib/farm';
+import { Image, Pressable, Text, View } from 'react-native';
+import { farmOf, farmSummary, levelOf } from '../lib/farm';
+import { ART } from '../lib/farmArt';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted, T } from './ui';
 
-// Ana ekranda Bizim Bahçe'nin küçük önizlemesi; dokununca çiftlik açılır.
+// Ana ekranda Bizim Bahçe kartı; dokununca 2.5D çiftlik açılır.
 export function GardenCard() {
   const t = useTheme();
   const { user, couple, partnerName } = useSession();
@@ -21,37 +22,34 @@ export function GardenCard() {
 
   const farm = farmOf(couple);
   const { level } = levelOf(farm.xp);
-  const { ready, canWater } = farmSummary(farm, user.uid, now);
+  const { ready, canWater, fields } = farmSummary(farm, user.uid, now);
+  const fresh = !couple.farm || (couple.farm as { v?: number }).v !== 2;
   const line =
     ready > 0
-      ? `${ready} ürün toplanmaya hazır ✨`
+      ? `${ready} ürün toplanmaya hazır`
       : canWater > 0
         ? `${partnerName}’in ektiği ${canWater} ürün sulanmayı bekliyor 💧`
-        : !couple.farm
+        : fresh
           ? 'Ortak çiftliğiniz sizi bekliyor. İlk tohumları ekin!'
-          : 'Ürünler büyüyor. Boş tarla varsa ekin.';
+          : `${fields} tarlanız var. Ürünler büyüyor.`;
 
   return (
     <Pressable onPress={() => router.push('/garden')}>
       <Card style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
         <View
-          style={{ width: 92, padding: 3, borderRadius: 10, backgroundColor: '#8BC34A', flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+          style={{
+            width: 92,
+            height: 80,
+            borderRadius: 14,
+            backgroundColor: '#A9D46C',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            overflow: 'hidden',
+          }}
         >
-          {farm.tiles.map((tl, i) => (
-            <View
-              key={i}
-              style={{
-                width: (86 - (COLS - 1)) / COLS,
-                height: (86 - (COLS - 1)) / COLS,
-                borderRadius: 3,
-                backgroundColor: tl.k === 'locked' ? '#5D7A3A' : tl.k === 'soil' || tl.k === 'crop' ? '#8D6E63' : '#8BC34A',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 10 }}>{mini(tl, now)}</Text>
-            </View>
-          ))}
+          <Image source={ART.soil.src} style={{ position: 'absolute', left: -6, bottom: -4, width: 60, height: 37 }} />
+          <Image source={ART.bugday.src} style={{ position: 'absolute', left: 34, bottom: -8, width: 58, height: 51 }} />
+          <Image source={ART.barn.src} style={{ position: 'absolute', left: 4, top: 2, width: 52, height: 54 }} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -59,7 +57,7 @@ export function GardenCard() {
             <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
           </View>
           <Muted style={{ fontSize: 12 }}>
-            Seviye {level} · {farm.coins} 🪙
+            Seviye {level} · {farm.coins} altın
           </Muted>
           <Text style={{ color: ready || canWater ? t.colors.primary : t.colors.text, fontSize: 14, fontFamily: t.fonts.body }}>
             {line}
@@ -68,11 +66,4 @@ export function GardenCard() {
       </Card>
     </Pressable>
   );
-}
-
-function mini(tl: Tile, now: number) {
-  if (tl.k === 'crop') return now >= tl.ready ? CROPS[tl.crop].art : '🌱';
-  if (tl.k === 'animal') return ANIMALS[tl.item].art;
-  if (tl.k === 'decor') return DECOR[tl.item].art;
-  return '';
 }

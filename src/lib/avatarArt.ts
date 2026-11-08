@@ -22,21 +22,84 @@ export type AvatarData = { kind: 'drawn'; opts: AvatarOpts } | { kind: 'photo'; 
 export const OPTIONS = {
   skin: ['ffdbb4', 'edb98a', 'd08b5b', 'ae5d29', '614335', 'fd9841', 'f8d25c'],
   top: [
-    'bob', 'bun', 'curly', 'curvy', 'straight01', 'straight02', 'straightAndStrand', 'longButNotTooLong', 'bigHair', 'miaWallace',
-    'frida', 'fro', 'froBand', 'dreads', 'dreads01', 'dreads02', 'frizzle', 'shaggy', 'shaggyMullet', 'shortCurly', 'shortFlat',
-    'shortRound', 'shortWaved', 'sides', 'theCaesar', 'theCaesarAndSidePart', 'shavedSides', 'hijab', 'turban', 'hat',
-    'winterHat1', 'winterHat02', 'winterHat03', 'winterHat04',
+    'bob',
+    'bun',
+    'curly',
+    'curvy',
+    'straight01',
+    'straight02',
+    'straightAndStrand',
+    'longButNotTooLong',
+    'bigHair',
+    'miaWallace',
+    'frida',
+    'fro',
+    'froBand',
+    'dreads',
+    'dreads01',
+    'dreads02',
+    'frizzle',
+    'shaggy',
+    'shaggyMullet',
+    'shortCurly',
+    'shortFlat',
+    'shortRound',
+    'shortWaved',
+    'sides',
+    'theCaesar',
+    'theCaesarAndSidePart',
+    'shavedSides',
+    'hijab',
+    'turban',
+    'hat',
+    'winterHat1',
+    'winterHat02',
+    'winterHat03',
+    'winterHat04',
   ],
   hairColor: ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'd6b370', 'c93305', 'f59797', 'ecdcbf', 'e8e1e1'],
   facialHair: ['none', 'beardLight', 'beardMedium', 'beardMajestic', 'moustacheFancy', 'moustacheMagnum'],
   accessories: ['none', 'prescription01', 'prescription02', 'round', 'wayfarers', 'sunglasses', 'kurt'],
-  clothing: ['hoodie', 'shirtCrewNeck', 'shirtScoopNeck', 'shirtVNeck', 'graphicShirt', 'collarAndSweater', 'blazerAndShirt', 'blazerAndSweater', 'overall'],
-  clothesColor: ['ff488e', 'ff5c5c', 'ffafb9', 'ffffb1', 'a7ffc4', 'b1e2ff', '65c9ff', '5199e4', '25557c', '3c4f5c', '262e33', '929598', 'e6e6e6', 'ffffff'],
+  clothing: [
+    'hoodie',
+    'shirtCrewNeck',
+    'shirtScoopNeck',
+    'shirtVNeck',
+    'graphicShirt',
+    'collarAndSweater',
+    'blazerAndShirt',
+    'blazerAndSweater',
+    'overall',
+  ],
+  clothesColor: [
+    'ff488e',
+    'ff5c5c',
+    'ffafb9',
+    'ffffb1',
+    'a7ffc4',
+    'b1e2ff',
+    '65c9ff',
+    '5199e4',
+    '25557c',
+    '3c4f5c',
+    '262e33',
+    '929598',
+    'e6e6e6',
+    'ffffff',
+  ],
   bg: ['ffd5dc', 'ffdfbf', 'fff3b0', 'd1f2d9', 'c0e8f9', 'd9d2f5', 'f4f0ec', 'e8516a'],
   eyes: ['default', 'happy', 'wink', 'winkWacky', 'side', 'squint', 'surprised', 'hearts', 'eyeRoll', 'closed'],
   eyebrows: [
-    'defaultNatural', 'default', 'flatNatural', 'raisedExcitedNatural', 'raisedExcited', 'upDownNatural', 'upDown',
-    'frownNatural', 'angryNatural', 'unibrowNatural',
+    'defaultNatural',
+    'default',
+    'flatNatural',
+    'raisedExcitedNatural',
+    'raisedExcited',
+    'upDownNatural',
+    'upDown',
+    'frownNatural',
+    'angryNatural',
+    'unibrowNatural',
   ],
   mouth: ['smile', 'default', 'twinkle', 'tongue', 'serious', 'eating', 'disbelief', 'grimace', 'concerned'],
 } satisfies Record<keyof AvatarOpts, string[]>;
@@ -56,7 +119,7 @@ export const DEFAULT_OPTS: AvatarOpts = {
 };
 
 export function randomOpts(): AvatarOpts {
-  const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+  const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
   return {
     skin: pick(OPTIONS.skin),
     top: pick(OPTIONS.top),
@@ -94,14 +157,43 @@ export function activeMood(m?: { key: MoodKey; atMs: number } | null): MoodKey |
 
 const svgCache = new Map<string, string>();
 
+// Hayal dünyalarındaki karakter için: daire kırpması olmadan, şeffaf zeminde baş ve omuzlar.
+export function avatarBustSvg(o: AvatarOpts): string {
+  const key = JSON.stringify(['bust', o]);
+  const hit = svgCache.get(key);
+  if (hit) return hit;
+  let svg = createAvatar(avataaars, {
+    seed: 'usdaily',
+    backgroundColor: ['transparent'],
+    skinColor: [o.skin],
+    top: [o.top as never],
+    topProbability: 100,
+    hairColor: [o.hairColor],
+    hatColor: [o.clothesColor],
+    facialHair: o.facialHair === 'none' ? undefined : [o.facialHair as never],
+    facialHairProbability: o.facialHair === 'none' ? 0 : 100,
+    facialHairColor: [o.hairColor],
+    accessories: o.accessories === 'none' ? undefined : [o.accessories as never],
+    accessoriesProbability: o.accessories === 'none' ? 0 : 100,
+    accessoriesColor: ['262e33'],
+    clothing: [o.clothing as never],
+    clothesColor: [o.clothesColor],
+    clothingGraphic: ['pizza'],
+    eyes: ['happy' as never],
+    mouth: ['smile' as never],
+    eyebrows: [(o.eyebrows ?? 'defaultNatural') as never],
+  }).toString();
+  svg = svg.replace(/<metadata[\s\S]*?<\/metadata>/, '');
+  svgCache.set(key, svg);
+  return svg;
+}
+
 // face: sadece yüzü yakından gösteren önizleme (göz/kaş/ağız seçimi için).
 export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = true, face = false): string {
   const key = JSON.stringify([o, mood, withBg, face]);
   const hit = svgCache.get(key);
   if (hit) return hit;
-  const [eyes, mouth, eyebrows] = mood
-    ? MOODS[mood].face
-    : [o.eyes ?? 'default', o.mouth ?? 'smile', o.eyebrows ?? 'defaultNatural'];
+  const [eyes, mouth, eyebrows] = mood ? MOODS[mood].face : [o.eyes ?? 'default', o.mouth ?? 'smile', o.eyebrows ?? 'defaultNatural'];
   let svg = createAvatar(avataaars, {
     seed: 'usdaily',
     style: ['circle'],
@@ -131,4 +223,3 @@ export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = t
   svgCache.set(key, svg);
   return svg;
 }
-
