@@ -28,7 +28,7 @@ export const GAMES: Record<GameType, { name: string; blurb: string; icon: string
   thisthat: { name: 'Bu mu, o mu?', blurb: '10 hızlı seçim · 2 dk', icon: 'git-compare-outline' },
   knowme: { name: 'Beni ne kadar tanıyorsun?', blurb: '5 soru · 3 dk', icon: 'help-circle-outline' },
   memory: { name: 'Anı eşleştirme', blurb: 'Selfielerinizle hafıza oyunu · 3 dk', icon: 'grid-outline' },
-  blocks: { name: 'Birlikte Blok', blurb: 'Ortak tahta, sırayla hamle · aynı takımdasınız', icon: 'apps-outline' },
+  blocks: { name: 'Birlikte Blok', blurb: 'Parçayı sürükle bırak · ortak tahta, 3’lü setle sıra', icon: 'apps-outline' },
   tavla: { name: 'Tavla', blurb: 'Klasik tavla, sırayla zar · kim kazanacak?', icon: 'dice-outline' },
 };
 
@@ -338,7 +338,7 @@ export async function endTurn(coupleId: string, id: string, next: string) {
 
 // ---------- Birlikte Blok ----------
 
-// Ortak tahtaya parça koyar; sıra partnere geçer. Oyun bitince çiftin rekoru güncellenir.
+// Ortak tahtaya parça koyar. Set bitince sıra partnere geçer. Oyun bitince çiftin rekoru güncellenir.
 export async function placeBlock(coupleId: string, id: string, uid: string, slot: number, r: number, c: number) {
   const ref = doc(gamesCol(coupleId), id);
   const coupleRef = doc(db, 'couples', coupleId);
@@ -350,7 +350,7 @@ export async function placeBlock(coupleId: string, id: string, uid: string, slot
     const b = game.blocks;
     if (!b || b.turn !== uid) return null;
     const next = uid === game.from ? game.to : game.from;
-    const res = applyMove(b, slot, r, c, uid === game.from ? 1 : 2, uid, next);
+    const res = applyMove(b, slot, r, c, uid, next);
     if (!res) return null;
     tx.update(ref, { blocks: res.state });
     const best = (cs.data() as Couple | undefined)?.blocksBest ?? 0;

@@ -1,189 +1,368 @@
-import { useEffect, useState } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
-import { fits, PIECES, SIZE } from '../../lib/blocks';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Avatar } from '../Avatar';
+import { anyFits, clearedCells, COLORS, fits, fullLines, SHAPES, shapeSize, SIZE, type BlocksState, type Piece } from '../../lib/blocks';
 import { placeBlock, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
-import { useTheme } from '../../lib/useTheme';
-import { Button, Card, Muted } from '../ui';
-import { Done, ResultHeader, useFinishOnce } from './shared';
+import { useFinishOnce } from './shared';
 
-// Birlikte Blok: ortak tahta, ortak puan. Sırası gelen eldeki parçalardan birini koyar,
-// dolan satır/sütunlar silinir, sıra partnere geçer. Hiçbir parça sığmayınca oyun biter.
-export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: GameProps) {
-  const t = useTheme();
-  const { couple } = useSession();
-  const { width } = useWindowDimensions();
-  const b = game.blocks!;
-  const [slot, setSlot] = useState<number | null>(null);
-  const [cell, setCell] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [flash, setFlash] = useState('');
-  useFinishOnce(b.over, game, coupleId, uid);
+// Birlikte Blok: Block Blast oynanışı. Parçayı alttan sürükleyip tahtaya bırakırsın; sürüklerken gölgesi ve
+// dolacak satırlar görünür. Sen üç parçanı koyunca sıradaki set partnere geçer. Tahta ve puan ortak.
 
-  useEffect(() => {
-    setGameOpen(game.id);
-    return () => setGameOpen(null);
-  }, [game.id]);
+const BG = '#2A2D66';
+const CELL_BG = '#262A63';
+const PRAISE = ['', 'Güzel!', 'Harika!', 'Muhteşem!', 'İnanılmaz!'];
 
-  const myTurn = b.turn === uid && !b.over;
-  // Sıra değişince seçim sıfırlansın.
-  useEffect(() => {
-    setSlot(null);
-    setCell(null);
-  }, [b.moves]);
-
-  const board = Math.min(width - 40, 380);
-  const gap = 3;
-  const cs = (board - gap * (SIZE - 1)) / SIZE;
-  const mine = uid === game.from ? 1 : 2;
-  const colorOf = (v: number) => (v === mine ? t.colors.primary : t.colors.text);
-
-  const piece = slot !== null ? b.hand[slot] : -1;
-  const r = cell !== null ? Math.floor(cell / SIZE) : -1;
-  const c = cell !== null ? cell % SIZE : -1;
-  const ghost = new Set<number>();
-  let ghostOk = false;
-  if (piece >= 0 && cell !== null) {
-    ghostOk = fits(b.board, piece, r, c);
-    for (const [dr, dc] of PIECES[piece]) if (r + dr < SIZE && c + dc < SIZE) ghost.add((r + dr) * SIZE + c + dc);
-  }
-  const lastCells = new Set(b.last && b.last.by !== uid ? b.last.cells : []);
-
-  async function place() {
-    if (!myTurn || busy || slot === null || cell === null || !ghostOk) return;
-    setBusy(true);
-    try {
-      const res = await placeBlock(coupleId, game.id, uid, slot, r, c);
-      if (res) {
-        setFlash(res.lines > 0 ? `${res.lines} satır gitti! +${res.gained}` : `+${res.gained}`);
-        setTimeout(() => setFlash(''), 1600);
-        notifyPartner(
-          partnerId,
-          res.state.over ? 'Birlikte Blok bitti 🧩' : 'Sıra sende 🧩',
-          res.state.over ? `Ortak skorunuz ${res.state.score}` : `${myName} hamlesini yaptı. Skorunuz ${res.state.score}`,
-          { type: 'game', url: `/game/${game.id}` },
-        );
-      }
-    } catch {
-      // ağ hatası: seçim kalsın, tekrar denenebilir
-    }
-    setBusy(false);
-  }
-
-  const grid = (
-    <View style={{ width: board, alignSelf: 'center', flexDirection: 'row', flexWrap: 'wrap', gap }}>
-      {b.board.map((v, i) => {
-        const g = ghost.has(i);
-        const bg = g ? (ghostOk ? t.colors.primarySoft : t.colors.border) : v ? colorOf(v) : t.colors.card;
-        return (
-          <Pressable
-            key={i}
-            disabled={!myTurn || slot === null}
-            onPress={() => (cell === i && ghostOk ? place() : setCell(i))}
-            style={{
-              width: cs,
-              height: cs,
-              borderRadius: 5,
-              backgroundColor: bg,
-              borderWidth: g || lastCells.has(i) ? 2 : 1,
-              borderColor: g ? (ghostOk ? t.colors.primary : t.colors.muted) : lastCells.has(i) ? t.colors.primary : t.colors.border,
-              opacity: v && !g ? (v === mine ? 1 : 0.8) : 1,
-            }}
-          />
-        );
-      })}
-    </View>
-  );
-
-  if (b.over) {
-    const best = couple?.blocksBest ?? 0;
-    return (
-      <Done>
-        <ResultHeader
-          big={String(b.score)}
-          line={`${b.moves} hamle, ${b.lines} satır. ${b.score >= best ? 'Yeni çift rekorunuz!' : `Rekorunuz ${best}`}`}
-          game={game}
-          uid={uid}
-        />
-        {grid}
-      </Done>
-    );
-  }
-
+function Cube({ size, color, radius = 5 }: { size: number; color: string; radius?: number }) {
   return (
-    <>
-      <Card style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}>
-        <Stat label="Ortak skor" value={String(b.score)} />
-        <Stat label="Silinen satır" value={String(b.lines)} />
-        <Stat label="Rekorunuz" value={String(couple?.blocksBest ?? 0)} />
-      </Card>
-      <Text style={{ textAlign: 'center', color: myTurn ? t.colors.primary : t.colors.muted, fontWeight: '600', fontFamily: t.fonts.body }}>
-        {flash || (myTurn ? (slot === null ? 'Senin sıran: bir parça seç' : 'Koymak istediğin yere dokun') : `${partnerName} düşünüyor…`)}
-      </Text>
-      {grid}
-
-      <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center' }}>
-        {b.hand.map((p, i) => (
-          <Pressable
-            key={i}
-            disabled={p < 0 || !myTurn}
-            onPress={() => setSlot(slot === i ? null : i)}
-            style={{
-              flex: 1,
-              height: 92,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: Math.min(t.radius.card, 14),
-              borderWidth: slot === i ? 2 : 1,
-              borderColor: slot === i ? t.colors.primary : t.colors.border,
-              backgroundColor: slot === i ? t.colors.primarySoft : t.colors.card,
-              opacity: p < 0 ? 0.25 : myTurn ? 1 : 0.6,
-            }}
-          >
-            {p >= 0 && <Mini piece={p} color={t.colors.primary} />}
-          </Pressable>
-        ))}
-      </View>
-
-      {myTurn && slot !== null && cell !== null && (
-        <Button
-          label={ghostOk ? 'Buraya koy' : 'Buraya sığmıyor'}
-          variant={ghostOk ? 'primary' : 'secondary'}
-          busy={busy}
-          onPress={place}
-        />
-      )}
-      <Muted style={{ textAlign: 'center', fontSize: 12 }}>
-        Aynı takımdasınız: parçalar ortak, puan ortak. Senin koyduğun kareler renkli, {partnerName}’inkiler koyu.
-      </Muted>
-    </>
+    <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: color, overflow: 'hidden' }}>
+      <View style={{ height: Math.max(2, size * 0.14), backgroundColor: 'rgba(255,255,255,0.35)' }} />
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: Math.max(2, size * 0.18),
+          backgroundColor: 'rgba(0,0,0,0.22)',
+        }}
+      />
+    </View>
   );
 }
 
-function Mini({ piece, color }: { piece: number; color: string }) {
-  const cells = PIECES[piece];
-  const rows = Math.max(...cells.map(([r]) => r)) + 1;
-  const cols = Math.max(...cells.map(([, c]) => c)) + 1;
-  const s = Math.min(16, 64 / Math.max(rows, cols));
+function PieceView({ p, cell, gap = 2, ghost }: { p: NonNullable<Piece>; cell: number; gap?: number; ghost?: boolean }) {
+  const { rows, cols } = shapeSize(p.s);
+  const w = cols * cell + (cols - 1) * gap;
+  const h = rows * cell + (rows - 1) * gap;
   return (
-    <View style={{ width: cols * s, height: rows * s }}>
-      {cells.map(([r, c]) => (
-        <View
-          key={`${r}-${c}`}
-          style={{ position: 'absolute', left: c * s, top: r * s, width: s - 2, height: s - 2, borderRadius: 3, backgroundColor: color }}
-        />
+    <View style={{ width: w, height: h, opacity: ghost ? 0.45 : 1 }}>
+      {SHAPES[p.s].cells.map(([r, c]) => (
+        <View key={`${r}-${c}`} style={{ position: 'absolute', left: c * (cell + gap), top: r * (cell + gap) }}>
+          <Cube size={cell} color={COLORS[p.col]} radius={Math.max(3, cell * 0.18)} />
+        </View>
       ))}
     </View>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  const t = useTheme();
+export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: GameProps) {
+  const { couple, profile, partnerProfile } = useSession();
+  const b = game.blocks!;
+  const myTurn = b.turn === uid && !b.over;
+  useFinishOnce(b.over, game, coupleId, uid);
+
+  const [W, setW] = useState(0);
+  const PAD = 6;
+  const GAP = 2;
+  const cell = W ? Math.floor((W - PAD * 2 - GAP * (SIZE - 1)) / SIZE) : 36;
+  const boardPx = cell * SIZE + GAP * (SIZE - 1) + PAD * 2;
+
+  // Hamle sırasında yerel görüntü: parça konur, satır parlar ve silinir, sonra sunucu durumu gelir.
+  const [local, setLocal] = useState<BlocksState | null>(null);
+  const [clearing, setClearing] = useState<number[]>([]);
+  const [flash, setFlash] = useState('');
+  const [hidden, setHidden] = useState<number | null>(null); // sürüklenen parçanın yuvası
+  const [drag, setDrag] = useState<{ slot: number; p: NonNullable<Piece>; x: number; y: number } | null>(null);
+  const [ghost, setGhost] = useState<{ cells: number[]; glow: number[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const shown = local ?? b;
+
+  useEffect(() => {
+    setGameOpen(game.id);
+    return () => setGameOpen(null);
+  }, [game.id]);
+  // Sunucudan yeni durum gelince yerel görüntüyü bırak.
+  useEffect(() => {
+    setLocal(null);
+    setClearing([]);
+  }, [b.score, b.sets, b.turn, b.board.join('')]);
+
+  // Tahtanın ve kapsayıcının pencere konumu: sürüklenen parça parmağın pencere koordinatıyla konumlanır.
+  const boardPos = useRef({ x: 0, y: 0 });
+  const rootPos = useRef({ x: 0, y: 0 });
+  const boardEl = useRef<{ measureInWindow: (cb: (x: number, y: number) => void) => void } | null>(null);
+  const rootEl = useRef<{ measureInWindow: (cb: (x: number, y: number) => void) => void } | null>(null);
+  const measureBoard = () => {
+    boardEl.current?.measureInWindow((x, y) => (boardPos.current = { x, y }));
+    rootEl.current?.measureInWindow((x, y) => (rootPos.current = { x, y }));
+  };
+
+  const stateRef = useRef({ b: shown, myTurn, busy, cell, boardPx });
+  stateRef.current = { b: shown, myTurn, busy, cell, boardPx };
+
+  // Parça parmağın biraz üstünde taşınır; bırakınca en yakın kareye oturur.
+  const dragSlotRef = useRef<number | null>(null);
+  const dropRef = useRef<{ r: number; c: number } | null>(null);
+  const liftY = () => stateRef.current.cell * 1.4;
+
+  const posFor = (pageX: number, pageY: number, p: NonNullable<Piece>) => {
+    const { cell: cz } = stateRef.current;
+    const { rows, cols } = shapeSize(p.s);
+    const w = cols * (cz + GAP) - GAP;
+    const h = rows * (cz + GAP) - GAP;
+    const x = pageX - w / 2;
+    const y = pageY - h - liftY();
+    const c = Math.round((x - boardPos.current.x - PAD) / (cz + GAP));
+    const r = Math.round((y - boardPos.current.y - PAD) / (cz + GAP));
+    return { x, y, r, c };
+  };
+
+  function onMove(pageX: number, pageY: number) {
+    const slot = dragSlotRef.current;
+    if (slot === null) return;
+    const p = stateRef.current.b.tray[slot];
+    if (!p) return;
+    const { x, y, r, c } = posFor(pageX, pageY, p);
+    setDrag({ slot, p, x, y });
+    const cells = SHAPES[p.s].cells;
+    if (fits(stateRef.current.b.board, cells, r, c)) {
+      dropRef.current = { r, c };
+      const ids = cells.map(([dr, dc]) => (r + dr) * SIZE + c + dc);
+      const nb = [...stateRef.current.b.board];
+      ids.forEach((i) => (nb[i] = 1));
+      setGhost({ cells: ids, glow: clearedCells(fullLines(nb)) });
+    } else {
+      dropRef.current = null;
+      setGhost(null);
+    }
+  }
+
+  async function onDrop() {
+    const slot = dragSlotRef.current;
+    dragSlotRef.current = null;
+    const target = dropRef.current;
+    dropRef.current = null;
+    setDrag(null);
+    setGhost(null);
+    setHidden(null);
+    if (slot === null || !target || stateRef.current.busy) return;
+    const cur = stateRef.current.b;
+    const p = cur.tray[slot];
+    if (!p) return;
+    setBusy(true);
+    // Önce yerelde göster: parça konur, dolan satırlar beyaza döner.
+    const cells = SHAPES[p.s].cells;
+    const nb = [...cur.board];
+    cells.forEach(([dr, dc]) => (nb[(target.r + dr) * SIZE + target.c + dc] = p.col + 1));
+    const full = fullLines(nb);
+    const cleared = clearedCells(full);
+    setLocal({ ...cur, board: nb, tray: cur.tray.map((x, i) => (i === slot ? null : x)) });
+    if (cleared.length) setClearing(cleared);
+    try {
+      const res = await placeBlock(coupleId, game.id, uid, slot, target.r, target.c);
+      if (res) {
+        if (res.lines) {
+          const n = res.lines;
+          setFlash(
+            `${PRAISE[Math.min(4, n + (res.state.combo > 1 ? 1 : 0))]} +${res.gained}${res.state.combo > 1 ? ` · ${res.state.combo}x kombo` : ''}`,
+          );
+        } else setFlash(`+${res.gained}`);
+        setTimeout(() => setFlash(''), 1500);
+        if (res.setEnded) {
+          notifyPartner(
+            partnerId,
+            res.state.over ? 'Birlikte Blok bitti 🧩' : 'Sıra sende 🧩',
+            res.state.over ? `Ortak skorunuz ${res.state.score}` : `${myName} setini koydu. Skorunuz ${res.state.score}`,
+            { type: 'game', url: `/game/${game.id}` },
+          );
+        }
+      } else setLocal(null);
+    } catch {
+      setLocal(null);
+    }
+    setBusy(false);
+  }
+
+  const makeResponder = (slot: number) =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => stateRef.current.myTurn && !stateRef.current.busy && !!stateRef.current.b.tray[slot],
+      onMoveShouldSetPanResponder: () => stateRef.current.myTurn && !stateRef.current.busy && !!stateRef.current.b.tray[slot],
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => {
+        measureBoard();
+        dragSlotRef.current = slot;
+        setHidden(slot);
+        onMove(e.nativeEvent.pageX, e.nativeEvent.pageY);
+      },
+      onPanResponderMove: (e) => onMove(e.nativeEvent.pageX, e.nativeEvent.pageY),
+      onPanResponderRelease: onDrop,
+      onPanResponderTerminate: onDrop,
+    });
+  const responders = useMemo(() => [0, 1, 2].map(makeResponder), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const best = couple?.blocksBest ?? 0;
+  const lastCells = new Set(b.last && b.last.by !== uid ? b.last.cells : []);
+  const ghostSet = new Set(ghost?.cells ?? []);
+  const glowSet = new Set(ghost?.glow ?? []);
+  const clearSet = new Set(clearing);
+  const trayCell = Math.max(14, Math.floor(cell * 0.5));
+
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: t.colors.text }}>{value}</Text>
-      <Muted style={{ fontSize: 12 }}>{label}</Muted>
+    <View
+      style={{ flex: 1, margin: -20, marginTop: -8, backgroundColor: BG, padding: 16, paddingTop: 8, gap: 12 }}
+      onLayout={(e) => setW(Math.min(e.nativeEvent.layout.width - 32, 420))}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
+          <Ionicons name="close" size={26} color="#fff" />
+        </Pressable>
+        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Birlikte Blok</Text>
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Ortak skor</Text>
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '900' }}>{shown.score}</Text>
+        </View>
+        <View style={{ alignItems: 'center', gap: 4 }}>
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
+            {b.over ? 'Oyun bitti' : myTurn ? 'Senin setin' : `${partnerName} oynuyor…`}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            <View style={{ opacity: myTurn ? 1 : 0.45, borderWidth: 2, borderColor: myTurn ? '#FFD34D' : 'transparent', borderRadius: 18 }}>
+              <Avatar p={profile} name={myName} size={30} showMood={false} />
+            </View>
+            <View
+              style={{
+                opacity: !myTurn && !b.over ? 1 : 0.45,
+                borderWidth: 2,
+                borderColor: !myTurn && !b.over ? '#FFD34D' : 'transparent',
+                borderRadius: 18,
+              }}
+            >
+              <Avatar p={partnerProfile} name={partnerName} size={30} showMood={false} />
+            </View>
+          </View>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Rekor</Text>
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '900' }}>{best}</Text>
+        </View>
+      </View>
+
+      {/* tahta */}
+      <View
+        ref={(v) => (boardEl.current = v as never)}
+        onLayout={measureBoard}
+        style={{
+          alignSelf: 'center',
+          width: boardPx,
+          height: boardPx,
+          padding: PAD,
+          borderRadius: 12,
+          backgroundColor: '#1E2150',
+          borderWidth: 2,
+          borderColor: '#4A4F9E',
+        }}
+      >
+        {shown.board.map((v, i) => {
+          const r = Math.floor(i / SIZE);
+          const c = i % SIZE;
+          const g = ghostSet.has(i);
+          const glow = glowSet.has(i);
+          const clr = clearSet.has(i);
+          return (
+            <View
+              key={i}
+              style={{
+                position: 'absolute',
+                left: PAD + c * (cell + GAP),
+                top: PAD + r * (cell + GAP),
+                width: cell,
+                height: cell,
+                borderRadius: 5,
+                backgroundColor: clr ? '#fff' : v ? 'transparent' : g && drag ? COLORS[drag.p.col] : CELL_BG,
+                opacity: g && !v ? 0.45 : 1,
+                borderWidth: glow ? 2 : lastCells.has(i) ? 1.5 : 0,
+                borderColor: glow ? '#fff' : 'rgba(255,255,255,0.5)',
+              }}
+            >
+              {v > 0 && !clr && <Cube size={cell} color={COLORS[v - 1]} />}
+            </View>
+          );
+        })}
+      </View>
+
+      <Text style={{ textAlign: 'center', color: '#FFD34D', fontSize: 20, fontWeight: '900', minHeight: 26 }}>{flash}</Text>
+
+      {/* el */}
+      <View style={{ flexDirection: 'row', gap: 8, minHeight: 100, alignSelf: 'center', width: boardPx }}>
+        {[0, 1, 2].map((k) => {
+          const p = shown.tray[k];
+          return (
+            <View key={k} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} {...(p ? responders[k].panHandlers : {})}>
+              {p && hidden !== k && (
+                <View style={{ opacity: myTurn ? 1 : 0.35 }}>
+                  <PieceView p={p} cell={trayCell} />
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+
+      <Text style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
+        Parçayı sürükleyip tahtaya bırak. Satır ya da sütun dolunca silinir. Sen 3 parçanı koyunca sıradaki set {partnerName}’a gider.
+      </Text>
+
+      {b.over && <GameOver score={b.score} best={best} />}
+
+      {drag && (
+        <View
+          pointerEvents="none"
+          style={{ position: 'absolute', left: drag.x - winOffset.current.x, top: drag.y - winOffset.current.y, zIndex: 50 }}
+        >
+          <PieceView p={drag.p} cell={cell} />
+        </View>
+      )}
+      <View
+        style={{ position: 'absolute', left: 0, top: 0 }}
+        onLayout={() => {}}
+        ref={(v) => v?.measureInWindow((x, y) => (winOffset.current = { x, y }))}
+      />
     </View>
+  );
+}
+// Sürüklenen parça ekran koordinatıyla konumlanır; kapsayıcının pencere ofseti düşülür.
+const winOffset = { current: { x: 0, y: 0 } };
+
+function GameOver({ score, best }: { score: number; best: number }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(v, { toValue: 1, useNativeDriver: true, speed: 14 }).start();
+  }, [v]);
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: 24,
+        right: 24,
+        top: '38%',
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        padding: 18,
+        alignItems: 'center',
+        gap: 6,
+        transform: [{ scale: v }],
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+      }}
+    >
+      <Text style={{ fontSize: 44, fontWeight: '900', color: '#4C7CF0' }}>{score}</Text>
+      <Text style={{ color: '#2B1D22', fontWeight: '700' }}>{score >= best ? 'Yeni çift rekorunuz!' : `Rekorunuz ${best}`}</Text>
+      <Text style={{ color: '#8A7479', fontSize: 12 }}>Günün ilk oyunuysa ikinize de +10 puan</Text>
+      <Pressable
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        style={{ marginTop: 6, backgroundColor: '#4C7CF0', borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10 }}
+      >
+        <Text style={{ color: '#fff', fontWeight: '800' }}>Bitir</Text>
+      </Pressable>
+    </Animated.View>
   );
 }

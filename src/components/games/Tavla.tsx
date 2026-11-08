@@ -10,7 +10,7 @@ import { Button, Muted } from '../ui';
 import { Done, ResultHeader, useFinishOnce } from './shared';
 
 // Tavla: deri kutulu, keçe zeminli tahta. Gidilecek yer gösterilmez; oyuncu pulu sürükler ya da pula sonra haneye dokunur.
-// Tur telefonda oynanır (geri alınabilir), "Hamleyi bitir" ile kaydedilir. Partnerin hamleleri pul pul kayarak görünür.
+// Tur telefonda oynanır; oynanacak hamle kalmayınca 1,5 sn sonra kendiliğinden kaydedilir (geri al iptal eder). Partnerin hamleleri pul pul kayarak görünür.
 
 const CREAM = ['#FFF9EA', '#EFE3C6', '#D6C39C'];
 const BROWN = ['#8E4A33', '#6A3022', '#4A1D14'];
@@ -329,6 +329,25 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   const legal = myTurn && rolled && !animating ? legalMoves(view, dice) : [];
   const turnDone = myTurn && rolled && !animating && legal.length === 0;
 
+  // Tur bitince kısa bir bekleme: son pulu yanlış koyduysan "Geri al" bu süreyi iptal eder.
+  const [countdown, setCountdown] = useState(false);
+  const finishRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (!turnDone || busy) {
+      setCountdown(false);
+      return;
+    }
+    setCountdown(true);
+    const t = setTimeout(
+      () => {
+        setCountdown(false);
+        finishRef.current();
+      },
+      hist.length ? 1500 : 400,
+    );
+    return () => clearTimeout(t);
+  }, [turnDone, busy, hist.length]);
+
   function tryMove(from: number, to: number) {
     const m = legal.filter((x) => x.from === from && x.to === to).sort((a, b) => a.die - b.die)[0];
     if (!m) {
@@ -421,6 +440,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   }
 
   async function finishTurn() {
+    if (busy) return;
     setBusy(true);
     try {
       const s = await commitTavla(coupleId, game.id, uid, view, path);
@@ -437,6 +457,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
     }
     setBusy(false);
   }
+
+  finishRef.current = finishTurn;
 
   function undo() {
     const last = hist[hist.length - 1];
@@ -591,8 +613,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
           ? 'Sıra sende, zarı at'
           : turnDone
             ? dice.length
-              ? 'Kalan zar oynanamıyor. Hamleni bitir.'
-              : 'Hamlen tamam'
+              ? 'Kalan zar oynanamıyor, sıra geçiyor…'
+              : 'Hamlen tamam, sıra geçiyor…'
             : `Kalan zar: ${dice.join(', ')}`);
 
   return (
@@ -623,11 +645,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
         </>,
       )}
       {myTurn && !rolled && !animating && <Button label="Zar at" busy={busy} onPress={roll} />}
-      {myTurn && rolled && !animating && (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button style={{ flex: 1 }} variant="secondary" label="Geri al" onPress={undo} />
-          {turnDone && <Button style={{ flex: 1 }} label="Hamleyi bitir" busy={busy} onPress={finishTurn} />}
-        </View>
+      {myTurn && rolled && !animating && hist.length > 0 && !busy && (
+        <Button variant="secondary" label={countdown ? 'Geri al (1,5 sn)' : 'Geri al'} onPress={undo} />
       )}
       <Muted style={{ textAlign: 'center', fontSize: 12 }}>
         Pulu parmağınla sürükle ya da önce pula sonra gideceği haneye dokun. Toplarken sağdaki kutuya bırak. Mars 2 sayı.
