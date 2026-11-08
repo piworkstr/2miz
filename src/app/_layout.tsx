@@ -50,6 +50,9 @@ function RootNavigator() {
           <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
           <Stack.Screen name="garden" />
+          <Stack.Screen name="dreams" />
+          <Stack.Screen name="dream/sea" />
+          <Stack.Screen name="dream/house" />
           <Stack.Screen name="plus" options={{ presentation: 'modal' }} />
           <Stack.Screen name="trip/new" />
           <Stack.Screen name="trip/[id]" />

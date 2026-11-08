@@ -28,6 +28,8 @@ export type Couple = {
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
   farm?: import('./farm').Farm; // Bizim Bahçe (ortak çiftlik)
+  sea?: import('./dreams').Sea; // Mavi Yolculuk
+  home?: import('./dreams').Home; // Sahilde Ev
   dreamBank?: number; // günlük görevden gelen, hayal dünyasında toplanmayı bekleyen altın
   dreamVotes?: Record<string, Record<string, boolean>>; // hangi hayal dünyasını kim istiyor
   dreamNote?: string; // çiftin gerçek hayali (ör. emeklilikte tekneyle koy koy gezmek)
