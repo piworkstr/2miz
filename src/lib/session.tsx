@@ -27,7 +27,7 @@ export type Couple = {
   startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
-  garden?: import('./garden').Garden; // Bizim Bahçe
+  farm?: import('./farm').Farm; // Bizim Bahçe (ortak çiftlik)
   tavlaWins?: Record<string, number>; // tavla skor tablosu (mars 2 sayılır)
   blocksBest?: number; // Birlikte Blok çift rekoru
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
