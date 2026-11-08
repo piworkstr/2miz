@@ -3,9 +3,10 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { DART } from '../lib/dreamArt';
-import { homeOf, HOUSE_LV, ritualState, seaOf } from '../lib/dreams';
+import { bay, homeOf, HOUSE_LV, houseLevel, seaOf } from '../lib/dreams';
 import { farmOf, farmSummary } from '../lib/farm';
 import { ART } from '../lib/farmArt';
+import { useOpenScene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
@@ -16,6 +17,9 @@ export function GardenCard() {
   const t = useTheme();
   const { user, couple, partnerName } = useSession();
   const [now, setNow] = useState(Date.now());
+  const openSea = useOpenScene(couple?.id, 'sea');
+  const openHome = useOpenScene(couple?.id, 'home');
+  const openFarm = useOpenScene(couple?.id, 'farm');
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(i);
@@ -27,28 +31,29 @@ export function GardenCard() {
   const home = homeOf(couple);
   const { ready, canWater } = farmSummary(farm, user.uid, now);
   const bank = couple.dreamBank ?? 0;
-  const waitHome = home.tiles.some(
-    (x, i) => x.k === 'item' && ritualState(home, i).length === 1 && !ritualState(home, i).includes(user.uid),
-  );
-  const sun = sea.sunset && !sea.sunset.joined && sea.sunset.by !== user.uid;
+  // Partnerin başlattığı ve beni beklediği sahne
+  const call = [openSea, openHome, openFarm].find((s) => s && s.by !== user.uid);
+  const where = call ? (call.world === 'sea' ? `${bay(sea.at).name}’e` : call.world === 'home' ? 'Sahilde Ev’e' : 'çiftliğe') : '';
 
-  const line = bank
-    ? `Günlük görevden ${bank} altın kumbarada`
-    : sun
-      ? `${partnerName} seni gün batımına çağırıyor 🌅`
-      : waitHome
-        ? `${partnerName} seni Sahilde Ev’de bekliyor 💛`
-        : ready
-          ? `Çiftlikte ${ready} ürün toplanmaya hazır`
-          : canWater
-            ? `${partnerName}’in ektiği ${canWater} ürün sulanmayı bekliyor 💧`
-            : sea.trip
-              ? 'Tekneniz yolda ⛵'
-              : 'Çiftlik, tekne ve sahildeki ev sizi bekliyor.';
-  const hot = !!(bank || sun || waitHome || ready || canWater);
+  const line = call
+    ? `${partnerName} seni ${where} çağırıyor 💛`
+    : bank
+      ? `Günlük görevden ${bank} altın kumbarada`
+      : ready
+        ? `Çiftlikte ${ready} ürün toplanmaya hazır`
+        : canWater
+          ? `${partnerName}’in ektiği ${canWater} ürün sulanmayı bekliyor 💧`
+          : sea.trip
+            ? `Tekneniz ${bay(sea.trip.to).name} yolunda ⛵`
+            : 'Çiftlik, tekne ve sahildeki ev sizi bekliyor.';
+  const hot = !!(call || bank || ready || canWater);
 
   return (
-    <Pressable onPress={() => router.push('/dreams')}>
+    <Pressable
+      onPress={() =>
+        router.push(call ? (call.world === 'sea' ? '/dream/sea' : call.world === 'home' ? '/dream/house' : '/garden') : '/dreams')
+      }
+    >
       <Card style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Hayalimiz')}</T>
@@ -59,11 +64,19 @@ export function GardenCard() {
           {[
             { bg: '#8BC34F', src: ART.barn.src },
             { bg: '#4FA8D8', src: DART[sea.boat].src },
-            { bg: '#E99AB8', src: DART[HOUSE_LV[home.lvl - 1].art].src },
+            { bg: '#E99AB8', src: DART[HOUSE_LV[houseLevel(home) - 1].art as keyof typeof DART].src },
           ].map((w, k) => (
             <View
               key={k}
-              style={{ flex: 1, height: 64, borderRadius: 12, backgroundColor: w.bg, alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                flex: 1,
+                height: 64,
+                borderRadius: 12,
+                backgroundColor: w.bg,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
             >
               <Image source={w.src} style={{ width: 62, height: 54 }} resizeMode="contain" />
             </View>

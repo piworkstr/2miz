@@ -4,198 +4,237 @@ import { farmOf, MIN, type Farm } from './farm';
 import { db } from './firebase';
 import type { Couple } from './session';
 
-// Hayalimiz: Mavi Yolculuk ve Sahilde Ev. Altın üç dünyada ortak ve çiftliğin cüzdanında (farm.coins) durur.
+// Hayalimiz: Mavi Yolculuk ve Sahilde Ev veri modeli ve tek kişilik işlemler.
+// İki kişilik sahneler scenes.ts'de. Altın üç dünyada ortak ve çiftliğin cüzdanında (farm.coins) durur.
 
 // ---------- Mavi Yolculuk ----------
 
 export type BoatId = 'sandal' | 'motor' | 'gulet' | 'yat';
 export type FishId = 'cipura' | 'levrek' | 'barbun' | 'ahtapot';
-export const BOATS: Record<BoatId, { name: string; cost: number; speed: number; rank: number; w: number }> = {
-  sandal: { name: 'Sandal', cost: 0, speed: 1, rank: 1, w: 70 },
-  motor: { name: 'Balıkçı teknesi', cost: 300, speed: 1.6, rank: 2, w: 84 },
-  gulet: { name: 'Gulet', cost: 900, speed: 2.2, rank: 3, w: 92 },
-  yat: { name: 'Motor yat', cost: 2500, speed: 3, rank: 4, w: 104 },
+// need: tekneyi almak için birlikte yaşanmış sahne sayısı. Tekneyi para değil birliktelik büyütür.
+export const BOATS: Record<BoatId, { name: string; cost: number; need: number; speed: number; rank: number; w: number }> = {
+  sandal: { name: 'Sandal', cost: 0, need: 0, speed: 1, rank: 1, w: 150 },
+  motor: { name: 'Balıkçı teknesi', cost: 200, need: 3, speed: 1.6, rank: 2, w: 170 },
+  gulet: { name: 'Gulet', cost: 600, need: 10, speed: 2.2, rank: 3, w: 190 },
+  yat: { name: 'Motor yat', cost: 1500, need: 25, speed: 3, rank: 4, w: 210 },
 };
-export const ISLANDS = [
+// Gerçek koylar. x,y haritada (0-1). rank: gidebilen en küçük tekne.
+export const BAYS = [
   {
-    id: 'liman',
-    name: 'Balıkçı Limanı',
-    art: 'ada4',
-    x: 0.26,
-    y: 0.84,
-    w: 124,
-    need: 1,
+    id: 'gocek',
+    name: 'Göcek',
+    x: 0.22,
+    y: 0.86,
+    rank: 1,
     camp: false,
     fish: ['cipura', 'barbun'] as FishId[],
-    line: 'Tekneniz burada bağlı. Yolculuk buradan başlar.',
+    note: 'Mavi yolculuğun başladığı liman. Marinadan çıkınca on iki ada sizi bekler.',
   },
   {
-    id: 'kumlu',
-    name: 'Kumlu Koy',
-    art: 'ada1',
-    x: 0.74,
-    y: 0.66,
-    w: 112,
-    need: 1,
-    camp: true,
-    fish: ['cipura', 'barbun', 'levrek'] as FishId[],
-    line: 'Sığ, berrak su. Gün batımı çok güzel.',
-  },
-  {
-    id: 'gizli',
-    name: 'Gizli Koy',
-    art: 'ada2',
-    x: 0.26,
-    y: 0.5,
-    w: 128,
-    need: 2,
-    camp: true,
-    fish: ['levrek', 'barbun', 'ahtapot'] as FishId[],
-    line: 'Kayaların arkasında saklı bir kumsal.',
-  },
-  {
-    id: 'zeytin',
-    name: 'Zeytinli Ada',
-    art: 'ada3',
-    x: 0.73,
-    y: 0.34,
-    w: 134,
-    need: 3,
+    id: 'kleopatra',
+    name: 'Kleopatra Hamamı',
+    x: 0.7,
+    y: 0.74,
+    rank: 1,
     camp: false,
-    fish: ['levrek', 'cipura', 'ahtapot'] as FishId[],
-    line: 'Zeytin ağaçları arasında küçük beyaz bir ev.',
+    fish: ['cipura', 'levrek'] as FishId[],
+    note: 'Suyun içinde antik hamam kalıntıları. Söylenceye göre Kleopatra burada yıkanmış.',
   },
   {
-    id: 'fener',
-    name: 'Fener Burnu',
-    art: 'fener',
+    id: 'bedri',
+    name: 'Bedri Rahmi Koyu',
+    x: 0.28,
+    y: 0.62,
+    rank: 1,
+    camp: true,
+    fish: ['barbun', 'levrek'] as FishId[],
+    note: 'Ressam Bedri Rahmi’nin kayaya çizdiği balık hâlâ duruyor. Çam gölgesinde kamp için ideal.',
+  },
+  {
+    id: 'sarisu',
+    name: 'Sarı Su',
+    x: 0.72,
+    y: 0.5,
+    rank: 2,
+    camp: true,
+    fish: ['levrek', 'cipura'] as FishId[],
+    note: 'Tatlı suyun denize karıştığı geniş kumsal. Sabahları sessiz.',
+  },
+  {
+    id: 'kelebek',
+    name: 'Kelebekler Vadisi',
     x: 0.3,
-    y: 0.17,
-    w: 70,
-    need: 4,
+    y: 0.38,
+    rank: 2,
+    camp: true,
+    fish: ['levrek', 'ahtapot'] as FishId[],
+    note: 'İki kaya duvarın arasında saklı vadi. Haziranda kelebekler uçuşur.',
+  },
+  {
+    id: 'kas',
+    name: 'Kaş',
+    x: 0.7,
+    y: 0.27,
+    rank: 3,
+    camp: false,
+    fish: ['ahtapot', 'cipura'] as FishId[],
+    note: 'Begonvilli sokaklar, küçük liman. Akşam yemeği için en güzel kasaba.',
+  },
+  {
+    id: 'kekova',
+    name: 'Kekova',
+    x: 0.28,
+    y: 0.16,
+    rank: 3,
     camp: false,
     fish: ['ahtapot', 'levrek'] as FishId[],
-    line: 'Açık denizin kıyısı. Yalnızca motor yatla gidilir.',
+    note: 'Suyun altında batık şehir görünür. Yüzmek yasak, tekneden izlenir.',
+  },
+  {
+    id: 'kaputas',
+    name: 'Kaputaş',
+    x: 0.68,
+    y: 0.07,
+    rank: 4,
+    camp: false,
+    fish: ['cipura', 'barbun'] as FishId[],
+    note: 'Dik kayaların arasında turkuaz bir koy. Denizden girmek karadan inmekten güzel.',
   },
 ];
-export type IslandId = (typeof ISLANDS)[number]['id'];
-export const FISH: Record<FishId, { name: string; sell: number }> = {
-  cipura: { name: 'Çipura', sell: 12 },
-  levrek: { name: 'Levrek', sell: 15 },
-  barbun: { name: 'Barbun', sell: 10 },
-  ahtapot: { name: 'Ahtapot', sell: 30 },
+export type BayId = (typeof BAYS)[number]['id'];
+export const FISH: Record<FishId, { name: string }> = {
+  cipura: { name: 'Çipura' },
+  levrek: { name: 'Levrek' },
+  barbun: { name: 'Barbun' },
+  ahtapot: { name: 'Ahtapot' },
 };
-export const CASTS_PER_DAY = 5;
-export const CAMP_COST = 40;
+export const CASTS_PER_DAY = 3;
 
-export type Memory = { t: string; at: number; art: string };
 export type Sea = {
   boat: BoatId;
+  boatName: string;
   at: string;
   trip: { from: string; to: string; start: number; end: number; by: string } | null;
   visited: Record<string, boolean>;
-  camps: Record<string, boolean>;
-  casts: Record<string, { day: string; n: number }>; // kişi başına günlük olta hakkı
-  catch: Partial<Record<FishId, number>>;
-  sunset: { at: string; day: string; by: string; joined?: boolean } | null; // biri davet eder, diğeri katılır
-  mem: Memory[];
+  camps: Record<string, boolean>; // kamp kurulan koylar (çadır kalır)
+  casts: Record<string, { day: string; n: number }>;
+  catch: Partial<Record<FishId, number>>; // teknedeki balıklar (akşam yemeğinde yenir)
+  realRoute: string[]; // "gerçekte de gidelim" denen koylar
 };
-
-export const island = (id: string) => ISLANDS.find((i) => i.id === id) ?? ISLANDS[0];
+export const bay = (id: string) => BAYS.find((b) => b.id === id) ?? BAYS[0];
 export function newSea(): Sea {
-  return { boat: 'sandal', at: 'liman', trip: null, visited: { liman: true }, camps: {}, casts: {}, catch: {}, sunset: null, mem: [] };
+  return {
+    boat: 'sandal',
+    boatName: 'Sandalımız',
+    at: 'gocek',
+    trip: null,
+    visited: { gocek: true },
+    camps: {},
+    casts: {},
+    catch: {},
+    realRoute: [],
+  };
 }
-// Yolculuk bittiyse varış yerini işler (okurken).
 export function seaOf(c: Couple | null | undefined, now = Date.now()): Sea {
-  const s: Sea = { ...newSea(), ...((c?.sea as Sea | undefined) ?? {}) };
+  const raw = (c?.sea as Partial<Sea> | undefined) ?? {};
+  const s: Sea = {
+    ...newSea(),
+    ...raw,
+    realRoute: raw.realRoute ?? [],
+    casts: raw.casts ?? {},
+    catch: raw.catch ?? {},
+    camps: raw.camps ?? {},
+  };
+  if (!BAYS.some((b) => b.id === s.at)) s.at = 'gocek';
   if (s.trip && now >= s.trip.end) {
-    const to = s.trip.to;
-    s.mem = s.visited[to] ? s.mem : [{ t: `${island(to).name}’ya ilk kez vardınız`, at: s.trip.end, art: island(to).art }, ...s.mem];
-    s.visited = { ...s.visited, [to]: true };
-    s.at = to;
+    s.visited = { ...s.visited, [s.trip.to]: true };
+    s.at = s.trip.to;
     s.trip = null;
   }
   return s;
 }
-// Haritada iki ada arası mesafeye göre dakika (0-1 koordinatlarında).
 export function tripMins(sea: Sea, from: string, to: string) {
-  const a = island(from);
-  const b = island(to);
-  const d = Math.hypot((a.x - b.x) * 366, (a.y - b.y) * 600);
-  return Math.max(10, Math.round((d * 0.45) / BOATS[sea.boat].speed));
+  const a = bay(from);
+  const b = bay(to);
+  return Math.max(10, Math.round((Math.hypot((a.x - b.x) * 366, (a.y - b.y) * 600) * 0.45) / BOATS[sea.boat].speed));
 }
-export function castsLeft(sea: Sea, uid: string) {
+export const castsLeft = (sea: Sea, uid: string) => {
   const c = sea.casts[uid];
   return CASTS_PER_DAY - (c && c.day === dayKey() ? c.n : 0);
-}
+};
+export const fishOnBoard = (sea: Sea) => Object.values(sea.catch).reduce((a, b) => a + (b ?? 0), 0);
 
 export type SeaAction =
   | { a: 'sail'; to: string }
-  | { a: 'fish'; fish: FishId | null } // null: kaçtı (yine de hak düşer)
-  | { a: 'camp' }
-  | { a: 'sunset' }
-  | { a: 'boat'; boat: BoatId };
+  | { a: 'fish'; fish: FishId | null }
+  | { a: 'eat' } // akşam yemeği sahnesi başlarken tekne balıkları yenir
+  | { a: 'camp' } // kamp sahnesi başlarken çadır kurulur
+  | { a: 'real'; id: string }
+  | { a: 'boat'; boat: BoatId }
+  | { a: 'rename'; name: string };
 
 // ---------- Sahilde Ev ----------
 
-export const HN = 6;
+export type HItemId = 'masa' | 'hamak' | 'mangal' | 'bisiklet' | 'sezlong' | 'havuz' | 'kedi' | 'zeytin';
+export type SlotId = 'teras' | 'agaclar' | 'kose' | 'kapi' | 'kumsal' | 'bahce' | 'merdiven' | 'pencere';
+// Sahnede sabit yuvalar (yüzde). Her yuvaya belli eşyalar gelir.
+export const SLOTS: Record<SlotId, { x: number; y: number; w: number; name: string; items: HItemId[]; lvl?: number }> = {
+  teras: { x: 0.5, y: 0.735, w: 0.2, name: 'Teras', items: ['masa'] },
+  agaclar: { x: 0.2, y: 0.37, w: 0.2, name: 'Ağaçların arası', items: ['hamak'] },
+  kose: { x: 0.82, y: 0.46, w: 0.14, name: 'Bahçe köşesi', items: ['mangal'] },
+  kapi: { x: 0.74, y: 0.72, w: 0.14, name: 'Kapı önü', items: ['bisiklet'] },
+  kumsal: { x: 0.8, y: 0.1, w: 0.16, name: 'Kumsal', items: ['sezlong'] },
+  bahce: { x: 0.56, y: 0.47, w: 0.22, name: 'Bahçe', items: ['havuz'], lvl: 3 },
+  merdiven: { x: 0.36, y: 0.69, w: 0.08, name: 'Merdiven', items: ['kedi'] },
+  pencere: { x: 0.27, y: 0.72, w: 0.1, name: 'Pencere kenarı', items: ['zeytin'] },
+};
+export const HITEMS: Record<HItemId, { name: string; cost: number; lvl: number; art: string }> = {
+  masa: { name: 'Kahve masası', cost: 50, lvl: 1, art: 'masa' },
+  hamak: { name: 'Hamak', cost: 60, lvl: 1, art: 'hamak' },
+  mangal: { name: 'Mangal', cost: 100, lvl: 1, art: 'mangal' },
+  bisiklet: { name: 'İki bisiklet', cost: 90, lvl: 1, art: 'bisiklet' },
+  sezlong: { name: 'Şezlong ve şemsiye', cost: 45, lvl: 1, art: 'sezlong' },
+  havuz: { name: 'Havuz', cost: 600, lvl: 3, art: 'havuz' },
+  kedi: { name: 'Kedi', cost: 0, lvl: 2, art: 'kedi' },
+  zeytin: { name: 'Zeytin saksısı', cost: 40, lvl: 1, art: 'zeytin' },
+};
 export const HOUSE_LV = [
-  { name: 'Küçük beyaz ev', art: 'ev1', cost: 0 },
-  { name: 'İki katlı taş ev', art: 'ev2', cost: 400 },
-  { name: 'Begonvilli villa', art: 'ev3', cost: 1200 },
+  { name: 'Küçük beyaz ev', art: 'evsahne1', huzur: 0 },
+  { name: 'İki katlı taş ev', art: 'evsahne2', huzur: 30 },
+  { name: 'Begonvilli villa', art: 'evsahne3', huzur: 100 },
 ];
-export type HItemId = 'masa' | 'zeytin' | 'sezlong' | 'semsiye' | 'hamak' | 'pergola' | 'mangal' | 'bisiklet' | 'kedi' | 'havuz';
-export const HITEMS: Record<HItemId, { name: string; cost: number; w: number; lvl: number; rit?: string; gain?: number }> = {
-  masa: { name: 'Kahve masası', cost: 50, w: 0.85, lvl: 1, rit: 'Sabah kahvesi', gain: 15 },
-  zeytin: { name: 'Zeytin ağacı', cost: 40, w: 0.75, lvl: 1 },
-  sezlong: { name: 'Şezlong', cost: 45, w: 0.85, lvl: 1, rit: 'Güneşlenmek', gain: 6 },
-  semsiye: { name: 'Plaj şemsiyesi', cost: 35, w: 0.85, lvl: 1 },
-  hamak: { name: 'Hamak', cost: 60, w: 0.95, lvl: 1, rit: 'Hamakta kitap', gain: 8 },
-  pergola: { name: 'Begonvil pergola', cost: 80, w: 1.0, lvl: 1 },
-  mangal: { name: 'Mangal', cost: 100, w: 0.7, lvl: 2, rit: 'Mangal akşamı', gain: 20 },
-  bisiklet: { name: 'Bisiklet', cost: 90, w: 0.85, lvl: 2, rit: 'Sahilde bisiklet turu', gain: 12 },
-  kedi: { name: 'Kedi', cost: 120, w: 0.5, lvl: 2, rit: 'Kediyi sevmek', gain: 4 },
-  havuz: { name: 'Havuz', cost: 600, w: 1.25, lvl: 3, rit: 'Havuzda serinlemek', gain: 10 },
-};
-export type HTile = { k: 'fixed' } | { k: 'terrace' } | { k: 'grass' } | { k: 'item'; item: HItemId };
-// rit: anahtar kare; ilk kişi başlatır, ikincisi gelince ödül verilir. done: o gün tamamlandı.
-export type Home = {
-  lvl: number;
-  tiles: HTile[];
-  huzur: number;
-  rit: Record<string, { day: string; by: string[] }>;
-  pos: Record<string, number>;
-};
+// Günün sahneleri: saat aralığı ve gereken eşya (yuva).
+export const DAY_SCENES: { kind: string; from: number; to: number; needs: HItemId | null; where: SlotId }[] = [
+  { kind: 'coffee', from: 7, to: 11, needs: 'masa', where: 'teras' },
+  { kind: 'beach', from: 11, to: 17, needs: 'sezlong', where: 'kumsal' },
+  { kind: 'bike', from: 11, to: 17, needs: 'bisiklet', where: 'kapi' },
+  { kind: 'bbq', from: 17, to: 21, needs: 'mangal', where: 'kose' },
+  { kind: 'stars', from: 21, to: 1, needs: null, where: 'teras' },
+];
 
-const isTerrace = (i: number) => Math.floor(i / HN) === 2 || i % HN === 2;
+export type Home = {
+  slots: Partial<Record<SlotId, HItemId>>;
+  huzur: number;
+  town: string;
+  wishes: { by: string; text: string; at: number }[];
+};
 export function newHome(): Home {
-  const tiles: HTile[] = Array.from({ length: HN * HN }, (_, i) => {
-    const r = Math.floor(i / HN);
-    const c = i % HN;
-    if (r < 2 && c < 2) return { k: 'fixed' };
-    return isTerrace(i) ? { k: 'terrace' } : { k: 'grass' };
-  });
-  tiles[2 * HN + 3] = { k: 'item', item: 'masa' };
-  tiles[3] = { k: 'item', item: 'zeytin' };
-  return { lvl: 1, tiles, huzur: 0, rit: {}, pos: {} };
+  return { slots: { teras: 'masa', pencere: 'zeytin' }, huzur: 0, town: 'Sahildeki Evimiz', wishes: [] };
 }
 export function homeOf(c: Couple | null | undefined): Home {
-  const h = c?.home as Home | undefined;
-  return h ? { ...newHome(), ...h, rit: h.rit ?? {}, pos: h.pos ?? {} } : newHome();
+  const raw = (c?.home as Partial<Home> | undefined) ?? {};
+  const h = { ...newHome(), ...raw, slots: raw.slots ?? newHome().slots, wishes: raw.wishes ?? [] };
+  return h;
 }
-export const ritualState = (h: Home, i: number) => {
-  const r = h.rit[`${i}`];
-  return r && r.day === dayKey() ? r.by : [];
-};
+export const houseLevel = (h: Home) => (h.huzur >= HOUSE_LV[2].huzur ? 3 : h.huzur >= HOUSE_LV[1].huzur ? 2 : 1);
 
 export type HomeAction =
-  { a: 'place'; i: number; item: HItemId } | { a: 'remove'; i: number } | { a: 'ritual'; i: number } | { a: 'upgrade' };
+  { a: 'place'; slot: SlotId; item: HItemId } | { a: 'remove'; slot: SlotId } | { a: 'town'; name: string } | { a: 'wish'; text: string };
 
 // ---------- işlem ----------
 
 const clean = <T>(x: T): T => JSON.parse(JSON.stringify(x));
-
-type Out = { text: string; gained?: number; joined?: boolean; started?: boolean };
+type Out = { text: string };
 
 export async function dreamAction(
   coupleId: string,
@@ -218,114 +257,93 @@ export async function dreamAction(
     let out: Out | string;
     if (act.w === 'sea') {
       const s = seaOf(c, now);
-      out = seaApply(s, act.x, uid, name, now, farm, pay);
+      out = seaApply(s, act.x, uid, name, now, c.sceneCount ?? 0, pay);
       if (typeof out !== 'string') tx.update(ref, { sea: clean(s), farm: clean(farm) });
     } else {
       const h = homeOf(c);
-      out = homeApply(h, act.x, uid, name, farm, pay);
+      out = homeApply(h, act.x, uid, name, pay);
       if (typeof out !== 'string') tx.update(ref, { home: clean(h), farm: clean(farm) });
     }
     return out;
   });
 }
 
-function seaApply(s: Sea, x: SeaAction, uid: string, name: string, now: number, farm: Farm, pay: (n: number) => boolean): Out | string {
-  const here = island(s.at);
+function seaApply(s: Sea, x: SeaAction, uid: string, name: string, now: number, scenes: number, pay: (n: number) => boolean): Out | string {
+  const here = bay(s.at);
   switch (x.a) {
     case 'sail': {
       if (s.trip) return 'Tekne zaten yolda.';
-      const to = island(x.to);
+      const to = bay(x.to);
       if (to.id === s.at) return 'Zaten buradasınız.';
-      if (BOATS[s.boat].rank < to.need) return 'Bu koy için daha büyük tekne lazım.';
+      if (BOATS[s.boat].rank < to.rank) return `${to.name} için ${Object.values(BOATS).find((b) => b.rank === to.rank)!.name} gerekir.`;
       s.trip = { from: s.at, to: to.id, start: now, end: now + tripMins(s, s.at, to.id) * MIN, by: uid };
       return { text: `${name} ${to.name} yoluna çıktı ⛵` };
     }
     case 'fish': {
       if (s.trip) return 'Yoldayken balık tutulmaz.';
-      if (castsLeft(s, uid) <= 0) return 'Bugünkü olta hakkın bitti.';
+      if (castsLeft(s, uid) <= 0) return 'Bugün yeterince balık tuttunuz.';
       const c = s.casts[uid];
       s.casts[uid] = { day: dayKey(), n: (c && c.day === dayKey() ? c.n : 0) + 1 };
       if (!x.fish) return { text: 'Kaçtı' };
-      if (!here.fish.includes(x.fish) && x.fish !== 'ahtapot') return 'Bu koyda o balık yok.';
-      const f = FISH[x.fish];
       s.catch[x.fish] = (s.catch[x.fish] ?? 0) + 1;
-      if (s.catch[x.fish] === 1) s.mem = [{ t: `İlk ${f.name.toLowerCase()} ${here.name}’da tutuldu`, at: now, art: x.fish }, ...s.mem];
-      farm.coins += f.sell;
-      return { text: `${name} ${f.name.toLowerCase()} tuttu (+${f.sell})`, gained: f.sell };
+      return { text: `${name} ${FISH[x.fish].name.toLowerCase()} tuttu` };
+    }
+    case 'eat': {
+      if (fishOnBoard(s) <= 0) return 'Teknede balık yok.';
+      s.catch = {};
+      return { text: 'Balıklar ızgarada' };
     }
     case 'camp': {
-      if (!here.camp || s.camps[here.id]) return 'Burada kamp kurulamaz.';
-      if (!pay(CAMP_COST)) return 'Yeterli altın yok.';
+      if (!here.camp) return 'Bu koyda kamp kurulmaz.';
       s.camps[here.id] = true;
-      s.mem = [{ t: `${here.name}’da kamp ateşi yaktınız`, at: now, art: 'ates' }, ...s.mem];
-      return { text: `${name} ${here.name}’da kamp kurdu 🔥` };
+      return { text: `${here.name}’da çadır kuruldu` };
     }
-    case 'sunset': {
-      const day = dayKey();
-      const sn = s.sunset;
-      if (sn && sn.day === day && sn.at === here.id) {
-        if (sn.joined) return 'Bugün bu gün batımını izlediniz.';
-        if (sn.by === uid) return 'Partnerinin gelmesini bekliyorsun.';
-        s.sunset = { ...sn, joined: true };
-        s.mem = [{ t: `${here.name}’da birlikte gün batımı`, at: now, art: 'gunbatimi' }, ...s.mem];
-        farm.xp += 5;
-        farm.coins += 20;
-        return { text: `${name} gün batımına geldi 🌅`, gained: 20, joined: true };
-      }
-      s.sunset = { at: here.id, day, by: uid };
-      return { text: `${name} seni ${here.name}’da gün batımına çağırıyor 🌅`, started: true };
+    case 'real': {
+      s.realRoute = s.realRoute.includes(x.id) ? s.realRoute.filter((i) => i !== x.id) : [...s.realRoute, x.id];
+      return { text: s.realRoute.includes(x.id) ? `${bay(x.id).name} gerçek rotanıza eklendi ❤` : 'Rotadan çıkarıldı' };
     }
     case 'boat': {
       const b = BOATS[x.boat];
       if (b.rank !== BOATS[s.boat].rank + 1) return 'Önce bir önceki tekne alınmalı.';
+      if (scenes < b.need) return `${b.name} için ${b.need} ortak sahne gerek; ${scenes} yaşadınız.`;
       if (!pay(b.cost)) return 'Yeterli altın yok.';
       s.boat = x.boat;
-      s.mem = [{ t: `Yeni tekne: ${b.name}`, at: now, art: x.boat }, ...s.mem];
       return { text: `${name} ${b.name} aldı ⚓` };
+    }
+    case 'rename': {
+      s.boatName = x.name.trim().slice(0, 24) || s.boatName;
+      return { text: `Teknenin adı: ${s.boatName}` };
     }
   }
 }
 
-function homeApply(h: Home, x: HomeAction, uid: string, name: string, farm: Farm, pay: (n: number) => boolean): Out | string {
+function homeApply(h: Home, x: HomeAction, uid: string, name: string, pay: (n: number) => boolean): Out | string {
+  const lv = houseLevel(h);
   switch (x.a) {
     case 'place': {
-      const t = h.tiles[x.i];
+      const slot = SLOTS[x.slot];
       const it = HITEMS[x.item];
-      if (!t || (t.k !== 'grass' && t.k !== 'terrace')) return 'Önce boş bir yer seç.';
-      if (h.lvl < it.lvl) return `${it.name} için ${HOUSE_LV[it.lvl - 1].name} lazım.`;
+      if (!slot.items.includes(x.item)) return 'Bu eşya buraya gelmez.';
+      if (h.slots[x.slot]) return 'Burası dolu.';
+      if ((slot.lvl && lv < slot.lvl) || lv < it.lvl) return `Bunun için ${HOUSE_LV[Math.max(slot.lvl ?? 1, it.lvl) - 1].name} gerekir.`;
       if (!pay(it.cost)) return 'Yeterli altın yok.';
-      h.tiles[x.i] = { k: 'item', item: x.item };
-      h.pos[uid] = x.i;
-      return { text: `${name} eve ${it.name.toLowerCase()} aldı` };
+      h.slots[x.slot] = x.item;
+      return { text: x.item === 'kedi' ? 'Bir kedi geldi, merdivene oturdu 🐈' : `${name} eve ${it.name.toLowerCase()} aldı` };
     }
     case 'remove': {
-      const t = h.tiles[x.i];
-      if (t?.k !== 'item') return 'Kaldırılacak bir şey yok.';
-      farm.coins += Math.floor(HITEMS[t.item].cost / 2);
-      h.tiles[x.i] = isTerrace(x.i) ? { k: 'terrace' } : { k: 'grass' };
-      return { text: `${name} bir eşyayı kaldırdı` };
+      const it = h.slots[x.slot];
+      if (!it) return 'Burası zaten boş.';
+      pay(-Math.floor(HITEMS[it].cost / 2));
+      delete h.slots[x.slot];
+      return { text: `${HITEMS[it].name} kaldırıldı` };
     }
-    case 'upgrade': {
-      const next = HOUSE_LV[h.lvl];
-      if (!next) return 'Eviniz zaten villa.';
-      if (!pay(next.cost)) return 'Yeterli altın yok.';
-      h.lvl += 1;
-      return { text: `Yeni eviniz: ${next.name} 🏡` };
+    case 'town': {
+      h.town = x.name.trim().slice(0, 30) || h.town;
+      return { text: `Kasabanızın adı: ${h.town}` };
     }
-    case 'ritual': {
-      const t = h.tiles[x.i];
-      if (t?.k !== 'item' || !HITEMS[t.item].rit) return 'Bu eşyayla bir şey yapılmaz.';
-      const it = HITEMS[t.item];
-      const by = ritualState(h, x.i);
-      if (by.includes(uid)) return by.length >= 2 ? `Bugün “${it.rit!.toLowerCase()}” yaptınız.` : 'Partnerinin gelmesini bekliyorsun.';
-      h.rit[`${x.i}`] = { day: dayKey(), by: [...by, uid] };
-      h.pos[uid] = x.i;
-      if (by.length === 1) {
-        farm.coins += it.gain!;
-        h.huzur += 1;
-        return { text: `${it.rit}: ikiniz de geldiniz 💛 +${it.gain} altın`, gained: it.gain, joined: true };
-      }
-      return { text: `${name} seni ${it.rit!.toLowerCase()} için çağırıyor 💛`, started: true };
+    case 'wish': {
+      h.wishes = [...h.wishes, { by: uid, text: x.text.trim().slice(0, 200), at: Date.now() }].slice(-40);
+      return { text: 'Dilek saklandı. Yıl dönümünde açılacak.' };
     }
   }
 }

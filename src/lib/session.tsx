@@ -33,6 +33,10 @@ export type Couple = {
   dreamBank?: number; // günlük görevden gelen, hayal dünyasında toplanmayı bekleyen altın
   dreamVotes?: Record<string, Record<string, boolean>>; // hangi hayal dünyasını kim istiyor
   dreamNote?: string; // çiftin gerçek hayali (ör. emeklilikte tekneyle koy koy gezmek)
+  dreamYear?: number; // gerçek hedefin yılı
+  anniversary?: string; // MM-DD, dileklerin açıldığı gün
+  askedQ?: string[]; // sorulan hayal soruları
+  sceneCount?: number; // birlikte yaşanan sahne sayısı (tekne ve arazi bununla büyür)
   tavlaWins?: Record<string, number>; // tavla skor tablosu (mars 2 sayılır)
   blocksBest?: number; // Birlikte Blok çift rekoru
   lastGameDay?: string; // günün oyun puanı bir kez verilsin

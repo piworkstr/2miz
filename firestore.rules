@@ -73,6 +73,12 @@ service cloud.firestore {
         allow read, write: if isMember(coupleId);
       }
 
+      // Hayal dünyaları: iki kişilik sahneler ve hayal defteri sayfaları.
+      match /scenes/{sceneId} {
+        allow read, update, delete: if isMember(coupleId);
+        allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid;
+      }
+
       // Mesajlar: herkes yalnızca kendi adına yazar; şikayet için "hiddenFor" güncellenebilir.
       match /messages/{messageId} {
         allow read, update, delete: if isMember(coupleId);

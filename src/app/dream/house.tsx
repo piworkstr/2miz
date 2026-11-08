@@ -1,55 +1,97 @@
-import { useEffect, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path, Polygon, Rect } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../../components/Avatar';
-import { Btn, DreamHud, DreamSheet, DreamToast, Head, Note, Shop } from '../../components/world/DreamUI';
-import { WorldChar } from '../../components/world/WorldChar';
+import { ActTile, Btn, DreamHud, DreamSheet, DreamToast, Head, INK, MUTED, Note, Shop } from '../../components/world/DreamUI';
+import { ScenePanel, type SceneMeta } from '../../components/world/ScenePanel';
 import { DART } from '../../lib/dreamArt';
-import { dreamAction, HITEMS, HN, homeOf, HOUSE_LV, ritualState, type HItemId, type HomeAction } from '../../lib/dreams';
+import {
+  DAY_SCENES,
+  dreamAction,
+  HITEMS,
+  HOUSE_LV,
+  homeOf,
+  houseLevel,
+  SLOTS,
+  type HItemId,
+  type HomeAction,
+  type SlotId,
+} from '../../lib/dreams';
 import { farmOf } from '../../lib/farm';
 import { notifyPartner } from '../../lib/push';
+import { hourNow, inWindow, startScene, useOpenScene } from '../../lib/scenes';
 import { useSession } from '../../lib/session';
 
-// Sahilde Ev: Ege kıyısında evinizi kurarsınız. Kalpli eşyalar günün güzel anlarıdır; ikiniz de gelince altın ve huzur kazanırsınız.
+// Sahilde Ev: tek bir sahne (ev, bahçe, kumsal). Ev parayla değil huzurla büyür; huzur yalnızca birlikte yaşanan sahnelerden gelir.
+// Eşyalar sahnedeki sabit yuvalara konur; her eşya günün bir sahnesini açar (masa → sabah kahvesi, mangal → mangal akşamı).
 
-const TW = 64;
-const TH = TW / 2;
-const OX = (HN * TW) / 2 + TW * 3;
-const OY = TW * 3.4;
-const WW = HN * TW + TW * 6;
-const WH = OY + HN * TH + TW * 5;
-const center = (r: number, c: number) => ({ x: OX + ((c - r) * TW) / 2, y: OY + ((c + r) * TH) / 2 });
-const rc = (i: number) => [Math.floor(i / HN), i % HN] as const;
-function tileAt(px: number, py: number) {
-  const dx = (px - OX) / (TW / 2);
-  const dy = (py - OY) / (TH / 2);
-  const c = Math.round((dy + dx) / 2);
-  const r = Math.round((dy - dx) / 2);
-  return r >= 0 && r < HN && c >= 0 && c < HN ? r * HN + c : -1;
-}
-const art = (item: HItemId) => DART[item] ?? DART.semsiye;
+export const HOME_SCENES: Record<string, SceneMeta> = {
+  coffee: { title: 'Sabah kahvesi', verb: 'terasta sabah kahvesi', reward: { huzur: 3 } },
+  beach: { title: 'Deniz günü', verb: 'kumsalda deniz günü', reward: { huzur: 4 } },
+  bike: { title: 'Bisiklet turu', verb: 'sahilde bisiklet turu', reward: { huzur: 4 } },
+  bbq: { title: 'Mangal akşamı', verb: 'bahçede mangal', reward: { huzur: 5 } },
+  stars: { title: 'Yıldızlar', verb: 'yıldızların altında bir dilek', reward: { huzur: 5 }, playMs: 7000 },
+};
+const SCENE_ART: Record<string, keyof typeof DART> = {
+  coffee: 'masa',
+  beach: 'sezlong',
+  bike: 'bisiklet',
+  bbq: 'mangal',
+  stars: 'gunbatimi',
+};
+const WINDOW = (k: string) => {
+  const d = DAY_SCENES.find((x) => x.kind === k)!;
+  return `${String(d.from).padStart(2, '0')}–${String(d.to).padStart(2, '0')}`;
+};
+const todOf = (h: number) => (h >= 6 && h < 11 ? 'sabah' : h < 17 ? 'gun' : h < 21 ? 'aksam' : 'gece');
+const TINT: Record<string, [string, string] | null> = {
+  sabah: ['rgba(255,220,170,0.35)', 'rgba(255,245,230,0.05)'],
+  gun: null,
+  aksam: ['rgba(255,160,80,0.4)', 'rgba(90,40,110,0.45)'],
+  gece: ['rgba(10,20,70,0.62)', 'rgba(5,10,40,0.72)'],
+};
 
 export default function HouseScreen() {
   const insets = useSafeAreaInsets();
   const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
-  const [box, setBox] = useState({ w: 0, h: 0 });
-  const [sel, setSel] = useState<number | 'house' | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [stage, setStage] = useState({ w: 0, h: 0 });
+  const [slot, setSlot] = useState<SlotId | null>(null);
+  const [town, setTown] = useState<string | null>(null);
+  const [wish, setWish] = useState<string | null>(null);
   const [toast, setToast] = useState('');
-  const [, tick] = useState(0);
+  const twinkle = useRef(new Animated.Value(0)).current;
+  const scene = useOpenScene(couple?.id, 'home');
+
   useEffect(() => {
-    const id = setInterval(() => tick((n) => n + 1), 30_000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+  useEffect(() => {
+    const l = Animated.loop(
+      Animated.sequence([
+        Animated.timing(twinkle, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(twinkle, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    l.start();
+    return () => l.stop();
+  }, [twinkle]);
 
   if (!user || !couple || !partnerId) return null;
   const uid = user.uid;
   const myName = profile?.name ?? 'Ben';
   const home = homeOf(couple);
   const farm = farmOf(couple);
+  const lvl = houseLevel(home);
+  const H = HOUSE_LV[lvl - 1];
+  const hour = hourNow();
+  const tod = todOf(hour);
+  const next = HOUSE_LV[lvl]; // bir sonraki ev
   const flash = (t: string) => {
     setToast(t);
-    setTimeout(() => setToast(''), 2600);
+    setTimeout(() => setToast(''), 2800);
   };
 
   async function act(x: HomeAction) {
@@ -57,287 +99,333 @@ export default function HouseScreen() {
       const r = await dreamAction(couple!.id, uid, myName, { w: 'home', x });
       if (typeof r === 'string') return flash(r);
       flash(r.text);
-      if (x.a === 'ritual' && r.started)
-        notifyPartner(partnerId!, r.text, 'Sahilde Ev’de seni bekliyor.', { type: 'mood', url: '/dream/house' });
-      if (x.a === 'ritual' && r.joined) notifyPartner(partnerId!, `${myName} geldi 💛`, r.text, { type: 'mood', url: '/dream/house' });
-      if (x.a === 'upgrade') notifyPartner(partnerId!, r.text, 'Sahilde Ev', { type: 'mood', url: '/dream/house' });
+      if (x.a === 'place') notifyPartner(partnerId!, r.text, home.town, { type: 'mood', url: '/dream/house' });
     } catch {
       flash('Olmadı, tekrar dene');
     }
   }
-
-  // kamera: arsa ekranı doldursun
-  const top = insets.top + 46;
-  const bottom = 190 + insets.bottom;
-  const s = box.w ? Math.min(1.25, box.w / (HN * TW + TW * 0.9), (box.h - top - bottom) / (HN * TH + TW * 2.6)) : 0.6;
-  const tx = box.w / 2 - OX * s;
-  const ty = top + (box.h - top - bottom) / 2 - (OY + HN * TH * 0.5 - TW * 0.7) * s;
-
-  const pts = (r: number, c: number) => {
-    const { x, y } = center(r, c);
-    return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
-  };
-  const T = center(0, 0);
-  const L = center(HN - 1, 0);
-  const R = center(0, HN - 1);
-  const Bc = center(HN - 1, HN - 1);
-  const lv = HOUSE_LV[home.lvl - 1];
-
-  type Spr = { key: string; src: (typeof DART)[string]; x: number; y: number; w: number; z: number };
-  const sprs: Spr[] = [];
-  const put = (key: string, a: (typeof DART)[string], x: number, y: number, w: number, z: number) => sprs.push({ key, src: a, x, y, w, z });
-  const ha = center(1, 1);
-  const hb = center(0, 0);
-  put('house', DART[lv.art], (ha.x + hb.x) / 2, ha.y + TH * 0.55, TW * 2.15, 26);
-  const hearts: { key: string; x: number; y: number; z: number; waiting: boolean }[] = [];
-  home.tiles.forEach((t, i) => {
-    if (t.k !== 'item') return;
-    const [r, c] = rc(i);
-    const { x, y } = center(r, c);
-    const it = HITEMS[t.item];
-    put(`i${i}`, art(t.item), x, y + TH * 0.32, TW * it.w, (r + c) * 10 + 6);
-    if (it.rit) {
-      const by = ritualState(home, i);
-      if (by.length < 2)
-        hearts.push({ key: `h${i}`, x, y: y - TW * 0.85, z: (r + c) * 10 + 409, waiting: by.length === 1 && !by.includes(uid) });
+  async function begin(kind: string) {
+    if (scene) return flash('Önce açık sahneyi bitirin.');
+    const d = DAY_SCENES.find((x) => x.kind === kind)!;
+    if (d.needs && !Object.values(home.slots).includes(d.needs)) return flash(`${HITEMS[d.needs].name} lazım.`);
+    if (!inWindow(hour, d.from, d.to)) return flash(`Bu sahne ${WINDOW(kind)} arası.`);
+    try {
+      await startScene(couple!.id, uid, { world: 'home', kind, place: home.town, windowMin: 120, qkind: kind });
+      notifyPartner(partnerId!, `${myName} seni ${HOME_SCENES[kind].verb} için çağırıyor`, `${home.town} · Sahilde Ev`, {
+        type: 'mood',
+        url: '/dream/house',
+      });
+    } catch {
+      flash('Sahne başlatılamadı');
     }
-  });
-  put('n1', DART.ev2, L.x - TW * 1.2, L.y - TW * 0.3, TW * 1.4, 1);
-  put('n2', DART.zeytin, L.x - TW * 0.4, L.y + TW * 0.9, TW * 0.8, 2000);
-  put('n3', DART.ev1, R.x + TW * 1.3, R.y + TW * 0.9, TW * 1.3, 2000);
-  put('n4', DART.zeytin, Bc.x - TW * 1.6, Bc.y + TW * 1.2, TW * 0.8, 2000);
-  put('n5', DART.pergola, Bc.x + TW * 1.4, Bc.y + TW * 1.0, TW * 0.9, 2000);
-  put('n6', DART.semsiye, R.x + TW * 1.6, R.y - TW * 0.7, TW * 0.9, 1);
-  put('n7', DART.sandal, R.x + TW * 0.2, R.y - TW * 2.2, TW * 1.0, 1);
-  put('n8', DART.marti, R.x + TW * 2.6, R.y - TW * 1.4, TW * 0.45, 1);
-  sprs.sort((a, b) => a.z - b.z);
+  }
 
-  const myTile = home.pos[uid] ?? 2 * HN + 1;
-  const pTile = home.pos[partnerId] ?? 2 * HN + 4;
-  const at = (i: number, side: number) => {
-    const { x, y } = center(...rc(i));
-    return { x: x + side * TW * 0.35, y: y + TH * 0.4, z: (rc(i)[0] + rc(i)[1]) * 10 + 8 };
-  };
-  const me = at(myTile, -1);
-  const pp = at(pTile, 1);
+  const live = scene && scene.status === 'live' ? scene : null;
+  const kind = live?.kind ?? null;
+  const tint = kind === 'stars' ? 'gece' : kind === 'bbq' ? 'aksam' : kind === 'coffee' ? 'sabah' : kind ? 'gun' : tod;
+  const tintCols = TINT[tint];
+  const at = kind ? DAY_SCENES.find((x) => x.kind === kind)?.where : null;
+  const whereXY = (s: SlotId) => ({ x: SLOTS[s].x * stage.w, y: SLOTS[s].y * stage.h });
 
+  // ---- alt panel ----
   let sheet: React.ReactNode;
-  if (sel === 'house') {
-    const next = HOUSE_LV[home.lvl];
+  if (scene) {
+    sheet = (
+      <ScenePanel
+        scene={scene}
+        meta={HOME_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
+        coupleId={couple.id}
+        uid={uid}
+        partnerId={partnerId}
+        partnerName={partnerName}
+        profile={profile}
+        partnerProfile={partnerProfile}
+        onJoined={() =>
+          notifyPartner(partnerId, `${myName} geldi 💛`, `${HOME_SCENES[scene.kind]?.title} başlıyor`, {
+            type: 'mood',
+            url: '/dream/house',
+          })
+        }
+        extra={
+          scene.kind === 'stars' && scene.status === 'live' ? (
+            wish === null ? (
+              <Btn kind="soft" label="Bir dilek tut (yalnız ikiniz görür)" onPress={() => setWish('')} />
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput
+                  value={wish}
+                  onChangeText={setWish}
+                  placeholder="Dileğimiz…"
+                  maxLength={120}
+                  style={{ flex: 1, borderWidth: 1, borderColor: '#F0E2DC', borderRadius: 10, padding: 8, color: INK }}
+                />
+                <Btn label="Tut" onPress={() => act({ a: 'wish', text: wish.trim() }).then(() => setWish(null))} />
+              </View>
+            )
+          ) : null
+        }
+      />
+    );
+  } else if (slot) {
+    const S = SLOTS[slot];
+    const cur = home.slots[slot];
     sheet = (
       <>
-        <Head img={DART[lv.art].src} title={lv.name} onClose={() => setSel(null)} />
-        {next ? (
+        <Head title={S.name} onClose={() => setSlot(null)} />
+        {cur ? (
           <>
-            <Note>Sırada: {next.name}. Büyük ev yeni eşyaların (mangal, bisiklet, kedi, havuz) kilidini açar.</Note>
-            <Btn
-              label={`${next.name} · ${next.cost} altın`}
-              onPress={() => act({ a: 'upgrade' }).then(() => setSel(null))}
-              disabled={farm.coins < next.cost}
-            />
+            <Note>
+              {HITEMS[cur].name} burada.{' '}
+              {DAY_SCENES.find((d) => d.needs === cur)
+                ? `${HOME_SCENES[DAY_SCENES.find((d) => d.needs === cur)!.kind].title} sahnesini açıyor.`
+                : ''}
+            </Note>
+            {HITEMS[cur].cost > 0 && (
+              <Btn kind="soft" label="Kaldır" onPress={() => act({ a: 'remove', slot }).then(() => setSlot(null))} />
+            )}
           </>
         ) : (
-          <Note>Hayalinizdeki villadasınız 🌸</Note>
-        )}
-      </>
-    );
-  } else if (typeof sel === 'number') {
-    const t = home.tiles[sel];
-    if (t.k === 'item') {
-      const it = HITEMS[t.item];
-      const by = ritualState(home, sel);
-      const done = by.length >= 2;
-      const mine = by.includes(uid);
-      sheet = (
-        <>
-          <Head img={art(t.item).src} title={it.name} onClose={() => setSel(null)} />
-          {it.rit ? (
-            <>
-              <Note>
-                {done
-                  ? `Bugün “${it.rit.toLowerCase()}” yaptınız 💛`
-                  : mine
-                    ? `${partnerName}’in gelmesini bekliyorsun. Gelince ikinize de +${it.gain} altın.`
-                    : by.length
-                      ? `${partnerName} seni bekliyor! Gel, birlikte ${it.rit.toLowerCase()}.`
-                      : `${it.rit}: ikiniz birlikte. +${it.gain} altın, +1 huzur.`}
-              </Note>
-              <Btn
-                kind="accent"
-                label={by.length && !mine ? `Katıl: ${it.rit}` : it.rit}
-                onPress={() => act({ a: 'ritual', i: sel }).then(() => setSel(null))}
-                disabled={done || mine}
-              />
-            </>
-          ) : (
-            <Note>Evinizi güzelleştiriyor.</Note>
-          )}
-          <Btn
-            kind="soft"
-            label={`Kaldır (+${Math.floor(it.cost / 2)})`}
-            onPress={() => act({ a: 'remove', i: sel }).then(() => setSel(null))}
-          />
-        </>
-      );
-    } else if (t.k === 'fixed') {
-      sheet = null;
-    } else {
-      sheet = (
-        <>
-          <Head title={t.k === 'terrace' ? 'Boş teras' : 'Boş bahçe'} onClose={() => setSel(null)} />
           <Shop
-            list={(Object.keys(HITEMS) as HItemId[]).map((id) => {
+            list={S.items.map((id) => {
               const it = HITEMS[id];
-              const lock = home.lvl < it.lvl;
+              const d = DAY_SCENES.find((x) => x.needs === id);
               return {
                 id,
-                img: art(id).src,
+                img: DART[it.art as keyof typeof DART].src,
                 name: it.name,
-                price: lock ? HOUSE_LV[it.lvl - 1].name : `${it.cost} altın`,
-                sub: it.rit ?? 'süs',
-                off: lock || farm.coins < it.cost,
-                onPress: () => act({ a: 'place', i: sel, item: id }).then(() => setSel(null)),
+                price: it.cost ? `${it.cost} altın` : 'Hediye',
+                sub: it.lvl > lvl ? `${HOUSE_LV[it.lvl - 1].name} ister` : d ? `${HOME_SCENES[d.kind].title} sahnesini açar` : '',
+                off: it.lvl > lvl || farm.coins < it.cost,
+                onPress: () => act({ a: 'place', slot, item: id }).then(() => setSlot(null)),
               };
             })}
           />
-        </>
-      );
-    }
-  }
-  if (sel === null || sheet === null) {
-    const waiting = home.tiles.filter(
-      (t, i) => t.k === 'item' && HITEMS[t.item].rit && ritualState(home, i).length === 1 && !ritualState(home, i).includes(uid),
-    ).length;
-    const open = home.tiles.filter((t, i) => t.k === 'item' && HITEMS[t.item].rit && ritualState(home, i).length < 2).length;
+        )}
+      </>
+    );
+  } else if (town !== null) {
     sheet = (
       <>
-        <Note center>
-          {waiting
-            ? `${partnerName} seni ${waiting} güzel an için bekliyor 💛 Kalpli eşyaya dokun.`
-            : open
-              ? `Bugün ${open} güzel an sizi bekliyor 💛 Eşyaya dokun, ikiniz birlikte yapın.`
-              : 'Bugünkü anları yaşadınız. Yarın yine 💛'}
-        </Note>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <Note>
-            {lv.name} · {home.huzur} huzur
-          </Note>
-          <View style={{ flex: 1 }} />
-          <Btn kind="soft" label="Evi büyüt" onPress={() => setSel('house')} />
+        <Head title="Evimizin adı" onClose={() => setTown(null)} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TextInput
+            value={town}
+            onChangeText={setTown}
+            maxLength={28}
+            style={{ flex: 1, borderWidth: 1, borderColor: '#F0E2DC', borderRadius: 10, padding: 8, color: INK }}
+          />
+          <Btn label="Kaydet" onPress={() => act({ a: 'town', name: town.trim() }).then(() => setTown(null))} />
         </View>
+        <Note>Hangi sahil? Hangi köy? Gerçek hayalinizin adını verin.</Note>
+      </>
+    );
+  } else {
+    const avail = DAY_SCENES.filter((d) => inWindow(hour, d.from, d.to));
+    const later = DAY_SCENES.filter((d) => !inWindow(hour, d.from, d.to));
+    sheet = (
+      <>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Pressable onPress={() => setTown(home.town)}>
+              <Text style={{ fontWeight: '900', fontSize: 17, color: INK }}>
+                {home.town} <Text style={{ color: MUTED, fontSize: 12 }}>✎</Text>
+              </Text>
+            </Pressable>
+            <Note>
+              {H.name} · huzur {home.huzur}
+              {next ? ` · ${next.name} için ${next.huzur}` : ' · en büyük ev'}
+            </Note>
+          </View>
+        </View>
+        {next && (
+          <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F3E4EA', overflow: 'hidden' }}>
+            <View
+              style={{
+                width: `${Math.min(100, Math.round(((home.huzur - H.huzur) / (next.huzur - H.huzur)) * 100))}%`,
+                height: 8,
+                backgroundColor: '#E8516A',
+              }}
+            />
+          </View>
+        )}
+        <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>Şimdi yapılabilir</Text>
+        {avail.length === 0 && <Note>Şu an sahne yok. Saat {String(hour).padStart(2, '0')}:00.</Note>}
+        <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+          {avail.map((d) => {
+            const has = !d.needs || Object.values(home.slots).includes(d.needs);
+            return (
+              <ActTile
+                key={d.kind}
+                img={DART[SCENE_ART[d.kind]].src}
+                title={HOME_SCENES[d.kind].title}
+                sub={has ? `+${HOME_SCENES[d.kind].reward?.huzur} huzur` : `${HITEMS[d.needs!].name} lazım`}
+                onPress={() => begin(d.kind)}
+                off={!has}
+              />
+            );
+          })}
+        </View>
+        {later.length > 0 && <Note>Sonra: {later.map((d) => `${HOME_SCENES[d.kind].title} ${WINDOW(d.kind)}`).join(' · ')}</Note>}
+        <Note>
+          Ev parayla değil huzurla büyür; huzur yalnızca birlikte yaşanan sahnelerden gelir. Eşya almak için sahnedeki noktalara dokunun.
+        </Note>
       </>
     );
   }
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: '#B8D88A' }}
-      onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
-    >
-      {box.w > 0 && (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: WW,
-            height: WH,
-            transformOrigin: 'left top',
-            transform: [{ translateX: tx }, { translateY: ty }, { scale: s }],
-          }}
-        >
-          <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }}>
-            <Rect x={0} y={0} width={WW} height={WH} fill="#B8D88A" />
-            <Rect x={0} y={0} width={WW} height={T.y + TW * 0.2} fill="#4FB3DE" />
-            {Array.from({ length: 40 }, (_, k) => (
-              <Path
-                key={k}
-                d={`M${(k * 89) % WW},${(k * 61) % (T.y - TW)} q6,-4 12,0 q6,4 12,0`}
-                stroke="rgba(255,255,255,0.4)"
-                strokeWidth={2}
-                fill="none"
-              />
-            ))}
-            <Path d={`M0,${T.y - TW * 0.4} L${WW},${T.y - TW * 2.6} L${WW},${WH} L0,${WH} Z`} fill="#F2DDA9" />
-            <Path d={`M0,${T.y + TW * 0.6} L${WW},${T.y - TW * 1.6} L${WW},${WH} L0,${WH} Z`} fill="#B8D88A" />
-            <Path
-              d={`M${Bc.x - TW * 0.3},${Bc.y + TH / 2 + 16} C${Bc.x - TW * 0.4},${Bc.y + TW * 1.2} ${Bc.x + TW * 0.5},${Bc.y + TW * 1.8} ${Bc.x + TW * 0.3},${WH} L${Bc.x + TW * 1.1},${WH} C${Bc.x + TW * 1.2},${Bc.y + TW * 1.8} ${Bc.x + TW * 0.3},${Bc.y + TW * 1.2} ${Bc.x + TW * 0.3},${Bc.y + TH / 2 + 16} Z`}
-              fill="#EFE6D6"
-              stroke="#D9CBB3"
-            />
-            <Polygon
-              points={`${L.x - TW / 2},${L.y} ${Bc.x},${Bc.y + TH / 2} ${Bc.x},${Bc.y + TH / 2 + 16} ${L.x - TW / 2},${L.y + 16}`}
-              fill="#D7CBB6"
-            />
-            <Polygon
-              points={`${Bc.x},${Bc.y + TH / 2} ${R.x + TW / 2},${R.y} ${R.x + TW / 2},${R.y + 16} ${Bc.x},${Bc.y + TH / 2 + 16}`}
-              fill="#BFB29C"
-            />
-            {home.tiles.map((t, i) => {
-              const [r, c] = rc(i);
-              const fill =
-                t.k === 'terrace' || (t.k === 'item' && (r === 2 || c === 2))
-                  ? (r + c) % 2
-                    ? '#EFE6D6'
-                    : '#E6DBC7'
-                  : (r + c) % 2
-                    ? '#9DCE62'
-                    : '#94C75A';
-              return <Polygon key={i} points={pts(r, c)} fill={fill} stroke="rgba(255,255,255,0.12)" />;
-            })}
-            {typeof sel === 'number' && <Polygon points={pts(...rc(sel))} fill="rgba(255,255,255,0.3)" stroke="#fff" strokeWidth={3} />}
+    <View style={{ flex: 1, backgroundColor: '#9ED4EE' }}>
+      <View
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      >
+        <Image
+          source={DART[H.art as keyof typeof DART].src}
+          style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}
+          resizeMode="cover"
+        />
+        {tintCols && (
+          <Svg style={{ position: 'absolute', left: 0, top: 0 }} width="100%" height="100%" pointerEvents="none">
+            <Defs>
+              <LinearGradient id="t" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={tintCols[0]} />
+                <Stop offset="1" stopColor={tintCols[1]} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={0} y={0} width="100%" height="100%" fill="url(#t)" />
           </Svg>
-          {sprs.map((p) => (
-            <Image
-              key={p.key}
-              source={p.src.src}
-              style={{
-                position: 'absolute',
-                left: p.x - p.w / 2,
-                top: p.y - p.w * p.src.h,
-                width: p.w,
-                height: p.w * p.src.h,
-                zIndex: p.z,
-              }}
-            />
-          ))}
-          {hearts.map((h) => (
+        )}
+        {tint === 'gece' && (
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              right: 0,
+              height: '40%',
+              opacity: twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }),
+            }}
+          >
+            <Svg width="100%" height="100%">
+              {[6, 14, 25, 38, 47, 58, 69, 80, 91, 33, 75, 18].map((x, i) => (
+                <Circle key={i} cx={`${x}%`} cy={`${10 + ((i * 53) % 70)}%`} r={i % 4 === 0 ? 2.2 : 1.4} fill="#fff" />
+              ))}
+            </Svg>
+          </Animated.View>
+        )}
+        {/* eşyalar ve yuvalar */}
+        {stage.w > 0 &&
+          (Object.keys(SLOTS) as SlotId[]).map((s) => {
+            const S = SLOTS[s];
+            if (S.lvl && S.lvl > lvl) return null;
+            const it = home.slots[s];
+            const w = S.w * stage.w;
+            const p = whereXY(s);
+            if (it) {
+              const art = DART[HITEMS[it].art as keyof typeof DART];
+              const hgt = w * art.h;
+              return (
+                <Pressable
+                  key={s}
+                  onPress={() => !scene && setSlot(s)}
+                  style={{ position: 'absolute', left: p.x - w / 2, top: p.y - hgt, width: w, height: hgt }}
+                >
+                  <Image source={art.src} style={{ width: w, height: hgt }} resizeMode="contain" />
+                </Pressable>
+              );
+            }
+            if (scene) return null;
+            return (
+              <Pressable
+                key={s}
+                onPress={() => setSlot(s)}
+                style={{
+                  position: 'absolute',
+                  left: p.x - 16,
+                  top: p.y - 16,
+                  width: 32,
+                  height: 32,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Animated.View
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    backgroundColor: 'rgba(255,255,255,0.85)',
+                    borderWidth: 2,
+                    borderColor: '#E8516A',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: [{ scale: twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] }) }],
+                  }}
+                >
+                  <Text style={{ color: '#E8516A', fontWeight: '900', fontSize: 16, lineHeight: 18 }}>+</Text>
+                </Animated.View>
+              </Pressable>
+            );
+          })}
+        {/* ikisi sahnede */}
+        {stage.w > 0 && (
+          <>
+            {(() => {
+              const spot = at ? whereXY(at) : whereXY('kapi');
+              const dx = kind === 'bike' ? 70 : kind === 'beach' ? 60 : 46;
+              return (
+                <>
+                  <View style={{ position: 'absolute', left: spot.x - dx - 18, top: spot.y - 46 }}>
+                    <Who p={profile} name={myName} />
+                  </View>
+                  <View style={{ position: 'absolute', left: spot.x + dx - 18, top: spot.y - 46 }}>
+                    <Who p={partnerProfile} name={partnerName} />
+                  </View>
+                </>
+              );
+            })()}
+          </>
+        )}
+        {scene?.status === 'waiting' && (
+          <View style={{ position: 'absolute', left: 0, right: 0, top: '45%', alignItems: 'center' }}>
             <View
-              key={h.key}
-              pointerEvents="none"
               style={{
-                position: 'absolute',
-                left: h.x - 15,
-                top: h.y - 15,
-                width: 30,
-                height: 30,
-                borderRadius: 15,
-                zIndex: h.z,
-                backgroundColor: h.waiting ? '#E8516A' : '#fff',
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
-                elevation: 3,
+                gap: 8,
+                backgroundColor: 'rgba(255,255,255,0.92)',
+                borderRadius: 999,
+                padding: 6,
+                paddingRight: 12,
               }}
             >
-              {h.waiting ? <Avatar p={partnerProfile} name={partnerName} size={24} showMood={false} /> : <Heart />}
+              <Avatar p={scene.by === uid ? partnerProfile : profile} name="" size={28} showMood={false} />
+              <Text style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+                {scene.by === uid ? `${partnerName} bekleniyor…` : `${partnerName} seni bekliyor`}
+              </Text>
             </View>
-          ))}
-          <WorldChar profile={partnerProfile} name={partnerName} x={pp.x} y={pp.y} z={pp.z} tag={partnerName} />
-          <WorldChar profile={profile} name={myName} x={me.x} y={me.y} z={me.z + 1} />
-        </View>
-      )}
-      <Pressable
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-        onPress={(e) => {
-          const i = tileAt((e.nativeEvent.locationX - tx) / s, (e.nativeEvent.locationY - ty) / s);
-          if (i < 0) return setSel(null);
-          if (home.tiles[i].k === 'fixed') return setSel('house');
-          setSel(sel === i ? null : i);
-        }}
-      />
+          </View>
+        )}
+        {home.wishes.length > 0 && !scene && (
+          <View
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: insets.top + 50,
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+            }}
+          >
+            <Text style={{ fontWeight: '800', fontSize: 12, color: INK }}>✦ {home.wishes.length} dilek</Text>
+          </View>
+        )}
+      </View>
       <DreamHud
-        title={lv.name}
-        sub={`${home.huzur} huzur`}
+        title={home.town}
+        sub={`${H.name} · huzur ${home.huzur}`}
         coins={farm.coins}
         left={<Avatar p={profile} name={myName} size={30} showMood={false} />}
       />
@@ -347,13 +435,21 @@ export default function HouseScreen() {
   );
 }
 
-function Heart() {
+function Who({ p, name }: { p: Parameters<typeof Avatar>[0]['p']; name: string }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24">
-      <Path
-        d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2 0 3.6 1.1 5.3 3 1.7-1.9 3.3-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"
-        fill="#E8516A"
-      />
-    </Svg>
+    <View
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 2,
+        borderColor: '#fff',
+        backgroundColor: '#fff',
+        overflow: 'hidden',
+        elevation: 3,
+      }}
+    >
+      <Avatar p={p} name={name} size={32} showMood={false} />
+    </View>
   );
 }
