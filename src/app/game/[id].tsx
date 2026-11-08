@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Blocks } from '../../components/games/Blocks';
 import { KnowMe } from '../../components/games/KnowMe';
 import { Memory } from '../../components/games/Memory';
 import { ThisThat } from '../../components/games/ThisThat';
@@ -64,6 +65,7 @@ export default function GameScreen() {
       {game.type === 'thisthat' && <ThisThat {...props} />}
       {game.type === 'knowme' && <KnowMe {...props} />}
       {game.type === 'memory' && <Memory {...props} />}
+      {game.type === 'blocks' && <Blocks {...props} />}
     </Screen>
   );
 }
@@ -89,9 +91,7 @@ function Waiting({ game, coupleId, partnerName, onClose }: { game: Game; coupleI
       {game.status === 'declined' ? (
         <>
           <Text style={{ fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text, textAlign: 'center' }}>Şimdi olmaz</Text>
-          <Muted style={{ textAlign: 'center' }}>
-            {partnerName} şu an müsait değil. Biraz sonra tekrar davet edebilirsin.
-          </Muted>
+          <Muted style={{ textAlign: 'center' }}>{partnerName} şu an müsait değil. Biraz sonra tekrar davet edebilirsin.</Muted>
           <Button style={{ alignSelf: 'stretch' }} label="Tamam" onPress={onClose} />
         </>
       ) : expired ? (

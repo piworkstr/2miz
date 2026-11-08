@@ -16,16 +16,18 @@ import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { db } from './firebase';
 import { logActivity } from './bond';
+import { applyMove, newBlocks, type BlocksState } from './blocks';
 import { KNOW_ME, THIS_THAT } from './gameData';
 import type { Couple } from './session';
 
-export type GameType = 'thisthat' | 'knowme' | 'memory';
+export type GameType = 'thisthat' | 'knowme' | 'memory' | 'blocks';
 export type GameStatus = 'invited' | 'declined' | 'playing' | 'done' | 'cancelled';
 
 export const GAMES: Record<GameType, { name: string; blurb: string; icon: string }> = {
   thisthat: { name: 'Bu mu, o mu?', blurb: '10 hızlı seçim · 2 dk', icon: 'git-compare-outline' },
   knowme: { name: 'Beni ne kadar tanıyorsun?', blurb: '5 soru · 3 dk', icon: 'help-circle-outline' },
   memory: { name: 'Anı eşleştirme', blurb: 'Selfielerinizle hafıza oyunu · 3 dk', icon: 'grid-outline' },
+  blocks: { name: 'Birlikte Blok', blurb: 'Ortak tahta, sırayla hamle · aynı takımdasınız', icon: 'apps-outline' },
 };
 
 export const INVITE_MINUTES = 15;
@@ -55,6 +57,7 @@ export type Game = {
   self?: Record<string, number[]>;
   guess?: Record<string, number[]>;
   memory?: MemoryState;
+  blocks?: BlocksState;
   finished?: Record<string, boolean>;
 };
 
@@ -129,7 +132,14 @@ async function recentPhotoIds(coupleId: string): Promise<string[]> {
 }
 
 export async function sendInvite(coupleId: string, from: string, to: string, type: GameType) {
-  const base = { type, from, to, status: 'invited' as GameStatus, expiresAt: Date.now() + INVITE_MINUTES * 60_000, createdAt: serverTimestamp() };
+  const base = {
+    type,
+    from,
+    to,
+    status: 'invited' as GameStatus,
+    expiresAt: Date.now() + INVITE_MINUTES * 60_000,
+    createdAt: serverTimestamp(),
+  };
   const coupleRef = doc(db, 'couples', coupleId);
   const coupleSnap = await getDoc(coupleRef);
   const seen = (coupleSnap.data() as Couple | undefined)?.seenGames ?? {};
@@ -146,6 +156,7 @@ export async function sendInvite(coupleId: string, from: string, to: string, typ
     await updateDoc(coupleRef, { 'seenGames.knowme': nextSeen(seen.knowme ?? [], questions, KNOW_ME.length, 5) });
   }
   if (type === 'memory') extra = { memory: newMemory(await recentPhotoIds(coupleId), from, to) };
+  if (type === 'blocks') extra = { blocks: newBlocks(to) };
   const ref = await addDoc(gamesCol(coupleId), { ...base, ...extra, finished: {} });
   return ref.id;
 }
@@ -186,7 +197,7 @@ export function useGame(coupleId: string | undefined, id: string | undefined) {
     if (!coupleId || !id) return;
     return onSnapshot(
       doc(gamesCol(coupleId), id),
-      (s) => setGame(s.exists() ? ({ id: s.id, ...(s.data() as Omit<Game, 'id'>) }) : null),
+      (s) => setGame(s.exists() ? { id: s.id, ...(s.data() as Omit<Game, 'id'>) } : null),
       () => setGame(null),
     );
   }, [coupleId, id]);
@@ -319,4 +330,48 @@ export async function flipCard(coupleId: string, id: string, uid: string, index:
 // Eşleşmeyen iki kart bir süre açık kalır, sonra kapanır ve sıra diğerine geçer.
 export async function endTurn(coupleId: string, id: string, next: string) {
   await updateDoc(doc(gamesCol(coupleId), id), { 'memory.flipped': [], 'memory.turn': next });
+}
+
+// ---------- Birlikte Blok ----------
+
+// Ortak tahtaya parça koyar; sıra partnere geçer. Oyun bitince çiftin rekoru güncellenir.
+export async function placeBlock(coupleId: string, id: string, uid: string, slot: number, r: number, c: number) {
+  const ref = doc(gamesCol(coupleId), id);
+  const coupleRef = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    const cs = await tx.get(coupleRef);
+    if (!s.exists()) return null;
+    const game = s.data() as Game;
+    const b = game.blocks;
+    if (!b || b.turn !== uid) return null;
+    const next = uid === game.from ? game.to : game.from;
+    const res = applyMove(b, slot, r, c, uid === game.from ? 1 : 2, uid, next);
+    if (!res) return null;
+    tx.update(ref, { blocks: res.state });
+    const best = (cs.data() as Couple | undefined)?.blocksBest ?? 0;
+    if (res.state.over && res.state.score > best) tx.update(coupleRef, { blocksBest: res.state.score });
+    return res;
+  });
+}
+
+// Devam eden Birlikte Blok oyunu (bildirim kaçarsa ana ekrandan geri dönülsün).
+export function useActiveBlocks(coupleId: string | undefined) {
+  const [game, setGame] = useState<Game | null>(null);
+  useEffect(() => {
+    if (!coupleId) return;
+    const q = query(gamesCol(coupleId), where('status', '==', 'playing'), limit(10));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }))
+          .filter((g) => g.type === 'blocks' && g.blocks && !g.blocks.over);
+        list.sort((a, b) => b.expiresAt - a.expiresAt);
+        setGame(list[0] ?? null);
+      },
+      () => setGame(null),
+    );
+  }, [coupleId]);
+  return game;
 }

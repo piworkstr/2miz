@@ -27,6 +27,7 @@ export type Couple = {
   startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
+  blocksBest?: number; // Birlikte Blok çift rekoru
   lastGameDay?: string; // günün oyun puanı bir kez verilsin
   bestStreak?: number;
   lastRead?: Record<string, number>; // mesajları en son ne zaman okudu
@@ -90,10 +91,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setCoupleReady(false);
     setProfileReady(false);
 
-    const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-      setProfile(snap.exists() ? (snap.data() as Profile) : null);
-      setProfileReady(true);
-    }, () => setProfileReady(true));
+    const unsubProfile = onSnapshot(
+      doc(db, 'users', user.uid),
+      (snap) => {
+        setProfile(snap.exists() ? (snap.data() as Profile) : null);
+        setProfileReady(true);
+      },
+      () => setProfileReady(true),
+    );
 
     // Kullanıcının üyesi olduğu çift belgesini dinler. Partner davet kodunu
     // girdiği anda, davet eden tarafta da eşleşme otomatik görünür.
@@ -114,7 +119,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
-  const partnerId = couple && user ? couple.members.find((m) => m !== user.uid) ?? null : null;
+  const partnerId = couple && user ? (couple.members.find((m) => m !== user.uid) ?? null) : null;
   const partnerName = (partnerId && couple?.names[partnerId]) || 'Partnerin';
 
   // Partnerin profili (sevgi dili, doğum günü, ilgi alanları). Kurallar bunu sadece eşleşmiş partnere açar.

@@ -19,10 +19,16 @@ export const setChatOpen = (open: boolean) => {
   chatOpen = open;
 };
 
+// Açık olan oyun ekranının bildirimi ("Sıra sende") üstte çıkmasın.
+let gameOpen: string | null = null;
+export const setGameOpen = (id: string | null) => {
+  gameOpen = id;
+};
+
 Notifications.setNotificationHandler({
   handleNotification: async (n) => {
     const data = n.request.content.data as Partial<PushData> | undefined;
-    const hide = data?.type === 'message' && chatOpen;
+    const hide = (data?.type === 'message' && chatOpen) || (data?.type === 'game' && !!gameOpen && data.url === `/game/${gameOpen}`);
     return { shouldShowBanner: !hide, shouldShowList: !hide, shouldPlaySound: !hide, shouldSetBadge: false };
   },
 });
@@ -74,7 +80,7 @@ export async function notifyPartner(partnerId: string, title: string, body: stri
   try {
     if (!tokens.has(partnerId)) {
       const s = await getDoc(doc(db, 'users', partnerId));
-      tokens.set(partnerId, ((s.data() as { pushToken?: string } | undefined)?.pushToken) ?? null);
+      tokens.set(partnerId, (s.data() as { pushToken?: string } | undefined)?.pushToken ?? null);
     }
     const to = tokens.get(partnerId);
     if (!to) {
