@@ -5,10 +5,12 @@ import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, Vie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, Path, Pattern, Polygon, Rect } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
+import { ScenePanel, type SceneMeta } from '../components/world/ScenePanel';
 import { WorldChar } from '../components/world/WorldChar';
 import {
   ANIMALS,
   animalReady,
+  bigReady,
   CROPS,
   cropReady,
   DECOR,
@@ -16,14 +18,21 @@ import {
   farmAction,
   farmOf,
   FIXED_ANCHOR,
+  isWeekend,
   levelOf,
+  MARKET_BONUS,
   MIN,
   N,
-  parcelCost,
+  parcelNeed,
   parcelOf,
   parcelTiles,
+  PRODUCT_NAME,
   rc,
   readyTiles,
+  SEASON_NAME,
+  seasonOf,
+  stockCount,
+  stockValue,
   TILL,
   timeLeft,
   type Action,
@@ -31,14 +40,24 @@ import {
   type CropId,
   type DecorId,
   type Farm,
+  type Season,
   type Tile,
 } from '../lib/farm';
 import { ART } from '../lib/farmArt';
 import { notifyPartner } from '../lib/push';
+import { startScene, useOpenScene, type Scene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 
-// Bizim Bahçe: 2.5D ortak çiftlik. Bütün arazi tek ekranda; avatarın dokunduğun kareye yürüyüp işi yapar.
+// Bizim Çiftlik: 2.5D ortak çiftlik. Bütün arazi tek ekranda; avatarın dokunduğun kareye yürüyüp işi yapar.
 // Partnerinin avatarı en son çalıştığı yerde durur, o bir şey yapınca oraya yürür.
+// İki kişilik sahneler: Hasat günü (büyük ürünler) ve hafta sonu Pazar. Depo ahırın önünde yığın olarak görünür.
+
+export const FARM_SCENES: Record<string, SceneMeta> = {
+  harvest: { title: 'Hasat günü', verb: 'hasadı birlikte kaldırmak', reward: { coins: 15 } },
+  market: { title: 'Pazar', verb: 'pazarda tezgâh kurmak', reward: { coins: 10 } },
+};
+// Depo yığını ahırın önünde durur.
+const PILE_TILE = 24;
 
 const TW = 64;
 const TH = TW / 2;
@@ -99,6 +118,14 @@ function sprites(f: Farm, now: number): Spr[] {
       }
     }
   });
+  // Depo: ahırın önünde ürün yığını; en çok olan ürünün resmi, miktara göre büyür.
+  const top = Object.entries(f.stock).sort((a, b) => b[1] - a[1])[0];
+  if (top && top[1] > 0) {
+    const [r, c] = rc(PILE_TILE);
+    const { x, y } = center(r, c);
+    const w = TW * Math.min(1.5, 0.7 + Math.sqrt(stockCount(f)) * 0.12);
+    out.push({ key: 'pile', art: top[0], x, y: y + TH * 0.4, z: zOf(r, c) + 7, w });
+  }
   return out;
 }
 
@@ -131,7 +158,7 @@ function SpriteImg({ s }: { s: Spr }) {
   return <Image source={a.src} style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: s.z }} />;
 }
 
-function Ground({ f, sel }: { f: Farm; sel: number | null }) {
+function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
   const pts = (r: number, c: number) => {
     const { x, y } = center(r, c);
     return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
@@ -153,7 +180,7 @@ function Ground({ f, sel }: { f: Farm; sel: number | null }) {
           <Rect width="3" height="7" fill="#5D8A36" />
         </Pattern>
       </Defs>
-      <Rect x={0} y={0} width={WW} height={WH} fill={GRASS} />
+      <Rect x={0} y={0} width={WW} height={WH} fill={season === 'kis' ? '#DCE6DA' : season === 'guz' ? '#B9C96A' : GRASS} />
       <Path
         d={`M${B.x - TW * 0.35},${btm} C${B.x - TW * 0.5},${btm + 70} ${B.x + TW * 0.6},${btm + 140} ${B.x + TW * 0.2},${WH} L${B.x + TW},${WH} C${B.x + TW * 1.3},${btm + 140} ${B.x + TW * 0.3},${btm + 70} ${B.x + TW * 0.35},${btm} Z`}
         fill="#D9C9A6"
@@ -167,8 +194,13 @@ function Ground({ f, sel }: { f: Farm; sel: number | null }) {
       <Polygon points={`${B.x},${btm} ${rx},${R.y} ${rx},${R.y + D} ${B.x},${btm + D}`} fill="#6E4625" />
       {f.tiles.map((t, i) => {
         const [r, c] = rc(i);
-        const fill =
-          t.k === 'path' ? '#D9CDB4' : t.k === 'locked' ? ((r + c) % 2 ? '#74A146' : '#6E9A42') : (r + c) % 2 ? '#93CB57' : '#8BC34F';
+        const g =
+          season === 'kis'
+            ? ['#EEF4EC', '#E4ECE2', '#C9D6C6', '#BFCDBC']
+            : season === 'guz'
+              ? ['#B3C65B', '#A9BC52', '#8E9F45', '#869841']
+              : ['#93CB57', '#8BC34F', '#74A146', '#6E9A42'];
+        const fill = t.k === 'path' ? '#D9CDB4' : t.k === 'locked' ? g[(r + c) % 2 ? 2 : 3] : g[(r + c) % 2 ? 0 : 1];
         return (
           <Polygon key={i} points={pts(r, c)} fill={fill} stroke={t.k === 'path' ? '#C9BC9F' : 'rgba(255,255,255,0.08)'} strokeWidth={1} />
         );
@@ -176,6 +208,16 @@ function Ground({ f, sel }: { f: Farm; sel: number | null }) {
       {f.tiles.map((t, i) => {
         const [r, c] = rc(i);
         if (t.k === 'locked') return <Polygon key={`h${i}`} points={pts(r, c)} fill="url(#hatch)" opacity={0.45} />;
+        if (t.k === 'grass' && season === 'bahar' && i % 3 === 0) {
+          const { x, y } = center(r, c);
+          return (
+            <Path
+              key={`h${i}`}
+              d={`M${x - 12},${y + 2} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 8},${y - 4} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 1},${y + 7} a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0`}
+              fill={i % 2 ? '#FFD6E7' : '#FFF6B3'}
+            />
+          );
+        }
         if (t.k === 'path') {
           const { x, y } = center(r, c);
           return (
@@ -202,7 +244,7 @@ function Ground({ f, sel }: { f: Farm; sel: number | null }) {
   );
 }
 
-// Satılık her parselin ortasında küçük tabela.
+// Kapalı her parselin ortasında küçük tabela: ortak hasatla açılır.
 function Signs({ f }: { f: Farm }) {
   const groups = new Map<string, number[]>();
   f.tiles.forEach((t, i) => {
@@ -228,7 +270,7 @@ function Signs({ f }: { f: Farm }) {
           >
             <Rect x={14.5} y={14} width={3} height={22} fill="#7A4E2A" />
             <Rect x={2} y={2} width={28} height={16} rx={3} fill="#C88A4E" stroke="#7A4E2A" strokeWidth={1.5} />
-            <Ellipse cx={10} cy={10} rx={4.5} ry={4.5} fill="#F4C542" stroke="#B88A1A" />
+            <Ellipse cx={10} cy={10} rx={4.5} ry={4.5} fill="#8BC34F" stroke="#4F7F2A" />
             <Path d="M17 10h9 M21.5 5.5v9" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" />
           </Svg>
         );
@@ -359,6 +401,7 @@ export default function GardenScreen() {
   const [say, setSay] = useState('');
   const [tool, setTool] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
+  const scene = useOpenScene(couple?.id, 'farm');
 
   const farm = farmOf(couple);
   const uid = user?.uid ?? '';
@@ -452,9 +495,17 @@ export default function GardenScreen() {
         if (typeof r === 'string') flash(r);
         else {
           if (r.gained) {
-            const { x, y } = center(...rc(job.i));
+            const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
             const id = Date.now() + Math.random();
-            setFloats((f) => [...f, { id, x, y: y - TW * 0.6, text: `+${r.gained}` }]);
+            setFloats((f) => [
+              ...f,
+              {
+                id,
+                x,
+                y: y - TW * 0.6,
+                text: job.a === 'sell' ? `+${r.gained} altın` : job.a === 'harvestDay' ? `${r.gained} ürün 🌾` : `+${r.gained}`,
+              },
+            ]);
             setTimeout(() => setFloats((f) => f.filter((q) => q.id !== id)), 1300);
           }
           if (job.a === 'plant') {
@@ -496,7 +547,29 @@ export default function GardenScreen() {
   if (!user || !couple || !partnerId) return null;
 
   const lv = levelOf(farm.xp);
+  const season = seasonOf(now);
   const ready = readyTiles(farm, now);
+  const bigIds = bigReady(farm, now);
+  const live = scene && scene.status === 'live' ? scene : null;
+  // Hasat günü canlıyken ikisi tarlada yan yana; pazar canlıyken yığının başında.
+  const sceneTile = live ? (live.kind === 'harvest' && bigIds.length ? bigIds[0] : PILE_TILE) : null;
+  async function begin(kind: 'harvest' | 'market') {
+    if (scene) return flash('Önce açık sahneyi bitirin.');
+    try {
+      await startScene(couple!.id, uid, { world: 'farm', kind, place: 'Bizim Çiftlik', windowMin: 120 });
+      notifyPartner(partnerId!, `${myName} seni ${FARM_SCENES[kind].verb} için çağırıyor`, 'Bizim Çiftlik', {
+        type: 'mood',
+        url: '/garden',
+      });
+    } catch {
+      flash('Sahne başlatılamadı');
+    }
+  }
+  // Sahneye katılan kişi işi yapar: hasadı kaldırır ya da tezgâhı açıp satar.
+  const doScene = (sc: Scene) =>
+    sc.kind === 'harvest'
+      ? work({ a: 'harvestDay', i: bigIds[0] ?? PILE_TILE, scene: sc.id })
+      : work({ a: 'sell', i: PILE_TILE, scene: sc.id });
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   const sprs = [...SCENERY, ...sprites(farm, now)].sort((a, b) => a.z - b.z);
@@ -507,11 +580,12 @@ export default function GardenScreen() {
     const z = zOf(r, c) + 409;
     if (tl.k === 'crop' && !cropReady(tl, now) && tl.by !== uid && !tl.watered)
       badges.push({ key: `b${i}`, x, y: y - TW * 0.75, art: 'can', z });
-    if (tl.k === 'crop' && cropReady(tl, now)) badges.push({ key: `b${i}`, x, y: y - TW * 0.95, art: 'coin', z });
+    if (tl.k === 'crop' && cropReady(tl, now))
+      badges.push({ key: `b${i}`, x, y: y - TW * 0.95, art: CROPS[tl.crop].big ? 'gul' : 'coin', z });
     if (tl.k === 'animal' && animalReady(tl, now)) badges.push({ key: `b${i}`, x, y: y - TW * 0.85, art: ANIMALS[tl.item].product, z });
   });
-  const meAt = stand(myTile, -1);
-  const pAt = stand(partnerTile, 1);
+  const meAt = stand(sceneTile ?? myTile, -1);
+  const pAt = stand(sceneTile ?? partnerTile, 1);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const pill = {
@@ -540,7 +614,7 @@ export default function GardenScreen() {
             transform: [{ translateX: tx }, { translateY: ty }, { scale: s }],
           }}
         >
-          <Ground f={farm} sel={sel} />
+          <Ground f={farm} sel={sel} season={season} />
           {sprs.map((sp) => (
             <SpriteImg key={sp.key} s={sp} />
           ))}
@@ -616,6 +690,14 @@ export default function GardenScreen() {
           <Text style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>{farm.coins}</Text>
         </View>
       </View>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 10, top: insets.top + 52 }}>
+        <Text
+          style={[pill, { fontWeight: '800', fontSize: 11, color: INK, paddingHorizontal: 10, paddingVertical: 5, overflow: 'hidden' }]}
+        >
+          {SEASON_NAME[season]}
+          {season === 'kis' ? ' · ürünler yavaş' : ''} · {farm.harvests} ortak hasat
+        </Text>
+      </View>
       <View style={{ position: 'absolute', right: 10, top: insets.top + 52, gap: 6 }}>
         {(['in', 'out'] as const).map((k) => (
           <Pressable
@@ -672,39 +754,77 @@ export default function GardenScreen() {
           elevation: 8,
         }}
       >
-        <Sheet
-          farm={farm}
-          sel={sel}
-          now={now}
-          uid={uid}
-          partnerName={partnerName}
-          shop={shop}
-          setShop={setShop}
-          plantAll={plantAll}
-          setPlantAll={setPlantAll}
-          showLog={showLog}
-          ready={ready.length}
-          thirsty={thirsty}
-          fields={fields}
-          bank={couple.dreamBank ?? 0}
-          onBank={() =>
-            collectDreamBank(couple.id, uid, myName)
-              .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
-              .catch(() => {})
-          }
-          onClose={() => {
-            setSel(null);
-            setShowLog(false);
-          }}
-          onLog={() => setShowLog(true)}
-          onAll={() => ready.forEach((i) => work({ a: farm.tiles[i].k === 'crop' ? 'harvest' : 'collect', i }))}
-          onAct={(a, all) => {
-            if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
-            else work(a);
-            setSel(null);
-            setPlantAll(false);
-          }}
-        />
+        {scene ? (
+          <ScenePanel
+            scene={scene}
+            meta={FARM_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
+            coupleId={couple.id}
+            uid={uid}
+            partnerId={partnerId}
+            partnerName={partnerName}
+            profile={profile}
+            partnerProfile={partnerProfile}
+            onJoined={() => {
+              notifyPartner(partnerId, `${myName} geldi 💛`, `${FARM_SCENES[scene.kind]?.title} başlıyor`, {
+                type: 'mood',
+                url: '/garden',
+              });
+              doScene(scene);
+            }}
+            extra={
+              live && ((live.kind === 'harvest' && bigIds.length > 0) || (live.kind === 'market' && stockCount(farm) > 0)) ? (
+                <Btn
+                  label={
+                    live.kind === 'harvest' ? `Birlikte topla (${bigIds.length})` : `Tezgâhı aç · ${stockValue(farm, MARKET_BONUS)} altın`
+                  }
+                  onPress={() => doScene(live)}
+                />
+              ) : null
+            }
+          />
+        ) : (
+          <Sheet
+            farm={farm}
+            sel={sel}
+            now={now}
+            uid={uid}
+            partnerName={partnerName}
+            shop={shop}
+            setShop={setShop}
+            plantAll={plantAll}
+            setPlantAll={setPlantAll}
+            showLog={showLog}
+            ready={ready.length}
+            thirsty={thirsty}
+            fields={fields}
+            bank={couple.dreamBank ?? 0}
+            onBank={() =>
+              collectDreamBank(couple.id, uid, myName)
+                .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
+                .catch(() => {})
+            }
+            onClose={() => {
+              setSel(null);
+              setShowLog(false);
+            }}
+            onLog={() => setShowLog(true)}
+            onAll={() =>
+              ready.forEach((i) => {
+                const x = farm.tiles[i];
+                if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat günüyle
+                work({ a: x.k === 'crop' ? 'harvest' : 'collect', i });
+              })
+            }
+            onSell={() => work({ a: 'sell', i: PILE_TILE })}
+            onScene={begin}
+            onAct={(a, all) => {
+              if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
+              else work(a);
+              setSel(null);
+              setPlantAll(false);
+            }}
+          />
+        )}
       </View>
     </View>
   );
@@ -729,6 +849,8 @@ type SheetProps = {
   onClose: () => void;
   onLog: () => void;
   onAll: () => void;
+  onSell: () => void;
+  onScene: (k: 'harvest' | 'market') => void;
   onAct: (a: Action, all?: boolean) => void;
 };
 
@@ -879,21 +1001,45 @@ function Sheet(p: SheetProps) {
       </>
     );
 
-  if (sel === null)
+  if (sel === null) {
+    const n = stockCount(farm);
+    const big = bigReady(farm, now).length;
+    const weekend = isWeekend(now);
+    const small = p.ready - big;
     return (
       <>
         <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>
-          {p.thirsty
-            ? `${p.partnerName}’in ${p.thirsty} ürünü sulanmayı bekliyor 💧 Sularsan iki kat hızlı büyür.`
-            : `${p.fields} tarlanız var. Bir kareye dokun: ek, sula, topla. Tabelalı her yer satılık.`}
+          {big
+            ? `${big} büyük ürün hasada hazır: hasat günü ikinizle olur 🌾`
+            : p.thirsty
+              ? `${p.partnerName}’in ${p.thirsty} ürünü sulanmayı bekliyor 💧 Sularsan iki kat hızlı büyür ve hasat ortak sayılır.`
+              : `${p.fields} tarlanız var. Bir kareye dokun: ek, sula, topla. Kapalı arazi ortak hasatla açılır (${farm.harvests}/${parcelNeed(farm)}).`}
         </Text>
         {p.bank > 0 && <Btn kind="accent" label={`Günlük görevden ${p.bank} altın geldi · Al`} onPress={p.onBank} />}
+        {big > 0 && <Btn kind="accent" label={`Hasat günü · ${p.partnerName}’i çağır`} onPress={() => p.onScene('harvest')} />}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn flex label={`Hepsini topla${p.ready ? ` (${p.ready})` : ''}`} onPress={p.onAll} disabled={!p.ready} />
+          <Btn flex label={`Topla${small > 0 ? ` (${small})` : ''}`} onPress={p.onAll} disabled={small <= 0} />
+          {n > 0 &&
+            (weekend ? (
+              <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
+            ) : (
+              <Btn flex kind="soft" label={`Sat · ${stockValue(farm)}`} onPress={p.onSell} />
+            ))}
           <Btn kind="soft" label="Günlük" onPress={p.onLog} />
         </View>
+        {n > 0 && (
+          <Note>
+            Depoda {n} ürün:{' '}
+            {Object.entries(farm.stock)
+              .filter(([, k]) => k > 0)
+              .map(([k, v]) => `${v} ${PRODUCT_NAME[k] ?? k}`)
+              .join(', ')}
+            . {weekend ? 'Hafta sonu pazarı açık: tezgâhı ikiniz kurarsanız bir buçuk kat.' : 'Hafta sonu pazarda bir buçuk kata gider.'}
+          </Note>
+        )}
       </>
     );
+  }
 
   const i = sel;
   const t: Tile = farm.tiles[i];
@@ -919,15 +1065,20 @@ function Sheet(p: SheetProps) {
         }));
 
   if (t.k === 'locked') {
-    const cost = parcelCost(farm);
+    const need = parcelNeed(farm);
+    const ok = farm.harvests >= need;
     return (
       <>
-        <Head title="Satılık arazi" onClose={p.onClose} />
+        <Head title="Komşu arazi" onClose={p.onClose} />
         <Note>
-          Bu parselde {parcelTiles(farm, i).length} kare var. Alınca hepsi sürülmüş tarla olur; istersen üstüne hayvan ya da süs de
-          koyarsın.
+          Bu parselde {parcelTiles(farm, i).length} kare var. Arazi parayla değil ortak hasatla açılır: biri eker, diğeri sular; büyük
+          ürünler hasat günüyle kalkar. {ok ? 'Açılmaya hazır!' : `${need}. ortak hasatta açılır (${farm.harvests}/${need}).`}
         </Note>
-        <Btn label={`Araziyi al · ${cost} altın`} onPress={() => p.onAct({ a: 'unlock', i })} disabled={farm.coins < cost} />
+        <Btn
+          label={ok ? 'Araziyi aç' : `${need - farm.harvests} ortak hasat daha`}
+          onPress={() => p.onAct({ a: 'unlock', i })}
+          disabled={!ok}
+        />
       </>
     );
   }
@@ -942,7 +1093,13 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art={t.item} title={t.item === 'house' ? 'Eviniz' : 'Ahır'} onClose={p.onClose} />
-        <Note>{t.item === 'house' ? 'Çiftlikteki eviniz.' : 'Ürünleriniz burada saklanıyor.'}</Note>
+        <Note>
+          {t.item === 'house'
+            ? 'Çiftlikteki eviniz.'
+            : stockCount(farm)
+              ? `Depoda ${stockCount(farm)} ürün var (${stockValue(farm)} altın). Hafta sonu pazarda bir buçuk kat.`
+              : 'Depo boş. Toplanan ürünler burada birikir, satınca altın olur.'}
+        </Note>
       </>
     );
   if (t.k === 'soil') {
@@ -955,7 +1112,7 @@ function Sheet(p: SheetProps) {
             name: CROPS[id].name,
             cost: CROPS[id].cost,
             lvl: CROPS[id].lvl,
-            sub: `${timeLeft(CROPS[id].mins * MIN)} · ${CROPS[id].sell} altın`,
+            sub: `${timeLeft(CROPS[id].mins * MIN)} · ${CROPS[id].sell} altın${CROPS[id].big ? ' · hasat günü' : ''}`,
             a: { a: 'plant', i, crop: id },
           }))
         : placeList();
@@ -990,12 +1147,19 @@ function Sheet(p: SheetProps) {
       <>
         <Head art={t.crop} title={c.name} onClose={p.onClose} />
         {done ? (
-          <>
-            <Note>
-              Hasada hazır: +{c.sell} altın, +{c.xp} tecrübe
-            </Note>
-            <Btn label="Hasat et" onPress={() => p.onAct({ a: 'harvest', i })} />
-          </>
+          c.big ? (
+            <>
+              <Note>Büyük ürün: hasat günü ikinizle olur. Biri çağırır, diğeri gelir; birlikte toplar, ortak hasat sayılır.</Note>
+              <Btn kind="accent" label={`Hasat günü · ${p.partnerName}’i çağır`} onPress={() => p.onScene('harvest')} />
+            </>
+          ) : (
+            <>
+              <Note>
+                Hasada hazır: depoya {c.sell} altınlık ürün, +{c.xp} tecrübe{t.watered ? ' · ortak hasat' : ''}
+              </Note>
+              <Btn label="Topla" onPress={() => p.onAct({ a: 'harvest', i })} />
+            </>
+          )
         ) : (
           <>
             <View style={{ height: 8, borderRadius: 4, backgroundColor: '#EEE6DD', overflow: 'hidden' }}>
@@ -1006,7 +1170,7 @@ function Sheet(p: SheetProps) {
               {t.watered ? ' · sulandı 💧' : ''}
             </Note>
             {!mine && !t.watered && <Btn kind="accent" label="Sula · iki kat hızlı büyür" onPress={() => p.onAct({ a: 'water', i })} />}
-            {mine && !t.watered && <Note>{p.partnerName} sularsa kalan süre yarıya iner.</Note>}
+            {mine && !t.watered && <Note>{p.partnerName} sularsa kalan süre yarıya iner ve hasat ortak sayılır.</Note>}
           </>
         )}
       </>
@@ -1019,7 +1183,9 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art={t.item} title={an.name} onClose={p.onClose} />
-        <Note>{done ? `${P1} hazır: +${an.sell} altın` : `${an.pname} için ${timeLeft(t.last + an.mins * MIN - now)} kaldı`}</Note>
+        <Note>
+          {done ? `${P1} hazır: depoya ${an.sell} altınlık ürün` : `${an.pname} için ${timeLeft(t.last + an.mins * MIN - now)} kaldı`}
+        </Note>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {done && <Btn flex label={`${P1} topla`} onPress={() => p.onAct({ a: 'collect', i })} />}
           <Btn kind="soft" label={`Sat (+${Math.floor(an.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />

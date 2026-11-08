@@ -3,28 +3,33 @@ import { doc, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Couple } from './session';
 
-// Bizim Bahçe: çiftin ortak çiftliği (2.5D, FarmVille tarzı). Hayal dünyalarının ilki.
-// Tarla ekilir, ürün gerçek zamanla büyür, hasat altın ve tecrübe getirir.
-// Ortaklık: birinin ektiğini diğeri sularsa kalan süre yarıya iner.
-// Arazi 10x10; satılık kısımlar 2x2 parseller halinde alınır ve tarla olur.
+// Bizim Çiftlik: çiftin ortak çiftliği (2.5D). Amaç: birlikte emek vermek ve emeğin meyvesini birlikte görmek.
+// Tarla ekilir, ürün gerçek zamanla büyür; hasat depoya gider, depo satılınca altın olur.
+// Ortaklık: birinin ektiğini diğeri sularsa kalan süre yarıya iner ve o hasat "ortak hasat" sayılır.
+// Büyük ürünlerin (gül, ayçiçeği, bal kabağı) hasadı iki kişilik sahnedir: Hasat günü.
+// Hafta sonu pazar: tezgâhı ikiniz kurarsanız depo bir buçuk katına gider.
+// Mevsim gerçek takvimi izler: kışın ürün yavaş büyür.
+// Arazi 10x10; kapalı parseller parayla değil ortak hasat sayısıyla açılır (her 10 ortak hasatta bir parsel).
 
 export const N = 10;
 export const MIN = 60_000;
 export const TILL = 10;
+export const HARVESTS_PER_PARCEL = 10;
+export const MARKET_BONUS = 1.5;
 
 export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' | 'aycicegi' | 'kabak';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type DecorId = 'cicek' | 'cit' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
 
-export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number }> = {
+export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
   bugday: { name: 'Buğday', cost: 2, mins: 30, sell: 6, xp: 2, lvl: 1 },
   havuc: { name: 'Havuç', cost: 5, mins: 120, sell: 15, xp: 4, lvl: 1 },
   domates: { name: 'Domates', cost: 8, mins: 240, sell: 25, xp: 7, lvl: 2 },
   misir: { name: 'Mısır', cost: 12, mins: 480, sell: 40, xp: 10, lvl: 3 },
-  gul: { name: 'Aşk gülü', cost: 30, mins: 1440, sell: 110, xp: 30, lvl: 3 },
+  gul: { name: 'Aşk gülü', cost: 30, mins: 1440, sell: 110, xp: 30, lvl: 3, big: true },
   cilek: { name: 'Çilek', cost: 20, mins: 720, sell: 65, xp: 14, lvl: 4 },
-  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 1440, sell: 90, xp: 20, lvl: 5 },
-  kabak: { name: 'Bal kabağı', cost: 40, mins: 1440, sell: 140, xp: 26, lvl: 6 },
+  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 1440, sell: 90, xp: 20, lvl: 5, big: true },
+  kabak: { name: 'Bal kabağı', cost: 40, mins: 1440, sell: 140, xp: 26, lvl: 6, big: true },
 };
 
 export const ANIMALS: Record<
@@ -59,7 +64,18 @@ export type Tile =
 
 export type FarmLog = { by: string; text: string; at: number };
 // pos: herkesin en son çalıştığı kare; partnerin avatarı orada durur.
-export type Farm = { v: 2; coins: number; xp: number; bought: number; tiles: Tile[]; log: FarmLog[]; pos: Record<string, number> };
+// stock: depo (ürün adı → adet); harvests: ortak hasat sayısı (arazi bununla açılır).
+export type Farm = {
+  v: 2;
+  coins: number;
+  xp: number;
+  bought: number;
+  tiles: Tile[];
+  log: FarmLog[];
+  pos: Record<string, number>;
+  stock: Record<string, number>;
+  harvests: number;
+};
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
 const MAP = [
@@ -92,13 +108,13 @@ export function newFarm(): Farm {
       if (ch === 'F') t = { k: 'decor', item: 'cesme' };
       tiles.push(t);
     }
-  return { v: 2, coins: 100, xp: 0, bought: 0, tiles, log: [], pos: {} };
+  return { v: 2, coins: 100, xp: 0, bought: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0 };
 }
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
   const f = couple?.farm as Farm | undefined;
-  return f && f.v === 2 ? { ...f, pos: f.pos ?? {} } : newFarm();
+  return f && f.v === 2 ? { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0 } : newFarm();
 }
 
 export const levelStart = (l: number) => 15 * l * (l - 1);
@@ -112,7 +128,34 @@ export const rc = (i: number) => [Math.floor(i / N), i % N] as const;
 export const parcelOf = (i: number) => `${Math.floor(Math.floor(i / N) / 2)}-${Math.floor((i % N) / 2)}`;
 export const parcelTiles = (f: Farm, i: number) =>
   f.tiles.map((t, j) => (t.k === 'locked' && parcelOf(j) === parcelOf(i) ? j : -1)).filter((j) => j >= 0);
-export const parcelCost = (f: Farm) => 80 + 40 * (f.bought || 0);
+// Bir sonraki parsel için gereken ortak hasat sayısı.
+export const parcelNeed = (f: Farm) => HARVESTS_PER_PARCEL * ((f.bought || 0) + 1);
+
+// ---------- Mevsim ----------
+export type Season = 'kis' | 'bahar' | 'yaz' | 'guz';
+export function seasonOf(now = Date.now()): Season {
+  const m = new Date(now).getMonth();
+  return m === 11 || m < 2 ? 'kis' : m < 5 ? 'bahar' : m < 8 ? 'yaz' : 'guz';
+}
+export const SEASON_NAME: Record<Season, string> = { kis: 'Kış', bahar: 'Bahar', yaz: 'Yaz', guz: 'Güz' };
+// Kışın ürün yavaş büyür, baharda biraz hızlı.
+export const growFactor = (s: Season) => (s === 'kis' ? 1.5 : s === 'bahar' ? 0.85 : 1);
+export const isWeekend = (now = Date.now()) => [0, 6].includes(new Date(now).getDay());
+
+// ---------- Depo ----------
+const PRICE: Record<string, number> = {
+  ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.sell])),
+  ...Object.fromEntries(Object.values(ANIMALS).map((a) => [a.product, a.sell])),
+};
+export const PRODUCT_NAME: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.name])),
+  ...Object.fromEntries(Object.values(ANIMALS).map((a) => [a.product, a.pname[0].toLocaleUpperCase('tr-TR') + a.pname.slice(1)])),
+};
+export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
+export const stockValue = (f: Farm, bonus = 1) =>
+  Math.round(Object.entries(f.stock).reduce((a, [k, n]) => a + (PRICE[k] ?? 0) * n, 0) * bonus);
+export const bigReady = (f: Farm, now: number) =>
+  f.tiles.map((t, i) => (t.k === 'crop' && CROPS[t.crop].big && cropReady(t, now) ? i : -1)).filter((i) => i >= 0);
 
 export const cropReady = (t: Extract<Tile, { k: 'crop' }>, now: number) => now >= t.ready;
 export const animalReady = (t: Extract<Tile, { k: 'animal' }>, now: number) => now >= t.last + ANIMALS[t.item].mins * MIN;
@@ -132,7 +175,13 @@ export function readyTiles(f: Farm, now: number) {
 export function farmSummary(f: Farm, uid: string, now = Date.now()) {
   let canWater = 0;
   for (const t of f.tiles) if (t.k === 'crop' && !cropReady(t, now) && t.by !== uid && !t.watered) canWater++;
-  return { ready: readyTiles(f, now).length, canWater, fields: f.tiles.filter((t) => t.k === 'soil' || t.k === 'crop').length };
+  return {
+    ready: readyTiles(f, now).length,
+    canWater,
+    fields: f.tiles.filter((t) => t.k === 'soil' || t.k === 'crop').length,
+    big: bigReady(f, now).length,
+    stock: stockCount(f),
+  };
 }
 
 // ---------- Hamleler ----------
@@ -146,7 +195,11 @@ export type Action =
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'decor'; i: number; item: DecorId }
   | { a: 'unlock'; i: number }
-  | { a: 'remove'; i: number };
+  | { a: 'remove'; i: number }
+  // Hasat günü: iki kişilik sahne canlıyken bütün hazır büyük ürünler toplanır.
+  | { a: 'harvestDay'; i: number; scene: string }
+  // Depoyu sat; pazar sahnesi canlıysa (hafta sonu, ikiniz) bir buçuk kat.
+  | { a: 'sell'; i: number; scene?: string };
 
 export type Result = { farm: Farm; text: string; gained: number; ready?: number };
 
@@ -160,8 +213,10 @@ export function applyAction(
   partnerName: (by: string) => string,
   name: string,
   now: number,
+  live?: { kind: string } | null, // doğrulanmış canlı sahne (hasat günü / pazar)
 ): Result | string {
-  const f: Farm = { ...f0, tiles: [...f0.tiles], log: [...f0.log], pos: { ...f0.pos } };
+  const f: Farm = { ...f0, tiles: [...f0.tiles], log: [...f0.log], pos: { ...f0.pos }, stock: { ...f0.stock } };
+  const put = (k: string, n = 1) => (f.stock[k] = (f.stock[k] ?? 0) + n);
   const t = f.tiles[act.i];
   if (!t) return 'Böyle bir yer yok.';
   const lv = levelOf(f.xp).level;
@@ -176,9 +231,10 @@ export function applyAction(
       if (lv < c.lvl) return `${c.name} ${c.lvl}. seviyede açılır.`;
       if (f.coins < c.cost) return 'Yeterli altının yok.';
       f.coins -= c.cost;
-      ready = now + c.mins * MIN;
+      const season = seasonOf(now);
+      ready = now + Math.round(c.mins * MIN * growFactor(season));
       f.tiles[act.i] = { k: 'crop', crop: act.crop, by: uid, at: now, ready };
-      text = `${name} ${c.name.toLowerCase()} ekti`;
+      text = `${name} ${c.name.toLowerCase()} ekti${season === 'kis' ? ' (kışın yavaş büyür)' : ''}`;
       break;
     }
     case 'water': {
@@ -195,22 +251,22 @@ export function applyAction(
       if (t.k !== 'crop') return 'Hasat edilecek ürün yok.';
       if (!cropReady(t, now)) return 'Henüz olmadı.';
       const c = CROPS[t.crop];
-      gained = c.sell;
-      f.coins += c.sell;
+      if (c.big) return `${c.name} hasat günüyle toplanır: partnerini çağır.`;
       f.xp += c.xp;
+      put(t.crop);
+      if (t.watered) f.harvests += 1; // biri ekti, diğeri suladı: ortak hasat
       f.tiles[act.i] = { k: 'soil' };
-      text = `${name} ${c.name.toLowerCase()} hasat etti (+${c.sell})`;
+      text = `${name} ${c.name.toLowerCase()} topladı${t.watered ? ' · ortak hasat' : ''}`;
       break;
     }
     case 'collect': {
       if (t.k !== 'animal') return 'Burada hayvan yok.';
       if (!animalReady(t, now)) return 'Henüz hazır değil.';
       const an = ANIMALS[t.item];
-      gained = an.sell;
-      f.coins += an.sell;
       f.xp += an.xp;
+      put(an.product);
       f.tiles[act.i] = { ...t, last: now };
-      text = `${name} ${an.pname} topladı (+${an.sell})`;
+      text = `${name} ${an.pname} topladı`;
       break;
     }
     case 'till': {
@@ -245,14 +301,13 @@ export function applyAction(
     }
     case 'unlock': {
       if (t.k !== 'locked') return 'Bu arazi zaten açık.';
-      const cost = parcelCost(f);
-      if (f.coins < cost) return `Bu arazi için ${cost} altın gerek.`;
-      f.coins -= cost;
+      const need = parcelNeed(f);
+      if (f.harvests < need) return `Bu arazi ${need}. ortak hasatta açılır (${f.harvests}/${need}).`;
       f.bought = (f.bought || 0) + 1;
       const ids = parcelTiles(f0, act.i);
       ids.forEach((j) => (f.tiles[j] = { k: 'soil' }));
       f.xp += 5;
-      text = `${name} yeni arazi aldı: ${ids.length} tarla daha`;
+      text = `${name} yeni araziyi açtı: ${ids.length} tarla daha 🌱`;
       break;
     }
     case 'remove': {
@@ -262,6 +317,34 @@ export function applyAction(
       f.coins += gained;
       f.tiles[act.i] = { k: 'grass' };
       text = `${name} bir yeri boşalttı`;
+      break;
+    }
+    case 'harvestDay': {
+      if (live?.kind !== 'harvest') return 'Hasat günü için önce ikiniz tarlada olmalısınız.';
+      const ids = bigReady(f0, now);
+      if (!ids.length) return 'Toplanacak büyük ürün yok.';
+      const names = new Set<string>();
+      for (const j of ids) {
+        const tj = f0.tiles[j];
+        if (tj.k !== 'crop') continue;
+        put(tj.crop);
+        f.xp += CROPS[tj.crop].xp;
+        names.add(CROPS[tj.crop].name.toLowerCase());
+        f.tiles[j] = { k: 'soil' };
+      }
+      f.harvests += ids.length;
+      gained = ids.length;
+      text = `Hasat günü: ikiniz ${ids.length} ${[...names].join(', ')} topladınız 🌾`;
+      break;
+    }
+    case 'sell': {
+      const n = stockCount(f);
+      if (!n) return 'Depo boş.';
+      const market = live?.kind === 'market';
+      gained = stockValue(f, market ? MARKET_BONUS : 1);
+      f.coins += gained;
+      f.stock = {};
+      text = market ? `Pazar günü: ${n} ürün tezgâhta ${gained} altına gitti 🧺` : `${name} ${n} ürünü ${gained} altına sattı`;
       break;
     }
   }
@@ -275,10 +358,26 @@ const clean = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 
 export async function farmAction(coupleId: string, uid: string, name: string, partnerName: string, act: Action) {
   const ref = doc(db, 'couples', coupleId);
+  const sceneId = act.a === 'harvestDay' || act.a === 'sell' ? act.scene : undefined;
   const res = await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists()) return 'Çift bulunamadı.';
-    const r = applyAction(farmOf(snap.data() as Couple), act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, Date.now());
+    // İki kişilik sahne gerçekten canlı mı? (hasat günü, pazar)
+    let live: { kind: string } | null = null;
+    if (sceneId) {
+      const sc = await tx.get(doc(db, 'couples', coupleId, 'scenes', sceneId));
+      const d = sc.data() as { kind?: string; status?: string } | undefined;
+      if (sc.exists() && d?.status === 'live' && d.kind) live = { kind: d.kind };
+    }
+    const r = applyAction(
+      farmOf(snap.data() as Couple),
+      act,
+      uid,
+      (by) => (by === uid ? 'kendi' : `${partnerName}’in`),
+      name,
+      Date.now(),
+      live,
+    );
     if (typeof r !== 'string') tx.update(ref, { farm: clean(r.farm) });
     return r;
   });
