@@ -20,6 +20,7 @@ export const MARKET_BONUS = 1.5;
 
 export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' | 'aycicegi' | 'kabak';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
+export type TreeId = 'elma' | 'kiraz' | 'armut';
 export type DecorId = 'cicek' | 'cit' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
 
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
@@ -33,14 +34,45 @@ export const CROPS: Record<CropId, { name: string; cost: number; mins: number; s
   kabak: { name: 'Bal kabağı', cost: 40, mins: 1440, sell: 140, xp: 26, lvl: 6, big: true },
 };
 
+// Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
+// koyun yün ve süt, inek süt, tavuk yumurta, arı bal. products[0] rozet ve ana üründür.
+export const PRODUCTS: Record<string, { name: string; sell: number; art: string }> = {
+  egg: { name: 'Yumurta', sell: 15, art: 'egg' },
+  wool: { name: 'Yün', sell: 35, art: 'wool' },
+  milk: { name: 'Süt', sell: 45, art: 'milk' },
+  honey: { name: 'Bal', sell: 80, art: 'honey' },
+};
 export const ANIMALS: Record<
   AnimalId,
-  { name: string; product: string; pname: string; cost: number; mins: number; sell: number; xp: number; lvl: number; w: number }
+  { name: string; products: string[]; cost: number; mins: number; xp: number; lvl: number; w: number }
 > = {
-  tavuk: { name: 'Tavuk', product: 'egg', pname: 'yumurta', cost: 60, mins: 240, sell: 15, xp: 3, lvl: 2, w: 0.6 },
-  koyun: { name: 'Koyun', product: 'wool', pname: 'yün', cost: 150, mins: 360, sell: 35, xp: 5, lvl: 3, w: 0.78 },
-  inek: { name: 'İnek', product: 'milk', pname: 'süt', cost: 200, mins: 480, sell: 45, xp: 6, lvl: 4, w: 0.95 },
-  ari: { name: 'Arı kovanı', product: 'honey', pname: 'bal', cost: 300, mins: 720, sell: 80, xp: 8, lvl: 5, w: 0.72 },
+  tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 240, xp: 3, lvl: 2, w: 0.6 },
+  koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 360, xp: 5, lvl: 3, w: 0.78 },
+  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 480, xp: 6, lvl: 4, w: 0.95 },
+  ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 720, xp: 8, lvl: 5, w: 0.72 },
+};
+export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
+export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
+
+// Meyve ağaçları: bir kez dikilir, ilk hasattan sonra sürekli meyve verir. Çayıra dikilir.
+export const TREES: Record<
+  TreeId,
+  {
+    name: string;
+    fruit: string;
+    cost: number;
+    first: number;
+    mins: number;
+    yieldN: number;
+    sell: number;
+    xp: number;
+    lvl: number;
+    w: number;
+  }
+> = {
+  elma: { name: 'Elma ağacı', fruit: 'Elma', cost: 200, first: 240, mins: 120, yieldN: 3, sell: 30, xp: 6, lvl: 3, w: 1.15 },
+  kiraz: { name: 'Kiraz ağacı', fruit: 'Kiraz', cost: 320, first: 300, mins: 180, yieldN: 3, sell: 45, xp: 9, lvl: 4, w: 1.15 },
+  armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 360, mins: 240, yieldN: 3, sell: 60, xp: 12, lvl: 5, w: 1.15 },
 };
 
 export const DECOR: Record<DecorId, { name: string; sp: string; cost: number; xp: number; lvl: number; w: number }> = {
@@ -61,6 +93,7 @@ export type Tile =
   | { k: 'fixed'; item: 'house' | 'barn' }
   | { k: 'crop'; crop: CropId; by: string; at: number; ready: number; watered?: string }
   | { k: 'animal'; item: AnimalId; last: number }
+  | { k: 'tree'; item: TreeId; at: number; last: number } // at: dikim; last: son hasat (ilk hasat at + first)
   | { k: 'decor'; item: DecorId };
 
 export type FarmLog = { by: string; text: string; at: number };
@@ -167,11 +200,13 @@ export const isWeekend = (now = Date.now()) => [0, 6].includes(new Date(now).get
 // ---------- Depo ----------
 const PRICE: Record<string, number> = {
   ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.sell])),
-  ...Object.fromEntries(Object.values(ANIMALS).map((a) => [a.product, a.sell])),
+  ...Object.fromEntries(Object.entries(PRODUCTS).map(([k, v]) => [k, v.sell])),
+  ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.sell])),
 };
 export const PRODUCT_NAME: Record<string, string> = {
   ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.name])),
-  ...Object.fromEntries(Object.values(ANIMALS).map((a) => [a.product, a.pname[0].toLocaleUpperCase('tr-TR') + a.pname.slice(1)])),
+  ...Object.fromEntries(Object.entries(PRODUCTS).map(([k, v]) => [k, v.name])),
+  ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.fruit])),
 };
 export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
 export const stockValue = (f: Farm, bonus = 1) =>
@@ -184,7 +219,10 @@ export const bigReady = (f: Farm, now: number) =>
 export function makeOrder(f: Farm, now: number, openAt = now): Order {
   const lv = levelOf(f.xp).level;
   const pool: string[] = (Object.keys(CROPS) as CropId[]).filter((c) => CROPS[c].lvl <= lv && !CROPS[c].big);
-  for (const t of f.tiles) if (t.k === 'animal' && !pool.includes(ANIMALS[t.item].product)) pool.push(ANIMALS[t.item].product);
+  for (const t of f.tiles) {
+    if (t.k === 'animal') for (const k of ANIMALS[t.item].products) if (!pool.includes(k)) pool.push(k);
+    if (t.k === 'tree' && !pool.includes(t.item)) pool.push(t.item);
+  }
   const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
   const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
   const items: Record<string, number> = {};
@@ -219,6 +257,9 @@ export const notesToday = (f: Farm, uid: string, now = Date.now()) =>
 
 export const cropReady = (t: Extract<Tile, { k: 'crop' }>, now: number) => now >= t.ready;
 export const animalReady = (t: Extract<Tile, { k: 'animal' }>, now: number) => now >= t.last + ANIMALS[t.item].mins * MIN;
+export const treeReadyAt = (t: Extract<Tile, { k: 'tree' }>) =>
+  t.last === t.at ? t.at + TREES[t.item].first * MIN : t.last + TREES[t.item].mins * MIN;
+export const treeReady = (t: Extract<Tile, { k: 'tree' }>, now: number) => now >= treeReadyAt(t);
 
 export function timeLeft(ms: number) {
   const m = Math.max(0, Math.ceil(ms / MIN));
@@ -228,7 +269,9 @@ export function timeLeft(ms: number) {
 
 export function readyTiles(f: Farm, now: number) {
   return f.tiles
-    .map((t, i) => ((t.k === 'crop' && cropReady(t, now)) || (t.k === 'animal' && animalReady(t, now)) ? i : -1))
+    .map((t, i) =>
+      (t.k === 'crop' && cropReady(t, now)) || (t.k === 'animal' && animalReady(t, now)) || (t.k === 'tree' && treeReady(t, now)) ? i : -1,
+    )
     .filter((i) => i >= 0);
 }
 
@@ -253,6 +296,8 @@ export type Action =
   | { a: 'collect'; i: number }
   | { a: 'till'; i: number }
   | { a: 'animal'; i: number; item: AnimalId }
+  | { a: 'tree'; i: number; item: TreeId }
+  | { a: 'pick'; i: number } // meyve topla
   | { a: 'decor'; i: number; item: DecorId }
   | { a: 'unlock'; i: number }
   | { a: 'remove'; i: number }
@@ -267,7 +312,8 @@ export type Action =
 
 export type Result = { farm: Farm; text: string; gained: number; ready?: number };
 
-const emptyOk = (t: Tile) => t.k === 'grass' || t.k === 'soil';
+// Hayvan, ağaç ve süs yalnız çayıra (çimene) konur; tarla ekin içindir.
+const emptyOk = (t: Tile) => t.k === 'grass';
 
 // Saf kural fonksiyonu: hata mesajı ya da yeni çiftlik döner.
 export function applyAction(
@@ -337,9 +383,9 @@ export function applyAction(
       if (!animalReady(t, now)) return 'Henüz hazır değil.';
       const an = ANIMALS[t.item];
       f.xp += an.xp;
-      put(an.product);
+      for (const k of an.products) put(k);
       f.tiles[act.i] = { ...t, last: now };
-      text = `${name} ${an.pname} topladı`;
+      text = `${name} ${productNames(t.item)} topladı`;
       break;
     }
     case 'till': {
@@ -353,7 +399,7 @@ export function applyAction(
     }
     case 'animal': {
       const an = ANIMALS[act.item];
-      if (!emptyOk(t)) return 'Önce boş bir yer seç.';
+      if (!emptyOk(t)) return 'Hayvanlar çayıra konur; boş bir çimen seç.';
       if (lv < an.lvl) return `${an.name} ${an.lvl}. seviyede açılır.`;
       if (f.coins < an.cost) return 'Yeterli altının yok.';
       f.coins -= an.cost;
@@ -363,7 +409,7 @@ export function applyAction(
     }
     case 'decor': {
       const d = DECOR[act.item];
-      if (!emptyOk(t)) return 'Önce boş bir yer seç.';
+      if (!emptyOk(t)) return 'Süsler çimene konur; boş bir çimen seç.';
       if (lv < d.lvl) return `${d.name} ${d.lvl}. seviyede açılır.`;
       if (f.coins < d.cost) return 'Yeterli altının yok.';
       f.coins -= d.cost;
@@ -384,13 +430,35 @@ export function applyAction(
       break;
     }
     case 'remove': {
-      if (t.k !== 'animal' && t.k !== 'decor') return 'Kaldırılacak bir şey yok.';
+      if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree') return 'Kaldırılacak bir şey yok.';
       if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
-      const cost = t.k === 'animal' ? ANIMALS[t.item].cost : DECOR[t.item].cost;
+      const cost = t.k === 'animal' ? ANIMALS[t.item].cost : t.k === 'tree' ? TREES[t.item].cost : DECOR[t.item].cost;
       gained = Math.floor(cost / 2);
       f.coins += gained;
       f.tiles[act.i] = { k: 'grass' };
       text = `${name} bir yeri boşalttı`;
+      break;
+    }
+    case 'tree': {
+      const tr = TREES[act.item];
+      if (!emptyOk(t)) return 'Ağaç çayıra dikilir; boş bir çimen seç.';
+      if (lv < tr.lvl) return `${tr.name} ${tr.lvl}. seviyede açılır.`;
+      if (f.coins < tr.cost) return 'Yeterli altının yok.';
+      f.coins -= tr.cost;
+      f.xp += 2;
+      f.tiles[act.i] = { k: 'tree', item: act.item, at: now, last: now };
+      ready = now + tr.first * MIN;
+      text = `${name} ${tr.name.toLowerCase()} dikti 🌳`;
+      break;
+    }
+    case 'pick': {
+      if (t.k !== 'tree') return 'Burada ağaç yok.';
+      if (!treeReady(t, now)) return 'Meyveler henüz olmadı.';
+      const tr = TREES[t.item];
+      put(t.item, tr.yieldN);
+      f.xp += tr.xp;
+      f.tiles[act.i] = { ...t, last: now };
+      text = `${name} ${tr.yieldN} ${tr.fruit.toLowerCase()} topladı`;
       break;
     }
     case 'harvestDay': {
