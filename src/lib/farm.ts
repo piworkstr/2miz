@@ -298,3 +298,23 @@ async function scheduleReady(coupleId: string, i: number, crop: CropId, at: numb
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(at) },
   });
 }
+
+// Günlük görevden biriken altını çiftliğe aktarır.
+export async function collectDreamBank(coupleId: string, uid: string, name: string) {
+  const ref = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return 0;
+    const c = snap.data() as Couple;
+    const bank = c.dreamBank ?? 0;
+    if (bank <= 0) return 0;
+    const f = farmOf(c);
+    const farm: Farm = {
+      ...f,
+      coins: f.coins + bank,
+      log: [{ by: uid, text: `${name} günlük görevden gelen ${bank} altını topladı`, at: Date.now() }, ...f.log].slice(0, 14),
+    };
+    tx.update(ref, { farm: clean(farm), dreamBank: 0 });
+    return bank;
+  });
+}

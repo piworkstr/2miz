@@ -12,7 +12,7 @@ export type TavlaState = {
   rolled: number[]; // bu turun zarı; boşsa henüz atılmadı
   winner?: string;
   mars?: boolean;
-  last?: { by: string; dice: number[]; moves: number };
+  last?: { by: string; dice: number[]; moves: number; path?: { from: number; to: number }[] }; // path: a açısından, partnerde canlandırmak için
 };
 
 export type View = { pts: number[]; barMe: number; barOpp: number; offMe: number; offOpp: number };
@@ -130,3 +130,9 @@ export function play(v: View, dice: number[], m: Move) {
 }
 
 export const pipCount = (v: View) => v.pts.reduce((s, n, i) => s + (n > 0 ? n * (i + 1) : 0), 0) + v.barMe * 25;
+
+// Bir hamleyi oyuncunun açısından a açısına (ya da geri) çevirir; iki yönde de aynı dönüşüm.
+export function flipMove(side: Side, m: { from: number; to: number }) {
+  if (side === 'a') return { from: m.from, to: m.to };
+  return { from: m.from === BAR ? BAR : 23 - m.from, to: m.to === OFF ? OFF : 23 - m.to };
+}

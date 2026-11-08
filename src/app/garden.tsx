@@ -12,6 +12,7 @@ import {
   CROPS,
   cropReady,
   DECOR,
+  collectDreamBank,
   farmAction,
   farmOf,
   FIXED_ANCHOR,
@@ -685,6 +686,12 @@ export default function GardenScreen() {
           ready={ready.length}
           thirsty={thirsty}
           fields={fields}
+          bank={couple.dreamBank ?? 0}
+          onBank={() =>
+            collectDreamBank(couple.id, uid, myName)
+              .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
+              .catch(() => {})
+          }
           onClose={() => {
             setSel(null);
             setShowLog(false);
@@ -717,6 +724,8 @@ type SheetProps = {
   ready: number;
   thirsty: number;
   fields: number;
+  bank: number;
+  onBank: () => void;
   onClose: () => void;
   onLog: () => void;
   onAll: () => void;
@@ -878,6 +887,7 @@ function Sheet(p: SheetProps) {
             ? `${p.partnerName}’in ${p.thirsty} ürünü sulanmayı bekliyor 💧 Sularsan iki kat hızlı büyür.`
             : `${p.fields} tarlanız var. Bir kareye dokun: ek, sula, topla. Tabelalı her yer satılık.`}
         </Text>
+        {p.bank > 0 && <Btn kind="accent" label={`Günlük görevden ${p.bank} altın geldi · Al`} onPress={p.onBank} />}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Btn flex label={`Hepsini topla${p.ready ? ` (${p.ready})` : ''}`} onPress={p.onAll} disabled={!p.ready} />
           <Btn kind="soft" label="Günlük" onPress={p.onLog} />

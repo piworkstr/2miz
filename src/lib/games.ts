@@ -18,7 +18,7 @@ import { db } from './firebase';
 import { logActivity } from './bond';
 import { applyMove, newBlocks, type BlocksState } from './blocks';
 import { KNOW_ME, THIS_THAT } from './gameData';
-import { diceOf, fromView, legalMoves, newTavla, toView, type TavlaState, type View } from './tavla';
+import { diceOf, flipMove, fromView, legalMoves, newTavla, toView, type TavlaState, type View } from './tavla';
 import type { Couple } from './session';
 
 export type GameType = 'thisthat' | 'knowme' | 'memory' | 'blocks' | 'tavla';
@@ -409,7 +409,7 @@ export async function rollTavla(coupleId: string, id: string, uid: string) {
 }
 
 // Turun hamleleri telefonda yapılır (geri alınabilir), "Hamleyi bitir" ile tek seferde kaydedilir.
-export async function commitTavla(coupleId: string, id: string, uid: string, view: View, moves: number) {
+export async function commitTavla(coupleId: string, id: string, uid: string, view: View, path: { from: number; to: number }[]) {
   const ref = doc(gamesCol(coupleId), id);
   const coupleRef = doc(db, 'couples', coupleId);
   return runTransaction(db, async (tx) => {
@@ -427,7 +427,7 @@ export async function commitTavla(coupleId: string, id: string, uid: string, vie
       ...fromView(view, sideOf(game, uid)),
       turn: next,
       rolled: [],
-      last: { by: uid, dice: tv.rolled, moves },
+      last: { by: uid, dice: tv.rolled, moves: path.length, path: path.map((m) => flipMove(sideOf(game, uid), m)) },
       ...(won ? { winner: uid, mars } : {}),
     };
     tx.update(ref, { tavla: state });

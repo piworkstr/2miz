@@ -97,6 +97,8 @@ export async function saveSpin(coupleId: string, key: string, spin: WheelSpin, c
 
 export type DayMode = 'pending' | 'shared' | 'separate';
 
+export const DREAM_REWARD = 20;
+
 export const POINTS = { shared: 20, separate: 15 };
 
 function dayRef(coupleId: string, key: string) {
@@ -179,13 +181,16 @@ export async function completeTask(coupleId: string, key: string, uid: string, m
     tx.update(ref, { [`completions.${uid}`]: { note: note.trim(), at: serverTimestamp() } });
 
     // İkiniz de tamamladığınızda puan ve seri bir kez işlenir.
+    // Hayal dünyası kumbarasına: 20 altın + seri başına 2 (en çok 20).
     if (allDone && !day.rewarded) {
       const c = coupleSnap.data() as { points: number; streak: number; lastCompleteDay: string | null };
       const earned = modeOf(day, members) === 'shared' ? POINTS.shared : POINTS.separate;
       const streak = c.lastCompleteDay === yesterdayKey() ? c.streak + 1 : c.lastCompleteDay === key ? c.streak : 1;
       tx.update(ref, { rewarded: true });
       const best = Math.max((c as { bestStreak?: number }).bestStreak ?? 0, streak);
-      tx.update(coupleRef, { points: c.points + earned, streak, bestStreak: best, lastCompleteDay: key });
+      // Gerçek hayattaki emek hayal dünyasına altın olarak gider (Hayalimiz kumbarası).
+      const bank = ((c as { dreamBank?: number }).dreamBank ?? 0) + DREAM_REWARD + Math.min(streak, 10) * 2;
+      tx.update(coupleRef, { points: c.points + earned, streak, bestStreak: best, lastCompleteDay: key, dreamBank: bank });
     }
   });
   logActivity(coupleId, uid, 'task');
