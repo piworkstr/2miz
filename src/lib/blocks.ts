@@ -229,7 +229,9 @@ export const SHAPES: { cells: Cells; w: number }[] = [
   ).map((cells) => ({ cells, w: 1 })),
 ];
 
-export const COLORS = ['#F2545B', '#F7A23B', '#F6D03F', '#5BC95A', '#3EC3E6', '#4C7CF0', '#A86BF0', '#F06BB4'];
+// Koyu zemin üstünde sakin, neon kenarlıklı küpler (dolgu rengi; kenar rengi EDGE'de).
+export const COLORS = ['#B23A42', '#C77A3A', '#B8961C', '#1F7A3A', '#1C7A8A', '#2F57C9', '#8C3FC9', '#2E8A42'];
+export const EDGE = ['#FF7A82', '#FFB36B', '#FFE066', '#5FD37A', '#5FD9EA', '#7FA2FF', '#D08CFF', '#7FE09A'];
 
 export type Piece = { s: number; col: number } | null; // col: COLORS indeksi
 
