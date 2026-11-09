@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -132,7 +133,7 @@ type Placing =
   | { a: 'tree'; item: TreeId }
   | { a: 'decor'; item: DecorId }
   | { a: 'move'; from: number }; // yerleştirilmiş bir şeyi taşı
-type Spr = { key: string; art: string; x: number; y: number; w: number; z: number };
+type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number };
 
 function sprites(f: Farm, now: number): Spr[] {
   const out: Spr[] = [];
@@ -200,7 +201,12 @@ function SpriteImg({ s }: { s: Spr }) {
   const a = ART[s.art];
   if (!a) return null;
   const h = s.w * a.h;
-  return <Image source={a.src} style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: s.z }} />;
+  return (
+    <Image
+      source={a.src}
+      style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: s.z, opacity: s.o ?? 1 }}
+    />
+  );
 }
 
 function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
@@ -457,6 +463,13 @@ export default function GardenScreen() {
   const [placing, setPlacing] = useState<Placing | null>(null);
   const placingRef = useRef<Placing | null>(null);
   placingRef.current = placing;
+  // Basılı tutup sürükleme: ağaç/bina/süs/hayvan parmağın altında taşınır, bırakınca boş çimene konur.
+  const [lift, setLift] = useState<{ from: number; wx: number; wy: number } | null>(null);
+  const liftRef = useRef(lift);
+  liftRef.current = lift;
+  const liftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liftableRef = useRef<(i: number) => boolean>(() => false);
+  const liftDropRef = useRef<(from: number, to: number) => void>(() => {});
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState('');
@@ -515,12 +528,40 @@ export default function GardenScreen() {
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
         onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: () => {
+        onPanResponderTerminate: () => {
+          if (liftTimer.current) clearTimeout(liftTimer.current);
+          liftTimer.current = null;
+          setLift(null);
+        },
+        onPanResponderGrant: (e) => {
           drag.current = { ...cam.current.pan, moved: false };
           pinch.current = null;
+          // Basılı tutma: 0,4 sn kıpırdamadan durulursa altındaki eşya kaldırılır
+          if (liftTimer.current) clearTimeout(liftTimer.current);
+          const c = cam.current;
+          const wx = (e.nativeEvent.locationX - c.tx) / c.s;
+          const wy = (e.nativeEvent.locationY - c.ty) / c.s;
+          const i = tileAt(wx, wy);
+          if (i >= 0 && !placingRef.current && liftableRef.current(i)) {
+            liftTimer.current = setTimeout(() => {
+              liftTimer.current = null;
+              if (drag.current.moved || pinch.current) return;
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+              setLift({ from: i, wx, wy });
+            }, 400);
+          }
         },
         onPanResponderMove: (e, g) => {
+          if (liftRef.current) {
+            const c = cam.current;
+            setLift({ ...liftRef.current, wx: (e.nativeEvent.locationX - c.tx) / c.s, wy: (e.nativeEvent.locationY - c.ty) / c.s });
+            return;
+          }
           const t = e.nativeEvent.touches;
+          if (Math.hypot(g.dx, g.dy) > 6 && liftTimer.current) {
+            clearTimeout(liftTimer.current);
+            liftTimer.current = null;
+          }
           if (t.length >= 2) {
             drag.current.moved = true;
             const c = cam.current;
@@ -544,6 +585,17 @@ export default function GardenScreen() {
           if (drag.current.moved && cam.current.zoom > 1) setPan({ x: drag.current.x + g.dx, y: drag.current.y + g.dy });
         },
         onPanResponderRelease: (e) => {
+          if (liftTimer.current) {
+            clearTimeout(liftTimer.current);
+            liftTimer.current = null;
+          }
+          if (liftRef.current) {
+            const c = cam.current;
+            const to = tileAt((e.nativeEvent.locationX - c.tx) / c.s, (e.nativeEvent.locationY - c.ty) / c.s);
+            liftDropRef.current(liftRef.current.from, to);
+            setLift(null);
+            return;
+          }
           if (drag.current.moved || pinch.current) return;
           const c = cam.current;
           const wx = (e.nativeEvent.locationX - c.tx) / c.s;
@@ -696,7 +748,17 @@ export default function GardenScreen() {
       : work({ a: 'sell', i: PILE_TILE, scene: sc.id });
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
-  const sprs = [...SCENERY, ...sprites(farm, now)].sort((a, b) => a.z - b.z);
+  // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
+  const farmView = lift ? { ...farm, tiles: farm.tiles.map((t, j) => (j === lift.from ? ({ k: 'grass' } as Tile) : t)) } : farm;
+  const sprs = [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z);
+  let ghost: Spr[] = [];
+  let liftTarget: number | null = null;
+  if (lift) {
+    const one = { ...farm, tiles: farm.tiles.map((t, j) => (j === lift.from ? t : ({ k: 'grass' } as Tile))) };
+    const o = center(...rc(lift.from));
+    ghost = sprites(one, now).map((sp) => ({ ...sp, x: sp.x + lift.wx - o.x, y: sp.y + lift.wy - o.y - TH * 0.6, z: 9000, o: 0.8 }));
+    liftTarget = tileAt(lift.wx, lift.wy);
+  }
   const badges: { key: string; i: number; x: number; y: number; art: string; z: number; n?: number }[] = [];
   // Depo rozeti: ahırın üstünde en çok olan ürün ve toplam adet; dokununca depo açılır.
   {
@@ -755,6 +817,19 @@ export default function GardenScreen() {
       return null;
     }
     return null;
+  };
+  liftableRef.current = (i) => {
+    const tl = farm.tiles[i];
+    return !!tl && i !== NOTE_TREE && (tl.k === 'tree' || tl.k === 'building' || tl.k === 'decor' || tl.k === 'animal');
+  };
+  liftDropRef.current = (from, to) => {
+    if (to < 0 || to === from) return;
+    if (farm.tiles[to]?.k !== 'grass') {
+      flash('Boş bir çimene bırak');
+      return;
+    }
+    setSel(null);
+    work({ a: 'move', i: to, from });
   };
   placeRef.current = (i: number) => {
     const pl = placingRef.current;
@@ -836,9 +911,12 @@ export default function GardenScreen() {
               }}
             />
           )}
-          <Ground f={farm} sel={sel} season={season} />
+          <Ground f={farmView} sel={lift ? liftTarget : sel} season={season} />
           {sprs.map((sp) => (
             <SpriteImg key={sp.key} s={sp} />
+          ))}
+          {ghost.map((sp) => (
+            <SpriteImg key={`g${sp.key}`} s={sp} />
           ))}
           <Signs f={farm} />
           {badges.map((b) => (
