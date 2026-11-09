@@ -444,7 +444,7 @@ export default function GardenScreen() {
 
   // Kamera: bütün araziyi ekrana sığdır; + ile yaklaşılır, sürükleyerek gezilir.
   const top = insets.top + 54;
-  const bottom = 150 + insets.bottom;
+  const bottom = 118 + insets.bottom;
   const fit = box.w ? Math.min(1.1, box.w / (BOUNDS.x1 - BOUNDS.x0), (box.h - top - bottom) / (BOUNDS.y1 - BOUNDS.y0)) : 0.5;
   const s = fit * zoom;
   const tx = box.w / 2 - ((BOUNDS.x0 + BOUNDS.x1) / 2) * s + pan.x;
@@ -827,101 +827,108 @@ export default function GardenScreen() {
         </View>
       )}
 
-      {/* alt panel */}
+      {/* alt bölüm: zemin yok. Bir şey seçiliyse ahşap tabela, yoksa oyun düğmeleri. */}
       <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: '#fff',
-          borderTopLeftRadius: 22,
-          borderTopRightRadius: 22,
-          padding: 14,
-          paddingBottom: insets.bottom + 14,
-          gap: 10,
-          shadowColor: '#283C0A',
-          shadowOpacity: 0.2,
-          shadowRadius: 12,
-          elevation: 8,
-        }}
+        pointerEvents="box-none"
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 10, paddingBottom: insets.bottom + 8 }}
       >
-        {scene ? (
-          <ScenePanel
-            scene={scene}
-            meta={FARM_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
-            coupleId={couple.id}
-            uid={uid}
-            partnerId={partnerId}
-            partnerName={partnerName}
-            profile={profile}
-            partnerProfile={partnerProfile}
-            onJoined={() => {
-              notifyPartner(partnerId, `${myName} geldi 💛`, `${FARM_SCENES[scene.kind]?.title} başlıyor`, {
-                type: 'mood',
-                url: '/garden',
-              });
-              doScene(scene);
-            }}
-            extra={
-              live && ((live.kind === 'harvest' && bigIds.length > 0) || (live.kind === 'market' && stockCount(farm) > 0)) ? (
-                <Btn
-                  label={
-                    live.kind === 'harvest' ? `Birlikte topla (${bigIds.length})` : `Tezgâhı aç · ${stockValue(farm, MARKET_BONUS)} altın`
-                  }
-                  onPress={() => doScene(live)}
-                />
-              ) : null
-            }
-          />
-        ) : (
-          <Sheet
-            farm={farm}
-            sel={sel}
-            now={now}
-            uid={uid}
-            partnerName={partnerName}
-            shop={shop}
-            setShop={setShop}
-            plantAll={plantAll}
-            setPlantAll={setPlantAll}
-            showLog={showLog}
-            showOrders={showOrders}
-            onOrders={() => setShowOrders(true)}
-            onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
-            onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
-            ready={ready.length}
-            thirsty={thirsty}
-            fields={fields}
-            bank={couple.dreamBank ?? 0}
-            onBank={() =>
-              collectDreamBank(couple.id, uid, myName)
-                .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
-                .catch(() => {})
-            }
-            onClose={() => {
-              setSel(null);
-              setShowLog(false);
-              setShowOrders(false);
-            }}
-            onLog={() => setShowLog(true)}
-            onAll={() =>
-              ready.forEach((i) => {
-                const x = farm.tiles[i];
-                if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat günüyle
-                work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : 'collect', i });
-              })
-            }
-            onSell={() => work({ a: 'sell', i: PILE_TILE })}
-            onScene={begin}
-            onAct={(a, all) => {
-              if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
-              else work(a);
-              setSel(null);
-              setPlantAll(false);
-            }}
-          />
-        )}
+        <View
+          pointerEvents="box-none"
+          style={
+            scene || sel !== null || showLog || showOrders
+              ? {
+                  backgroundColor: 'rgba(255,248,232,0.96)',
+                  borderRadius: 20,
+                  borderWidth: 3,
+                  borderColor: '#9A6534',
+                  padding: 12,
+                  gap: 10,
+                  shadowColor: '#3A2A10',
+                  shadowOpacity: 0.3,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 8,
+                }
+              : { gap: 8 }
+          }
+        >
+          {scene ? (
+            <ScenePanel
+              scene={scene}
+              meta={FARM_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
+              coupleId={couple.id}
+              uid={uid}
+              partnerId={partnerId}
+              partnerName={partnerName}
+              profile={profile}
+              partnerProfile={partnerProfile}
+              onJoined={() => {
+                notifyPartner(partnerId, `${myName} geldi 💛`, `${FARM_SCENES[scene.kind]?.title} başlıyor`, {
+                  type: 'mood',
+                  url: '/garden',
+                });
+                doScene(scene);
+              }}
+              extra={
+                live && ((live.kind === 'harvest' && bigIds.length > 0) || (live.kind === 'market' && stockCount(farm) > 0)) ? (
+                  <Btn
+                    label={
+                      live.kind === 'harvest' ? `Birlikte topla (${bigIds.length})` : `Tezgâhı aç · ${stockValue(farm, MARKET_BONUS)} altın`
+                    }
+                    onPress={() => doScene(live)}
+                  />
+                ) : null
+              }
+            />
+          ) : (
+            <Sheet
+              farm={farm}
+              sel={sel}
+              now={now}
+              uid={uid}
+              partnerName={partnerName}
+              shop={shop}
+              setShop={setShop}
+              plantAll={plantAll}
+              setPlantAll={setPlantAll}
+              showLog={showLog}
+              showOrders={showOrders}
+              onOrders={() => setShowOrders(true)}
+              onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
+              onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
+              ready={ready.length}
+              thirsty={thirsty}
+              fields={fields}
+              bank={couple.dreamBank ?? 0}
+              onBank={() =>
+                collectDreamBank(couple.id, uid, myName)
+                  .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
+                  .catch(() => {})
+              }
+              onClose={() => {
+                setSel(null);
+                setShowLog(false);
+                setShowOrders(false);
+              }}
+              onLog={() => setShowLog(true)}
+              onAll={() =>
+                ready.forEach((i) => {
+                  const x = farm.tiles[i];
+                  if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat günüyle
+                  work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : 'collect', i });
+                })
+              }
+              onSell={() => work({ a: 'sell', i: PILE_TILE })}
+              onScene={begin}
+              onAct={(a, all) => {
+                if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
+                else work(a);
+                setSel(null);
+                setPlantAll(false);
+              }}
+            />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -985,6 +992,91 @@ function Btn({
       })}
     >
       <Text style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15 }}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// Yuvarlak oyun düğmesi: yeşil disk, koyu kenar, altında kısa etiket, köşede sayı rozeti.
+function Round({
+  icon,
+  art,
+  label,
+  badge,
+  accent,
+  off,
+  onPress,
+}: {
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
+  art?: string;
+  label: string;
+  badge?: number;
+  accent?: boolean;
+  off?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={off}
+      style={({ pressed }) => ({ alignItems: 'center', width: 64, opacity: off ? 0.5 : pressed ? 0.85 : 1 })}
+    >
+      <View
+        style={{
+          width: 54,
+          height: 54,
+          borderRadius: 27,
+          backgroundColor: accent ? '#E8516A' : '#6FBF3F',
+          borderWidth: 3,
+          borderColor: accent ? '#9E2740' : '#3E7F22',
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#1E3A0A',
+          shadowOpacity: 0.35,
+          shadowRadius: 5,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 5,
+        }}
+      >
+        {art && ART[art] ? (
+          <Image source={ART[art].src} style={{ width: 32, height: 30 }} resizeMode="contain" />
+        ) : (
+          <Ionicons name={icon ?? 'ellipse'} size={26} color="#fff" />
+        )}
+        {!!badge && (
+          <View
+            style={{
+              position: 'absolute',
+              top: -6,
+              right: -6,
+              minWidth: 22,
+              height: 22,
+              borderRadius: 11,
+              paddingHorizontal: 5,
+              backgroundColor: '#FFD23F',
+              borderWidth: 2,
+              borderColor: '#fff',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontWeight: '900', fontSize: 12, color: '#5A3E00' }}>{badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text
+        numberOfLines={1}
+        style={{
+          marginTop: 3,
+          fontWeight: '800',
+          fontSize: 11,
+          color: '#fff',
+          textShadowColor: 'rgba(0,0,0,0.6)',
+          textShadowRadius: 3,
+          textShadowOffset: { width: 0, height: 1 },
+        }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -1113,45 +1205,47 @@ function Sheet(p: SheetProps) {
     const weekend = isWeekend(now);
     const small = p.ready - big;
     const deliverable = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
+    // Yalnız iş varsa kısa bir balon; altta oyun düğmeleri. Zemin yok, çiftlik görünür kalır.
+    const hint = big
+      ? `${big} büyük ürün hazır · hasat günü ikinizle 🌾`
+      : p.thirsty
+        ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧 bidona dokun`
+        : p.bank > 0
+          ? `Günlük görevden ${p.bank} altın geldi`
+          : '';
     return (
       <>
-        <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>
-          {big
-            ? `${big} büyük ürün hasada hazır: hasat günü ikinizle olur 🌾`
-            : p.thirsty
-              ? `${p.partnerName}’in ${p.thirsty} ürünü sulanmayı bekliyor 💧 Sularsan iki kat hızlı büyür ve hasat ortak sayılır.`
-              : `${p.fields} tarlanız var. Bir kareye dokun: ek, sula, topla. Kapalı arazi ortak hasatla açılır (${farm.harvests}/${parcelNeed(farm)}).`}
-        </Text>
-        {p.bank > 0 && <Btn kind="accent" label={`Günlük görevden ${p.bank} altın geldi · Al`} onPress={p.onBank} />}
-        {big > 0 && <Btn kind="accent" label={`Hasat günü · ${p.partnerName}’i çağır`} onPress={() => p.onScene('harvest')} />}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn flex label={`Topla${small > 0 ? ` (${small})` : ''}`} onPress={p.onAll} disabled={small <= 0} />
-          <Btn
-            flex
-            kind={deliverable ? 'accent' : 'soft'}
-            label={`Siparişler${deliverable ? ` (${deliverable})` : ''}`}
-            onPress={p.onOrders}
-          />
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        {!!hint && (
+          <View pointerEvents="none" style={{ alignItems: 'center' }}>
+            <Text
+              style={{
+                backgroundColor: 'rgba(43,29,34,0.78)',
+                color: '#fff',
+                fontWeight: '700',
+                fontSize: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 14,
+                overflow: 'hidden',
+              }}
+            >
+              {hint}
+            </Text>
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 10 }}>
+          {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
+          {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
+          <Round icon="basket" label="Topla" badge={small > 0 ? small : 0} off={small <= 0} onPress={p.onAll} />
+          <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
           {n > 0 &&
             (weekend ? (
-              <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
+              <Round icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} accent onPress={() => p.onScene('market')} />
             ) : (
-              <Btn flex kind="soft" label={`Sat · ${stockValue(farm)}`} onPress={p.onSell} />
+              <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
-          <Btn flex kind="soft" label="Günlük" onPress={p.onLog} />
+          <Round icon="book" label="Günlük" onPress={p.onLog} />
         </View>
-        {n > 0 && (
-          <Note>
-            Depoda {n} ürün:{' '}
-            {Object.entries(farm.stock)
-              .filter(([, k]) => k > 0)
-              .map(([k, v]) => `${v} ${PRODUCT_NAME[k] ?? k}`)
-              .join(', ')}
-            . {weekend ? 'Hafta sonu pazarı açık: tezgâhı ikiniz kurarsanız bir buçuk kat.' : 'Hafta sonu pazarda bir buçuk kata gider.'}
-          </Note>
-        )}
       </>
     );
   }
