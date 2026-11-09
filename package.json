@@ -47,7 +47,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "guncelle": "git pull --ff-only && expo start --tunnel --clear"
+    "guncelle": "git pull --ff-only && expo start --tunnel --clear",
+    "cek": "git pull --ff-only"
   },
   "private": true
 }
