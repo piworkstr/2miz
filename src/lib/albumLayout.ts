@@ -26,7 +26,7 @@ export type AlbumTrip = {
   photos: { id: string; uid: string; note: string; src: string }[];
 };
 
-export type AlbumPerson = { uid: string; name: string; avatar?: AvatarData };
+export type AlbumPerson = { uid: string; name: string; avatar?: AvatarData; avatarHtml?: string }; // avatarHtml: çizgi avatar için hazır HTML (görseller çağıran tarafta çözülür)
 
 export type AlbumInput = {
   people: [AlbumPerson, AlbumPerson]; // [sipariş veren, partner]
@@ -84,8 +84,8 @@ export function buildAlbum(input: AlbumInput, opts: AlbumOptions): AlbumPlan {
   const [a, b] = input.people;
   const nameOf = (uid?: string) => (uid === a.uid ? a.name : uid === b.uid ? b.name : '');
   const trip = opts.range.kind === 'trip' ? input.trips.find((t) => t.id === (opts.range as { tripId: string }).tripId) : undefined;
-  const from = opts.range.kind === 'trip' ? trip?.start ?? '0000' : opts.range.from;
-  const to = opts.range.kind === 'trip' ? trip?.end ?? '9999' : opts.range.to;
+  const from = opts.range.kind === 'trip' ? (trip?.start ?? '0000') : opts.range.from;
+  const to = opts.range.kind === 'trip' ? (trip?.end ?? '9999') : opts.range.to;
   const inRange = (d: string) => d >= from && d <= to;
 
   // İçerik: tarih sırasına göre gün sayfaları, seyahatler başladıkları güne yerleşir.
@@ -96,7 +96,11 @@ export function buildAlbum(input: AlbumInput, opts: AlbumOptions): AlbumPlan {
     const byDay = new Map<string, AlbumPhoto[]>();
     for (const p of input.photos.filter((p) => inRange(p.day))) {
       if (p.kind === 'date') {
-        items.push({ day: p.day, order: 0, pages: [{ kind: 'date', id: `date-${p.day}`, day: p.day, photo: { src: p.src, note: p.note, who: '' } }] });
+        items.push({
+          day: p.day,
+          order: 0,
+          pages: [{ kind: 'date', id: `date-${p.day}`, day: p.day, photo: { src: p.src, note: p.note, who: '' } }],
+        });
       } else if (p.kind === 'moment') {
         items.push({
           day: p.day,
@@ -115,7 +119,9 @@ export function buildAlbum(input: AlbumInput, opts: AlbumOptions): AlbumPlan {
       items.push({
         day,
         order: 1,
-        pages: [{ kind: 'task', id: `task-${day}`, day, title, photos: sorted.map((p) => ({ src: p.src, note: p.note, who: nameOf(p.uid) })) }],
+        pages: [
+          { kind: 'task', id: `task-${day}`, day, title, photos: sorted.map((p) => ({ src: p.src, note: p.note, who: nameOf(p.uid) })) },
+        ],
       });
     });
   }

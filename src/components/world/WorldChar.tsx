@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Text, View, type ImageSourcePropType } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { avatarHeadSvg } from '../../lib/avatar';
+import { artBody, avatarHeadSvg } from '../../lib/avatar';
+import { ArtAvatar } from '../ArtAvatar';
 import type { Profile } from '../../lib/session';
 
 // Hayal dünyalarındaki karakter: tam boy. Gövde dünyaya göre çizilmiş bir kıyafet (çiftlikte tulum),
@@ -41,6 +42,7 @@ const FEM_TOPS = new Set([
 // Gövde seçimi: profilde cinsiyet yok; avatarın saç ve sakalından çıkarılır.
 export function bodyOf(profile: Profile | null | undefined): 'm' | 'f' {
   const a = profile?.avatar;
+  if (a?.kind === 'art') return artBody(a.opts);
   if (a?.kind === 'drawn') {
     if (a.opts.facialHair && a.opts.facialHair !== 'none') return 'm';
     if (FEM_TOPS.has(a.opts.top)) return 'f';
@@ -157,7 +159,9 @@ export function WorldChar({
         <Image source={src} style={{ position: 'absolute', bottom: 0, width: bodyW, height: BODY_H }} resizeMode="contain" />
         {/* baş: boyun kütüğünün üstüne oturur */}
         <View style={{ position: 'absolute', top: bob, width: HEAD_W, height: HEAD_H, alignItems: 'center', justifyContent: 'flex-end' }}>
-          {a?.kind === 'drawn' ? (
+          {a?.kind === 'art' ? (
+            <ArtAvatar opts={a.opts} size={HEAD_W * 1.15} variant="head" style={{ marginBottom: -HEAD_W * 0.12 }} />
+          ) : a?.kind === 'drawn' ? (
             <SvgXml xml={avatarHeadSvg(a.opts)} width={HEAD_W} height={HEAD_H} />
           ) : a?.kind === 'photo' ? (
             <Image

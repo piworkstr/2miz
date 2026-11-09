@@ -3,7 +3,17 @@ import { getFirestore } from 'firebase-admin/firestore';
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildAlbum, type AlbumInput, type AlbumOptions, type AlbumPhoto } from '../src/lib/albumLayout';
+
+import { artAvatarHtml, type AvatarData } from '../src/lib/avatarArt';
 import { renderAlbum } from './pdf';
+// Çizgi avatar (yeni stil): katman dosyaları assets/avatar'dan base64 gömülür.
+function artHtml(a: AvatarData | undefined): string | undefined {
+  if (a?.kind !== 'art') return undefined;
+  return artAvatarHtml(a.opts, (f) => {
+    const b = fs.readFileSync(path.join(__dirname, '..', 'assets', 'avatar', f));
+    return `data:image/webp;base64,${b.toString('base64')}`;
+  });
+}
 
 // Sipariş (baskı talebi) için baskı dosyalarını üretir.
 // Çalıştırma: cd baski && npm run siparis -- <çift kimliği> [talep kimliği]
@@ -29,7 +39,13 @@ const db = getFirestore();
   const orders = coupleRef.collection('albumOrders');
   const orderSnap = orderArg ? await orders.doc(orderArg).get() : (await orders.orderBy('createdAtMs', 'desc').limit(1).get()).docs[0];
   if (!orderSnap?.exists) throw new Error('Baskı talebi bulunamadı.');
-  const order = orderSnap.data() as { by: string; size: AlbumOptions['size']; theme: AlbumOptions['theme']; range: AlbumOptions['range']; exclude: string[] };
+  const order = orderSnap.data() as {
+    by: string;
+    size: AlbumOptions['size'];
+    theme: AlbumOptions['theme'];
+    range: AlbumOptions['range'];
+    exclude: string[];
+  };
 
   const partnerId = (couple.members as string[]).find((m) => m !== order.by)!;
   const profile = async (uid: string) => (await db.collection('users').doc(uid).get()).data() ?? {};
@@ -45,7 +61,16 @@ const db = getFirestore();
       ? []
       : (await coupleRef.collection('photos').where('day', '>=', from).where('day', '<=', to).get()).docs.map((d) => {
           const p = d.data();
-          return { id: d.id, kind: p.kind, day: p.day, uid: p.uid, from: p.from, taskId: p.taskId ?? null, note: p.note ?? '', src: src(p.data) };
+          return {
+            id: d.id,
+            kind: p.kind,
+            day: p.day,
+            uid: p.uid,
+            from: p.from,
+            taskId: p.taskId ?? null,
+            note: p.note ?? '',
+            src: src(p.data),
+          };
         });
   const tripDocs = (await coupleRef.collection('trips').get()).docs
     .map((d) => ({ id: d.id, ...(d.data() as { name: string; place: string; start: string; end: string }) }))
@@ -61,8 +86,8 @@ const db = getFirestore();
 
   const input: AlbumInput = {
     people: [
-      { uid: order.by, name: names[order.by] ?? me.name ?? '', avatar: me.avatar },
-      { uid: partnerId, name: names[partnerId] ?? partner.name ?? '', avatar: partner.avatar },
+      { uid: order.by, name: names[order.by] ?? me.name ?? '', avatar: me.avatar, avatarHtml: artHtml(me.avatar) },
+      { uid: partnerId, name: names[partnerId] ?? partner.name ?? '', avatar: partner.avatar, avatarHtml: artHtml(partner.avatar) },
     ],
     startDate: couple.startDate,
     photos,

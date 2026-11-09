@@ -23,7 +23,7 @@ export function PersonaCard() {
       if (couple) await updateDoc(doc(db, 'couples', couple.id), { [`names.${user.uid}`]: p.name });
       await updateDoc(doc(db, 'users', user.uid), {
         name: p.name,
-        avatar: { kind: 'photo', photo: p.photo },
+        avatar: { kind: 'art', opts: p.art }, // çizgi avatar: çiftlikte tam boy karakter, ruh hali yüze yansır
         petNames: [...p.petNamesForPartner],
       });
     } finally {

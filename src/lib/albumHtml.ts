@@ -49,6 +49,7 @@ img{pointer-events:none;-webkit-user-drag:none;display:block}
 .lines{width:100%;flex:1;margin-top:3cqw;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 7.6cqw,#D9CBC4 7.6cqw,#D9CBC4 7.8cqw)}
 .av{width:20cqw;height:20cqw;border-radius:50%;overflow:hidden;border:1cqw solid #fff;background:#fff;box-shadow:0 .4cqw 1cqw rgba(0,0,0,.12)}
 .av svg,.av img{width:100%;height:100%}
+.av.art>div{width:150%;margin-left:-25%;margin-top:-6%}
 .mark{position:absolute;right:3cqw;bottom:2.4cqw;font-size:2cqw;color:rgba(43,29,34,.28);letter-spacing:.2cqw}
 `;
 
@@ -58,6 +59,7 @@ function pol(p: { src: string; note: string; who: string }, width: number, aspec
 
 function avatar(person: AlbumInput['people'][number]) {
   const a = person.avatar;
+  if (a?.kind === 'art' && person.avatarHtml) return `<div class="av art">${person.avatarHtml}</div>`;
   if (a?.kind === 'drawn') return `<div class="av">${avatarSvg(a.opts, null, true)}</div>`;
   if (a?.kind === 'photo') return `<div class="av"><img src="data:image/jpeg;base64,${a.photo}"/></div>`;
   return `<div class="av" style="display:flex;align-items:center;justify-content:center;background:#FFD5DC;font-size:9cqw;color:#E8516A;font-weight:700">${esc(person.name.slice(0, 1).toLocaleUpperCase('tr-TR'))}</div>`;
@@ -92,7 +94,9 @@ function pageBody(p: AlbumPage, input: AlbumInput, plan: AlbumPlan, a4: boolean)
           ? `<div style="width:100%;display:flex;flex-direction:column;gap:4cqw">${pol(x, w, '1', -3, 'align-self:flex-start')}${pol(y, w, '1', 2.5, 'align-self:flex-end;margin-top:-14cqw')}</div>`
           : `<div class="row">${pol(x, w, '1', -3)}${pol(y, w, '1', 2.5, 'margin-top:4cqw')}</div>`
         : `<div class="row">${pol(x, a4 ? 62 : 48, '1', -2)}</div>`;
-      return { html: `<div class="safe"><div class="label">${esc(pretty(p.day))}</div>${pics}<div class="title">${esc(p.title)}</div></div>` };
+      return {
+        html: `<div class="safe"><div class="label">${esc(pretty(p.day))}</div>${pics}<div class="title">${esc(p.title)}</div></div>`,
+      };
     }
     case 'date':
       return {
@@ -130,7 +134,9 @@ function coverBody(input: AlbumInput, plan: AlbumPlan, a4: boolean) {
   const [me, partner] = input.people;
   // Kapakta en güzel ihtimal: ilk date fotoğrafı, yoksa ilk seyahat ya da görev fotoğrafı.
   const pick =
-    plan.pages.find((p) => p.kind === 'date') ?? plan.pages.find((p) => p.kind === 'tripPhotos') ?? plan.pages.find((p) => p.kind === 'task');
+    plan.pages.find((p) => p.kind === 'date') ??
+    plan.pages.find((p) => p.kind === 'tripPhotos') ??
+    plan.pages.find((p) => p.kind === 'task');
   const photo = pick && (pick.kind === 'date' ? pick.photo : pick.kind === 'task' || pick.kind === 'tripPhotos' ? pick.photos[0] : null);
   return `<div class="safe" style="justify-content:center;gap:5cqw">${photo ? pol({ ...photo, who: '' }, a4 ? 64 : 54, '1', -2.5) : ''}<div class="title" style="color:#fff;font-size:11cqw">${esc(me.name)} &amp; ${esc(partner.name)}</div><div style="font-size:3.4cqw;color:#FFE3E8;letter-spacing:.3cqw;text-transform:uppercase">${esc(span(plan.from, plan.to))}</div></div>`;
 }

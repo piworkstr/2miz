@@ -7,6 +7,7 @@ import { WebView } from 'react-native-webview';
 import { Button, Muted } from '../components/ui';
 import { loadAlbumInput, saveAlbumRequest } from '../lib/albumData';
 import { albumPreviewHtml } from '../lib/albumHtml';
+import { artAvatarHtmlAsync } from '../lib/avatarHtml';
 import { buildAlbum, PAGE_STEP, type AlbumInput, type AlbumOptions, type AlbumSize } from '../lib/albumLayout';
 import { dayKey } from '../lib/date';
 import { useSession } from '../lib/session';
@@ -64,7 +65,13 @@ export default function AlbumBuilder() {
     ];
     const from = range.kind === 'period' ? range.from : '0000';
     const to = range.kind === 'period' ? range.to : '9999';
-    loadAlbumInput(couple.id, people, couple.startDate, from, to, range.kind === 'trip' ? range.tripId : undefined)
+    // çizgi avatarların HTML'i (görseller base64) önceden hazırlanır
+    Promise.all(people.map(async (p) => (p.avatar?.kind === 'art' ? { ...p, avatarHtml: await artAvatarHtmlAsync(p.avatar.opts) } : p)))
+      .then(
+        (pp) => pp as AlbumInput['people'],
+        () => people,
+      )
+      .then((pp) => loadAlbumInput(couple.id, pp, couple.startDate, from, to, range.kind === 'trip' ? range.tripId : undefined))
       .then((i) => alive && setInput(i))
       .catch(() => alive && setInput(null))
       .finally(() => alive && setLoading(false));

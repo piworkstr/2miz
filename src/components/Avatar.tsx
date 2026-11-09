@@ -3,6 +3,7 @@ import { SvgXml } from 'react-native-svg';
 import { activeMood, avatarSvg, MOODS } from '../lib/avatar';
 import type { Profile } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
+import { ArtAvatar } from './ArtAvatar';
 
 // Kişinin avatarı: çizilmiş karakter, fotoğraf ya da (hiçbiri yoksa) adının baş harfi.
 // Ruh hali varsa çizilmiş avatarın yüz ifadesi değişir; fotoğrafta köşede emoji çıkar.
@@ -20,7 +21,7 @@ export function Avatar({
   const t = useTheme();
   const mood = showMood ? activeMood(p?.mood) : null;
   const a = p?.avatar;
-  const badge = mood && (a?.kind !== 'drawn' || size < 40) && (
+  const badge = mood && (a?.kind === 'photo' || !a || size < 40) && (
     <View
       style={{
         position: 'absolute',
@@ -46,7 +47,9 @@ export function Avatar({
 
   return (
     <View style={{ width: size, height: size }}>
-      {a?.kind === 'drawn' ? (
+      {a?.kind === 'art' ? (
+        <ArtAvatar opts={a.opts} size={size} mood={mood} variant="circle" />
+      ) : a?.kind === 'drawn' ? (
         <SvgXml xml={avatarSvg(a.opts, mood)} width={size} height={size} />
       ) : a?.kind === 'photo' ? (
         <Image source={{ uri: `data:image/jpeg;base64,${a.photo}` }} style={{ width: size, height: size, borderRadius: size / 2 }} />

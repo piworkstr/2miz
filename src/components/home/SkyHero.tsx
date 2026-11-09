@@ -9,6 +9,7 @@ import { bondOf } from '../../lib/bond';
 import { useSession, type Profile } from '../../lib/session';
 import { useTheme } from '../../lib/useTheme';
 import { SvgXml } from 'react-native-svg';
+import { ArtAvatar } from '../ArtAvatar';
 import { BondHeart } from '../BondHeart';
 import { Glass } from '../Glass';
 import { MoodSheet } from '../MoodSheet';
@@ -58,6 +59,9 @@ export function skyFor(h: number): Sky {
 function Bust({ p, name, size }: { p: Profile | null; name: string; size: number }) {
   const t = useTheme();
   const a = p?.avatar;
+  // çizgi avatar: ruh hali yüze yansır; omuzlara kadar, zemin bandına oturur
+  if (a?.kind === 'art')
+    return <ArtAvatar opts={a.opts} size={size * 1.25} mood={activeMood(p?.mood)} variant="bust" style={{ marginBottom: -6 }} />;
   if (a?.kind === 'drawn') return <SvgXml xml={avatarBustSvg(a.opts)} width={size} height={size} />;
   const r = size * 0.72;
   return (
