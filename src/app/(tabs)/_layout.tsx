@@ -1,64 +1,125 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs } from 'expo-router/tabs';
+
+import { Tabs, type BottomTabBarProps } from 'expo-router/tabs';
+import type { ComponentProps } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Glass, hexA } from '../../components/Glass';
 import { InviteModal } from '../../components/InviteModal';
 import { useUnreadCount } from '../../lib/chat';
 import { usePushSetup } from '../../lib/push';
 import { useSession } from '../../lib/session';
-import type { ComponentProps } from 'react';
-import type { ColorValue } from 'react-native';
 import { tx, type ThemeId } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-// Her temanın kendi sekme simgeleri var.
+// Her temanın kendi sekme simgeleri var (dolu simgeler: yazı yok, simge konuşur).
 const ICONS: Record<ThemeId, [IconName, IconName, IconName, IconName, IconName]> = {
-  standart: ['heart-outline', 'chatbubbles-outline', 'images-outline', 'gift-outline', 'people-outline'],
-  agir: ['flash-outline', 'radio-outline', 'archive-outline', 'ticket-outline', 'shield-outline'],
-  asko: ['heart', 'chatbubble-ellipses', 'images', 'gift', 'happy-outline'],
+  standart: ['heart', 'chatbubbles', 'images', 'gift', 'people'],
+  agir: ['flash', 'radio', 'archive', 'ticket', 'shield'],
+  asko: ['heart', 'chatbubble-ellipses', 'images', 'gift', 'happy'],
 };
+// Sekme renkleri: her sekmenin kendi tonu, seçiliyken cam o renge çalar.
+const TINTS = ['#E8516A', '#5B8DB8', '#8C6BC2', '#E0A43A', '#4FA37E'];
 
-function icon(name: IconName) {
-  return ({ color, size }: { color: ColorValue; size: number }) => (
-    <Ionicons name={name} color={color as string} size={size} />
+export const TAB_BAR_H = 64;
+
+// Yüzen cam sekme çubuğu: ekranın altında, kenarlardan açık, arkası bulanık.
+function GlassTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+  const t = useTheme();
+  const insets = useSafeAreaInsets();
+  const unread = useUnreadCount();
+  const icons = ICONS[t.id];
+  return (
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 8 }}>
+      <Glass
+        radius={TAB_BAR_H / 2}
+        intensity={60}
+        style={{ height: TAB_BAR_H, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}
+      >
+        {state.routes.map((route, i) => {
+          const focused = state.index === i;
+          const { options } = descriptors[route.key];
+          const tint = TINTS[i] ?? t.colors.primary;
+          const onPress = () => {
+            const e = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!focused && !e.defaultPrevented) navigateToTab(route.key);
+          };
+          const badge = route.name === 'chat' && unread > 0 ? (unread > 9 ? '9+' : String(unread)) : null;
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              accessibilityLabel={typeof options.title === 'string' ? options.title : route.name}
+              style={({ pressed }) => ({ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.75 : 1 })}
+            >
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: focused ? hexA(tint, 0.22) : 'transparent',
+                  borderWidth: focused ? 1 : 0,
+                  borderColor: 'rgba(255,255,255,0.9)',
+                }}
+              >
+                <Ionicons name={icons[i]} size={focused ? 26 : 23} color={focused ? tint : t.colors.muted} />
+                {!!badge && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      minWidth: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      paddingHorizontal: 4,
+                      backgroundColor: t.colors.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ color: t.colors.onPrimary, fontSize: 10, fontWeight: '800' }}>{badge}</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
+      </Glass>
+    </View>
   );
 }
 
 export default function TabsLayout() {
   const t = useTheme();
-  const [today, chat, album, coupons, us] = ICONS[t.id];
-  const unread = useUnreadCount();
+  const insets = useSafeAreaInsets();
   const { user } = useSession();
   usePushSetup(user?.uid);
   const label = (s: string) => tx(t, s);
 
   return (
     <>
-    <InviteModal />
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: t.colors.primary,
-        tabBarInactiveTintColor: t.colors.muted,
-        tabBarStyle: { backgroundColor: t.colors.tabBar, borderTopColor: t.colors.border },
-        tabBarLabelStyle: { fontFamily: t.fonts.button, letterSpacing: t.upper ? 1 : 0 },
-        sceneStyle: { backgroundColor: t.colors.bg },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: label(t.copy.tabs.today), tabBarIcon: icon(today) }} />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: label(t.copy.tabs.chat),
-          tabBarIcon: icon(chat),
-          tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined,
-          tabBarBadgeStyle: { backgroundColor: t.colors.primary, color: t.colors.onPrimary },
+      <InviteModal />
+      <Tabs
+        tabBar={(p) => <GlassTabBar {...p} />}
+        screenOptions={{
+          headerShown: false,
+          // İçerik yüzen çubuğun altında kalmasın.
+          sceneStyle: { backgroundColor: t.colors.bg, paddingBottom: TAB_BAR_H + insets.bottom + 8 },
         }}
-      />
-      <Tabs.Screen name="album" options={{ title: label(t.copy.tabs.album), tabBarIcon: icon(album) }} />
-      <Tabs.Screen name="coupons" options={{ title: label(t.copy.tabs.coupons), tabBarIcon: icon(coupons) }} />
-      <Tabs.Screen name="profile" options={{ title: label(t.copy.tabs.us), tabBarIcon: icon(us) }} />
-    </Tabs>
+      >
+        <Tabs.Screen name="index" options={{ title: label(t.copy.tabs.today) }} />
+        <Tabs.Screen name="chat" options={{ title: label(t.copy.tabs.chat) }} />
+        <Tabs.Screen name="album" options={{ title: label(t.copy.tabs.album) }} />
+        <Tabs.Screen name="coupons" options={{ title: label(t.copy.tabs.coupons) }} />
+        <Tabs.Screen name="profile" options={{ title: label(t.copy.tabs.us) }} />
+      </Tabs>
     </>
   );
 }

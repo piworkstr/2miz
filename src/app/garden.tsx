@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
 import { ScenePanel, type SceneMeta } from '../components/world/ScenePanel';
+import { GlassCircle } from '../components/Glass';
 import { WorldChar } from '../components/world/WorldChar';
 import {
   ANIMALS,
@@ -1027,7 +1028,7 @@ function Btn({
   );
 }
 
-// Yuvarlak oyun düğmesi: yeşil disk, koyu kenar, altında kısa etiket, köşede sayı rozeti.
+// Yuvarlak cam oyun düğmesi: arkası bulanık, renk tonlu; altında kısa etiket, köşede sayı rozeti.
 function Round({
   icon,
   art,
@@ -1045,40 +1046,21 @@ function Round({
   off?: boolean;
   onPress: () => void;
 }) {
+  const tint = accent ? '#E8516A' : '#3E7F22';
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={off}
-      style={({ pressed }) => ({ alignItems: 'center', width: 64, opacity: off ? 0.5 : pressed ? 0.85 : 1 })}
-    >
-      <View
-        style={{
-          width: 54,
-          height: 54,
-          borderRadius: 27,
-          backgroundColor: accent ? '#E8516A' : '#6FBF3F',
-          borderWidth: 3,
-          borderColor: accent ? '#9E2740' : '#3E7F22',
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: '#1E3A0A',
-          shadowOpacity: 0.35,
-          shadowRadius: 5,
-          shadowOffset: { width: 0, height: 3 },
-          elevation: 5,
-        }}
-      >
+    <View style={{ alignItems: 'center', width: 64 }}>
+      <GlassCircle size={54} tint={tint} active={accent} onPress={onPress} disabled={off} accessibilityLabel={label}>
         {art && ART[art] ? (
           <Image source={ART[art].src} style={{ width: 32, height: 30 }} resizeMode="contain" />
         ) : (
-          <Ionicons name={icon ?? 'ellipse'} size={26} color="#fff" />
+          <Ionicons name={icon ?? 'ellipse'} size={26} color={accent ? '#fff' : '#1F4D0C'} />
         )}
         {!!badge && (
           <View
             style={{
               position: 'absolute',
-              top: -6,
-              right: -6,
+              top: -4,
+              right: -4,
               minWidth: 22,
               height: 22,
               borderRadius: 11,
@@ -1093,7 +1075,7 @@ function Round({
             <Text style={{ fontWeight: '900', fontSize: 12, color: '#5A3E00' }}>{badge}</Text>
           </View>
         )}
-      </View>
+      </GlassCircle>
       <Text
         numberOfLines={1}
         style={{
@@ -1108,7 +1090,7 @@ function Round({
       >
         {label}
       </Text>
-    </Pressable>
+    </View>
   );
 }
 

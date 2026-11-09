@@ -6,7 +6,6 @@ import { useSession } from '../lib/session';
 import { LIVING, type Living } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
-import { Card, Muted, T } from './ui';
 
 // Yaşam düzeni: aynı ev / aynı şehir ayrı ev / uzak. Günlük görevler buna göre seçilir;
 // ayrı yaşayan çifte "sabah kahvaltı hazırla" çıkmaz. İkiniz de değiştirebilirsiniz.
@@ -54,19 +53,5 @@ export function LivingChips({ compact }: { compact?: boolean }) {
         );
       })}
     </View>
-  );
-}
-
-// Ana ekranda yalnızca seçilmemişken görünür.
-export function LivingCard() {
-  const t = useTheme();
-  const { couple } = useSession();
-  if (!couple || couple.living) return null;
-  return (
-    <Card accent style={{ gap: 8 }}>
-      <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Nasıl yaşıyorsunuz?')}</T>
-      <Muted style={{ fontSize: 13 }}>Günlük görevler buna göre gelir: ayrı yaşıyorsanız "kahvaltı hazırla" gibi görevler çıkmaz.</Muted>
-      <LivingChips compact />
-    </Card>
   );
 }

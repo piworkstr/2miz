@@ -10,7 +10,6 @@ import { activeMood, MOODS } from '../../lib/avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
 import { GardenCard } from '../../components/GardenCard';
-import { LivingCard } from '../../components/LivingCard';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
@@ -19,6 +18,7 @@ import { SelfieCamera } from '../../components/SelfieCamera';
 import { SharedCalendar } from '../../components/SharedCalendar';
 import { SpecialDays } from '../../components/SpecialDays';
 import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
+import { GlassCircle } from '../../components/Glass';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { saveTaskPhoto, usePhotos } from '../../lib/photos';
@@ -105,8 +105,6 @@ export default function Today() {
           <DateCard mode="planner" />
         </Card>
       )}
-
-      <LivingCard />
 
       <SharedCalendar />
 
@@ -219,7 +217,7 @@ function Chip({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['nam
   );
 }
 
-// Yuvarlak renkli simge düğmesi; yazı yok, erişilebilirlik etiketi var. Açıkken altında küçük bir nokta.
+// Cam kısayol: yazı yok, simge renkli; açıkken cam o renge çalar.
 function Shortcut({
   icon,
   color,
@@ -235,32 +233,9 @@ function Shortcut({
 }) {
   const t = useTheme();
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={tx(t, label)}
-      style={({ pressed }) => ({ alignItems: 'center', gap: 4, opacity: pressed ? 0.8 : 1 })}
-    >
-      <View
-        style={{
-          width: 50,
-          height: 50,
-          borderRadius: 25,
-          backgroundColor: color,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: 3,
-          borderColor: active ? t.colors.text : 'rgba(255,255,255,0.9)',
-          shadowColor: color,
-          shadowOpacity: 0.45,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 3 },
-          elevation: 4,
-        }}
-      >
-        <Ionicons name={icon} size={24} color="#fff" />
-      </View>
-      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: active ? color : 'transparent' }} />
-    </Pressable>
+    <GlassCircle size={54} tint={color} active={active} onPress={onPress} accessibilityLabel={tx(t, label)}>
+      <Ionicons name={icon} size={26} color={active ? '#fff' : color} />
+    </GlassCircle>
   );
 }
 

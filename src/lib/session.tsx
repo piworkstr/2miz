@@ -15,6 +15,7 @@ export type Profile = {
   petNames?: string[]; // partnerine nasıl hitap ettiği
   calendarShare?: 'titles' | 'busy' | null; // telefon takvimini paylaşıyor mu
   mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
+  hints?: Record<string, boolean>; // "Anladım" denen ipuçları; ünlem bir daha çıkmaz
 };
 
 export type Couple = {
