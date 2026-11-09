@@ -749,7 +749,7 @@ export default function GardenScreen() {
               tool ? (
                 <Image
                   source={ART[tool].src}
-                  style={{ position: 'absolute', left: 30, top: 20, width: 26, height: 26, transform: [{ rotate: '-25deg' }] }}
+                  style={{ position: 'absolute', left: 42, top: 30, width: 26, height: 26, transform: [{ rotate: '-25deg' }] }}
                   resizeMode="contain"
                 />
               ) : null

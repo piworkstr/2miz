@@ -188,6 +188,35 @@ export function avatarBustSvg(o: AvatarOpts): string {
   return svg;
 }
 
+// head: yalnızca baş ve boyun; omuz ve kıyafet yok. Dünya karakterlerinde gövde ayrı çizim (çiftçi tulumu vb.) olarak eklenir.
+// avataaars'ta ten rengi tek bir yol: baş + boyun + omuzlar. Omuz kısmı boyun kütüğüyle değiştirilir, kıyafet grubu silinir.
+export function avatarHeadSvg(o: AvatarOpts): string {
+  const key = JSON.stringify(['head', o]);
+  const hit = svgCache.get(key);
+  if (hit) return hit;
+  let svg = avatarBustSvg(o);
+  svg = svg.replace(/v18\.4h-4a72 72 0 0 0-72 72v9h200v-9a72 72 0 0 0-72-72h-4v-18\.39/, 'v18.4h48v-18.39');
+  const start = svg.indexOf('<g transform="translate(0 170)">');
+  if (start >= 0) {
+    // dengeli kapanışı bul
+    const re = /<g\b|<\/g>/g;
+    re.lastIndex = start;
+    let depth = 0;
+    let end = -1;
+    for (let m = re.exec(svg); m; m = re.exec(svg)) {
+      depth += m[0] === '</g>' ? -1 : 1;
+      if (depth === 0) {
+        end = m.index + m[0].length;
+        break;
+      }
+    }
+    if (end > 0) svg = svg.slice(0, start) + svg.slice(end);
+  }
+  svg = svg.replace(/viewBox="0 0 280 280"/, 'viewBox="0 0 280 200"');
+  svgCache.set(key, svg);
+  return svg;
+}
+
 // face: sadece yüzü yakından gösteren önizleme (göz/kaş/ağız seçimi için).
 export function avatarSvg(o: AvatarOpts, mood: MoodKey | null = null, withBg = true, face = false): string {
   const key = JSON.stringify([o, mood, withBg, face]);
