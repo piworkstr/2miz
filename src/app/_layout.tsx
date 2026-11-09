@@ -4,11 +4,16 @@ import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useRef } from 'react';
+import { LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '../components/ui';
 import { OnboardingProvider } from '../lib/onboarding';
 import { SessionProvider, useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
+
+// Firestore bağlantı kopunca "Could not reach Cloud Firestore backend" diye uyarır ve çevrimdışı sürer;
+// geliştirme modunda bu uyarı kırmızı tam ekran hata gibi açılıyordu. Hata değil, gizlenir; uygulama bağlanınca devam eder.
+LogBox.ignoreLogs([/Could not reach Cloud Firestore backend/, /operate in offline mode/]);
 
 function RootNavigator() {
   const session = useSession();
