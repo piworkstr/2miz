@@ -40,3 +40,7 @@ yarn-error.*
 /ios
 /android
 
+
+# Baski Merkezi ve eski aktarim dosyalari derlemeye gitmez (gizli anahtar icerir)
+baski/
+_eski_aktarim/
