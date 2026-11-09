@@ -71,7 +71,7 @@ export const FARM_SCENES: Record<string, SceneMeta> = {
   harvest: { title: 'Hasat günü', verb: 'hasadı birlikte kaldırmak', reward: { coins: 15 } },
   market: { title: 'Pazar', verb: 'pazarda tezgâh kurmak', reward: { coins: 10 } },
 };
-// Depo yığını ahırın önünde durur.
+// Ahırın önündeki kare: depo işlerinde (satış, teslim) avatar buraya yürür.
 const PILE_TILE = 24;
 
 const TW = 64;
@@ -144,14 +144,6 @@ function sprites(f: Farm, now: number): Spr[] {
       }
     }
   });
-  // Depo: ahırın önünde ürün yığını; en çok olan ürünün resmi, miktara göre büyür.
-  const top = Object.entries(f.stock).sort((a, b) => b[1] - a[1])[0];
-  if (top && top[1] > 0) {
-    const [r, c] = rc(PILE_TILE);
-    const { x, y } = center(r, c);
-    const w = TW * Math.min(1.5, 0.7 + Math.sqrt(stockCount(f)) * 0.12);
-    out.push({ key: 'pile', art: top[0], x, y: y + TH * 0.4, z: zOf(r, c) + 7, w });
-  }
   return out;
 }
 
@@ -293,7 +285,7 @@ function Signs({ f }: { f: Farm }) {
   );
 }
 
-function Badge({ x, y, art, z }: { x: number; y: number; art: string; z: number }) {
+function Badge({ x, y, art, z, n }: { x: number; y: number; art: string; z: number; n?: number }) {
   const bob = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const l = Animated.loop(
@@ -328,6 +320,26 @@ function Badge({ x, y, art, z }: { x: number; y: number; art: string; z: number 
       }}
     >
       <Image source={ART[art].src} style={{ width: 22, height: 22 }} resizeMode="contain" />
+      {!!n && (
+        <View
+          style={{
+            position: 'absolute',
+            right: -8,
+            top: -6,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            paddingHorizontal: 4,
+            backgroundColor: '#FFD23F',
+            borderWidth: 1.5,
+            borderColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 10, fontWeight: '900', color: '#5A3E00' }}>{n}</Text>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -632,7 +644,27 @@ export default function GardenScreen() {
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   const sprs = [...SCENERY, ...sprites(farm, now)].sort((a, b) => a.z - b.z);
-  const badges: { key: string; i: number; x: number; y: number; art: string; z: number }[] = [];
+  const badges: { key: string; i: number; x: number; y: number; art: string; z: number; n?: number }[] = [];
+  // Depo rozeti: ahırın üstünde en çok olan ürün ve toplam adet; dokununca depo açılır.
+  {
+    const n = stockCount(farm);
+    const top = Object.entries(farm.stock).sort((a, b) => b[1] - a[1])[0];
+    if (n > 0 && top) {
+      const [ar, ac] = FIXED_ANCHOR.barn;
+      const a = center(ar, ac);
+      const back = center(ar - 1, ac - 1);
+      const barnTile = ar * N + ac;
+      badges.push({
+        key: 'depo',
+        i: barnTile,
+        x: (a.x + back.x) / 2,
+        y: a.y - TW * 1.35,
+        art: ART[top[0]] ? top[0] : 'coin',
+        z: zOf(ar, ac) + 420,
+        n,
+      });
+    }
+  }
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
     const { x, y } = center(r, c);
@@ -662,6 +694,10 @@ export default function GardenScreen() {
   quickRef.current = (wx, wy) => {
     // Önce rozetler: rozet karenin üstünde durduğu için aksi hâlde arkadaki kare seçilirdi.
     const hit = badges.find((b) => Math.hypot(b.x - wx, b.y - wy) < TW * 0.45);
+    if (hit?.key === 'depo') {
+      setSel(hit.i);
+      return true;
+    }
     const i = hit ? hit.i : tileAt(wx, wy);
     if (i < 0) return false;
     const q = quickFor(i);
@@ -731,7 +767,7 @@ export default function GardenScreen() {
           ))}
           <Signs f={farm} />
           {badges.map((b) => (
-            <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} />
+            <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} n={b.n} />
           ))}
           <Dog />
           <WorldChar profile={partnerProfile} name={partnerName} x={pAt.x} y={pAt.y} z={pAt.z} tag={partnerName} />
@@ -1322,17 +1358,63 @@ function Sheet(p: SheetProps) {
         <Note>Yollara bir şey konmaz.</Note>
       </>
     );
+  if (t.k === 'fixed' && t.item === 'barn') {
+    const items = Object.entries(farm.stock)
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1]);
+    const n = stockCount(farm);
+    const weekend = isWeekend(now);
+    return (
+      <>
+        <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
+        {items.length === 0 ? (
+          <Note>Depo boş. Topladığınız ürünler burada birikir; satınca altın olur, siparişlere buradan verilir.</Note>
+        ) : (
+          <>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {items.map(([k, v]) => (
+                <View
+                  key={k}
+                  style={{
+                    width: 74,
+                    alignItems: 'center',
+                    paddingVertical: 6,
+                    borderRadius: 14,
+                    backgroundColor: '#FBFAF6',
+                    borderWidth: 1,
+                    borderColor: '#F0E2DC',
+                  }}
+                >
+                  <Image source={(ART[k] ?? ART.coin).src} style={{ width: 44, height: 40 }} resizeMode="contain" />
+                  <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
+                    {PRODUCT_NAME[k] ?? k}
+                  </Text>
+                  <Text style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>×{v}</Text>
+                </View>
+              ))}
+            </ScrollView>
+            <Note>
+              {n} ürün · {stockValue(farm)} altın değerinde.{' '}
+              {weekend ? 'Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.' : 'Hafta sonu pazarda bir buçuk kata gider.'}
+            </Note>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {weekend ? (
+                <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
+              ) : (
+                <Btn flex label={`Sat · ${stockValue(farm)} altın`} onPress={p.onSell} />
+              )}
+              <Btn kind="soft" label="Siparişler" onPress={p.onOrders} />
+            </View>
+          </>
+        )}
+      </>
+    );
+  }
   if (t.k === 'fixed')
     return (
       <>
-        <Head art={t.item} title={t.item === 'house' ? 'Eviniz' : 'Ahır'} onClose={p.onClose} />
-        <Note>
-          {t.item === 'house'
-            ? 'Çiftlikteki eviniz.'
-            : stockCount(farm)
-              ? `Depoda ${stockCount(farm)} ürün var (${stockValue(farm)} altın). Hafta sonu pazarda bir buçuk kat.`
-              : 'Depo boş. Toplanan ürünler burada birikir, satınca altın olur.'}
-        </Note>
+        <Head art={t.item} title="Eviniz" onClose={p.onClose} />
+        <Note>Çiftlikteki eviniz.</Note>
       </>
     );
   if (t.k === 'soil') {
