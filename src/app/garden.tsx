@@ -452,6 +452,8 @@ export default function GardenScreen() {
   const cam = useRef({ s, tx, ty, zoom, pan });
   cam.current = { s, tx, ty, zoom, pan };
   const drag = useRef({ x: 0, y: 0, moved: false });
+  // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
+  const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
 
   const pr = useMemo(
     () =>
@@ -467,7 +469,15 @@ export default function GardenScreen() {
         onPanResponderRelease: (e) => {
           if (drag.current.moved) return;
           const c = cam.current;
-          const i = tileAt((e.nativeEvent.locationX - c.tx) / c.s, (e.nativeEvent.locationY - c.ty) / c.s);
+          const wx = (e.nativeEvent.locationX - c.tx) / c.s;
+          const wy = (e.nativeEvent.locationY - c.ty) / c.s;
+          if (quickRef.current(wx, wy)) {
+            setSel(null);
+            setShowLog(false);
+            setShowOrders(false);
+            return;
+          }
+          const i = tileAt(wx, wy);
           setSel((old) => (i < 0 || old === i ? null : i));
           setShowLog(false);
           setShowOrders(false);
@@ -593,19 +603,42 @@ export default function GardenScreen() {
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   const sprs = [...SCENERY, ...sprites(farm, now)].sort((a, b) => a.z - b.z);
-  const badges: { key: string; x: number; y: number; art: string; z: number }[] = [];
+  const badges: { key: string; i: number; x: number; y: number; art: string; z: number }[] = [];
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
     const { x, y } = center(r, c);
     const z = zOf(r, c) + 409;
     if (tl.k === 'crop' && !cropReady(tl, now) && tl.by !== uid && !tl.watered)
-      badges.push({ key: `b${i}`, x, y: y - TW * 0.75, art: 'can', z });
+      badges.push({ key: `b${i}`, i, x, y: y - TW * 0.75, art: 'can', z });
     if (tl.k === 'crop' && cropReady(tl, now))
-      badges.push({ key: `b${i}`, x, y: y - TW * 0.95, art: CROPS[tl.crop].big ? 'gul' : 'coin', z });
+      badges.push({ key: `b${i}`, i, x, y: y - TW * 0.95, art: CROPS[tl.crop].big ? 'gul' : 'coin', z });
     if (tl.k === 'animal' && animalReady(tl, now))
-      badges.push({ key: `b${i}`, x, y: y - TW * 0.85, art: PRODUCTS[ANIMALS[tl.item].products[0]].art, z });
-    if (tl.k === 'tree' && treeReady(tl, now)) badges.push({ key: `b${i}`, x, y: y - TW * 1.15, art: 'coin', z });
+      badges.push({ key: `b${i}`, i, x, y: y - TW * 0.85, art: PRODUCTS[ANIMALS[tl.item].products[0]].art, z });
+    if (tl.k === 'tree' && treeReady(tl, now)) badges.push({ key: `b${i}`, i, x, y: y - TW * 1.15, art: 'coin', z });
   });
+  // Karenin tek ve belli bir işi varsa onu döndür: sula, topla, meyve topla; büyük ürün hazırsa hasat gününü başlat.
+  const quickFor = (i: number): (() => void) | null => {
+    const tl = farm.tiles[i];
+    if (!tl) return null;
+    if (tl.k === 'crop') {
+      if (cropReady(tl, now)) return CROPS[tl.crop].big ? (scene ? null : () => begin('harvest')) : () => work({ a: 'harvest', i });
+      if (tl.by !== uid && !tl.watered) return () => work({ a: 'water', i });
+      return null;
+    }
+    if (tl.k === 'animal' && animalReady(tl, now)) return () => work({ a: 'collect', i });
+    if (tl.k === 'tree' && treeReady(tl, now)) return () => work({ a: 'pick', i });
+    return null;
+  };
+  quickRef.current = (wx, wy) => {
+    // Önce rozetler: rozet karenin üstünde durduğu için aksi hâlde arkadaki kare seçilirdi.
+    const hit = badges.find((b) => Math.hypot(b.x - wx, b.y - wy) < TW * 0.45);
+    const i = hit ? hit.i : tileAt(wx, wy);
+    if (i < 0) return false;
+    const q = quickFor(i);
+    if (!q) return false;
+    q();
+    return true;
+  };
   const meAt = stand(sceneTile ?? myTile, -1);
   const pAt = stand(sceneTile ?? partnerTile, 1);
 
