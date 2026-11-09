@@ -14,7 +14,9 @@ import { useOpenScene, usePages } from '../lib/scenes';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 
-// Hayalimiz: çiftin gerçek hayali, hedef yılı ve üç hayal dünyası. Altın üç dünyada ortak.
+// Hayalimiz: çiftin gerçek hayali, hedef yılı ve hayal dünyaları. Altın dünyalarda ortak.
+// Mavi Yolculuk ve Sahilde Ev yayında kapalı; üzerinde çalışılıp en iyi hâliyle açılacak.
+const WORLDS_OPEN = false;
 // Her dünyada yapılan şeyler gerçek hayatta yapılabilecek şeylerdir; birlikte yaşanan her sahne hayal defterine bir sayfa olur.
 export default function DreamsScreen() {
   const t = useTheme();
@@ -187,27 +189,30 @@ export default function DreamsScreen() {
         `Seviye ${levelOf(farm.xp).level} · ${sum.fields} tarla${sum.ready ? ` · ${sum.ready} hazır` : ''}`,
         waitLine(openFarm, 'hasada'),
       )}
-      {world(
-        '/dream/sea',
-        DART[sea.boat].src,
-        '#4FA8D8',
-        'Mavi Yolculuk',
-        'Göcek’ten Kaş’a gerçek koylar. Yüzün, balık tutun, güvertede yemek yiyin, kumsalda kamp kurun.',
-        sea.trip
-          ? `${bay(sea.trip.to).name} yolunda ⛵`
-          : `${sea.boatName} · ${Object.keys(sea.visited).length}/${BAYS.length} koy · ${BOATS[sea.boat].name}`,
-        waitLine(openSea, 'koya'),
+      {WORLDS_OPEN && (
+        <>
+          {world(
+            '/dream/sea',
+            DART[sea.boat].src,
+            '#4FA8D8',
+            'Mavi Yolculuk',
+            'Göcek’ten Kaş’a gerçek koylar. Yüzün, balık tutun, güvertede yemek yiyin, kumsalda kamp kurun.',
+            sea.trip
+              ? `${bay(sea.trip.to).name} yolunda ⛵`
+              : `${sea.boatName} · ${Object.keys(sea.visited).length}/${BAYS.length} koy · ${BOATS[sea.boat].name}`,
+            waitLine(openSea, 'koya'),
+          )}
+          {world(
+            '/dream/house',
+            DART[HOUSE_LV[houseLevel(home) - 1].art as keyof typeof DART].src,
+            '#E99AB8',
+            'Sahilde Ev',
+            'Küçük beyaz evden begonvilli villaya. Sabah kahvesi, mangal akşamı, yıldızların altında bir dilek.',
+            `${HOUSE_LV[houseLevel(home) - 1].name} · ${home.huzur} huzur`,
+            waitLine(openHome, 'eve'),
+          )}
+        </>
       )}
-      {world(
-        '/dream/house',
-        DART[HOUSE_LV[houseLevel(home) - 1].art as keyof typeof DART].src,
-        '#E99AB8',
-        'Sahilde Ev',
-        'Küçük beyaz evden begonvilli villaya. Sabah kahvesi, mangal akşamı, yıldızların altında bir dilek.',
-        `${HOUSE_LV[houseLevel(home) - 1].name} · ${home.huzur} huzur`,
-        waitLine(openHome, 'eve'),
-      )}
-
       <Pressable onPress={() => router.push('/dream/book')}>
         <Card style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

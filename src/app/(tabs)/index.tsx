@@ -2,22 +2,20 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import type React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Avatar } from '../../components/Avatar';
-import { BondHeart, BondStreak } from '../../components/BondHeart';
-import { MoodSheet } from '../../components/MoodSheet';
-import { activeMood, MOODS } from '../../lib/avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
 import { GardenCard } from '../../components/GardenCard';
+import { SkyHero } from '../../components/home/SkyHero';
+import { WeekStrip } from '../../components/home/WeekStrip';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
 import { Polaroid } from '../../components/Polaroid';
 import { SelfieCamera } from '../../components/SelfieCamera';
-import { SharedCalendar } from '../../components/SharedCalendar';
 import { SpecialDays } from '../../components/SpecialDays';
-import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, Screen, T, Title } from '../../components/ui';
+import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, T } from '../../components/ui';
 import { GlassCircle } from '../../components/Glass';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
@@ -52,168 +50,133 @@ export default function Today() {
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
 
   return (
-    <Screen>
-      <View style={{ gap: 2, marginTop: 4 }}>
-        <Title>{greeting(t.id, profile?.name ?? '', partnerProfile?.petNames)}</Title>
-        <Muted>
-          {tx(t, t.copy.dateLine(prettyDate(key), partnerName))}
-          {couple.startDate ? ` · ${daysTogether(couple.startDate)}. gününüz` : ''}
-        </Muted>
-      </View>
-
-      <TodayStrip
-        day={day}
-        uid={uid}
-        partnerId={partnerId}
-        myName={profile?.name ?? 'Sen'}
-        partnerName={partnerName}
-        streak={streakAlive ? couple.streak : 0}
-        points={couple.points}
+    <ScrollView
+      style={{ flex: 1, backgroundColor: t.colors.bg }}
+      contentContainerStyle={{ paddingBottom: 24 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Arka plandaki yumuşak renk lekeleri: cam yüzeyler bir şeyi bulanıklaştırsın */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: -80,
+          top: 420,
+          width: 260,
+          height: 260,
+          borderRadius: 130,
+          backgroundColor: '#FFD1B8',
+          opacity: 0.35,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          right: -90,
+          top: 620,
+          width: 240,
+          height: 240,
+          borderRadius: 120,
+          backgroundColor: '#F7C6D0',
+          opacity: 0.35,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 60,
+          top: 1000,
+          width: 220,
+          height: 220,
+          borderRadius: 110,
+          backgroundColor: '#DCD3F5',
+          opacity: 0.35,
+        }}
       />
 
-      {!profile?.avatar && (
-        <Pressable
-          onPress={() => router.push('/avatar')}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            padding: 12,
-            borderRadius: t.radius.card,
-            borderWidth: 1.5,
-            borderStyle: 'dashed',
-            borderColor: t.colors.primary,
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
-          <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
-            Avatarını oluştur; ruh haline göre yüz ifaden değişsin.
-          </Text>
-          <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
-        </Pressable>
-      )}
+      <SkyHero
+        greeting={greeting(t.id, profile?.name ?? '', partnerProfile?.petNames)}
+        line={`${tx(t, t.copy.dateLine(prettyDate(key), partnerName))}${couple.startDate ? ` · ${daysTogether(couple.startDate)}. gününüz` : ''}`}
+        streak={streakAlive ? couple.streak : 0}
+        points={couple.points}
+        pointsLabel={t.copy.points}
+      />
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+      {/* kısayollar: gök bölümünün alt kenarına oturur */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 26, marginTop: -30, zIndex: 5 }}>
         <Shortcut icon="game-controller" color="#8C6BC2" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
         <Shortcut icon="color-wand" color="#E07A45" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
         <Shortcut icon="heart" color={t.colors.primary} label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
       </View>
-      {panel === 'play' && <BoredCard />}
-      {panel === 'date' && (
-        <Card>
-          <DateCard mode="planner" />
-        </Card>
-      )}
 
-      <SharedCalendar />
-
-      <DateCard mode="banner" />
-
-      <SpecialDays />
-
-      {mode === 'pending' ? (
-        <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />
-      ) : (
-        <TaskCard
-          day={day}
-          uid={uid}
-          partnerId={partnerId}
-          partnerName={partnerName}
-          shared={mode === 'shared'}
-          coupleId={couple.id}
-          members={couple.members}
-          dayId={key}
-        />
-      )}
-
-      <OpenBonusCard />
-
-      <GardenCard />
-
-      <Pressable
-        onPress={() => router.push('/archive')}
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}
-      >
-        <Ionicons name="time-outline" size={16} color={t.colors.primary} />
-        <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Görev arşivi ve favoriler')}</Text>
-      </Pressable>
-
-      <MemoryCorner />
-      <CoupleInfoCard />
-    </Screen>
-  );
-}
-
-// İkinizin bugünkü durumu: kim görevi bitirdi, seri ve puan.
-function TodayStrip(props: {
-  day: DayDoc;
-  uid: string;
-  partnerId: string;
-  myName: string;
-  partnerName: string;
-  streak: number;
-  points: number;
-}) {
-  const t = useTheme();
-  const { day, uid, partnerId } = props;
-  const { profile, partnerProfile } = useSession();
-  const [moodOpen, setMoodOpen] = useState(false);
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
-      <Person p={profile} name={props.myName} done={!!day.completions[uid]} onPress={() => setMoodOpen(true)} />
-      <BondHeart />
-      <Person p={partnerProfile} name={props.partnerName} done={!!day.completions[partnerId]} />
-      <MoodSheet open={moodOpen} onClose={() => setMoodOpen(false)} />
-      <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
-        <BondStreak />
-        <Chip icon={t.id === 'asko' ? 'happy-outline' : 'star'} text={`${props.points} ${t.copy.points}`} />
-      </View>
-    </View>
-  );
-}
-
-function Person({ p, name, done, onPress }: { p: Profile | null; name: string; done: boolean; onPress?: () => void }) {
-  const t = useTheme();
-  const mood = activeMood(p?.mood);
-  return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ alignItems: 'center', gap: 2, width: 48 }}>
-      <View>
-        <Avatar p={p} name={name} size={40} />
-        {done && (
-          <View
-            style={{
-              position: 'absolute',
-              right: -3,
-              top: -3,
-              width: 18,
-              height: 18,
-              borderRadius: 9,
-              backgroundColor: '#4FA37E',
-              borderWidth: 2,
-              borderColor: t.colors.card,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Ionicons name="checkmark" size={12} color="#fff" />
-          </View>
+      <View style={{ paddingHorizontal: 18, paddingTop: 22, gap: 14 }}>
+        {panel === 'play' && <BoredCard />}
+        {panel === 'date' && (
+          <Card>
+            <DateCard mode="planner" />
+          </Card>
         )}
-      </View>
-      <Text numberOfLines={1} style={{ fontSize: 10, color: t.colors.muted, fontFamily: t.fonts.body }}>
-        {mood ? MOODS[mood].label : done ? 'Tamam' : name}
-      </Text>
-    </Pressable>
-  );
-}
 
-function Chip({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }) {
-  const t = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-      <Ionicons name={icon} size={14} color={t.colors.primary} />
-      <Text style={{ fontSize: 13, color: t.colors.text, fontWeight: '600', fontFamily: t.fonts.body }}>{tx(t, text)}</Text>
-    </View>
+        {!profile?.avatar && (
+          <Pressable
+            onPress={() => router.push('/avatar')}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              padding: 12,
+              borderRadius: t.radius.card,
+              borderWidth: 1.5,
+              borderStyle: 'dashed',
+              borderColor: t.colors.primary,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
+            <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
+              Avatarını oluştur; ruh haline göre yüz ifaden değişsin.
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
+          </Pressable>
+        )}
+
+        {mode === 'pending' ? (
+          <PendingCard day={day} uid={uid} partnerName={partnerName} coupleId={couple.id} dayId={key} />
+        ) : (
+          <TaskCard
+            day={day}
+            uid={uid}
+            partnerId={partnerId}
+            partnerName={partnerName}
+            shared={mode === 'shared'}
+            coupleId={couple.id}
+            members={couple.members}
+            dayId={key}
+          />
+        )}
+
+        <OpenBonusCard />
+        <DateCard mode="banner" />
+        <SpecialDays />
+        <WeekStrip />
+        <GardenCard />
+
+        <Pressable
+          onPress={() => router.push('/archive')}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}
+        >
+          <Ionicons name="time-outline" size={16} color={t.colors.primary} />
+          <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+            {tx(t, 'Görev arşivi ve favoriler')}
+          </Text>
+        </Pressable>
+
+        <MemoryCorner />
+        <CoupleInfoCard />
+      </View>
+    </ScrollView>
   );
 }
 

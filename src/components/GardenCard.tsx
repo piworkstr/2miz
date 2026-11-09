@@ -1,24 +1,21 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
-import { DART } from '../lib/dreamArt';
-import { bay, homeOf, HOUSE_LV, houseLevel, seaOf } from '../lib/dreams';
-import { farmOf, farmSummary } from '../lib/farm';
+import { Image, ImageBackground, Pressable, Text, View } from 'react-native';
+import { farmOf, farmSummary, levelOf, stockCount } from '../lib/farm';
 import { ART } from '../lib/farmArt';
 import { useOpenScene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
-import { Card, Muted, T } from './ui';
+import { Card, T } from './ui';
 
-// Ana ekranda Hayalimiz kartı: üç dünyanın küçük resmi ve sizi bekleyen ilk şey.
+// Ana ekranda Çiftliğimiz: manzara, ahır, seviye ve sizi bekleyen ilk iş. Dokununca çiftliğe gider.
 export function GardenCard() {
   const t = useTheme();
   const { user, couple, partnerName } = useSession();
   const [now, setNow] = useState(Date.now());
-  const openSea = useOpenScene(couple?.id, 'sea');
-  const openHome = useOpenScene(couple?.id, 'home');
   const openFarm = useOpenScene(couple?.id, 'farm');
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 30_000);
@@ -27,62 +24,59 @@ export function GardenCard() {
   if (!user || !couple) return null;
 
   const farm = farmOf(couple);
-  const sea = seaOf(couple, now);
-  const home = homeOf(couple);
-  const { ready, canWater } = farmSummary(farm, user.uid, now);
+  const { ready, canWater, big } = farmSummary(farm, user.uid, now);
   const bank = couple.dreamBank ?? 0;
-  // Partnerin başlattığı ve beni beklediği sahne
-  const call = [openSea, openHome, openFarm].find((s) => s && s.by !== user.uid);
-  const where = call ? (call.world === 'sea' ? `${bay(sea.at).name}’e` : call.world === 'home' ? 'Sahilde Ev’e' : 'çiftliğe') : '';
-
+  const call = openFarm && openFarm.by !== user.uid ? openFarm : null;
   const line = call
-    ? `${partnerName} seni ${where} çağırıyor 💛`
-    : bank
-      ? `Günlük görevden ${bank} altın kumbarada`
-      : ready
-        ? `Çiftlikte ${ready} ürün toplanmaya hazır`
-        : canWater
-          ? `${partnerName}’in ektiği ${canWater} ürün sulanmayı bekliyor 💧`
-          : sea.trip
-            ? `Tekneniz ${bay(sea.trip.to).name} yolunda ⛵`
-            : 'Çiftlik, tekne ve sahildeki ev sizi bekliyor.';
-  const hot = !!(call || bank || ready || canWater);
+    ? `${partnerName} seni ${call.kind === 'market' ? 'pazara' : 'hasada'} çağırıyor 💛`
+    : big
+      ? `${big} büyük ürün hazır · hasat günü için ${partnerName}’ı çağır 🌾`
+      : bank
+        ? `Günlük görevden ${bank} altın kumbarada`
+        : ready
+          ? `${ready} ürün toplanmaya hazır`
+          : canWater
+            ? `${partnerName}’in ${canWater} ürünü susuz 💧`
+            : stockCount(farm)
+              ? `Depoda ${stockCount(farm)} ürün · pazar hafta sonu`
+              : 'Bir şey ekin; birbirinizin ektiğini sulayın.';
+  const hot = !!(call || big || bank || ready || canWater);
 
   return (
-    <Pressable
-      onPress={() =>
-        router.push(call ? (call.world === 'sea' ? '/dream/sea' : call.world === 'home' ? '/dream/house' : '/garden') : '/dreams')
-      }
-    >
-      <Card style={{ gap: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Hayalimiz')}</T>
-          <Muted style={{ fontSize: 12 }}>{farm.coins} altın</Muted>
-          <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
+    <Pressable onPress={() => router.push('/garden')}>
+      <Card style={{ gap: 10, padding: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 }}>
+          <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Çiftliğimiz')}</T>
+          <Text
+            numberOfLines={1}
+            style={{ fontSize: 12, fontWeight: '700', color: hot ? t.colors.primary : t.colors.muted, maxWidth: 220 }}
+          >
+            {line}
+          </Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {[
-            { bg: '#8BC34F', src: ART.barn.src },
-            { bg: '#4FA8D8', src: DART[sea.boat].src },
-            { bg: '#E99AB8', src: DART[HOUSE_LV[houseLevel(home) - 1].art as keyof typeof DART].src },
-          ].map((w, k) => (
-            <View
-              key={k}
-              style={{
-                flex: 1,
-                height: 64,
-                borderRadius: 12,
-                backgroundColor: w.bg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <Image source={w.src} style={{ width: 62, height: 54 }} resizeMode="contain" />
+        <ImageBackground
+          source={ART.manzara.src}
+          imageStyle={{ borderRadius: 16 }}
+          style={{ height: 100, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end' }}
+          resizeMode="cover"
+        >
+          <LinearGradient
+            colors={['rgba(43,29,34,0.55)', 'rgba(43,29,34,0)']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 0.7, y: 0.5 }}
+            style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
+          />
+          <Image source={ART.barn.src} style={{ position: 'absolute', right: 12, bottom: 4, width: 92, height: 84 }} resizeMode="contain" />
+          <View style={{ padding: 12, gap: 2 }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}>
+              Seviye {levelOf(farm.xp).level} · {farm.harvests} ortak hasat · {farm.coins} altın
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ color: '#fff', fontSize: 12, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}>Çiftliğe gir</Text>
+              <Ionicons name="arrow-forward" size={12} color="#fff" />
             </View>
-          ))}
-        </View>
-        <Text style={{ color: hot ? t.colors.primary : t.colors.text, fontSize: 14, fontFamily: t.fonts.body }}>{line}</Text>
+          </View>
+        </ImageBackground>
       </Card>
     </Pressable>
   );
