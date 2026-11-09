@@ -54,10 +54,11 @@ function RootNavigator() {
           <Stack.Screen name="album-builder" />
           <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
-          <Stack.Screen name="garden" />
+          {/* Dünya ekranlarında parmakla gezinme var; kenardan kaydırma geri gitmesin. Geri düğmesi ekranda. */}
+          <Stack.Screen name="garden" options={{ gestureEnabled: false }} />
           <Stack.Screen name="dreams" />
-          <Stack.Screen name="dream/sea" />
-          <Stack.Screen name="dream/house" />
+          <Stack.Screen name="dream/sea" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="dream/house" options={{ gestureEnabled: false }} />
           <Stack.Screen name="dream/book" />
           <Stack.Screen name="plus" options={{ presentation: 'modal' }} />
           <Stack.Screen name="trip/new" />
