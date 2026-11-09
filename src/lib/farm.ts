@@ -21,6 +21,7 @@ export const MARKET_BONUS = 1.5;
 export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' | 'aycicegi' | 'kabak';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut';
+export type BuildingId = 'kumes' | 'agil' | 'kovan';
 export type DecorId = 'cicek' | 'cit' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
 
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
@@ -53,6 +54,23 @@ export const ANIMALS: Record<
 };
 export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
 export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
+
+// Hayvan binaları: hayvanlar çimene bırakılmaz, binada yaşar. Her binaya 3 hayvan sığar.
+// Tavuk/koyun/inek yemlenince üretime başlar (yem: depodan 1 buğday, yoksa 5 altın); arılar yemsiz kendi döngüsünde.
+export const BUILDINGS: Record<BuildingId, { name: string; cost: number; lvl: number; w: number; animals: AnimalId[]; cap: number }> = {
+  kumes: { name: 'Kümes', cost: 120, lvl: 2, w: 1.45, animals: ['tavuk'], cap: 3 },
+  agil: { name: 'Ağıl', cost: 260, lvl: 3, w: 1.7, animals: ['koyun', 'inek'], cap: 3 },
+  kovan: { name: 'Kovanlar', cost: 220, lvl: 5, w: 1.3, animals: ['ari'], cap: 3 },
+};
+export const FEED_COINS = 5;
+export const FEED_CROP = 'bugday';
+export const needsFeed = (a: AnimalId) => a !== 'ari';
+export type Resident = { id: AnimalId; fed: number | null; last: number }; // fed: yemleme zamanı (üretim başlangıcı); null: aç
+// Bir hayvanın ürünü hazır mı? Arı: son toplamadan beri süre doldu. Diğerleri: yemlendi ve süre doldu.
+export const residentReady = (r: Resident, now: number) =>
+  needsFeed(r.id) ? r.fed !== null && now >= r.fed + ANIMALS[r.id].mins * MIN : now >= r.last + ANIMALS[r.id].mins * MIN;
+export const residentReadyAt = (r: Resident) => (needsFeed(r.id) ? (r.fed ?? 0) : r.last) + ANIMALS[r.id].mins * MIN;
+export const buildingFor = (a: AnimalId) => (Object.keys(BUILDINGS) as BuildingId[]).find((b) => BUILDINGS[b].animals.includes(a))!;
 
 // Meyve ağaçları: bir kez dikilir, ilk hasattan sonra sürekli meyve verir. Çayıra dikilir.
 export const TREES: Record<
@@ -94,6 +112,7 @@ export type Tile =
   | { k: 'crop'; crop: CropId; by: string; at: number; ready: number; watered?: string }
   | { k: 'animal'; item: AnimalId; last: number }
   | { k: 'tree'; item: TreeId; at: number; last: number } // at: dikim; last: son hasat (ilk hasat at + first)
+  | { k: 'building'; item: BuildingId; res: Resident[] }
   | { k: 'decor'; item: DecorId };
 
 export type FarmLog = { by: string; text: string; at: number };
@@ -221,6 +240,7 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
   const pool: string[] = (Object.keys(CROPS) as CropId[]).filter((c) => CROPS[c].lvl <= lv && !CROPS[c].big);
   for (const t of f.tiles) {
     if (t.k === 'animal') for (const k of ANIMALS[t.item].products) if (!pool.includes(k)) pool.push(k);
+    if (t.k === 'building') for (const r of t.res) for (const k of ANIMALS[r.id].products) if (!pool.includes(k)) pool.push(k);
     if (t.k === 'tree' && !pool.includes(t.item)) pool.push(t.item);
   }
   const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
@@ -270,7 +290,12 @@ export function timeLeft(ms: number) {
 export function readyTiles(f: Farm, now: number) {
   return f.tiles
     .map((t, i) =>
-      (t.k === 'crop' && cropReady(t, now)) || (t.k === 'animal' && animalReady(t, now)) || (t.k === 'tree' && treeReady(t, now)) ? i : -1,
+      (t.k === 'crop' && cropReady(t, now)) ||
+      (t.k === 'animal' && animalReady(t, now)) ||
+      (t.k === 'tree' && treeReady(t, now)) ||
+      (t.k === 'building' && t.res.some((r) => residentReady(r, now)))
+        ? i
+        : -1,
     )
     .filter((i) => i >= 0);
 }
@@ -284,6 +309,7 @@ export function farmSummary(f: Farm, uid: string, now = Date.now()) {
     fields: f.tiles.filter((t) => t.k === 'soil' || t.k === 'crop').length,
     big: bigReady(f, now).length,
     stock: stockCount(f),
+    hungry: f.tiles.reduce((n, t) => n + (t.k === 'building' ? t.res.filter((r) => needsFeed(r.id) && r.fed === null).length : 0), 0),
   };
 }
 
@@ -298,6 +324,10 @@ export type Action =
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'tree'; i: number; item: TreeId }
   | { a: 'pick'; i: number } // meyve topla
+  | { a: 'build'; i: number; item: BuildingId } // çimene bina kur
+  | { a: 'adopt'; i: number; item: AnimalId } // binaya hayvan al (i: bina karesi)
+  | { a: 'feed'; i: number } // binadaki aç hayvanları yemle
+  | { a: 'gather'; i: number } // binadaki hazır ürünleri topla
   | { a: 'decor'; i: number; item: DecorId }
   | { a: 'unlock'; i: number }
   | { a: 'remove'; i: number }
@@ -398,14 +428,9 @@ export function applyAction(
       break;
     }
     case 'animal': {
+      // Eski yol: hayvan artık çimene değil binaya alınır.
       const an = ANIMALS[act.item];
-      if (!emptyOk(t)) return 'Hayvanlar çayıra konur; boş bir çimen seç.';
-      if (lv < an.lvl) return `${an.name} ${an.lvl}. seviyede açılır.`;
-      if (f.coins < an.cost) return 'Yeterli altının yok.';
-      f.coins -= an.cost;
-      f.tiles[act.i] = { k: 'animal', item: act.item, last: now };
-      text = `${name} çiftliğe ${an.name.toLowerCase()} aldı`;
-      break;
+      return `${an.name} ${BUILDINGS[buildingFor(act.item)].name.toLowerCase()}te yaşar; dükkândan önce bina kur.`;
     }
     case 'decor': {
       const d = DECOR[act.item];
@@ -430,9 +455,17 @@ export function applyAction(
       break;
     }
     case 'remove': {
-      if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree') return 'Kaldırılacak bir şey yok.';
+      if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree' && t.k !== 'building') return 'Kaldırılacak bir şey yok.';
       if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
-      const cost = t.k === 'animal' ? ANIMALS[t.item].cost : t.k === 'tree' ? TREES[t.item].cost : DECOR[t.item].cost;
+      if (t.k === 'building' && t.res.length) return 'İçinde hayvan varken bina kaldırılmaz.';
+      const cost =
+        t.k === 'animal'
+          ? ANIMALS[t.item].cost
+          : t.k === 'tree'
+            ? TREES[t.item].cost
+            : t.k === 'building'
+              ? BUILDINGS[t.item].cost
+              : DECOR[t.item].cost;
       gained = Math.floor(cost / 2);
       f.coins += gained;
       f.tiles[act.i] = { k: 'grass' };
@@ -459,6 +492,72 @@ export function applyAction(
       f.xp += tr.xp;
       f.tiles[act.i] = { ...t, last: now };
       text = `${name} ${tr.yieldN} ${tr.fruit.toLowerCase()} topladı`;
+      break;
+    }
+    case 'build': {
+      const b = BUILDINGS[act.item];
+      if (!emptyOk(t)) return `${b.name} çimene kurulur; boş bir çimen seç.`;
+      if (lv < b.lvl) return `${b.name} ${b.lvl}. seviyede açılır.`;
+      if (f.coins < b.cost) return 'Yeterli altının yok.';
+      f.coins -= b.cost;
+      f.xp += 5;
+      // Çimende başıboş duran uygun hayvanlar binaya taşınır.
+      const res: Resident[] = [];
+      f.tiles.forEach((x, j) => {
+        if (x.k === 'animal' && b.animals.includes(x.item) && res.length < b.cap) {
+          res.push({ id: x.item, fed: null, last: x.last });
+          f.tiles[j] = { k: 'grass' };
+        }
+      });
+      f.tiles[act.i] = { k: 'building', item: act.item, res };
+      text = `${name} ${b.name.toLowerCase()} kurdu${res.length ? `; ${res.length} hayvan içeri taşındı` : ''} 🏡`;
+      break;
+    }
+    case 'adopt': {
+      if (t.k !== 'building') return 'Önce bina kur.';
+      const b = BUILDINGS[t.item];
+      const an = ANIMALS[act.item];
+      if (!b.animals.includes(act.item)) return `${an.name} burada yaşamaz.`;
+      if (t.res.length >= b.cap) return `${b.name} dolu (${b.cap}).`;
+      if (lv < an.lvl) return `${an.name} ${an.lvl}. seviyede açılır.`;
+      if (f.coins < an.cost) return 'Yeterli altının yok.';
+      f.coins -= an.cost;
+      f.xp += 2;
+      f.tiles[act.i] = { ...t, res: [...t.res, { id: act.item, fed: null, last: now }] };
+      text = `${name} ${b.name.toLowerCase()}e ${an.name.toLowerCase()} aldı`;
+      break;
+    }
+    case 'feed': {
+      if (t.k !== 'building') return 'Burada hayvan yok.';
+      const hungry = t.res.filter((r) => needsFeed(r.id) && r.fed === null);
+      if (!hungry.length) return 'Hepsi tok.';
+      let wheat = f.stock[FEED_CROP] ?? 0;
+      let coins = 0;
+      for (const r of hungry) {
+        if (wheat > 0) wheat--;
+        else if (f.coins - coins >= FEED_COINS) coins += FEED_COINS;
+        else return `Yem için depoda buğday ya da ${FEED_COINS} altın gerek.`;
+      }
+      const used = (f.stock[FEED_CROP] ?? 0) - wheat;
+      if (used > 0) f.stock[FEED_CROP] = wheat;
+      if (f.stock[FEED_CROP] === 0) delete f.stock[FEED_CROP];
+      f.coins -= coins;
+      f.tiles[act.i] = { ...t, res: t.res.map((r) => (needsFeed(r.id) && r.fed === null ? { ...r, fed: now } : r)) };
+      text = `${name} ${hungry.length} hayvanı yemledi${used ? ` (${used} buğday)` : ''}${coins ? ` (${coins} altın)` : ''}`;
+      break;
+    }
+    case 'gather': {
+      if (t.k !== 'building') return 'Burada hayvan yok.';
+      const ready = t.res.filter((r) => residentReady(r, now));
+      if (!ready.length) return 'Henüz hazır ürün yok.';
+      const names = new Set<string>();
+      for (const r of ready) {
+        for (const k of ANIMALS[r.id].products) put(k);
+        f.xp += ANIMALS[r.id].xp;
+        names.add(productNames(r.id));
+      }
+      f.tiles[act.i] = { ...t, res: t.res.map((r) => (residentReady(r, now) ? { ...r, fed: null, last: now } : r)) };
+      text = `${name} ${[...names].join(', ')} topladı`;
       break;
     }
     case 'harvestDay': {

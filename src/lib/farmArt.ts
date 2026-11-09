@@ -34,6 +34,9 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   kiraz: { src: require('../../assets/farm/kiraz.webp'), h: 1.35 },
   armut: { src: require('../../assets/farm/armut.webp'), h: 1.37 },
   manzara: { src: require('../../assets/farm/manzara.webp'), h: 720 / 1280 }, // çiftliğin oturduğu manzara (1280×720)
+  kumes: { src: require('../../assets/farm/kumes.webp'), h: 0.976 },
+  agil: { src: require('../../assets/farm/agil.webp'), h: 0.977 },
+  kovan: { src: require('../../assets/farm/kovan.webp'), h: 0.899 },
   tree: { src: require('../../assets/farm/tree.webp'), h: 1.03 },
   well: { src: require('../../assets/farm/well.webp'), h: 1.42 },
   wool: { src: require('../../assets/farm/wool.webp'), h: 0.86 },

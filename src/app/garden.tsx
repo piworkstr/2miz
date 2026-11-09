@@ -12,6 +12,8 @@ import {
   ANIMALS,
   animalReady,
   bigReady,
+  BUILDINGS,
+  buildingFor,
   canGive,
   CROPS,
   cropReady,
@@ -37,6 +39,9 @@ import {
   productNames,
   PRODUCTS,
   productValue,
+  residentReady,
+  residentReadyAt,
+  needsFeed,
   rc,
   readyTiles,
   SEASON_NAME,
@@ -50,6 +55,7 @@ import {
   TREES,
   type Action,
   type AnimalId,
+  type BuildingId,
   type CropId,
   type DecorId,
   type Farm,
@@ -117,7 +123,10 @@ const GREEN = '#5FA83A';
 const INK = '#2B1D22';
 const MUTED = '#8A7479';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-type Shop = 'crop' | 'animal' | 'tree' | 'decor';
+type Shop = 'crop' | 'animal' | 'building' | 'tree' | 'decor';
+// Dükkandan seçilen, yere konacak şey: sonraki dokunuş o kareye yerleştirir.
+type Placing =
+  { a: 'plant'; crop: CropId } | { a: 'build'; item: BuildingId } | { a: 'tree'; item: TreeId } | { a: 'decor'; item: DecorId };
 type Spr = { key: string; art: string; x: number; y: number; w: number; z: number };
 
 function sprites(f: Farm, now: number): Spr[] {
@@ -134,6 +143,21 @@ function sprites(f: Farm, now: number): Spr[] {
     }
     if (t.k === 'animal') out.push({ key: `s${i}`, art: t.item, ...up, w: TW * ANIMALS[t.item].w });
     if (t.k === 'tree') out.push({ key: `s${i}`, art: ART[t.item] ? t.item : 'tree', ...up, w: TW * TREES[t.item].w });
+    if (t.k === 'building') {
+      out.push({ key: `s${i}`, art: t.item, ...up, y: up.y + TH * 0.25, w: TW * BUILDINGS[t.item].w });
+      // İçindekiler binanın önünde küçük küçük görünür.
+      t.res.forEach((r, k) => {
+        if (r.id === 'ari') return;
+        out.push({
+          key: `s${i}r${k}`,
+          art: r.id,
+          x: up.x + (k - 1) * TW * 0.3,
+          y: up.y + TH * 0.62 + (k % 2) * 4,
+          z: up.z + 1,
+          w: TW * ANIMALS[r.id].w * 0.45,
+        });
+      });
+    }
     if (t.k === 'decor') out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
     if (t.k === 'fixed') {
       const [ar, ac] = FIXED_ANCHOR[t.item];
@@ -422,6 +446,10 @@ export default function GardenScreen() {
   const [plantAll, setPlantAll] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [placing, setPlacing] = useState<Placing | null>(null);
+  const placingRef = useRef<Placing | null>(null);
+  placingRef.current = placing;
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState('');
@@ -472,6 +500,7 @@ export default function GardenScreen() {
   const MAX_ZOOM = 4;
   // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
   const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
+  const placeRef = useRef<(i: number) => void>(() => {});
 
   const pr = useMemo(
     () =>
@@ -512,16 +541,24 @@ export default function GardenScreen() {
           const c = cam.current;
           const wx = (e.nativeEvent.locationX - c.tx) / c.s;
           const wy = (e.nativeEvent.locationY - c.ty) / c.s;
+          // Yerleştirme modu: dükkandan seçilen şey dokunulan kareye konur.
+          if (placingRef.current) {
+            const i = tileAt(wx, wy);
+            if (i >= 0) placeRef.current(i);
+            return;
+          }
           if (quickRef.current(wx, wy)) {
             setSel(null);
             setShowLog(false);
             setShowOrders(false);
+            setShowShop(false);
             return;
           }
           const i = tileAt(wx, wy);
           setSel((old) => (i < 0 || old === i ? null : i));
           setShowLog(false);
           setShowOrders(false);
+          setShowShop(false);
           setPlantAll(false);
         },
       }),
@@ -677,6 +714,13 @@ export default function GardenScreen() {
     if (tl.k === 'animal' && animalReady(tl, now))
       badges.push({ key: `b${i}`, i, x, y: y - TW * 0.85, art: PRODUCTS[ANIMALS[tl.item].products[0]].art, z });
     if (tl.k === 'tree' && treeReady(tl, now)) badges.push({ key: `b${i}`, i, x, y: y - TW * 1.15, art: 'coin', z });
+    if (tl.k === 'building') {
+      const ready = tl.res.filter((r) => residentReady(r, now));
+      const hungry = tl.res.filter((r) => needsFeed(r.id) && r.fed === null);
+      if (ready.length)
+        badges.push({ key: `b${i}`, i, x, y: y - TW * 1.25, art: PRODUCTS[ANIMALS[ready[0].id].products[0]].art, z, n: ready.length });
+      else if (hungry.length) badges.push({ key: `b${i}`, i, x, y: y - TW * 1.25, art: 'bugday', z, n: hungry.length });
+    }
   });
   // Karenin tek ve belli bir işi varsa onu döndür: sula, topla, meyve topla; büyük ürün hazırsa hasat gününü başlat.
   const quickFor = (i: number): (() => void) | null => {
@@ -689,7 +733,18 @@ export default function GardenScreen() {
     }
     if (tl.k === 'animal' && animalReady(tl, now)) return () => work({ a: 'collect', i });
     if (tl.k === 'tree' && treeReady(tl, now)) return () => work({ a: 'pick', i });
+    if (tl.k === 'building') {
+      if (tl.res.some((r) => residentReady(r, now))) return () => work({ a: 'gather', i });
+      if (tl.res.some((r) => needsFeed(r.id) && r.fed === null)) return () => work({ a: 'feed', i });
+      return null;
+    }
     return null;
+  };
+  placeRef.current = (i: number) => {
+    const pl = placingRef.current;
+    if (!pl) return;
+    work({ ...pl, i } as Action);
+    setPlacing(null);
   };
   quickRef.current = (wx, wy) => {
     // Önce rozetler: rozet karenin üstünde durduğu için aksi hâlde arkadaki kare seçilirdi.
@@ -837,6 +892,27 @@ export default function GardenScreen() {
           <Text style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>{farm.coins}</Text>
         </View>
       </View>
+      {placing && (
+        <View style={{ position: 'absolute', left: 0, right: 0, top: insets.top + 96, alignItems: 'center', zIndex: 30 }}>
+          <Pressable
+            onPress={() => setPlacing(null)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: 'rgba(43,29,34,0.86)',
+              borderRadius: 999,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+              {placing.a === 'plant' ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun` : 'Boş bir çimene dokun'}
+            </Text>
+            <Ionicons name="close-circle" size={18} color="#fff" />
+          </Pressable>
+        </View>
+      )}
       <View pointerEvents="none" style={{ position: 'absolute', left: 10, top: insets.top + 52 }}>
         <Text
           style={[pill, { fontWeight: '800', fontSize: 11, color: INK, paddingHorizontal: 10, paddingVertical: 5, overflow: 'hidden' }]}
@@ -897,7 +973,7 @@ export default function GardenScreen() {
         <View
           pointerEvents="box-none"
           style={
-            scene || sel !== null || showLog || showOrders
+            scene || sel !== null || showLog || showOrders || showShop
               ? {
                   backgroundColor: 'rgba(255,248,232,0.96)',
                   borderRadius: 20,
@@ -955,6 +1031,13 @@ export default function GardenScreen() {
               setPlantAll={setPlantAll}
               showLog={showLog}
               showOrders={showOrders}
+              showShop={showShop}
+              onShop={() => setShowShop(true)}
+              onPlace={(pl) => {
+                setPlacing(pl);
+                setShowShop(false);
+                setSel(null);
+              }}
               onOrders={() => setShowOrders(true)}
               onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
               onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
@@ -977,7 +1060,7 @@ export default function GardenScreen() {
                 ready.forEach((i) => {
                   const x = farm.tiles[i];
                   if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat günüyle
-                  work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : 'collect', i });
+                  work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : x.k === 'building' ? 'gather' : 'collect', i });
                 })
               }
               onSell={() => work({ a: 'sell', i: PILE_TILE })}
@@ -1013,6 +1096,9 @@ type SheetProps = {
   setPlantAll: (v: boolean) => void;
   showLog: boolean;
   showOrders: boolean;
+  showShop: boolean;
+  onShop: () => void;
+  onPlace: (pl: Placing) => void;
   onOrders: () => void;
   onDeliver: (orderId: string) => void;
   onNote: (text: string) => void;
@@ -1227,6 +1313,19 @@ function Sheet(p: SheetProps) {
   const { farm, sel, now } = p;
   const level = levelOf(farm.xp).level;
 
+  if (p.showShop)
+    return (
+      <ShopPanel
+        farm={farm}
+        now={now}
+        level={level}
+        shop={p.shop}
+        setShop={p.setShop}
+        onClose={p.onClose}
+        onPlace={p.onPlace}
+        onAct={p.onAct}
+      />
+    );
   if (p.showOrders)
     return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
   if (sel === NOTE_TREE)
@@ -1295,6 +1394,7 @@ function Sheet(p: SheetProps) {
               <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
           <Round icon="book" label="Günlük" onPress={p.onLog} />
+          <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
         </View>
       </>
     );
@@ -1302,37 +1402,6 @@ function Sheet(p: SheetProps) {
 
   const i = sel;
   const t: Tile = farm.tiles[i];
-  const placeList = (): Item[] =>
-    p.shop === 'decor'
-      ? (Object.keys(DECOR) as DecorId[]).map((id) => ({
-          id,
-          art: DECOR[id].sp,
-          name: DECOR[id].name,
-          cost: DECOR[id].cost,
-          lvl: DECOR[id].lvl,
-          sub: `+${DECOR[id].xp} tecrübe`,
-          a: { a: 'decor', i, item: id },
-        }))
-      : p.shop === 'tree'
-        ? (Object.keys(TREES) as TreeId[]).map((id) => ({
-            id,
-            art: ART[id] ? id : 'tree',
-            name: TREES[id].name,
-            cost: TREES[id].cost,
-            lvl: TREES[id].lvl,
-            sub: `${TREES[id].yieldN} ${TREES[id].fruit.toLowerCase()} / ${timeLeft(TREES[id].mins * MIN)}`,
-            a: { a: 'tree', i, item: id },
-          }))
-        : (Object.keys(ANIMALS) as AnimalId[]).map((id) => ({
-            id,
-            art: id,
-            name: ANIMALS[id].name,
-            cost: ANIMALS[id].cost,
-            lvl: ANIMALS[id].lvl,
-            sub: `${productNames(id)} · ${timeLeft(ANIMALS[id].mins * MIN)}`,
-            a: { a: 'animal', i, item: id },
-          }));
-
   if (t.k === 'locked') {
     const need = parcelNeed(farm);
     const ok = farm.harvests >= need;
@@ -1527,38 +1596,199 @@ function Sheet(p: SheetProps) {
       </>
     );
   }
-  // çimen
-  const shop = p.shop === 'crop' ? 'animal' : p.shop;
+  if (t.k === 'building') {
+    const b = BUILDINGS[t.item];
+    const ready = t.res.filter((r) => residentReady(r, now)).length;
+    const hungry = t.res.filter((r) => needsFeed(r.id) && r.fed === null).length;
+    const wheat = farm.stock.bugday ?? 0;
+    return (
+      <>
+        <Head art={t.item} title={`${b.name} · ${t.res.length}/${b.cap}`} onClose={p.onClose} />
+        {t.res.length === 0 && <Note>Boş. Aşağıdan hayvan al; burada yaşar, yemlenir, ürün verir.</Note>}
+        {t.res.length > 0 && (
+          <View style={{ gap: 6 }}>
+            {t.res.map((r, k) => {
+              const an = ANIMALS[r.id];
+              const isReady = residentReady(r, now);
+              const hungryOne = needsFeed(r.id) && r.fed === null;
+              return (
+                <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Image source={ART[r.id].src} style={{ width: 34, height: 30 }} resizeMode="contain" />
+                  <Text style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>{an.name}</Text>
+                  <Text style={{ fontSize: 12, color: isReady ? GREEN : hungryOne ? '#B4521E' : MUTED, fontWeight: '700' }}>
+                    {isReady
+                      ? `${productNames(r.id)} hazır`
+                      : hungryOne
+                        ? 'aç · yemle'
+                        : `${productNames(r.id)} ${timeLeft(residentReadyAt(r) - now)} sonra`}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {ready > 0 && <Btn flex label={`Topla (${ready})`} onPress={() => p.onAct({ a: 'gather', i })} />}
+          {hungry > 0 && (
+            <Btn
+              flex
+              kind="accent"
+              label={`Yemle (${hungry}) · ${wheat ? `${Math.min(wheat, hungry)} buğday` : `${hungry * 5} altın`}`}
+              onPress={() => p.onAct({ a: 'feed', i })}
+            />
+          )}
+        </View>
+        {t.res.length < b.cap && (
+          <>
+            <Note>Hayvan al:</Note>
+            <Items
+              list={b.animals.map((id) => ({
+                id,
+                art: id,
+                name: ANIMALS[id].name,
+                cost: ANIMALS[id].cost,
+                lvl: ANIMALS[id].lvl,
+                sub: `${productNames(id)} · ${timeLeft(ANIMALS[id].mins * MIN)}`,
+                a: { a: 'adopt', i, item: id },
+              }))}
+              level={level}
+              coins={farm.coins}
+              onPick={(a) => p.onAct(a)}
+            />
+          </>
+        )}
+        {t.res.length === 0 && (
+          <Btn kind="soft" label={`Kaldır (+${Math.floor(b.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        )}
+        <Note>
+          {needsFeed(b.animals[0])
+            ? 'Yem: depodan 1 buğday, yoksa 5 altın. Yemlenen hayvan süre dolunca ürün verir.'
+            : 'Arılar yemsiz; bal kendi döngüsünde olur.'}
+        </Note>
+      </>
+    );
+  }
+  // çimen: bir şey koymak dükkândan seçilir; burada yalnız tarla sürülür.
   return (
     <>
       <Head title="Boş çimen" onClose={p.onClose} />
+      <Note>Buraya bina, ağaç ya da süs koymak için dükkânı aç ve seç; sonra bu kareye dokun. Ya da tarla sür.</Note>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Btn flex label={`Tarla sür · ${TILL} altın`} onPress={() => p.onAct({ a: 'till', i })} disabled={farm.coins < TILL} />
+        <Btn flex kind="soft" label="Dükkân" onPress={p.onShop} />
+      </View>
+    </>
+  );
+}
+
+// Dükkân: tohum, hayvan, bina, ağaç, süs. Yere konacaklar seçilince yerleştirme moduna geçilir.
+function ShopPanel({
+  farm,
+  now,
+  level,
+  shop,
+  setShop,
+  onClose,
+  onPlace,
+  onAct,
+}: {
+  farm: Farm;
+  now: number;
+  level: number;
+  shop: Shop;
+  setShop: (s: Shop) => void;
+  onClose: () => void;
+  onPlace: (pl: Placing) => void;
+  onAct: (a: Action) => void;
+}) {
+  const soil = farm.tiles.filter((x) => x.k === 'soil').length;
+  const list: Item[] =
+    shop === 'crop'
+      ? (Object.keys(CROPS) as CropId[]).map((id) => ({
+          id,
+          art: id,
+          name: CROPS[id].name,
+          cost: CROPS[id].cost,
+          lvl: CROPS[id].lvl,
+          sub: `${timeLeft(CROPS[id].mins * MIN)} · ${CROPS[id].sell} altın${CROPS[id].big ? ' · hasat günü' : ''}`,
+          a: { a: 'plant', i: -1, crop: id },
+        }))
+      : shop === 'animal'
+        ? (Object.keys(ANIMALS) as AnimalId[]).map((id) => ({
+            id,
+            art: id,
+            name: ANIMALS[id].name,
+            cost: ANIMALS[id].cost,
+            lvl: ANIMALS[id].lvl,
+            sub: `${BUILDINGS[buildingFor(id)].name} · ${productNames(id)}`,
+            a: { a: 'adopt', i: -1, item: id },
+          }))
+        : shop === 'building'
+          ? (Object.keys(BUILDINGS) as BuildingId[]).map((id) => ({
+              id,
+              art: id,
+              name: BUILDINGS[id].name,
+              cost: BUILDINGS[id].cost,
+              lvl: BUILDINGS[id].lvl,
+              sub: `${BUILDINGS[id].animals.map((a) => ANIMALS[a].name).join(', ')} · ${BUILDINGS[id].cap} yer`,
+              a: { a: 'build', i: -1, item: id },
+            }))
+          : shop === 'tree'
+            ? (Object.keys(TREES) as TreeId[]).map((id) => ({
+                id,
+                art: ART[id] ? id : 'tree',
+                name: TREES[id].name,
+                cost: TREES[id].cost,
+                lvl: TREES[id].lvl,
+                sub: `${TREES[id].yieldN} ${TREES[id].fruit.toLowerCase()} / ${timeLeft(TREES[id].mins * MIN)}`,
+                a: { a: 'tree', i: -1, item: id },
+              }))
+            : (Object.keys(DECOR) as DecorId[]).map((id) => ({
+                id,
+                art: DECOR[id].sp,
+                name: DECOR[id].name,
+                cost: DECOR[id].cost,
+                lvl: DECOR[id].lvl,
+                sub: `+${DECOR[id].xp} tecrübe`,
+                a: { a: 'decor', i: -1, item: id },
+              }));
+  const pick = (a: Action) => {
+    if (a.a === 'plant') return onPlace({ a: 'plant', crop: a.crop });
+    if (a.a === 'build') return onPlace({ a: 'build', item: a.item });
+    if (a.a === 'tree') return onPlace({ a: 'tree', item: a.item });
+    if (a.a === 'decor') return onPlace({ a: 'decor', item: a.item });
+    if (a.a === 'adopt') {
+      // Boş yeri olan uygun binaya girer; bina yoksa önce bina kurulur.
+      const need = buildingFor(a.item);
+      const j = farm.tiles.findIndex((x) => x.k === 'building' && x.item === need && x.res.length < BUILDINGS[need].cap);
+      if (j >= 0) return onAct({ a: 'adopt', i: j, item: a.item });
+      return onAct({ a: 'adopt', i: -1, item: a.item }); // kural metni: "önce bina kur"
+    }
+  };
+  return (
+    <>
+      <Head title="Dükkân" onClose={onClose} />
       <Tabs
         tabs={[
+          ['crop', 'Tohum'],
           ['animal', 'Hayvan'],
+          ['building', 'Bina'],
           ['tree', 'Ağaç'],
           ['decor', 'Süs'],
         ]}
         value={shop}
-        onChange={p.setShop}
-        extra={
-          <Pressable
-            disabled={farm.coins < TILL}
-            onPress={() => p.onAct({ a: 'till', i })}
-            style={{
-              flex: 1,
-              paddingVertical: 7,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#F0E2DC',
-              alignItems: 'center',
-              opacity: farm.coins < TILL ? 0.45 : 1,
-            }}
-          >
-            <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>Tarla sür · {TILL}</Text>
-          </Pressable>
-        }
+        onChange={setShop}
       />
-      <Items list={placeList()} level={level} coins={farm.coins} onPick={(a) => p.onAct(a)} />
+      <Items list={list} level={level} coins={farm.coins} onPick={pick} />
+      <Note>
+        {shop === 'crop'
+          ? soil
+            ? 'Tohumu seç, sonra boş tarlaya dokun.'
+            : 'Boş tarla yok: çimene dokunup tarla sür.'
+          : shop === 'animal'
+            ? 'Hayvan binasında yaşar: kümes, ağıl ya da kovan. Önce binayı kur.'
+            : 'Seç, sonra boş bir çimene dokun.'}
+      </Note>
     </>
   );
 }
