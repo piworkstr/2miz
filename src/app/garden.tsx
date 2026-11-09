@@ -64,6 +64,7 @@ import {
   type Tile,
   type TreeId,
 } from '../lib/farm';
+import { logActivityCapped } from '../lib/bond';
 import { ART } from '../lib/farmArt';
 import { notifyPartner } from '../lib/push';
 import { startScene, useOpenScene, type Scene } from '../lib/scenes';
@@ -593,6 +594,9 @@ export default function GardenScreen() {
     busy.current = true;
     let planted = 0;
     let plantedCrop: CropId | null = null;
+    // Kalp için: bu partide tek başına mı iş yapıldı, yoksa birlikte bir şey mi?
+    let solo = false;
+    let together = false;
     while (queue.current.length) {
       const job = queue.current.shift()!;
       await walkTo(job.i);
@@ -605,6 +609,10 @@ export default function GardenScreen() {
         const r = await farmAction(couple.id, uid, myName, partnerName, job);
         if (typeof r === 'string') flash(r);
         else {
+          const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
+          if (helped || ('scene' in job && job.scene) || job.a === 'harvestDay' || (job.a === 'deliver' && r.gained) || job.a === 'note')
+            together = true;
+          else solo = true;
           if (r.gained) {
             const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
             const id = Date.now() + Math.random();
@@ -643,6 +651,8 @@ export default function GardenScreen() {
         flash('Olmadı, tekrar dene');
       }
     }
+    if (together) logActivityCapped(couple.id, uid, 'farmTogether');
+    else if (solo) logActivityCapped(couple.id, uid, 'farm');
     if (planted && plantedCrop) {
       const c = CROPS[plantedCrop].name.toLowerCase();
       notifyPartner(

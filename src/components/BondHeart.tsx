@@ -72,8 +72,9 @@ export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: numb
               </Text>
             </View>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 15, lineHeight: 21, color: t.colors.text }}>
-              Kalp, son 7 gündeki iletişiminize göre büyür ya da küçülür. Mesajlar, anlık fotoğraflar, görevler, oyunlar ve bonus görevler
-              kalbi büyütür; en çok da ikinizin de aynı gün bir şey yaptığı günler sayılır. Birkaç gün sessiz kalırsanız kalp küçülür.
+              Kalp, son 7 gündeki iletişiminize göre büyür ya da küçülür. Mesajlar, anlık fotoğraflar, görevler, oyunlar, bonus görevler ve
+              çiftlikte yaptıklarınız kalbi büyütür (birbirinizin ürününü sulamak, birlikte hasat ve pazar en çok sayılır); en çok da
+              ikinizin de aynı gün bir şey yaptığı günler sayılır. Birkaç gün sessiz kalırsanız kalp küçülür.
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="flame" size={20} color="#E07A45" />

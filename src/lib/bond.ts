@@ -7,13 +7,37 @@ import type { Couple } from './session';
 // "Kalp" ve iletişim serisi (Snapchat'teki alev gibi).
 // Her etkileşim çift belgesine günlük bir sayaç olarak yazılır: activity.YYYY-MM-DD.uid
 // Puanlar: mesaj 1, sesli mesaj 2, anlık fotoğraf 2, görev 3, oyun 3, bonus 2, albüm/seyahat/kupon 1.
-export const WEIGHT = { message: 1, voice: 2, photo: 2, task: 3, game: 3, bonus: 2, album: 1, trip: 1, coupon: 1 };
+// Çiftlik: tek başına iş (ekme, toplama, satma) 1; birlikte iş (partnerin ürününü sulamak, sipariş, hasat günü, pazar) 3.
+export const WEIGHT = {
+  message: 1,
+  voice: 2,
+  photo: 2,
+  task: 3,
+  game: 3,
+  bonus: 2,
+  album: 1,
+  trip: 1,
+  coupon: 1,
+  farm: 1,
+  farmTogether: 3,
+};
 export type ActivityKind = keyof typeof WEIGHT;
 
 export async function logActivity(coupleId: string, uid: string, kind: ActivityKind, times = 1) {
   await updateDoc(doc(db, 'couples', coupleId), { [`activity.${dayKey()}.${uid}`]: increment(WEIGHT[kind] * times) }).catch(() => {});
   // Bugün bir şey yaptın: akşamki "serin bitmek üzere" hatırlatmasına gerek kalmadı.
   Notifications.cancelScheduledNotificationAsync(RISK_ID).catch(() => {});
+}
+
+// Çiftlikte art arda onlarca dokunuş kalbi şişirmesin: türe göre günlük üst sınır (bu cihazda, uygulama açıkken).
+const DAILY_CAP: Partial<Record<ActivityKind, number>> = { farm: 3, farmTogether: 9 };
+const given: Record<string, number> = {};
+export function logActivityCapped(coupleId: string, uid: string, kind: ActivityKind) {
+  const cap = DAILY_CAP[kind];
+  const key = `${dayKey()}.${kind}`;
+  if (cap !== undefined && (given[key] ?? 0) + WEIGHT[kind] > cap) return;
+  given[key] = (given[key] ?? 0) + WEIGHT[kind];
+  logActivity(coupleId, uid, kind);
 }
 
 type Activity = Record<string, Record<string, number>>;
@@ -37,7 +61,7 @@ const W = [1, 1, 0.85, 0.7, 0.55, 0.4, 0.3];
 
 export function bondOf(couple: Couple | null, uid: string | undefined, partnerId: string | null): Bond {
   const act = (couple?.activity ?? {}) as Activity;
-  const get = (k: string, who: string | null | undefined) => (who ? act[k]?.[who] ?? 0 : 0);
+  const get = (k: string, who: string | null | undefined) => (who ? (act[k]?.[who] ?? 0) : 0);
   const val = (k: string) => {
     const a = get(k, uid);
     const b = get(k, partnerId);
@@ -61,8 +85,7 @@ export function bondOf(couple: Couple | null, uid: string | undefined, partnerId
   let streak = 0;
   for (let i = both(today) ? 0 : 1; i < 400 && both(keyDaysAgo(i)); i++) streak++;
 
-  const label =
-    level >= 0.75 ? 'Alev alev' : level >= 0.5 ? 'Sıcacık' : level >= 0.25 ? 'Ilık' : level > 0 ? 'Soğuyor' : 'Kalp üşüyor';
+  const label = level >= 0.75 ? 'Alev alev' : level >= 0.5 ? 'Sıcacık' : level >= 0.25 ? 'Ilık' : level > 0 ? 'Soğuyor' : 'Kalp üşüyor';
   return { level, label, streak, atRisk: streak > 0 && !both(today), meToday: get(today, uid), themToday: get(today, partnerId) };
 }
 
