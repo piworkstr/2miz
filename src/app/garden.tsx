@@ -28,6 +28,10 @@ import {
   MARKET_BONUS,
   MIN,
   N,
+  OFF,
+  INNER,
+  isOuter,
+  outerPrice,
   NOTE_MAX,
   NOTE_TREE,
   NOTES_PER_DAY,
@@ -80,7 +84,7 @@ export const FARM_SCENES: Record<string, SceneMeta> = {
   market: { title: 'Pazar', verb: 'pazarda tezgâh kurmak', reward: { coins: 10 } },
 };
 // Ahırın önündeki kare: depo işlerinde (satış, teslim) avatar buraya yürür.
-const PILE_TILE = 24;
+const PILE_TILE = (2 + OFF) * N + 4 + OFF; // ahırın önü (iç çiftlikte (2,4))
 
 const TW = 64;
 const TH = TW / 2;
@@ -113,10 +117,18 @@ const BG = (() => {
 const SKY = '#99BDDA';
 const FAR = '#7E8F46';
 
+// Varsayılan görünüm iç çiftliğe (10x10) sığar; dış araziler sürükleyerek gezilir.
 const BOUNDS = {
-  x0: center(N - 1, 0).x - TW / 2 - 4,
-  x1: center(0, N - 1).x + TW / 2 + 4,
-  y0: OY - TH / 2 - TW * 1.7,
+  x0: center(OFF + INNER - 1, OFF).x - TW / 2 - 4,
+  x1: center(OFF, OFF + INNER - 1).x + TW / 2 + 4,
+  y0: center(OFF, OFF).y - TH / 2 - TW * 1.7,
+  y1: center(OFF + INNER - 1, OFF + INNER - 1).y + TH / 2 + TW * 0.4,
+};
+// Bütün arazi (14x14): sürükleme buraya kadar
+const FULL = {
+  x0: center(N - 1, 0).x - TW / 2,
+  x1: center(0, N - 1).x + TW / 2,
+  y0: OY - TH / 2 - TW * 1.2,
   y1: center(N - 1, N - 1).y + TH / 2 + TW * 0.4,
 };
 
@@ -483,9 +495,9 @@ export default function GardenScreen() {
   const farm = farmOf(couple);
   const uid = user?.uid ?? '';
   const myName = profile?.name ?? 'Ben';
-  const [myTile, setMyTile] = useState<number>(() => farm.pos[uid] ?? 22);
+  const [myTile, setMyTile] = useState<number>(() => farm.pos[uid] ?? (2 + OFF) * N + 2 + OFF);
   const myTileRef = useRef(myTile);
-  const partnerTile = (partnerId ? farm.pos[partnerId] : undefined) ?? 25;
+  const partnerTile = (partnerId ? farm.pos[partnerId] : undefined) ?? (2 + OFF) * N + 5 + OFF;
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -579,13 +591,19 @@ export default function GardenScreen() {
             const z = Math.min(MAX_ZOOM, Math.max(1, (pinch.current.z0 * d) / pinch.current.d0));
             const s2 = c.fit * z;
             setZoom(z);
-            if (z <= 1) setPan({ x: 0, y: 0 });
+            if (z <= 1 && Math.abs(c.pan.x) + Math.abs(c.pan.y) < 1) setPan({ x: 0, y: 0 });
             else setPan({ x: mx - c.ox - (pinch.current.wx - c.cx) * s2, y: my - c.oy - (pinch.current.wy - c.cy) * s2 });
             return;
           }
           if (pinch.current) return; // iki parmaktan tek parmağa düşünce sürükleme başlamasın
           if (Math.hypot(g.dx, g.dy) > 6) drag.current.moved = true;
-          if (drag.current.moved && cam.current.zoom > 1) setPan({ x: drag.current.x + g.dx, y: drag.current.y + g.dy });
+          if (drag.current.moved) {
+            // ekran merkezindeki dünya noktası arazinin dışına çıkmasın
+            const c = cam.current;
+            const x = Math.min((c.cx - FULL.x0) * c.s, Math.max((c.cx - FULL.x1) * c.s, drag.current.x + g.dx));
+            const y = Math.min((c.cy - FULL.y0) * c.s, Math.max((c.cy - FULL.y1) * c.s, drag.current.y + g.dy));
+            setPan({ x, y });
+          }
         },
         onPanResponderRelease: (e) => {
           if (liftTimer.current) {
@@ -1610,6 +1628,24 @@ function Sheet(p: SheetProps) {
 
   const i = sel;
   const t: Tile = farm.tiles[i];
+  if (t.k === 'locked' && isOuter(i)) {
+    const price = outerPrice(farm);
+    const ok = farm.coins >= price;
+    return (
+      <>
+        <Head title="Satılık arazi" onClose={p.onClose} />
+        <Note>
+          Çiftliğin çevresinde {parcelTiles(farm, i).length} karelik arazi. Satın alınca çimen olur; tarla sürer, ağaç diker, bina
+          kurarsınız. Her yeni arazi biraz daha pahalı.
+        </Note>
+        <Btn
+          label={ok ? `Satın al · ${price} altın` : `${price} altın (${price - farm.coins} eksik)`}
+          onPress={() => p.onAct({ a: 'unlock', i })}
+          disabled={!ok}
+        />
+      </>
+    );
+  }
   if (t.k === 'locked') {
     const need = parcelNeed(farm);
     const ok = farm.harvests >= need;

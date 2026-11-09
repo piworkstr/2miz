@@ -12,7 +12,9 @@ import type { Couple } from './session';
 // Mevsim gerçek takvimi izler: kışın ürün yavaş büyür.
 // Arazi 10x10; kapalı parseller parayla değil ortak hasat sayısıyla açılır (her 10 ortak hasatta bir parsel).
 
-export const N = 10;
+export const N = 14; // arazi 14x14; ortadaki 10x10 başlangıç çiftliği, çevresindeki iki sıra parayla alınan arazi
+export const INNER = 10;
+export const OFF = (N - INNER) / 2;
 export const MIN = 60_000;
 export const TILL = 10;
 export const HARVESTS_PER_PARCEL = 10;
@@ -128,7 +130,7 @@ export type Order = {
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
 export type FarmNote = { by: string; text: string; at: number };
-export const NOTE_TREE = 3; // (0,3) karesi
+export const NOTE_TREE = OFF * N + 3 + OFF; // (0,3) karesi (iç çiftlik)
 export const NOTE_MAX = 300;
 export const NOTES_PER_DAY = 10;
 export const ORDER_SLOTS = 3;
@@ -136,10 +138,11 @@ export const ORDER_REFILL = 20 * MIN;
 // pos: herkesin en son çalıştığı kare; partnerin avatarı orada durur.
 // stock: depo (ürün adı → adet); harvests: ortak hasat sayısı (arazi bununla açılır).
 export type Farm = {
-  v: 2;
+  v: 2 | 3;
   coins: number;
   xp: number;
-  bought: number;
+  bought: number; // ortak hasatla açılan iç parseller
+  outer?: number; // parayla alınan dış parseller
   tiles: Tile[];
   log: FarmLog[];
   pos: Record<string, number>;
@@ -162,13 +165,13 @@ const MAP = [
   'LLLpLLLLLL',
   'LLLpLLLLLL',
 ];
-export const FIXED_ANCHOR = { house: [1, 1], barn: [1, 5] } as const;
+export const FIXED_ANCHOR = { house: [1 + OFF, 1 + OFF], barn: [1 + OFF, 5 + OFF] } as const;
 
 export function newFarm(): Farm {
   const tiles: Tile[] = [];
   for (let r = 0; r < N; r++)
     for (let c = 0; c < N; c++) {
-      const ch = MAP[r][c];
+      const ch = MAP[r - OFF]?.[c - OFF] ?? 'L'; // dış halka: satılık arazi
       let t: Tile = { k: 'grass' };
       if (ch === 'H') t = { k: 'fixed', item: 'house' };
       if (ch === 'B') t = { k: 'fixed', item: 'barn' };
@@ -180,16 +183,36 @@ export function newFarm(): Farm {
       if (ch === 'F') t = { k: 'decor', item: 'cesme' };
       tiles.push(t);
     }
-  return { v: 2, coins: 100, xp: 0, bought: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
+  return { v: 3, coins: 100, xp: 0, bought: 0, outer: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
 }
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
   const f = couple?.farm as Farm | undefined;
-  return f && f.v === 2
-    ? { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0, orders: f.orders ?? [], notes: f.notes ?? [] }
-    : newFarm();
+  if (!f || (f.v !== 2 && f.v !== 3)) return newFarm();
+  const g: Farm = { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0, orders: f.orders ?? [], notes: f.notes ?? [] };
+  return g.v === 3 ? g : migrate10to14(g);
 }
+
+// v2 (10x10) kayıt → v3 (14x14): eski kareler ortaya taşınır, dış halka satılık olur. İlk işlemde kaydedilir.
+function migrate10to14(f: Farm): Farm {
+  const old = INNER;
+  const tiles: Tile[] = Array.from({ length: N * N }, () => ({ k: 'locked' }) as Tile);
+  const map = (i: number) => (Math.floor(i / old) + OFF) * N + (i % old) + OFF;
+  f.tiles.forEach((t, i) => {
+    if (i < old * old) tiles[map(i)] = t;
+  });
+  const pos: Record<string, number> = {};
+  for (const [k, v] of Object.entries(f.pos)) pos[k] = v < old * old ? map(v) : v;
+  return { ...f, v: 3, outer: f.outer ?? 0, tiles, pos };
+}
+
+export const isOuter = (i: number) => {
+  const [r, c] = rc(i);
+  return r < OFF || c < OFF || r >= OFF + INNER || c >= OFF + INNER;
+};
+// Dış arazi fiyatı: her parselde artar.
+export const outerPrice = (f: Farm) => 250 + 150 * (f.outer ?? 0);
 
 export const levelStart = (l: number) => 15 * l * (l - 1);
 export function levelOf(xp: number) {
@@ -447,6 +470,18 @@ export function applyAction(
     }
     case 'unlock': {
       if (t.k !== 'locked') return 'Bu arazi zaten açık.';
+      if (isOuter(act.i)) {
+        // dış arazi: altınla satın alınır
+        const price = outerPrice(f);
+        if (f.coins < price) return `Bu arazi ${price} altın; ${price - f.coins} altın eksik.`;
+        f.coins -= price;
+        f.outer = (f.outer ?? 0) + 1;
+        const ids = parcelTiles(f0, act.i);
+        ids.forEach((j) => (f.tiles[j] = { k: 'grass' }));
+        f.xp += 8;
+        text = `${name} yeni arazi satın aldı: ${ids.length} kare 🌿`;
+        break;
+      }
       const need = parcelNeed(f);
       if (f.harvests < need) return `Bu arazi ${need}. ortak hasatta açılır (${f.harvests}/${need}).`;
       f.bought = (f.bought || 0) + 1;
