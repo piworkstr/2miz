@@ -485,7 +485,7 @@ export default function GardenScreen() {
 
   // Kamera: bütün araziyi ekrana sığdır; + ile yaklaşılır, sürükleyerek gezilir.
   const top = insets.top + 54;
-  const bottom = 118 + insets.bottom;
+  const bottom = 170 + insets.bottom; // sabit Sula/Topla satırı + alt menü
   const fit = box.w ? Math.min(1.1, box.w / (BOUNDS.x1 - BOUNDS.x0), (box.h - top - bottom) / (BOUNDS.y1 - BOUNDS.y0)) : 0.5;
   const s = fit * zoom;
   const tx = box.w / 2 - ((BOUNDS.x0 + BOUNDS.x1) / 2) * s + pan.x;
@@ -1161,6 +1161,56 @@ function Btn({
 }
 
 // Yuvarlak cam oyun düğmesi: arkası bulanık, renk tonlu; altında kısa etiket, köşede sayı rozeti.
+// Menünün üstündeki sabit düğme: iş varsa yeşil ve sayılı, yoksa soluk ve basılamaz.
+function Quick({
+  icon,
+  label,
+  count,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  count: number;
+  onPress: () => void;
+}) {
+  const on = count > 0;
+  return (
+    <Pressable
+      disabled={!on}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !on }}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        minWidth: 140,
+        justifyContent: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 22,
+        borderWidth: 2,
+        borderColor: on ? '#fff' : 'rgba(255,255,255,0.5)',
+        backgroundColor: on ? (pressed ? '#2F6A16' : '#3E7F22') : 'rgba(60,60,60,0.55)',
+        opacity: on ? 1 : 0.75,
+        transform: [{ scale: pressed ? 0.96 : 1 }],
+        shadowColor: '#000',
+        shadowOpacity: on ? 0.25 : 0,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: on ? 4 : 0,
+      })}
+    >
+      <Ionicons name={icon} size={20} color={on ? '#fff' : 'rgba(255,255,255,0.6)'} />
+      <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: on ? '#fff' : 'rgba(255,255,255,0.6)' }}>
+        {label}
+        {on ? ` (${count})` : ''}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Round({
   icon,
   art,
@@ -1382,7 +1432,7 @@ function Sheet(p: SheetProps) {
     const hint = big
       ? `${big} büyük ürün hazır · hasat günü ikinizle 🌾`
       : p.thirsty
-        ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧 ${p.thirsty > 3 ? 'Hepsini sula' : 'bidona dokun'}`
+        ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧`
         : p.bank > 0
           ? `Günlük görevden ${p.bank} altın geldi`
           : '';
@@ -1407,11 +1457,19 @@ function Sheet(p: SheetProps) {
             </Text>
           </View>
         )}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 10 }}>
+        {/* Sula ve Topla menünün üstünde sabit; iş yoksa pasif görünür. */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
+          <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />
+          <Quick icon="basket" label="Topla" count={small > 0 ? small : 0} onPress={p.onAll} />
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -10 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-end', gap: 10, paddingHorizontal: 10 }}
+        >
           {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
           {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
-          {p.thirsty > 0 && <Round icon="water" label="Hepsini sula" badge={p.thirsty} onPress={p.onWaterAll} />}
-          <Round icon="basket" label="Topla" badge={small > 0 ? small : 0} off={small <= 0} onPress={p.onAll} />
           <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
           {n > 0 &&
             (weekend ? (
@@ -1421,7 +1479,7 @@ function Sheet(p: SheetProps) {
             ))}
           <Round icon="book" label="Günlük" onPress={p.onLog} />
           <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
-        </View>
+        </ScrollView>
       </>
     );
   }
