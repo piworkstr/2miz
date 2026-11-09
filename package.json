@@ -44,7 +44,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "guncelle": "git pull --ff-only && expo start --tunnel --clear"
   },
   "private": true
 }
