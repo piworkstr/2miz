@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 
 // Değerler .env dosyasından gelir (bkz. .env.example ve KURULUM.md).
 const firebaseConfig = {
@@ -21,4 +21,6 @@ export const auth: Auth = firstLoad
   ? initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) })
   : getAuth(app);
 
-export const db = getFirestore(app);
+// Bazı Wi-Fi ağları ve operatörler Firestore'un akış bağlantısını (WebChannel) keser; o zaman
+// "Could not reach Cloud Firestore backend" uyarısı çıkar. Otomatik uzun yoklama bu ağlarda da bağlanır.
+export const db = firstLoad ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : getFirestore(app);
