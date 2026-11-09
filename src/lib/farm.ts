@@ -331,6 +331,8 @@ export type Action =
   | { a: 'decor'; i: number; item: DecorId }
   | { a: 'unlock'; i: number }
   | { a: 'remove'; i: number }
+  // Yerini değiştir: from karesindeki ağaç/bina/süs/hayvan i karesine (boş çimen) taşınır; süreler korunur.
+  | { a: 'move'; i: number; from: number }
   // Hasat günü: iki kişilik sahne canlıyken bütün hazır büyük ürünler toplanır.
   | { a: 'harvestDay'; i: number; scene: string }
   // Depoyu sat; pazar sahnesi canlıysa (hafta sonu, ikiniz) bir buçuk kat.
@@ -470,6 +472,25 @@ export function applyAction(
       f.coins += gained;
       f.tiles[act.i] = { k: 'grass' };
       text = `${name} bir yeri boşalttı`;
+      break;
+    }
+    case 'move': {
+      const src = f.tiles[act.from];
+      if (!src || (src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building')) return 'Taşınacak bir şey yok.';
+      if (act.from === NOTE_TREE) return 'Not Ağacı yerinden oynamaz.';
+      if (act.i === act.from) return 'Zaten orada.';
+      if (!emptyOk(t)) return 'Boş bir çimene taşıyabilirsin.';
+      f.tiles[act.i] = src;
+      f.tiles[act.from] = { k: 'grass' };
+      const what =
+        src.k === 'animal'
+          ? ANIMALS[src.item].name
+          : src.k === 'tree'
+            ? TREES[src.item].name
+            : src.k === 'building'
+              ? BUILDINGS[src.item].name
+              : DECOR[src.item].name;
+      text = `${name} ${what.toLocaleLowerCase('tr-TR')} taşıdı`;
       break;
     }
     case 'tree': {

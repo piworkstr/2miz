@@ -126,7 +126,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 type Shop = 'crop' | 'animal' | 'building' | 'tree' | 'decor';
 // Dükkandan seçilen, yere konacak şey: sonraki dokunuş o kareye yerleştirir.
 type Placing =
-  { a: 'plant'; crop: CropId } | { a: 'build'; item: BuildingId } | { a: 'tree'; item: TreeId } | { a: 'decor'; item: DecorId };
+  | { a: 'plant'; crop: CropId }
+  | { a: 'build'; item: BuildingId }
+  | { a: 'tree'; item: TreeId }
+  | { a: 'decor'; item: DecorId }
+  | { a: 'move'; from: number }; // yerleştirilmiş bir şeyi taşı
 type Spr = { key: string; art: string; x: number; y: number; w: number; z: number };
 
 function sprites(f: Farm, now: number): Spr[] {
@@ -745,6 +749,10 @@ export default function GardenScreen() {
   placeRef.current = (i: number) => {
     const pl = placingRef.current;
     if (!pl) return;
+    if (pl.a === 'move' && farm.tiles[i]?.k !== 'grass' && i !== pl.from) {
+      flash('Boş bir çimene dokun'); // taşıma sürsün, yanlış dokunuş iptal etmesin
+      return;
+    }
     work({ ...pl, i } as Action);
     setPlacing(null);
   };
@@ -913,7 +921,11 @@ export default function GardenScreen() {
             }}
           >
             <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
-              {placing.a === 'plant' ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun` : 'Boş bir çimene dokun'}
+              {placing.a === 'plant'
+                ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun`
+                : placing.a === 'move'
+                  ? 'Taşı: boş bir çimene dokun'
+                  : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
           </Pressable>
@@ -1651,6 +1663,7 @@ function Sheet(p: SheetProps) {
         </Note>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {done && <Btn flex label="Topla" onPress={() => p.onAct({ a: 'collect', i })} />}
+          <Btn kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
           <Btn kind="soft" label={`Sat (+${Math.floor(an.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         </View>
       </>
@@ -1669,6 +1682,7 @@ function Sheet(p: SheetProps) {
         </Note>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {done && <Btn flex label="Meyve topla" onPress={() => p.onAct({ a: 'pick', i })} />}
+          <Btn kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
           <Btn kind="soft" label={`Kes (+${Math.floor(tr.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         </View>
       </>
@@ -1680,7 +1694,10 @@ function Sheet(p: SheetProps) {
       <>
         <Head art={d.sp} title={d.name} onClose={p.onClose} />
         <Note>Bahçenizi güzelleştiriyor.</Note>
-        <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Btn flex kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
+          <Btn flex kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        </View>
       </>
     );
   }
@@ -1750,9 +1767,12 @@ function Sheet(p: SheetProps) {
             />
           </>
         )}
-        {t.res.length === 0 && (
-          <Btn kind="soft" label={`Kaldır (+${Math.floor(b.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
-        )}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Btn flex kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
+          {t.res.length === 0 && (
+            <Btn flex kind="soft" label={`Kaldır (+${Math.floor(b.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+          )}
+        </View>
         <Note>
           {needsFeed(b.animals[0])
             ? 'Yem: depodan 1 buğday, yoksa 5 altın. Yemlenen hayvan süre dolunca ürün verir.'
