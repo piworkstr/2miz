@@ -636,7 +636,8 @@ export default function GardenScreen() {
     const [r, c] = rc(i);
     const { x, y } = center(r, c);
     const z = zOf(r, c) + 409;
-    if (tl.k === 'crop' && !cropReady(tl, now) && tl.by !== uid && !tl.watered)
+    // Susuz ürün çoksa tek tek bidon yerine alttaki "Hepsini sula" düğmesi kullanılır; rozetler tarlayı kapatmasın.
+    if (tl.k === 'crop' && !cropReady(tl, now) && tl.by !== uid && !tl.watered && thirsty <= 3)
       badges.push({ key: `b${i}`, i, x, y: y - TW * 0.75, art: 'can', z });
     if (tl.k === 'crop' && cropReady(tl, now))
       badges.push({ key: `b${i}`, i, x, y: y - TW * 0.95, art: CROPS[tl.crop].big ? 'gul' : 'coin', z });
@@ -943,6 +944,11 @@ export default function GardenScreen() {
                 })
               }
               onSell={() => work({ a: 'sell', i: PILE_TILE })}
+              onWaterAll={() =>
+                farm.tiles.forEach((x, i) => {
+                  if (x.k === 'crop' && x.by !== uid && !x.watered && !cropReady(x, now)) work({ a: 'water', i });
+                })
+              }
               onScene={begin}
               onAct={(a, all) => {
                 if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
@@ -981,6 +987,7 @@ type SheetProps = {
   onClose: () => void;
   onLog: () => void;
   onAll: () => void;
+  onWaterAll: () => void;
   onSell: () => void;
   onScene: (k: 'harvest' | 'market') => void;
   onAct: (a: Action, all?: boolean) => void;
@@ -1233,7 +1240,7 @@ function Sheet(p: SheetProps) {
     const hint = big
       ? `${big} büyük ürün hazır · hasat günü ikinizle 🌾`
       : p.thirsty
-        ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧 bidona dokun`
+        ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧 ${p.thirsty > 3 ? 'Hepsini sula' : 'bidona dokun'}`
         : p.bank > 0
           ? `Günlük görevden ${p.bank} altın geldi`
           : '';
@@ -1260,6 +1267,7 @@ function Sheet(p: SheetProps) {
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 10 }}>
           {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
           {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
+          {p.thirsty > 0 && <Round icon="water" label="Hepsini sula" badge={p.thirsty} onPress={p.onWaterAll} />}
           <Round icon="basket" label="Topla" badge={small > 0 ? small : 0} off={small <= 0} onPress={p.onAll} />
           <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
           {n > 0 &&
