@@ -17,6 +17,7 @@ import { auth } from '../../lib/firebase';
 import { LOVE_LANGUAGES, type LoveLanguage } from '../../lib/loveLanguage';
 import { openPlus, usePlus } from '../../lib/plus';
 import { useSession, type Couple, type Profile } from '../../lib/session';
+import { LivingChips } from '../../components/LivingCard';
 import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
 import { THEME_LIST, tx, type Theme } from '../../lib/theme';
 import { saveTheme, useTheme } from '../../lib/useTheme';
@@ -58,6 +59,11 @@ export default function Profile() {
 
       <StoryCard couple={couple} myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
       <CoupleInfoCard />
+      <Card style={{ gap: 8 }}>
+        <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Nasıl yaşıyorsunuz?')}</T>
+        <Muted style={{ fontSize: 12 }}>Günlük görevler buna göre seçilir. İkiniz de değiştirebilirsiniz.</Muted>
+        <LivingChips compact />
+      </Card>
       <PlusCard />
 
       <Section title="Birbirinizi tanıyın">

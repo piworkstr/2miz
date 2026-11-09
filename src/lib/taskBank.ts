@@ -50,6 +50,9 @@ const BANK: Record<Category, string[]> = {
     'Kendi sevgi dilinizi birbirinize bir örnekle anlatın',
     'İlişkinizin şarkısı ne olurdu, birlikte seçin',
     'Son tartışmanızdan ne öğrendiğinizi sakin bir şekilde konuşun',
+    'Görüntülü arayıp birbirinize gününüzü anlatın, telefon başka hiçbir şeye bakmasın',
+    'Birbirinize sesli mesajla üç dakikalık bir "bugün" özeti gönderin',
+    'Akşam aynı saatte arayıp yarının planını birlikte konuşun',
   ],
   minnet: [
     'Partnerine bugün yaptığı bir şey için yazılı teşekkür notu bırak',
@@ -96,6 +99,8 @@ const BANK: Record<Category, string[]> = {
     'Partnerine sana ayırdığı zaman için teşekkür et',
     'Birbirinize bir iltifatı sesli mesaj olarak gönderin',
     'Partnerinin bu hafta senin için yaptığı küçük bir şeyi fark et ve söyle',
+    'Partnerine bugün onu düşündüğün bir anı mesajla yaz',
+    'Partnerinin uzaktan bile sana iyi gelen bir huyunu ona söyle',
   ],
   romantik: [
     'Mum ışığında akşam yemeği yiyin',
@@ -128,7 +133,7 @@ const BANK: Record<Category, string[]> = {
     'Bugün birbirinize sevgililer günüymüş gibi davranın',
     'Kahvaltı hazırlayıp yatakta birlikte yiyin',
     'Birbirinize hayalinizdeki yıl dönümü kutlamasını anlatın',
-    'Bir sonraki date\'inizi romantik bir yer olarak planlayın',
+    "Bir sonraki date'inizi romantik bir yer olarak planlayın",
     'Telefonları başka odaya bırakıp birlikte bir akşam geçirin',
     'Birbirinize ilişkinizi anlatan bir şarkı gönderin',
     'Birlikte bir selfie çekip ikiniz de telefonunuzun arka planı yapın',
@@ -142,6 +147,10 @@ const BANK: Record<Category, string[]> = {
     'Birbirinize uzun bir sarılmayla günaydın deyin',
     'Birlikte manzaralı bir yere gidin',
     'Uyumadan önce birbirinize kısa bir hikaye anlatın',
+    'Aynı filmi aynı anda açıp görüntülü konuşmada birlikte izleyin',
+    'Görüntülü arayıp birlikte kahve ya da çay için',
+    'Uyumadan önce birbirinize sesli iyi geceler mesajı gönderin',
+    'Gökyüzüne bakıp aynı anda ayı/yıldızı bulup fotoğrafını birbirinize gönderin',
   ],
   eglence: [
     'Birlikte kısa bir video dansı öğrenin',
@@ -182,12 +191,15 @@ const BANK: Record<Category, string[]> = {
     'Rastgele bir ansiklopedi sayfası açıp birbirinize anlatın',
     'Birbirinize emojilerle bir film anlatın, diğeri tahmin etsin',
     'Bir kâğıda ortak bir hikaye yazın, her biriniz bir cümle',
-    '90\'lar şarkılarıyla dans edin',
+    "90'lar şarkılarıyla dans edin",
     'Birbirinizi 1 dakika boyunca güldürmeye çalışın',
     'Pet şişelerle evde mini bowling oynayın',
     'Bir yarışma programı izleyip birbirinizle yarışın',
     'Birbirinize en utanç verici anınızı anlatın',
     'En saçma selfie pozu yarışması yapın',
+    'Telefonda birbirinize üç soruluk mini bilgi yarışması yapın',
+    'Aynı şarkıyı aynı anda açıp birbirinize dans videosu gönderin',
+    'Birbirinize bulunduğunuz yerin en sıradan köşesinin fotoğrafını çekip hikâyesini uydurun',
   ],
   yeni: [
     'Birlikte yeni bir yürüyüş rotası keşfedin',
@@ -234,6 +246,8 @@ const BANK: Record<Category, string[]> = {
     'Bir yürüyüşte 10 farklı kuş ya da bitki bulmaya çalışın',
     'Birlikte bir gün boyu şikâyet etmeme denemesi yapın',
     'Birlikte yeni bir oyun ya da bulmaca uygulaması keşfedin',
+    'Birbirinize bulunduğunuz şehirden hiç bilmediğiniz bir şey öğretin',
+    'Aynı tarifi ayrı mutfaklarda aynı anda yapıp sonucu karşılaştırın',
   ],
   surpriz: [
     'Partnerinin çantasına ya da cebine küçük bir not koy',
@@ -249,7 +263,7 @@ const BANK: Record<Category, string[]> = {
     'Partnerine dört satırlık bir şiir yaz',
     'Partnerine gün ortasında kısa bir sesli mesaj gönder',
     'Partnerinin yastığına küçük bir çikolata bırak',
-    'Bir sonraki date\'inizi partnerine sürpriz olarak planla',
+    "Bir sonraki date'inizi partnerine sürpriz olarak planla",
     'Partnerinin uzun zamandır istediği küçük bir şeyi hallet',
     'Partnerine el yazınla bir kart yaz',
     'Partnerinin masasını ya da odasını toparla',
@@ -280,11 +294,35 @@ const BANK: Record<Category, string[]> = {
     'Sakladığın bir hatırayı (bilet, fiş, not) partnerine göster',
     'Partnerine "Bugün sen seç" de: yemek, film, plan onun',
     'Partnerine sevdiği bir şarkıyı söyleyerek sesli mesaj at',
+    'Partnerine sürpriz bir kargo ya da online sipariş gönder',
+    'Partnerinin bulunduğu şehirdeki bir kafeden ona uzaktan bir kahve ısmarla',
+    'Partnerine bir sonraki buluşmanız için el yazısı bir davetiye fotoğrafı gönder',
   ],
 };
 
 // Uygulamadan kaldırılmak istenen görev kimlikleri (silmek yerine buraya ekle).
 export const DISABLED: string[] = [];
+
+// Yalnız ayrı yaşayan çiftlere çıkan görevler (uzaktan yapılır); aynı evde yaşayanlara anlamsız olur.
+export const REMOTE = new Set<string>([
+  'iletisim-45',
+  'iletisim-46',
+  'iletisim-47',
+  'minnet-45',
+  'minnet-46',
+  'romantik-45',
+  'romantik-46',
+  'romantik-47',
+  'romantik-48',
+  'eglence-45',
+  'eglence-46',
+  'eglence-47',
+  'yeni-45',
+  'yeni-46',
+  'surpriz-45',
+  'surpriz-46',
+  'surpriz-47',
+]);
 
 export function extraTasks(includeDisabled = false): { id: string; title: string; category: Category }[] {
   const out: { id: string; title: string; category: Category }[] = [];

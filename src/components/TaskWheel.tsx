@@ -12,7 +12,7 @@ import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
 import { FREE, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
-import { CATEGORIES, categoryLabels, categoryStyle, taskById, TASKS, type Category, type Task } from '../lib/tasks';
+import { allowed, CATEGORIES, categoryLabels, categoryStyle, taskById, TASKS, type Category, type Task } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, Display, Muted, Pill, T } from './ui';
@@ -103,7 +103,9 @@ export function TaskWheel() {
 
   function pickFrom(cat: Category): Task {
     const seen = couple?.seenTasks ?? [];
-    const pool = mode === 'fav' ? favTasks.filter((x) => x.category === cat) : TASKS.filter((x) => x.category === cat);
+    // Yaşam düzenine uymayan görevler çarktan da çıkmaz (ayrı yaşayana "kahvaltı hazırla" gibi).
+    const living = couple?.living ?? (couple?.status === 'uzak' ? 'far' : undefined);
+    const pool = mode === 'fav' ? favTasks.filter((x) => x.category === cat) : TASKS.filter((x) => x.category === cat && allowed(x, living));
     const fresh = pool.filter((x) => x.id !== shown?.taskId && (mode === 'fav' || !seen.includes(x.id)));
     const list = fresh.length ? fresh : pool;
     return list[Math.floor(Math.random() * list.length)];

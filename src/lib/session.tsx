@@ -50,6 +50,7 @@ export type Couple = {
   openBonus?: { id: string; taskId: string; by: string; atMs: number }[]; // kabul edilmiş, bekleyen bonus görevler
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
+  living?: 'together' | 'city' | 'far'; // aynı ev / aynı şehir ayrı ev / farklı şehir — görevler buna göre seçilir
   plus?: { until: number; by: string; product?: 'monthly' | 'yearly' }; // 2miz Plus; yalnızca ödeme sunucusu yazar
   gameUse?: { day: string; n: number }; // ücretsizde günlük oyun hakkı
 };

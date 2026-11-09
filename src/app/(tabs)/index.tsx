@@ -10,6 +10,7 @@ import { activeMood, MOODS } from '../../lib/avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
 import { GardenCard } from '../../components/GardenCard';
+import { LivingCard } from '../../components/LivingCard';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
@@ -93,10 +94,10 @@ export default function Today() {
         </Pressable>
       )}
 
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Shortcut icon="game-controller-outline" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
-        <Shortcut icon="color-wand-outline" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
-        <Shortcut icon="calendar-outline" label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+        <Shortcut icon="game-controller" color="#8C6BC2" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
+        <Shortcut icon="color-wand" color="#E07A45" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
+        <Shortcut icon="heart" color={t.colors.primary} label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
       </View>
       {panel === 'play' && <BoredCard />}
       {panel === 'date' && (
@@ -104,6 +105,10 @@ export default function Today() {
           <DateCard mode="planner" />
         </Card>
       )}
+
+      <LivingCard />
+
+      <SharedCalendar />
 
       <DateCard mode="banner" />
 
@@ -127,8 +132,6 @@ export default function Today() {
       <OpenBonusCard />
 
       <GardenCard />
-
-      <SharedCalendar />
 
       <Pressable
         onPress={() => router.push('/archive')}
@@ -159,23 +162,12 @@ function TodayStrip(props: {
   const { profile, partnerProfile } = useSession();
   const [moodOpen, setMoodOpen] = useState(false);
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        backgroundColor: t.colors.card,
-        borderWidth: 1,
-        borderColor: t.colors.border,
-        borderRadius: t.radius.card,
-        padding: 14,
-      }}
-    >
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
       <Person p={profile} name={props.myName} done={!!day.completions[uid]} onPress={() => setMoodOpen(true)} />
       <BondHeart />
       <Person p={partnerProfile} name={props.partnerName} done={!!day.completions[partnerId]} />
       <MoodSheet open={moodOpen} onClose={() => setMoodOpen(false)} />
-      <View style={{ flex: 1, alignItems: 'flex-end', gap: 4 }}>
+      <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
         <BondStreak />
         <Chip icon={t.id === 'asko' ? 'happy-outline' : 'star'} text={`${props.points} ${t.copy.points}`} />
       </View>
@@ -187,18 +179,18 @@ function Person({ p, name, done, onPress }: { p: Profile | null; name: string; d
   const t = useTheme();
   const mood = activeMood(p?.mood);
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ alignItems: 'center', gap: 4, width: 58 }}>
+    <Pressable onPress={onPress} disabled={!onPress} style={{ alignItems: 'center', gap: 2, width: 48 }}>
       <View>
-        <Avatar p={p} name={name} size={48} />
+        <Avatar p={p} name={name} size={40} />
         {done && (
           <View
             style={{
               position: 'absolute',
               right: -3,
               top: -3,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
               backgroundColor: '#4FA37E',
               borderWidth: 2,
               borderColor: t.colors.card,
@@ -210,7 +202,7 @@ function Person({ p, name, done, onPress }: { p: Profile | null; name: string; d
           </View>
         )}
       </View>
-      <Text numberOfLines={1} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
+      <Text numberOfLines={1} style={{ fontSize: 10, color: t.colors.muted, fontFamily: t.fonts.body }}>
         {mood ? MOODS[mood].label : done ? 'Tamam' : name}
       </Text>
     </Pressable>
@@ -227,13 +219,16 @@ function Chip({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['nam
   );
 }
 
+// Yuvarlak renkli simge düğmesi; yazı yok, erişilebilirlik etiketi var. Açıkken altında küçük bir nokta.
 function Shortcut({
   icon,
+  color,
   label,
   active,
   onPress,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
+  color: string;
   label: string;
   active: boolean;
   onPress: () => void;
@@ -242,25 +237,29 @@ function Shortcut({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => ({
-        flex: 1,
-        alignItems: 'center',
-        gap: 6,
-        paddingVertical: 12,
-        paddingHorizontal: 4,
-        borderRadius: t.radius.card,
-        borderWidth: active ? 2 : 1,
-        borderColor: active || pressed ? t.colors.primary : t.colors.border,
-        backgroundColor: active ? t.colors.primarySoft : t.colors.card,
-      })}
+      accessibilityLabel={tx(t, label)}
+      style={({ pressed }) => ({ alignItems: 'center', gap: 4, opacity: pressed ? 0.8 : 1 })}
     >
-      <Ionicons name={icon} size={24} color={t.colors.primary} />
-      <Text
-        numberOfLines={2}
-        style={{ fontSize: 13, lineHeight: 16, fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button, textAlign: 'center' }}
+      <View
+        style={{
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          backgroundColor: color,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 3,
+          borderColor: active ? t.colors.text : 'rgba(255,255,255,0.9)',
+          shadowColor: color,
+          shadowOpacity: 0.45,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 4,
+        }}
       >
-        {tx(t, label)}
-      </Text>
+        <Ionicons name={icon} size={24} color="#fff" />
+      </View>
+      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: active ? color : 'transparent' }} />
     </Pressable>
   );
 }

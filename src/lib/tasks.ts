@@ -1,4 +1,4 @@
-import { extraTasks } from './taskBank';
+import { extraTasks, REMOTE } from './taskBank';
 
 export type Category = 'iletisim' | 'minnet' | 'romantik' | 'eglence' | 'yeni' | 'surpriz';
 
@@ -7,6 +7,87 @@ export type Task = {
   title: string;
   category: Category;
 };
+
+// Çiftin yaşam düzeni: her çift aynı evde yaşamaz. Görevler buna göre süzülür.
+export type Living = 'together' | 'city' | 'far';
+export const LIVING: { id: Living; label: string; hint: string }[] = [
+  { id: 'together', label: 'Aynı evde', hint: 'Her görev olur' },
+  { id: 'city', label: 'Aynı şehir, ayrı ev', hint: 'Ev içi görevler çıkmaz' },
+  { id: 'far', label: 'Uzak mesafe', hint: 'Yalnız uzaktan yapılabilenler' },
+];
+// Görevin gerektirdiği yakınlık: home = aynı ev, meet = buluşmak, any = her yerden, remote = yalnız ayrı yaşayanlara.
+export type Need = 'home' | 'meet' | 'any' | 'remote';
+// Uzaktan da yapılabilen işaretler: mesaj, arama, gönderme, anlatma, konuşma.
+const ANY_WORDS = [
+  'mesaj',
+  'anlat',
+  'teşekkür',
+  'online',
+  'gönder',
+  'arayıp',
+  'telefonda',
+  'anlatın',
+  'konuşun',
+  'söyle',
+  'sorun',
+  'deyin',
+  'paylaşın',
+  'listeleyin',
+  'tamamlayın',
+  'itiraf',
+  'yazın',
+  'belirleyip',
+];
+// Dışarıda buluşma işaretleri (ev içi sayılmasın).
+const OUT_WORDS = ['dışarı', 'kafe', 'restoran', 'sinema', 'piknik', 'sokak', 'park', 'sahil', 'yürüyüş'];
+const HOME_WORDS = [
+  'eve getir',
+  'masada',
+  'kahvaltı',
+  'yatak',
+  'uyan',
+  'kalkıp',
+  'evde',
+  'yemeğini',
+  'yemek yap',
+  'pişir',
+  'mutfak',
+  'kanepe',
+  'koltuk',
+  'battaniye',
+  'uyumadan',
+  'çamaşır',
+  'bulaşık',
+  'temizl',
+  'kapıda',
+  'çantasına',
+  'cebine',
+  'yastı',
+  'banyo',
+  'duş',
+  'tabak',
+  'yapışkan not',
+  'not bırak',
+  'not koy',
+  'notu bırak',
+  'balkon',
+  'pencere',
+];
+export function needOf(task: Task): Need {
+  if (REMOTE.has(task.id)) return 'remote';
+  const s = task.title.toLocaleLowerCase('tr-TR');
+  if (ANY_WORDS.some((w) => s.includes(w)) && !s.includes('sarıl') && !s.includes('yatak')) return 'any';
+  if (OUT_WORDS.some((w) => s.includes(w))) return 'meet';
+  if (HOME_WORDS.some((w) => s.includes(w))) return 'home';
+  // Geri kalan "birlikte yapın/izleyin/oynayın" türü işler buluşma ister.
+  return 'meet';
+}
+export function allowed(task: Task, living: Living | undefined): boolean {
+  const n = needOf(task);
+  if (!living || living === 'together') return n !== 'remote';
+  if (living === 'city') return n !== 'home';
+  return n === 'any' || n === 'remote';
+}
 
 // Çarkta ve arşivde kategorilerin rengi ve simgesi.
 export const categoryStyle: Record<Category, { color: string; icon: string }> = {
@@ -88,15 +169,17 @@ function hash(s: string): number {
   return h >>> 0;
 }
 
-export function pickTask(seed: string, excludeIds: string[] = []): Task {
-  const pool = TASKS.filter((t) => !excludeIds.includes(t.id));
-  const list = pool.length ? pool : TASKS;
+export function pickTask(seed: string, excludeIds: string[] = [], living?: Living): Task {
+  const ok = TASKS.filter((t) => allowed(t, living));
+  const pool = ok.filter((t) => !excludeIds.includes(t.id));
+  const list = pool.length ? pool : ok.length ? ok : TASKS;
   return list[hash(seed) % list.length];
 }
 
-export function randomTask(excludeIds: string[] = []): Task {
-  const pool = TASKS.filter((t) => !excludeIds.includes(t.id));
-  const list = pool.length ? pool : TASKS;
+export function randomTask(excludeIds: string[] = [], living?: Living): Task {
+  const ok = TASKS.filter((t) => allowed(t, living));
+  const pool = ok.filter((t) => !excludeIds.includes(t.id));
+  const list = pool.length ? pool : ok.length ? ok : TASKS;
   return list[Math.floor(Math.random() * list.length)];
 }
 

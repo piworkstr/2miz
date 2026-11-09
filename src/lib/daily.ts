@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { dayKey, yesterdayKey } from './date';
 import { db } from './firebase';
 import { logActivity } from './bond';
-import { pickTask, TASKS, trimSeen } from './tasks';
+import { pickTask, TASKS, trimSeen, type Living } from './tasks';
 
 export type Response = 'accept' | 'decline';
 
@@ -106,11 +106,11 @@ function dayRef(coupleId: string, key: string) {
 }
 
 // Görevler gün + çift kimliğinden seçilir ve çiftin yakın zamanda gördüğü görevler hariç tutulur.
-function buildDay(coupleId: string, members: string[], key: string, seen: string[]): DayDoc {
-  const shared = pickTask(`${coupleId}:${key}:shared`, seen);
+function buildDay(coupleId: string, members: string[], key: string, seen: string[], living?: Living): DayDoc {
+  const shared = pickTask(`${coupleId}:${key}:shared`, seen, living);
   const separate: Record<string, string> = {};
   members.forEach((m) => {
-    separate[m] = pickTask(`${coupleId}:${key}:${m}`, [...seen, shared.id, ...Object.values(separate)]).id;
+    separate[m] = pickTask(`${coupleId}:${key}:${m}`, [...seen, shared.id, ...Object.values(separate)], living).id;
   });
   return { sharedTaskId: shared.id, separate, responses: {}, completions: {}, rewarded: false };
 }
@@ -123,8 +123,11 @@ async function createDay(coupleId: string, members: string[], key: string) {
   await runTransaction(db, async (tx) => {
     const [daySnap, coupleSnap] = [await tx.get(ref), await tx.get(coupleRef)];
     if (daySnap.exists() || !coupleSnap.exists()) return;
-    const seen: string[] = (coupleSnap.data() as { seenTasks?: string[] }).seenTasks ?? [];
-    const day = buildDay(coupleId, members, key, seen);
+    const c = coupleSnap.data() as { seenTasks?: string[]; living?: Living; status?: string };
+    const seen: string[] = c.seenTasks ?? [];
+    // Yaşam düzeni seçilmediyse "uzak mesafe" durumu uzaktan sayılır.
+    const living: Living | undefined = c.living ?? (c.status === 'uzak' ? 'far' : undefined);
+    const day = buildDay(coupleId, members, key, seen, living);
     const picked = [day.sharedTaskId, ...Object.values(day.separate)];
     // Havuzun en az üçte biri her zaman seçilebilir kalsın.
     const keep = Math.max(0, TASKS.length - Math.ceil(TASKS.length / 3));
