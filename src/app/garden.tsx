@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, Ellipse, Path, Pattern, Polygon, Rect } from 'react-native-svg';
+import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
 import { ScenePanel, type SceneMeta } from '../components/world/ScenePanel';
 import { WorldChar } from '../components/world/WorldChar';
@@ -94,6 +94,16 @@ function tileAt(px: number, py: number) {
   return r >= 0 && r < N && c >= 0 && c < N ? r * N + c : -1;
 }
 // Bütün arazi (satılıklar dahil) ve evin çatısı ekrana sığsın.
+// Manzara: tabaka resmin ortasındaki açıklığa oturur. Resimde açıklık 1280×720'de x 429–957, y 200–514 (merkez 693,357).
+// Açıklık tabakadan %10 geniş olsun diye ölçek: 640·1.1 / 528.
+const BG_K = (N * TW * 1.1) / 528;
+const BG = (() => {
+  const c = center((N - 1) / 2, (N - 1) / 2);
+  return { x: c.x - 693 * BG_K, y: c.y - 357 * BG_K, w: 1280 * BG_K, h: 720 * BG_K };
+})();
+const SKY = '#99BDDA';
+const FAR = '#7E8F46';
+
 const BOUNDS = {
   x0: center(N - 1, 0).x - TW / 2 - 4,
   x1: center(0, N - 1).x + TW / 2 + 4,
@@ -161,8 +171,6 @@ const SCENERY: Spr[] = (() => {
     s('tree', R.x + TW * 0.3, R.y + TW * 1.1, TW * 1.2, 2000, 6),
     s('fence', L.x + TW * 2.6, btm - TW * 0.6, TW * 0.9, 2000, 7),
     s('fence', L.x + TW * 3.4, btm - TW * 0.2, TW * 0.9, 2000, 8),
-    s('hay', B.x + TW * 1.6, btm + TW * 1.1, TW * 0.8, 2000, 9),
-    s('planter', B.x + TW * 2.6, btm + TW * 0.6, TW * 0.75, 2000, 10),
   ];
 })();
 
@@ -185,8 +193,6 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
   const D = 18;
   const lx = L.x - TW / 2;
   const rx = R.x + TW / 2;
-  const px = L.x + TW * 0.6;
-  const py = btm + TW * 0.9;
   const hiTiles = sel === null ? [] : f.tiles[sel].k === 'locked' ? parcelTiles(f, sel) : [sel];
   return (
     <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }}>
@@ -195,16 +201,8 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
           <Rect width="3" height="7" fill="#5D8A36" />
         </Pattern>
       </Defs>
-      <Rect x={0} y={0} width={WW} height={WH} fill={season === 'kis' ? '#DCE6DA' : season === 'guz' ? '#B9C96A' : GRASS} />
-      <Path
-        d={`M${B.x - TW * 0.35},${btm} C${B.x - TW * 0.5},${btm + 70} ${B.x + TW * 0.6},${btm + 140} ${B.x + TW * 0.2},${WH} L${B.x + TW},${WH} C${B.x + TW * 1.3},${btm + 140} ${B.x + TW * 0.3},${btm + 70} ${B.x + TW * 0.35},${btm} Z`}
-        fill="#D9C9A6"
-        stroke="#C7B48C"
-        strokeWidth={2}
-      />
-      <Ellipse cx={px} cy={py + 6} rx={TW * 2.2} ry={TW * 0.75} fill="#7C9C4B" />
-      <Ellipse cx={px} cy={py} rx={TW * 2.1} ry={TW * 0.68} fill="#4FA8D8" />
-      <Ellipse cx={px - 8} cy={py - 5} rx={TW * 1.5} ry={TW * 0.42} fill="#6CC0EA" />
+      {/* Tabakanın altına yumuşak gölge: manzaraya oturur */}
+      <Ellipse cx={B.x} cy={btm + D - 2} rx={TW * 5.6} ry={TW * 1.1} fill="rgba(40,60,20,0.18)" />
       <Polygon points={`${lx},${L.y} ${B.x},${btm} ${B.x},${btm + D} ${lx},${L.y + D}`} fill="#8B5E34" />
       <Polygon points={`${B.x},${btm} ${rx},${R.y} ${rx},${R.y + D} ${B.x},${btm + D}`} fill="#6E4625" />
       {f.tiles.map((t, i) => {
@@ -684,9 +682,21 @@ export default function GardenScreen() {
 
   return (
     <View
-      style={{ flex: 1, backgroundColor: GRASS }}
+      style={{ flex: 1, backgroundColor: SKY }}
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
     >
+      {/* Ekran zemini: üstte gök, altta uzak çayır; manzara resmi bunların üstünde dünyayla birlikte ölçeklenir */}
+      <Svg style={{ position: 'absolute', left: 0, top: 0 }} width="100%" height="100%" pointerEvents="none">
+        <Defs>
+          <LinearGradient id="skyfar" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#B7D6EC" />
+            <Stop offset="0.42" stopColor={SKY} />
+            <Stop offset="0.5" stopColor={FAR} />
+            <Stop offset="1" stopColor="#6B7C3C" />
+          </LinearGradient>
+        </Defs>
+        <Rect x={0} y={0} width="100%" height="100%" fill="url(#skyfar)" />
+      </Svg>
       {box.w > 0 && (
         <View
           style={{
@@ -699,6 +709,20 @@ export default function GardenScreen() {
             transform: [{ translateX: tx }, { translateY: ty }, { scale: s }],
           }}
         >
+          <Image source={ART.manzara.src} style={{ position: 'absolute', left: BG.x, top: BG.y, width: BG.w, height: BG.h }} />
+          {season !== 'yaz' && season !== 'bahar' && (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: BG.x,
+                top: BG.y,
+                width: BG.w,
+                height: BG.h,
+                backgroundColor: season === 'kis' ? 'rgba(225,236,246,0.45)' : 'rgba(235,170,70,0.16)',
+              }}
+            />
+          )}
           <Ground f={farm} sel={sel} season={season} />
           {sprs.map((sp) => (
             <SpriteImg key={sp.key} s={sp} />
