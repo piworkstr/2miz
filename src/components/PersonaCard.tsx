@@ -19,6 +19,8 @@ export function PersonaCard() {
     setBusy(id);
     const p = PERSONAS[id];
     try {
+      // couples.names eşleşme anındaki adı tutar; partnerin ekranındaki ad buradan gelir.
+      if (couple) await updateDoc(doc(db, 'couples', couple.id), { [`names.${user.uid}`]: p.name });
       await updateDoc(doc(db, 'users', user.uid), {
         name: p.name,
         avatar: { kind: 'photo', photo: p.photo },

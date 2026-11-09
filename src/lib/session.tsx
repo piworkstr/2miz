@@ -133,8 +133,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const partnerId = couple && user ? (couple.members.find((m) => m !== user.uid) ?? null) : null;
-  const partnerName = (partnerId && couple?.names[partnerId]) || 'Partnerin';
-
   // Partnerin profili (sevgi dili, doğum günü, ilgi alanları). Kurallar bunu sadece eşleşmiş partnere açar.
   const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
   useEffect(() => {
@@ -148,6 +146,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       () => setPartnerProfile(null),
     );
   }, [partnerId]);
+  // Ad değişirse profil kazanır; couples.names eşleşme anındaki addır.
+  const partnerName = partnerProfile?.name || (partnerId && couple?.names[partnerId]) || 'Partnerin';
 
   return (
     <SessionContext.Provider
