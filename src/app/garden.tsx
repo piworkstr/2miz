@@ -469,6 +469,8 @@ export default function GardenScreen() {
   liftRef.current = lift;
   const liftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liftableRef = useRef<(i: number) => boolean>(() => false);
+  // Dokunulan noktadaki nesne (çizim kutusuna göre): ağaç/bina gövdesine basınca arkadaki kare değil, nesnenin karesi gelir.
+  const objectAtRef = useRef<(wx: number, wy: number) => number>(() => -1);
   const liftDropRef = useRef<(from: number, to: number) => void>(() => {});
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -541,7 +543,8 @@ export default function GardenScreen() {
           const c = cam.current;
           const wx = (e.nativeEvent.locationX - c.tx) / c.s;
           const wy = (e.nativeEvent.locationY - c.ty) / c.s;
-          const i = tileAt(wx, wy);
+          const obj = objectAtRef.current(wx, wy);
+          const i = obj >= 0 ? obj : tileAt(wx, wy);
           if (i >= 0 && !placingRef.current && liftableRef.current(i)) {
             liftTimer.current = setTimeout(() => {
               liftTimer.current = null;
@@ -558,7 +561,7 @@ export default function GardenScreen() {
             return;
           }
           const t = e.nativeEvent.touches;
-          if (Math.hypot(g.dx, g.dy) > 6 && liftTimer.current) {
+          if (Math.hypot(g.dx, g.dy) > 14 && liftTimer.current) {
             clearTimeout(liftTimer.current);
             liftTimer.current = null;
           }
@@ -613,7 +616,8 @@ export default function GardenScreen() {
             setShowShop(false);
             return;
           }
-          const i = tileAt(wx, wy);
+          const obj = objectAtRef.current(wx, wy);
+          const i = obj >= 0 ? obj : tileAt(wx, wy);
           setSel((old) => (i < 0 || old === i ? null : i));
           setShowLog(false);
           setShowOrders(false);
@@ -751,6 +755,25 @@ export default function GardenScreen() {
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
   const farmView = lift ? { ...farm, tiles: farm.tiles.map((t, j) => (j === lift.from ? ({ k: 'grass' } as Tile) : t)) } : farm;
   const sprs = [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z);
+  objectAtRef.current = (wx, wy) => {
+    let best = -1;
+    let bz = -1;
+    for (const sp of sprs) {
+      const m = /^s(\d+)$/.exec(sp.key);
+      if (!m) continue;
+      const i = Number(m[1]);
+      const k = farm.tiles[i]?.k;
+      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal') continue;
+      const a = ART[sp.art];
+      if (!a) continue;
+      const h = sp.w * a.h;
+      if (wx >= sp.x - sp.w / 2 && wx <= sp.x + sp.w / 2 && wy >= sp.y - h && wy <= sp.y && sp.z > bz) {
+        best = i;
+        bz = sp.z;
+      }
+    }
+    return best;
+  };
   let ghost: Spr[] = [];
   let liftTarget: number | null = null;
   if (lift) {
@@ -848,7 +871,8 @@ export default function GardenScreen() {
       setSel(hit.i);
       return true;
     }
-    const i = hit ? hit.i : tileAt(wx, wy);
+    const obj = objectAtRef.current(wx, wy);
+    const i = hit ? hit.i : obj >= 0 ? obj : tileAt(wx, wy);
     if (i < 0) return false;
     const q = quickFor(i);
     if (!q) return false;
@@ -1751,9 +1775,9 @@ function Sheet(p: SheetProps) {
         </Note>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {done && <Btn flex label="Topla" onPress={() => p.onAct({ a: 'collect', i })} />}
-          <Btn kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
           <Btn kind="soft" label={`Sat (+${Math.floor(an.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         </View>
+        <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
     );
   }
@@ -1770,9 +1794,9 @@ function Sheet(p: SheetProps) {
         </Note>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {done && <Btn flex label="Meyve topla" onPress={() => p.onAct({ a: 'pick', i })} />}
-          <Btn kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
           <Btn kind="soft" label={`Kes (+${Math.floor(tr.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         </View>
+        <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
     );
   }
@@ -1782,10 +1806,8 @@ function Sheet(p: SheetProps) {
       <>
         <Head art={d.sp} title={d.name} onClose={p.onClose} />
         <Note>Bahçenizi güzelleştiriyor.</Note>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn flex kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
-          <Btn flex kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
-        </View>
+        <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
     );
   }
@@ -1855,12 +1877,10 @@ function Sheet(p: SheetProps) {
             />
           </>
         )}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Btn flex kind="soft" label="Taşı" onPress={() => p.onPlace({ a: 'move', from: i })} />
-          {t.res.length === 0 && (
-            <Btn flex kind="soft" label={`Kaldır (+${Math.floor(b.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
-          )}
-        </View>
+        {t.res.length === 0 && (
+          <Btn kind="soft" label={`Kaldır (+${Math.floor(b.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        )}
+        <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
         <Note>
           {needsFeed(b.animals[0])
             ? 'Yem: depodan 1 buğday, yoksa 5 altın. Yemlenen hayvan süre dolunca ürün verir.'
