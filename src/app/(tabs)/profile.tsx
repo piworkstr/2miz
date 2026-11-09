@@ -19,6 +19,7 @@ import { openPlus, usePlus } from '../../lib/plus';
 import { useSession, type Couple, type Profile } from '../../lib/session';
 import { Hint } from '../../components/Hint';
 import { LivingChips } from '../../components/LivingCard';
+import { PersonaCard } from '../../components/PersonaCard';
 import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
 import { THEME_LIST, tx, type Theme } from '../../lib/theme';
 import { saveTheme, useTheme } from '../../lib/useTheme';
@@ -70,6 +71,7 @@ export default function Profile() {
         </View>
         <LivingChips compact />
       </Card>
+      <PersonaCard />
       <PlusCard />
 
       <Section title="Birbirinizi tanıyın">
