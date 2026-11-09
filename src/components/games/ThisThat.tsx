@@ -86,7 +86,9 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
               }}
             >
               <Ionicons name={match ? 'heart' : 'swap-vertical'} size={16} color={match ? t.colors.onPrimary : t.colors.muted} />
-              <Text style={{ color: match ? t.colors.onPrimary : t.colors.muted, fontWeight: '600' }}>{match ? 'Aynı!' : 'Farklı'}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: match ? t.colors.onPrimary : t.colors.muted, fontWeight: '600' }}>
+                {match ? 'Aynı!' : 'Farklı'}
+              </Text>
             </View>
           </View>
         )}
@@ -103,12 +105,14 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
               {theirPick === undefined ? (
                 <>
                   <ActivityIndicator color={t.colors.muted} />
-                  <Text style={{ color: t.colors.muted, fontFamily: t.fonts.body }}>{partnerName} düşünüyor…</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontFamily: t.fonts.body }}>
+                    {partnerName} düşünüyor…
+                  </Text>
                 </>
               ) : (
                 <>
                   <Ionicons name="lock-closed-outline" size={22} color={t.colors.primary} />
-                  <Text style={{ color: t.colors.muted, fontFamily: t.fonts.body, textAlign: 'center' }}>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontFamily: t.fonts.body, textAlign: 'center' }}>
                     {partnerName} seçti. Sen seçince görünecek.
                   </Text>
                 </>
@@ -135,7 +139,7 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
           <Card key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 }}>
             <Ionicons name={match ? 'heart' : 'swap-horizontal'} size={20} color={match ? t.colors.primary : t.colors.muted} />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}>
                 {match ? `İkiniz de: ${pair[mine[i]]}` : `${myName}: ${pair[mine[i]]} · ${partnerName}: ${pair[theirs[i]]}`}
               </Text>
             </View>
@@ -161,7 +165,9 @@ function Half({ title, partner, highlight, children }: { title: string; partner?
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name={partner ? 'heart-outline' : 'person-outline'} size={18} color={t.colors.primary} />
-        <Text style={{ color: t.colors.text, fontWeight: '700', fontSize: 15, fontFamily: t.fonts.button }}>{title}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontWeight: '700', fontSize: 15, fontFamily: t.fonts.button }}>
+          {title}
+        </Text>
       </View>
       {children}
     </View>
@@ -201,6 +207,7 @@ function Choice({
       })}
     >
       <Text
+        maxFontSizeMultiplier={1.25}
         style={{
           fontFamily: t.fonts.display,
           fontSize: 24,

@@ -48,6 +48,7 @@ export function GardenCard() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 }}>
           <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Çiftliğimiz')}</T>
           <Text
+            maxFontSizeMultiplier={1.25}
             numberOfLines={1}
             style={{ fontSize: 12, fontWeight: '700', color: hot ? t.colors.primary : t.colors.muted, maxWidth: 220 }}
           >
@@ -68,11 +69,19 @@ export function GardenCard() {
           />
           <Image source={ART.barn.src} style={{ position: 'absolute', right: 12, bottom: 4, width: 92, height: 84 }} resizeMode="contain" />
           <View style={{ padding: 12, gap: 2 }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}>
+            <Text
+              maxFontSizeMultiplier={1.25}
+              style={{ color: '#fff', fontWeight: '800', fontSize: 13, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}
+            >
               Seviye {levelOf(farm.xp).level} · {farm.harvests} ortak hasat · {farm.coins} altın
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 12, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}>Çiftliğe gir</Text>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: '#fff', fontSize: 12, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}
+              >
+                Çiftliğe gir
+              </Text>
               <Ionicons name="arrow-forward" size={12} color="#fff" />
             </View>
           </View>

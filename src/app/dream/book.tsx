@@ -50,7 +50,9 @@ export default function BookScreen() {
         <Pressable onPress={close} hitSlop={12} accessibilityLabel="Geri">
           <Ionicons name="chevron-back" size={28} color={t.colors.text} />
         </Pressable>
-        <Text style={{ flex: 1, fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text }}>Hayal defteri</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text }}>
+          Hayal defteri
+        </Text>
         <Muted>{pages?.length ?? 0} sayfa</Muted>
       </View>
       {pages === null && <Muted>Yükleniyor…</Muted>}
@@ -82,11 +84,16 @@ export default function BookScreen() {
             {photo && <Image source={{ uri: photoUri(photo) }} style={{ width: '100%', aspectRatio: 1, borderRadius: 12 }} />}
             {s.question && (
               <View style={{ gap: 4 }}>
-                <Text style={{ fontFamily: t.fonts.note, fontSize: 20, color: t.colors.text }}>{s.question}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.note, fontSize: 20, color: t.colors.text }}>
+                  {s.question}
+                </Text>
                 {[user.uid, partnerId].map((id) =>
                   s.answers?.[id] ? (
-                    <Text key={id} style={{ color: t.colors.text, fontSize: 14 }}>
-                      <Text style={{ fontWeight: '700' }}>{id === user.uid ? (profile?.name ?? 'Sen') : partnerName}:</Text> {s.answers[id]}
+                    <Text maxFontSizeMultiplier={1.25} key={id} style={{ color: t.colors.text, fontSize: 14 }}>
+                      <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '700' }}>
+                        {id === user.uid ? (profile?.name ?? 'Sen') : partnerName}:
+                      </Text>{' '}
+                      {s.answers[id]}
                     </Text>
                   ) : null,
                 )}
@@ -125,7 +132,7 @@ export default function BookScreen() {
             ) : (
               <Pressable onPress={() => setPicking(s.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="image-outline" size={16} color={t.colors.primary} />
-                <Text style={{ color: t.colors.primary, fontSize: 13, fontWeight: '600' }}>
+                <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 13, fontWeight: '600' }}>
                   {photo ? 'Fotoğrafı değiştir' : 'Albümden fotoğraf ekle'}
                 </Text>
               </Pressable>

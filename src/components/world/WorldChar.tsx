@@ -177,7 +177,7 @@ export function WorldChar({
                 borderColor: '#fff',
               }}
             >
-              <Text style={{ color: '#E8516A', fontWeight: '800', fontSize: 15 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ color: '#E8516A', fontWeight: '800', fontSize: 15 }}>
                 {(name || '?').slice(0, 1).toLocaleUpperCase('tr-TR')}
               </Text>
             </View>
@@ -188,6 +188,7 @@ export function WorldChar({
       {!!tag && (
         <View style={{ position: 'absolute', top: -total - 18, left: -40, width: 80, alignItems: 'center' }}>
           <Text
+            maxFontSizeMultiplier={1.0}
             style={{
               color: '#fff',
               fontSize: 10,
@@ -205,6 +206,7 @@ export function WorldChar({
       {!!say && (
         <View style={{ position: 'absolute', top: -total - 42, left: -90, width: 180, alignItems: 'center' }}>
           <Text
+            maxFontSizeMultiplier={1.0}
             style={{
               backgroundColor: '#fff',
               color: '#2B1D22',

@@ -76,18 +76,14 @@ export default function CameraScreen() {
           {shot ? (
             <Image source={{ uri: `data:image/jpeg;base64,${shot}` }} style={{ flex: 1 }} resizeMode="cover" />
           ) : permission?.granted ? (
-            <CameraView
-              ref={camera}
-              style={{ flex: 1 }}
-              facing={facing}
-              mirror={facing === 'front'}
-              onCameraReady={() => setReady(true)}
-            />
+            <CameraView ref={camera} style={{ flex: 1 }} facing={facing} mirror={facing === 'front'} onCameraReady={() => setReady(true)} />
           ) : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 }}>
-              <Text style={{ color: '#fff', textAlign: 'center' }}>Fotoğraf göndermek için kamera izni gerekli.</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', textAlign: 'center' }}>
+                Fotoğraf göndermek için kamera izni gerekli.
+              </Text>
               <Pressable onPress={() => (permission?.canAskAgain === false ? Linking.openSettings() : requestPermission())}>
-                <Text style={{ color: '#FF8FA3', fontWeight: '600' }}>
+                <Text maxFontSizeMultiplier={1.25} style={{ color: '#FF8FA3', fontWeight: '600' }}>
                   {permission?.canAskAgain === false ? 'Ayarlardan izin ver' : 'İzin ver'}
                 </Text>
               </Pressable>
@@ -95,7 +91,11 @@ export default function CameraScreen() {
           )}
         </View>
 
-        {!!error && <Text style={{ color: '#FF8FA3', textAlign: 'center', marginTop: 10 }}>{error}</Text>}
+        {!!error && (
+          <Text maxFontSizeMultiplier={1.25} style={{ color: '#FF8FA3', textAlign: 'center', marginTop: 10 }}>
+            {error}
+          </Text>
+        )}
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly', paddingVertical: 22 }}>
           {shot ? (
@@ -124,7 +124,11 @@ export default function CameraScreen() {
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                {busy ? <ActivityIndicator color="#fff" /> : <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff' }} />}
+                {busy ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff' }} />
+                )}
               </Pressable>
               <Pressable
                 onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}

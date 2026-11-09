@@ -247,7 +247,9 @@ export default function SeaScreen() {
         {fishing.state === 'done' ? (
           <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}>
             <Image source={DART[fishing.fish].src} style={{ width: 150, height: 150 * DART[fishing.fish].h }} />
-            <Text style={{ fontSize: 20, fontWeight: '900', color: INK }}>{FISH[fishing.fish].name}!</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 20, fontWeight: '900', color: INK }}>
+              {FISH[fishing.fish].name}!
+            </Text>
             <Note>Tekneye kondu. Akşam yemeğinde ızgarada.</Note>
           </View>
         ) : (
@@ -273,7 +275,7 @@ export default function SeaScreen() {
             </Animated.View>
           </View>
         )}
-        <Text style={{ textAlign: 'center', fontWeight: '800', color: INK }}>
+        <Text maxFontSizeMultiplier={1.25} style={{ textAlign: 'center', fontWeight: '800', color: INK }}>
           {fishing.state === 'wait'
             ? 'Şamandıra batınca dokun!'
             : fishing.state === 'bite'
@@ -317,7 +319,9 @@ export default function SeaScreen() {
       <>
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '900', fontSize: 17, color: INK }}>{here.name}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '900', fontSize: 17, color: INK }}>
+              {here.name}
+            </Text>
             <Note>{here.note}</Note>
           </View>
           <Pressable
@@ -332,7 +336,9 @@ export default function SeaScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: real ? '#fff' : '#E8516A', fontSize: 20 }}>{real ? '♥' : '♡'}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: real ? '#fff' : '#E8516A', fontSize: 20 }}>
+              {real ? '♥' : '♡'}
+            </Text>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -378,7 +384,9 @@ export default function SeaScreen() {
         <Note>Tekneyi para değil birliktelik büyütür: {scenes} sahne yaşadınız. Büyük tekne uzak koylara gider.</Note>
         {rename === null ? (
           <Pressable onPress={() => setRename(sea.boatName)}>
-            <Text style={{ color: MUTED, fontSize: 13, textDecorationLine: 'underline' }}>Tekneye isim ver</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: MUTED, fontSize: 13, textDecorationLine: 'underline' }}>
+              Tekneye isim ver
+            </Text>
           </Pressable>
         ) : (
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -432,7 +440,9 @@ export default function SeaScreen() {
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Image source={DART[here.id].src} style={{ width: 64, height: 64, borderRadius: 12 }} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '900', fontSize: 16, color: INK }}>{here.name}’dasınız</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '900', fontSize: 16, color: INK }}>
+              {here.name}’dasınız
+            </Text>
             <Note>{here.note}</Note>
           </View>
         </View>
@@ -446,7 +456,9 @@ export default function SeaScreen() {
           <Btn kind="soft" label="Tekne" onPress={() => setShop(true)} />
         </View>
         <View>
-          <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>Gerçek rotamız</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+            Gerçek rotamız
+          </Text>
           <Note>
             {sea.realRoute.length
               ? sea.realRoute.map((id) => bay(id).name).join(' → ')
@@ -576,7 +588,7 @@ export default function SeaScreen() {
             }}
           >
             <Avatar p={scene.by === uid ? partnerProfile : profile} name="" size={28} showMood={false} />
-            <Text style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
               {scene.by === uid ? `${partnerName} bekleniyor…` : `${partnerName} seni bekliyor`}
             </Text>
           </View>
@@ -594,7 +606,9 @@ export default function SeaScreen() {
           paddingVertical: 6,
         }}
       >
-        <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>‹ Harita</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+          ‹ Harita
+        </Text>
       </Pressable>
       <View
         style={{
@@ -607,7 +621,9 @@ export default function SeaScreen() {
           paddingVertical: 6,
         }}
       >
-        <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>{here.name}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+          {here.name}
+        </Text>
       </View>
     </View>
   );
@@ -674,6 +690,7 @@ export default function SeaScreen() {
                       }}
                     />
                     <Text
+                      maxFontSizeMultiplier={1.25}
                       style={{
                         marginTop: -8,
                         color: '#fff',
@@ -689,7 +706,7 @@ export default function SeaScreen() {
                       {sea.realRoute.includes(b.id) ? ' ♥' : ''}
                     </Text>
                     {far && (
-                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', opacity: 0.9 }}>
+                      <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontSize: 10, fontWeight: '700', opacity: 0.9 }}>
                         {Object.values(BOATS).find((x) => x.rank === b.rank)!.name} ister
                       </Text>
                     )}

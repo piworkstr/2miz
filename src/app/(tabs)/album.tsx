@@ -104,7 +104,10 @@ export default function Album() {
                 borderColor: filter === f.key ? t.colors.primary : t.colors.border,
               }}
             >
-              <Text style={{ color: filter === f.key ? t.colors.onPrimary : t.colors.text, fontWeight: '600', fontFamily: t.fonts.button }}>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: filter === f.key ? t.colors.onPrimary : t.colors.text, fontWeight: '600', fontFamily: t.fonts.button }}
+              >
                 {f.label}
               </Text>
             </Pressable>
@@ -126,8 +129,15 @@ export default function Album() {
       >
         <Ionicons name="book" size={26} color={t.colors.onPrimary} />
         <View style={{ flex: 1 }}>
-          <Text style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}>Albümünü bastır</Text>
-          <Text style={{ color: t.colors.onPrimary, opacity: 0.9, fontSize: 13 }}>Anılarınız gerçek bir albüm olsun: 21×21 ya da A4</Text>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}
+          >
+            Albümünü bastır
+          </Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, opacity: 0.9, fontSize: 13 }}>
+            Anılarınız gerçek bir albüm olsun: 21×21 ya da A4
+          </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimary} />
       </Pressable>
@@ -149,7 +159,9 @@ export default function Album() {
           })}
         >
           <Ionicons name="airplane-outline" size={18} color={t.colors.primary} />
-          <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>Seyahat albümü oluştur</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+            Seyahat albümü oluştur
+          </Text>
         </Pressable>
       )}
 
@@ -176,7 +188,9 @@ export default function Album() {
             {page.kind === 'moment' ? (
               <>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>Anı</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>
+                    Anı
+                  </Text>
                 </View>
                 <Polaroid
                   photo={page.photo}
@@ -194,13 +208,17 @@ export default function Album() {
                       }}
                       style={{ backgroundColor: '#C0392B', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '600' }}>Albümden çıkar</Text>
+                      <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600' }}>
+                        Albümden çıkar
+                      </Text>
                     </Pressable>
                     <Pressable
                       onPress={() => setRemoving(null)}
                       style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#D9CCC6' }}
                     >
-                      <Text style={{ color: inkColor, fontWeight: '600' }}>Vazgeç</Text>
+                      <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, fontWeight: '600' }}>
+                        Vazgeç
+                      </Text>
                     </Pressable>
                   </View>
                 )}
@@ -208,7 +226,9 @@ export default function Album() {
             ) : page.kind === 'date' ? (
               <>
                 <View style={{ alignItems: 'center', gap: 2 }}>
-                  <Text style={{ fontFamily: handFont, fontSize: 18, color: '#E8516A' }}>Date günü</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 18, color: '#E8516A' }}>
+                    Date günü
+                  </Text>
                 </View>
                 <Polaroid photo={page.photo} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
               </>
@@ -218,12 +238,17 @@ export default function Album() {
                   <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
                   <Polaroid style={{ flex: 1, marginTop: 12 }} photo={page.theirs} name={partnerName} tilt={2.5} />
                 </View>
-                <Text style={{ fontFamily: handFont, fontSize: 25, lineHeight: 28, color: inkColor, textAlign: 'center' }}>
+                <Text
+                  maxFontSizeMultiplier={1.25}
+                  style={{ fontFamily: handFont, fontSize: 25, lineHeight: 28, color: inkColor, textAlign: 'center' }}
+                >
                   {taskTitle(page)}
                 </Text>
               </>
             )}
-            <Text style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>{prettyDate(page.day)}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>
+              {prettyDate(page.day)}
+            </Text>
           </Pressable>
         ),
       )}

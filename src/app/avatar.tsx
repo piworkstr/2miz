@@ -80,15 +80,21 @@ export default function AvatarScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8 }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8 }}
+      >
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Ionicons name="chevron-back" size={22} color={t.colors.text} />
-          <Text style={{ color: t.colors.text, fontSize: 15 }}>{tx(t, 'Geri')}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 15 }}>
+            {tx(t, 'Geri')}
+          </Text>
         </Pressable>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {(['drawn', 'photo'] as const).map((k) => (
             <Pressable key={k} onPress={() => setTab(k)} style={chip(tab === k)}>
-              <Text style={{ fontWeight: '600', color: tab === k ? t.colors.onPrimary : t.colors.text }}>{k === 'drawn' ? 'Avatarım' : 'Fotoğrafım'}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '600', color: tab === k ? t.colors.onPrimary : t.colors.text }}>
+                {k === 'drawn' ? 'Avatarım' : 'Fotoğrafım'}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -103,14 +109,23 @@ export default function AvatarScreen() {
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.6 : 1 })}
             >
               <Ionicons name="shuffle" size={18} color={t.colors.primary} />
-              <Text style={{ color: t.colors.primary, fontWeight: '600' }}>Rastgele</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
+                Rastgele
+              </Text>
             </Pressable>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 6 }} style={{ flexGrow: 0 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 6 }}
+            style={{ flexGrow: 0 }}
+          >
             {CATS.map((c) => (
               <Pressable key={c.key} onPress={() => setCat(c.key)} style={chip(cat === c.key)}>
-                <Text style={{ fontWeight: '600', color: cat === c.key ? t.colors.onPrimary : t.colors.text }}>{c.label}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '600', color: cat === c.key ? t.colors.onPrimary : t.colors.text }}>
+                  {c.label}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -150,7 +165,16 @@ export default function AvatarScreen() {
           {photo ? (
             <Image source={{ uri: `data:image/jpeg;base64,${photo}` }} style={{ width: 180, height: 180, borderRadius: 90 }} />
           ) : (
-            <View style={{ width: 180, height: 180, borderRadius: 90, backgroundColor: t.colors.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 180,
+                height: 180,
+                borderRadius: 90,
+                backgroundColor: t.colors.primarySoft,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Ionicons name="person" size={80} color={t.colors.primary} />
             </View>
           )}
@@ -165,7 +189,11 @@ export default function AvatarScreen() {
       )}
 
       <View style={{ padding: 16, gap: 6, borderTopWidth: 1, borderTopColor: t.colors.border }}>
-        {!!error && <Text style={{ color: t.colors.primary, textAlign: 'center' }}>{error}</Text>}
+        {!!error && (
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, textAlign: 'center' }}>
+            {error}
+          </Text>
+        )}
         {busy ? <ActivityIndicator color={t.colors.primary} /> : <Button label="Kaydet" onPress={save} />}
       </View>
     </SafeAreaView>

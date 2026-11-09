@@ -43,7 +43,11 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
         {todayPlan?.status === 'proposed' && todayPlan.by !== uid && (
           <Card accent style={{ borderColor: t.colors.primary }}>
             <T>{t.copy.date.partnerSaysToday(partnerName)}</T>
-            <Button label={t.copy.date.confirmToday} busy={busy === 'today'} onPress={() => run('today', () => confirmDate(couple.id, today))} />
+            <Button
+              label={t.copy.date.confirmToday}
+              busy={busy === 'today'}
+              onPress={() => run('today', () => confirmDate(couple.id, today))}
+            />
           </Card>
         )}
         {toConfirm.map((d) => (
@@ -60,7 +64,9 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
     <>
       {todayPlan?.status === 'confirmed' ? (
         <Muted>
-          {todayPlan.selfie ? 'Bugünkü date anınız albüme eklendi. Bir sonrakini planlayın:' : 'Bugün date gününüz! Ortak selfie kartı yukarıda.'}
+          {todayPlan.selfie
+            ? 'Bugünkü date anınız albüme eklendi. Bir sonrakini planlayın:'
+            : 'Bugün date gününüz! Ortak selfie kartı yukarıda.'}
         </Muted>
       ) : todayPlan && todayPlan.by !== uid ? (
         <Card accent style={{ borderColor: t.colors.primary }}>
@@ -88,9 +94,7 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
         </View>
       )}
 
-      {todayPlan?.status === 'confirmed' && (
-        <Button label={t.copy.date.plan} variant="secondary" onPress={() => setPicking(!picking)} />
-      )}
+      {todayPlan?.status === 'confirmed' && <Button label={t.copy.date.plan} variant="secondary" onPress={() => setPicking(!picking)} />}
 
       {picking && (
         <Card>
@@ -134,7 +138,14 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
         <Card style={{ gap: 10 }}>
           <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.date.upcoming)}</T>
           {later.map((d) => (
-            <UpcomingRow key={d.id} plan={d} uid={uid} busy={busy === d.id} onConfirm={() => run(d.id, () => confirmDate(couple.id, d.id))} onCancel={() => cancelDate(couple.id, d.id)} />
+            <UpcomingRow
+              key={d.id}
+              plan={d}
+              uid={uid}
+              busy={busy === d.id}
+              onConfirm={() => run(d.id, () => confirmDate(couple.id, d.id))}
+              onCancel={() => cancelDate(couple.id, d.id)}
+            />
           ))}
         </Card>
       )}
@@ -142,7 +153,19 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
   );
 }
 
-function UpcomingRow({ plan, uid, busy, onConfirm, onCancel }: { plan: DatePlan; uid: string; busy: boolean; onConfirm: () => void; onCancel: () => void }) {
+function UpcomingRow({
+  plan,
+  uid,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  plan: DatePlan;
+  uid: string;
+  busy: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
   const t = useTheme();
   const { partnerName } = useSession();
   const day = prettyDate(plan.id);
@@ -198,7 +221,15 @@ function DateToday({ plan, coupleId, uid }: { plan: DatePlan; coupleId: string; 
     <View style={{ backgroundColor: t.colors.primary, borderRadius: t.radius.card, padding: 18, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name={t.id === 'agir' ? 'flash' : 'heart'} size={22} color={on} />
-        <Text style={{ color: on, fontFamily: t.fonts.button, fontWeight: t.fonts.button ? undefined : '600', letterSpacing: t.upper ? 1.5 : 0 }}>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{
+            color: on,
+            fontFamily: t.fonts.button,
+            fontWeight: t.fonts.button ? undefined : '600',
+            letterSpacing: t.upper ? 1.5 : 0,
+          }}
+        >
           {tx(t, 'Date günü')}
         </Text>
       </View>
@@ -211,7 +242,9 @@ function DateToday({ plan, coupleId, uid }: { plan: DatePlan; coupleId: string; 
         </View>
       ) : (
         <View style={{ backgroundColor: t.colors.card, borderRadius: Math.min(t.radius.card, 14), padding: 14, gap: 10 }}>
-          <Muted>{t.copy.date.selfieHint} Biriniz çekmesi yeterli, {partnerName} da görecek.</Muted>
+          <Muted>
+            {t.copy.date.selfieHint} Biriniz çekmesi yeterli, {partnerName} da görecek.
+          </Muted>
           <SelfieCamera value={selfie} onChange={setSelfie} aspect={4 / 3} />
           <Input placeholder="Bu date'ten bir not..." value={note} onChangeText={setNote} maxLength={80} />
           <ErrorText>{error}</ErrorText>

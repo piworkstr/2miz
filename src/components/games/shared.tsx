@@ -36,7 +36,12 @@ export function BigChoice({ label, onPress, disabled }: { label: string; onPress
         backgroundColor: pressed ? t.colors.primarySoft : t.colors.card,
       })}
     >
-      <Text style={{ fontFamily: t.fonts.display, fontSize: 24, lineHeight: 30, color: t.colors.text, textAlign: 'center' }}>{label}</Text>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ fontFamily: t.fonts.display, fontSize: 24, lineHeight: 30, color: t.colors.text, textAlign: 'center' }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -55,7 +60,12 @@ export function Option({ label, selected, onPress }: { label: string; selected?:
         backgroundColor: selected ? t.colors.primarySoft : t.colors.card,
       })}
     >
-      <Text style={{ color: selected ? t.colors.primary : t.colors.text, fontSize: 16, fontFamily: t.fonts.body }}>{label}</Text>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ color: selected ? t.colors.primary : t.colors.text, fontSize: 16, fontFamily: t.fonts.body }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -79,8 +89,12 @@ export function ResultHeader({ big, line, game, uid }: { big: string; line: stri
   const both = game.status === 'done';
   return (
     <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 24 }}>
-      <Text style={{ fontFamily: t.fonts.title, fontSize: 56, lineHeight: 64, color: t.colors.primary }}>{big}</Text>
-      <Text style={{ color: t.colors.text, fontSize: 16, textAlign: 'center', fontFamily: t.fonts.body }}>{line}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 56, lineHeight: 64, color: t.colors.primary }}>
+        {big}
+      </Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 16, textAlign: 'center', fontFamily: t.fonts.body }}>
+        {line}
+      </Text>
       {both && game.finished?.[uid] && <Muted style={{ fontSize: 13 }}>Günün ilk oyunuysa ikinize de +{GAME_POINTS} puan</Muted>}
     </Card>
   );

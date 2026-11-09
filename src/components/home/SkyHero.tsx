@@ -80,7 +80,7 @@ function Bust({ p, name, size }: { p: Profile | null; name: string; size: number
             borderColor: '#fff',
           }}
         >
-          <Text style={{ color: t.colors.primary, fontWeight: '800', fontSize: r * 0.4 }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ color: t.colors.primary, fontWeight: '800', fontSize: r * 0.4 }}>
             {(name || '?').slice(0, 1).toLocaleUpperCase('tr-TR')}
           </Text>
         </View>
@@ -93,7 +93,9 @@ function Bubble({ children, onPress }: { children: ReactNode; onPress?: () => vo
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ alignSelf: 'center' }}>
       <Glass radius={14} strong style={{ paddingHorizontal: 10, paddingVertical: 4 }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: '#2B1D22' }}>{children}</Text>
+        <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, fontWeight: '700', color: '#2B1D22' }}>
+          {children}
+        </Text>
       </Glass>
     </Pressable>
   );
@@ -148,17 +150,33 @@ export function SkyHero({
 
       <View style={{ position: 'absolute', left: 20, right: 16, top: insets.top + 8, flexDirection: 'row', alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 44, color: sky.ink }}>{greeting}</Text>
-          <Text style={{ fontSize: 13, color: sky.sub, fontFamily: t.fonts.body, marginTop: 2 }}>{line}</Text>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+            style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 44, color: sky.ink }}
+          >
+            {greeting}
+          </Text>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            numberOfLines={1}
+            style={{ fontSize: 13, color: sky.sub, fontFamily: t.fonts.body, marginTop: 2 }}
+          >
+            {line}
+          </Text>
         </View>
         <View style={{ gap: 6, alignItems: 'flex-end' }}>
           <Glass radius={999} style={{ paddingHorizontal: 11, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Ionicons name="flame" size={14} color="#E07A45" />
-            <Text style={{ fontSize: 13, fontWeight: '800', color: '#2B1D22' }}>{streak} gün</Text>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 13, fontWeight: '800', color: '#2B1D22' }}>
+              {streak} gün
+            </Text>
           </Glass>
           <Glass radius={999} style={{ paddingHorizontal: 11, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Ionicons name="star" size={13} color={t.colors.primary} />
-            <Text style={{ fontSize: 13, fontWeight: '800', color: '#2B1D22' }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 13, fontWeight: '800', color: '#2B1D22' }}>
               {points} {pointsLabel}
             </Text>
           </Glass>
@@ -187,7 +205,9 @@ export function SkyHero({
             <BondHeart box={56} max={40} showLabel={false} />
           </Glass>
           <Glass radius={999} strong style={{ paddingHorizontal: 9, paddingVertical: 3 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#2B1D22' }}>{bond.label}</Text>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '700', color: '#2B1D22' }}>
+              {bond.label}
+            </Text>
           </Glass>
         </View>
         <View style={{ alignItems: 'center', gap: 6 }}>

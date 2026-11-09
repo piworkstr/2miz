@@ -57,8 +57,7 @@ export function Memory({ game, coupleId, uid, partnerId, partnerName }: GameProp
         : 'Senin sıran, iki kart aç'
       : `${partnerName} oynuyor…`;
 
-  const winner =
-    myScore === theirScore ? 'Berabere!' : myScore > theirScore ? 'Sen kazandın!' : `${partnerName} kazandı!`;
+  const winner = myScore === theirScore ? 'Berabere!' : myScore > theirScore ? 'Sen kazandın!' : `${partnerName} kazandı!`;
 
   const grid = (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -87,7 +86,11 @@ export function Memory({ game, coupleId, uid, partnerId, partnerName }: GameProp
               photo ? (
                 <Image source={{ uri: photoUri(photo) }} style={{ width: '100%', height: '100%' }} />
               ) : (
-                <Ionicons name={(face.startsWith('icon:') ? face.slice(5) : 'image-outline') as IconName} size={34} color={t.colors.primary} />
+                <Ionicons
+                  name={(face.startsWith('icon:') ? face.slice(5) : 'image-outline') as IconName}
+                  size={34}
+                  color={t.colors.primary}
+                />
               )
             ) : (
               <Ionicons name={t.id === 'agir' ? 'flash' : 'heart'} size={26} color={t.colors.onPrimary} />
@@ -113,7 +116,10 @@ export function Memory({ game, coupleId, uid, partnerId, partnerName }: GameProp
         <Score label="Sen" value={myScore} active={myTurn} />
         <Score label={partnerName} value={theirScore} active={!myTurn} />
       </Card>
-      <Text style={{ textAlign: 'center', color: myTurn ? t.colors.primary : t.colors.muted, fontWeight: '600', fontFamily: t.fonts.body }}>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ textAlign: 'center', color: myTurn ? t.colors.primary : t.colors.muted, fontWeight: '600', fontFamily: t.fonts.body }}
+      >
         {status}
       </Text>
       {grid}
@@ -128,7 +134,9 @@ function Score({ label, value, active }: { label: string; value: number; active:
   const t = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text style={{ fontSize: 26, fontWeight: '700', color: active ? t.colors.primary : t.colors.text }}>{value}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 26, fontWeight: '700', color: active ? t.colors.primary : t.colors.text }}>
+        {value}
+      </Text>
       <Muted style={{ fontSize: 12 }}>{label}</Muted>
     </View>
   );

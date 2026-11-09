@@ -97,7 +97,9 @@ export function SharedCalendar() {
         <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Ortak takviminiz')}</T>
         <Pressable onPress={() => setShareOpen(true)} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Ionicons name={profile?.calendarShare ? 'sync' : 'phone-portrait-outline'} size={16} color={t.colors.primary} />
-          <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>Telefon takvimi</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
+            Telefon takvimi
+          </Text>
         </Pressable>
       </View>
 
@@ -105,7 +107,7 @@ export function SharedCalendar() {
         <Pressable onPress={() => move(-1)} hitSlop={10} accessibilityLabel="Önceki ay">
           <Ionicons name="chevron-back" size={22} color={t.colors.text} />
         </Pressable>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: t.colors.text }}>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, fontWeight: '700', color: t.colors.text }}>
           {MONTHS[ym.m]} {ym.y}
         </Text>
         <Pressable onPress={() => move(1)} hitSlop={10} accessibilityLabel="Sonraki ay">
@@ -115,7 +117,7 @@ export function SharedCalendar() {
 
       <View style={{ flexDirection: 'row' }}>
         {WEEK.map((w) => (
-          <Text key={w} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: t.colors.muted }}>
+          <Text maxFontSizeMultiplier={1.25} key={w} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: t.colors.muted }}>
             {w}
           </Text>
         ))}
@@ -128,7 +130,11 @@ export function SharedCalendar() {
           const day = days[k];
           const bothDone = !!day && couple.members.every((m) => day.completions?.[m]);
           return (
-            <Pressable key={i} onPress={() => setSelected(k)} style={{ width: `${100 / 7}%`, height: 46, alignItems: 'center', paddingTop: 4 }}>
+            <Pressable
+              key={i}
+              onPress={() => setSelected(k)}
+              style={{ width: `${100 / 7}%`, height: 46, alignItems: 'center', paddingTop: 4 }}
+            >
               <View
                 style={{
                   width: 28,
@@ -139,7 +145,14 @@ export function SharedCalendar() {
                   backgroundColor: isToday ? t.colors.primary : 'transparent',
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: isToday ? '700' : '400', color: isToday ? t.colors.onPrimary : k < today ? t.colors.muted : t.colors.text }}>
+                <Text
+                  maxFontSizeMultiplier={1.25}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: isToday ? '700' : '400',
+                    color: isToday ? t.colors.onPrimary : k < today ? t.colors.muted : t.colors.text,
+                  }}
+                >
                   {d}
                 </Text>
               </View>
@@ -174,7 +187,7 @@ export function SharedCalendar() {
         events={events.filter((e) => e.day === selected)}
         date={selected ? dates[selected] : undefined}
         day={selected ? days[selected] : undefined}
-        specials={selected ? specials[selected] ?? [] : []}
+        specials={selected ? (specials[selected] ?? []) : []}
         myBusy={myBusy}
         theirBusy={theirBusy}
         colorOf={colorOf}
@@ -254,10 +267,19 @@ function DaySheet({
   }
 
   const line = (key: string, color: string, left: string, text: string, onLong?: () => void) => (
-    <Pressable key={key} onLongPress={onLong} delayLongPress={400} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
+    <Pressable
+      key={key}
+      onLongPress={onLong}
+      delayLongPress={400}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}
+    >
       <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: color }} />
-      <Text style={{ width: 48, fontSize: 13, color: t.colors.muted }}>{left}</Text>
-      <Text style={{ flex: 1, fontSize: 15, color: t.colors.text }}>{text}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ width: 48, fontSize: 13, color: t.colors.muted }}>
+        {left}
+      </Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 15, color: t.colors.text }}>
+        {text}
+      </Text>
     </Pressable>
   );
 
@@ -270,7 +292,9 @@ function DaySheet({
           <Pressable style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' }}>
             <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 36, gap: 6 }} keyboardShouldPersistTaps="handled">
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ flex: 1, fontSize: 19, fontWeight: '700', color: t.colors.text }}>{label}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 19, fontWeight: '700', color: t.colors.text }}>
+                  {label}
+                </Text>
                 <Pressable onPress={onClose} hitSlop={10}>
                   <Ionicons name="close" size={24} color={t.colors.muted} />
                 </Pressable>
@@ -289,13 +313,20 @@ function DaySheet({
                 ),
               )}
               {busyLines.map(({ who, color, b }, i) =>
-                line(`b${i}`, color, b.allDay ? 'gün' : b.start ?? '', `${b.title ?? 'Meşgul'}${b.end && !b.allDay ? ` (–${b.end})` : ''} · ${who}`),
+                line(
+                  `b${i}`,
+                  color,
+                  b.allDay ? 'gün' : (b.start ?? ''),
+                  `${b.title ?? 'Meşgul'}${b.end && !b.allDay ? ` (–${b.end})` : ''} · ${who}`,
+                ),
               )}
               {empty && <Muted style={{ paddingVertical: 8 }}>Bu gün boş. Birlikte bir şey planlayın!</Muted>}
               {!!events.length && <Muted style={{ fontSize: 11 }}>Silmek için plana uzun bas.</Muted>}
 
               <View style={{ gap: 10, marginTop: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: t.colors.border }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: t.colors.text }}>Plan ekle</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 15, fontWeight: '600', color: t.colors.text }}>
+                  Plan ekle
+                </Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {(
                     [
@@ -317,7 +348,11 @@ function DaySheet({
                         backgroundColor: owner === v ? `${c}22` : 'transparent',
                       }}
                     >
-                      <Text numberOfLines={1} style={{ fontWeight: '600', color: owner === v ? c : t.colors.text }}>
+                      <Text
+                        maxFontSizeMultiplier={1.25}
+                        numberOfLines={1}
+                        style={{ fontWeight: '600', color: owner === v ? c : t.colors.text }}
+                      >
                         {l}
                       </Text>
                     </Pressable>
@@ -330,7 +365,17 @@ function DaySheet({
                     placeholder="Örn. Sinema, annemlere yemek"
                     placeholderTextColor={t.colors.muted}
                     maxLength={60}
-                    style={{ flex: 1, backgroundColor: t.colors.bg, borderWidth: 1, borderColor: t.colors.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: t.colors.text }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: t.colors.bg,
+                      borderWidth: 1,
+                      borderColor: t.colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: 15,
+                      color: t.colors.text,
+                    }}
                   />
                   <TextInput
                     value={time}
@@ -339,12 +384,35 @@ function DaySheet({
                     placeholderTextColor={t.colors.muted}
                     keyboardType="number-pad"
                     maxLength={5}
-                    style={{ width: 72, textAlign: 'center', backgroundColor: t.colors.bg, borderWidth: 1, borderColor: t.colors.border, borderRadius: 12, paddingVertical: 10, fontSize: 15, color: t.colors.text }}
+                    style={{
+                      width: 72,
+                      textAlign: 'center',
+                      backgroundColor: t.colors.bg,
+                      borderWidth: 1,
+                      borderColor: t.colors.border,
+                      borderRadius: 12,
+                      paddingVertical: 10,
+                      fontSize: 15,
+                      color: t.colors.text,
+                    }}
                   />
                 </View>
-                {!!error && <Text style={{ color: t.colors.primary }}>{error}</Text>}
-                <Pressable onPress={save} style={{ backgroundColor: t.colors.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' }}>
-                  {busy ? <ActivityIndicator color={t.colors.onPrimary} /> : <Text style={{ color: t.colors.onPrimary, fontWeight: '700', fontSize: 15 }}>Ekle</Text>}
+                {!!error && (
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary }}>
+                    {error}
+                  </Text>
+                )}
+                <Pressable
+                  onPress={save}
+                  style={{ backgroundColor: t.colors.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' }}
+                >
+                  {busy ? (
+                    <ActivityIndicator color={t.colors.onPrimary} />
+                  ) : (
+                    <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '700', fontSize: 15 }}>
+                      Ekle
+                    </Text>
+                  )}
                 </Pressable>
               </View>
             </ScrollView>
@@ -373,7 +441,11 @@ function ShareSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       else await stopCalendarShare(couple.id, user.uid);
       onClose();
     } catch (e) {
-      setError((e as Error).message === 'permission' ? 'Takvim izni verilmedi. Ayarlar > 2miz > Takvimler bölümünden açabilirsin.' : 'Olmadı, tekrar dene.');
+      setError(
+        (e as Error).message === 'permission'
+          ? 'Takvim izni verilmedi. Ayarlar > 2miz > Takvimler bölümünden açabilirsin.'
+          : 'Olmadı, tekrar dene.',
+      );
     } finally {
       setBusy(null);
     }
@@ -392,27 +464,46 @@ function ShareSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: t.colors.text }}>{title}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: t.colors.text }}>
+          {title}
+        </Text>
         {busy === (mode ?? 'off') && <ActivityIndicator color={t.colors.primary} />}
         {current === mode && !busy && <Ionicons name="checkmark-circle" size={20} color={t.colors.primary} />}
       </View>
-      <Text style={{ fontSize: 13, color: t.colors.muted }}>{desc}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
+        {desc}
+      </Text>
     </Pressable>
   );
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-        <Pressable style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36, gap: 10 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.text }}>Telefon takvimini paylaş</Text>
+        <Pressable
+          style={{
+            backgroundColor: t.colors.card,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            paddingBottom: 36,
+            gap: 10,
+          }}
+        >
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 18, fontWeight: '700', color: t.colors.text }}>
+            Telefon takvimini paylaş
+          </Text>
           <Muted style={{ fontSize: 13 }}>
-            iPhone takvimindeki önümüzdeki 5 haftan ortak takvimde {partnerName}'e görünür. Uygulama açıldıkça güncellenir. Takvimine hiçbir şey
-            yazılmaz.
+            iPhone takvimindeki önümüzdeki 5 haftan ortak takvimde {partnerName}'e görünür. Uygulama açıldıkça güncellenir. Takvimine hiçbir
+            şey yazılmaz.
           </Muted>
           {opt('titles', 'Başlıklarıyla paylaş', '"Diş hekimi 14:00" gibi görünür.')}
           {opt('busy', 'Sadece "Meşgul" olarak', 'Başlıklar gizli kalır, sadece dolu saatlerin görünür.')}
           {opt(null, 'Paylaşma', 'Telefon takvimin görünmez; paylaşılmış olanlar silinir.')}
-          {!!error && <Text style={{ color: t.colors.primary }}>{error}</Text>}
+          {!!error && (
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary }}>
+              {error}
+            </Text>
+          )}
         </Pressable>
       </Pressable>
     </Modal>

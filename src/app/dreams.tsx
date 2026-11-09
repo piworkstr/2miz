@@ -77,7 +77,9 @@ export default function DreamsScreen() {
         <View style={{ flex: 1, gap: 2 }}>
           <T style={{ fontWeight: '700', fontSize: 16 }}>{title}</T>
           <Muted style={{ fontSize: 12, lineHeight: 16 }}>{line}</Muted>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: wait ? '#E8516A' : t.colors.primary }}>{wait ?? stat}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, fontWeight: '800', color: wait ? '#E8516A' : t.colors.primary }}>
+            {wait ?? stat}
+          </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.colors.muted} />
       </Card>
@@ -94,7 +96,9 @@ export default function DreamsScreen() {
         <View style={{ marginLeft: -14 }}>
           <Avatar p={partnerProfile} name={partnerName} size={36} showMood={false} />
         </View>
-        <Text style={{ flex: 1, fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text }}>Hayalimiz</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text }}>
+          Hayalimiz
+        </Text>
         <View
           style={{
             flexDirection: 'row',
@@ -108,12 +112,16 @@ export default function DreamsScreen() {
           }}
         >
           <Image source={ART.coin.src} style={{ width: 24, height: 21 }} />
-          <Text style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>{farm.coins}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>
+            {farm.coins}
+          </Text>
         </View>
       </View>
 
       <Card style={{ gap: 6 }}>
-        <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.6, color: t.colors.primary }}>GERÇEK HAYALİMİZ</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.6, color: t.colors.primary }}>
+          GERÇEK HAYALİMİZ
+        </Text>
         {edit ? (
           <>
             <TextInput
@@ -157,7 +165,9 @@ export default function DreamsScreen() {
                 onPress={save}
                 style={{ backgroundColor: t.colors.primary, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 }}
               >
-                <Text style={{ color: t.colors.onPrimary, fontWeight: '700' }}>Kaydet</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '700' }}>
+                  Kaydet
+                </Text>
               </Pressable>
             </View>
           </>
@@ -169,12 +179,14 @@ export default function DreamsScreen() {
               setEdit(true);
             }}
           >
-            <Text style={{ fontFamily: t.fonts.note, fontSize: 24, lineHeight: 28, color: t.colors.text }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.note, fontSize: 24, lineHeight: 28, color: t.colors.text }}>
               {note ? `“${note}”` : 'Birlikte hayal ettiğiniz hayatı buraya yazın. İkiniz de görürsünüz.'}
             </Text>
             <Muted style={{ fontSize: 12 }}>
               {couple.dreamYear ? `Hedef ${couple.dreamYear} · ${Math.max(0, couple.dreamYear - thisYear)} yıl kaldı · ` : ''}
-              <Text style={{ textDecorationLine: 'underline' }}>{note ? 'Düzenle' : 'Yaz'}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ textDecorationLine: 'underline' }}>
+                {note ? 'Düzenle' : 'Yaz'}
+              </Text>
             </Muted>
           </Pressable>
         )}

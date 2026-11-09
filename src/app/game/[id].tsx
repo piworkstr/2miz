@@ -26,7 +26,10 @@ export default function GameScreen() {
       <Pressable onPress={close} hitSlop={12}>
         <Ionicons name="close" size={28} color={t.colors.text} />
       </Pressable>
-      <Text style={{ flex: 1, color: t.colors.text, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ flex: 1, color: t.colors.text, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}
+      >
         {game ? GAMES[game.type].name : 'Oyun'}
       </Text>
     </View>
@@ -92,7 +95,9 @@ function Waiting({ game, coupleId, partnerName, onClose }: { game: Game; coupleI
       <Ionicons name={icon} size={40} color={t.colors.primary} />
       {game.status === 'declined' ? (
         <>
-          <Text style={{ fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text, textAlign: 'center' }}>Şimdi olmaz</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text, textAlign: 'center' }}>
+            Şimdi olmaz
+          </Text>
           <Muted style={{ textAlign: 'center' }}>{partnerName} şu an müsait değil. Biraz sonra tekrar davet edebilirsin.</Muted>
           <Button style={{ alignSelf: 'stretch' }} label="Tamam" onPress={onClose} />
         </>
@@ -103,7 +108,7 @@ function Waiting({ game, coupleId, partnerName, onClose }: { game: Game; coupleI
         </>
       ) : (
         <>
-          <Text style={{ fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text, textAlign: 'center' }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 30, color: t.colors.text, textAlign: 'center' }}>
             {partnerName} bekleniyor
           </Text>
           <ActivityIndicator color={t.colors.primary} />

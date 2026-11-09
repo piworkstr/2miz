@@ -227,8 +227,11 @@ export default function HouseScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Pressable onPress={() => setTown(home.town)}>
-              <Text style={{ fontWeight: '900', fontSize: 17, color: INK }}>
-                {home.town} <Text style={{ color: MUTED, fontSize: 12 }}>✎</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '900', fontSize: 17, color: INK }}>
+                {home.town}{' '}
+                <Text maxFontSizeMultiplier={1.25} style={{ color: MUTED, fontSize: 12 }}>
+                  ✎
+                </Text>
               </Text>
             </Pressable>
             <Note>
@@ -248,7 +251,9 @@ export default function HouseScreen() {
             />
           </View>
         )}
-        <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>Şimdi yapılabilir</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+          Şimdi yapılabilir
+        </Text>
         {avail.length === 0 && <Note>Şu an sahne yok. Saat {String(hour).padStart(2, '0')}:00.</Note>}
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
           {avail.map((d) => {
@@ -363,7 +368,9 @@ export default function HouseScreen() {
                     transform: [{ scale: twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] }) }],
                   }}
                 >
-                  <Text style={{ color: '#E8516A', fontWeight: '900', fontSize: 16, lineHeight: 18 }}>+</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: '#E8516A', fontWeight: '900', fontSize: 16, lineHeight: 18 }}>
+                    +
+                  </Text>
                 </Animated.View>
               </Pressable>
             );
@@ -401,7 +408,7 @@ export default function HouseScreen() {
               }}
             >
               <Avatar p={scene.by === uid ? partnerProfile : profile} name="" size={28} showMood={false} />
-              <Text style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
                 {scene.by === uid ? `${partnerName} bekleniyor…` : `${partnerName} seni bekliyor`}
               </Text>
             </View>
@@ -419,7 +426,9 @@ export default function HouseScreen() {
               paddingVertical: 6,
             }}
           >
-            <Text style={{ fontWeight: '800', fontSize: 12, color: INK }}>✦ {home.wishes.length} dilek</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+              ✦ {home.wishes.length} dilek
+            </Text>
           </View>
         )}
       </View>

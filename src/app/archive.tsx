@@ -39,7 +39,9 @@ export default function Archive() {
     <Screen>
       <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Ionicons name="chevron-back" size={22} color={t.colors.text} />
-        <Text style={{ color: t.colors.text, fontSize: 15, fontFamily: t.fonts.body }}>{tx(t, 'Bugün')}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 15, fontFamily: t.fonts.body }}>
+          {tx(t, 'Bugün')}
+        </Text>
       </Pressable>
       <Title>Görev arşivi</Title>
       <Muted>
@@ -62,7 +64,12 @@ export default function Archive() {
                 backgroundColor: on ? t.colors.primary : t.colors.card,
               }}
             >
-              <Text style={{ color: on ? t.colors.onPrimary : t.colors.text, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, c.label)}</Text>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: on ? t.colors.onPrimary : t.colors.text, fontWeight: '600', fontFamily: t.fonts.button }}
+              >
+                {tx(t, c.label)}
+              </Text>
             </Pressable>
           );
         })}
@@ -70,13 +77,17 @@ export default function Archive() {
 
       {filter === 'fav' ? (
         favorites.length === 0 ? (
-          <Muted style={{ textAlign: 'center', paddingVertical: 24 }}>Henüz favori yok. Sevdiğiniz görevlerin yanındaki kalbe dokunun.</Muted>
+          <Muted style={{ textAlign: 'center', paddingVertical: 24 }}>
+            Henüz favori yok. Sevdiğiniz görevlerin yanındaki kalbe dokunun.
+          </Muted>
         ) : (
           TASKS.filter((x) => favorites.includes(x.id)).map((task) => (
             <Card key={task.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <CategoryDot id={task.id} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontSize: 16, color: t.colors.text, fontFamily: t.fonts.body }}>{task.title}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: t.colors.text, fontFamily: t.fonts.body }}>
+                  {task.title}
+                </Text>
                 <Muted style={{ fontSize: 12 }}>{tx(t, categoryLabels[task.category])}</Muted>
               </View>
               <Heart coupleId={couple.id} id={task.id} on />
@@ -100,7 +111,7 @@ export default function Archive() {
           return (
             <Card key={key} style={{ gap: 10 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
                   {key === today ? tx(t, 'Bugün') : prettyDate(key)}
                 </Text>
                 <Status
@@ -117,6 +128,7 @@ export default function Archive() {
                     <View style={{ flex: 1 }}>
                       {r.who && <Muted style={{ fontSize: 11 }}>{r.who}</Muted>}
                       <Text
+                        maxFontSizeMultiplier={1.25}
                         style={{
                           fontSize: 15,
                           color: t.colors.text,
@@ -132,9 +144,18 @@ export default function Archive() {
                 ) : null,
               )}
               {day.bonus && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: t.colors.border }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingTop: 8,
+                    borderTopWidth: 1,
+                    borderTopColor: t.colors.border,
+                  }}
+                >
                   <Ionicons name="color-wand-outline" size={16} color={t.colors.primary} />
-                  <Text style={{ flex: 1, fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
+                  <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
                     {tx(t, t.copy.surpriseLabel)}: {taskById(day.bonus.taskId).title}
                   </Text>
                   <Heart coupleId={couple.id} id={day.bonus.taskId} on={favorites.includes(day.bonus.taskId)} />
@@ -171,7 +192,9 @@ function Status({ me, them, myName, partnerName }: { me: boolean; them: boolean;
   const item = (name: string, ok: boolean) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
       <Ionicons name={ok ? 'checkmark-circle' : 'ellipse-outline'} size={15} color={ok ? '#4FA37E' : t.colors.muted} />
-      <Text style={{ fontSize: 12, color: t.colors.muted }}>{name}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.muted }}>
+        {name}
+      </Text>
     </View>
   );
   return (

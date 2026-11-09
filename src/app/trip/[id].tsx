@@ -51,9 +51,13 @@ export default function TripScreen() {
     // Seyahat silindiyse (ya da partner sildiyse) albüme dön.
     return (
       <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: KRAFT }}>
-        <Text style={{ fontFamily: handFont, fontSize: 24, color: inkColor }}>Bu seyahat artık yok.</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 24, color: inkColor }}>
+          Bu seyahat artık yok.
+        </Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={{ color: '#C0566A', fontWeight: '600' }}>Albüme dön</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: '#C0566A', fontWeight: '600' }}>
+            Albüme dön
+          </Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -101,13 +105,20 @@ export default function TripScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 18 }}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Ionicons name="chevron-back" size={22} color={inkColor} />
-          <Text style={{ color: inkColor, fontSize: 15 }}>Albüm</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, fontSize: 15 }}>
+            Albüm
+          </Text>
         </Pressable>
 
         <View style={{ gap: 4 }}>
           <Stamp style={{ position: 'absolute', right: 0, top: -6 }} />
-          <Text style={{ fontFamily: handFont, fontSize: 40, lineHeight: 44, color: inkColor, paddingRight: 70 }}>{trip.name}</Text>
-          <Text style={{ fontSize: 14, color: '#7A6650' }}>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ fontFamily: handFont, fontSize: 40, lineHeight: 44, color: inkColor, paddingRight: 70 }}
+          >
+            {trip.name}
+          </Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: '#7A6650' }}>
             {trip.place ? `${trip.place} · ` : ''}
             {tripDates(trip)}
           </Text>
@@ -129,26 +140,33 @@ export default function TripScreen() {
           {adding ? (
             <>
               <ActivityIndicator color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
                 Ekleniyor {adding.done}/{adding.total}
               </Text>
             </>
           ) : (
             <>
               <Ionicons name="images-outline" size={20} color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
                 {room > 0 ? 'Galeriden fotoğraf ekle' : plus.active ? 'Sınır doldu' : "Plus'la 100 fotoğrafa çıkar"}
               </Text>
             </>
           )}
         </Pressable>
-        <Text style={{ fontSize: 12, color: '#7A6650', textAlign: 'center', marginTop: -10 }}>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#7A6650', textAlign: 'center', marginTop: -10 }}>
           {trip.count}/{LIMIT} fotoğraf · Uzun basarak not yazabilir ya da silebilirsiniz
         </Text>
-        {!!error && <Text style={{ color: '#A93246', textAlign: 'center' }}>{error}</Text>}
+        {!!error && (
+          <Text maxFontSizeMultiplier={1.25} style={{ color: '#A93246', textAlign: 'center' }}>
+            {error}
+          </Text>
+        )}
 
         {photos.length === 0 ? (
-          <Text style={{ fontFamily: handFont, fontSize: 22, color: '#9A8468', textAlign: 'center', paddingVertical: 30 }}>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ fontFamily: handFont, fontSize: 22, color: '#9A8468', textAlign: 'center', paddingVertical: 30 }}
+          >
             İlk fotoğrafı ekleyin, {partnerName} da kendi çektiklerini ekleyebilir.
           </Text>
         ) : (
@@ -178,6 +196,7 @@ export default function TripScreen() {
                   style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }}
                 />
                 <Text
+                  maxFontSizeMultiplier={1.25}
                   style={{
                     fontFamily: handFont,
                     fontSize: 18,
@@ -191,7 +210,9 @@ export default function TripScreen() {
                 >
                   {p.note || ' '}
                 </Text>
-                <Text style={{ fontSize: 10, color: '#9C8C87', textAlign: 'center' }}>{p.uid === user.uid ? myName : partnerName}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 10, color: '#9C8C87', textAlign: 'center' }}>
+                  {p.uid === user.uid ? myName : partnerName}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -200,7 +221,7 @@ export default function TripScreen() {
         <View style={{ alignItems: 'center', marginTop: 20, gap: 10 }}>
           {confirmDelete ? (
             <>
-              <Text style={{ color: inkColor, textAlign: 'center' }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, textAlign: 'center' }}>
                 Seyahat ve içindeki {trip.count} fotoğraf ikiniz için de silinecek.
               </Text>
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -211,19 +232,25 @@ export default function TripScreen() {
                   }}
                   style={{ backgroundColor: '#A93246', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600' }}>Evet, sil</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600' }}>
+                    Evet, sil
+                  </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => setConfirmDelete(false)}
                   style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#B9A88F' }}
                 >
-                  <Text style={{ color: inkColor, fontWeight: '600' }}>Vazgeç</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, fontWeight: '600' }}>
+                    Vazgeç
+                  </Text>
                 </Pressable>
               </View>
             </>
           ) : (
             <Pressable onPress={() => setConfirmDelete(true)}>
-              <Text style={{ color: '#A93246', fontSize: 14 }}>Seyahati sil</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: '#A93246', fontSize: 14 }}>
+                Seyahati sil
+              </Text>
             </Pressable>
           )}
         </View>
@@ -244,7 +271,9 @@ export default function TripScreen() {
                 resizeMode="contain"
               />
               {!!viewing.note && (
-                <Text style={{ fontFamily: handFont, fontSize: 24, color: '#fff', textAlign: 'center' }}>{viewing.note}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 24, color: '#fff', textAlign: 'center' }}>
+                  {viewing.note}
+                </Text>
               )}
             </>
           )}
@@ -269,7 +298,9 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
       onPress={onPress}
       style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? '#F5EDE3' : 'transparent' })}
     >
-      <Text style={{ fontSize: 16, color: danger ? '#A93246' : inkColor }}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: danger ? '#A93246' : inkColor }}>
+        {label}
+      </Text>
     </Pressable>
   );
 
@@ -282,7 +313,9 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
           >
             {note !== null ? (
               <View style={{ padding: 20, gap: 12 }}>
-                <Text style={{ fontSize: 17, fontWeight: '600', color: inkColor }}>Polaroidin altına not</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: inkColor }}>
+                  Polaroidin altına not
+                </Text>
                 <TextInput
                   value={note}
                   onChangeText={setNote}
@@ -313,7 +346,9 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
                   {busy ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Kaydet</Text>
+                    <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>
+                      Kaydet
+                    </Text>
                   )}
                 </Pressable>
                 {row('Vazgeç', close)}

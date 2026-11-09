@@ -65,7 +65,10 @@ export default function PlusScreen() {
         >
           <Ionicons name="heart" size={32} color={t.colors.primary} />
         </View>
-        <Text style={{ color: t.colors.text, fontSize: 24, textAlign: 'center', fontFamily: t.fonts.display, fontWeight: '700' }}>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{ color: t.colors.text, fontSize: 24, textAlign: 'center', fontFamily: t.fonts.display, fontWeight: '700' }}
+        >
           {tx(t, head.title)}
         </Text>
         <Muted style={{ textAlign: 'center' }}>{head.sub}</Muted>
@@ -139,7 +142,9 @@ export default function PlusScreen() {
                   </View>
                   <T style={{ fontWeight: '700' }}>
                     {p.price}
-                    <Text style={{ fontWeight: '400', color: t.colors.muted }}>{p.per}</Text>
+                    <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '400', color: t.colors.muted }}>
+                      {p.per}
+                    </Text>
                   </T>
                 </Pressable>
               );
@@ -157,7 +162,10 @@ export default function PlusScreen() {
               opacity: 0.45,
             }}
           >
-            <Text style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>
+            <Text
+              maxFontSizeMultiplier={1.25}
+              style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}
+            >
               {tx(t, plan === 'yearly' ? '7 gün ücretsiz dene' : 'Abone ol')} · yakında
             </Text>
           </Pressable>

@@ -28,13 +28,20 @@ export function Screen({ children }: { children: ReactNode }) {
 // Temanın gövde fontu ve rengiyle yazı.
 export function T({ children, style }: { children: ReactNode; style?: TextStyle | TextStyle[] }) {
   const t = useTheme();
-  return <Text style={[{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }, style as TextStyle]}>{children}</Text>;
+  return (
+    <Text maxFontSizeMultiplier={1.25} style={[{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }, style as TextStyle]}>
+      {children}
+    </Text>
+  );
 }
 
 export function Title({ children }: { children: string }) {
   const t = useTheme();
   return (
-    <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize, color: t.colors.text, lineHeight: t.titleSize * (t.upper ? 1.4 : 1.15) }}>
+    <Text
+      maxFontSizeMultiplier={1.25}
+      style={{ fontFamily: t.fonts.title, fontSize: t.titleSize, color: t.colors.text, lineHeight: t.titleSize * (t.upper ? 1.4 : 1.15) }}
+    >
       {tx(t, children)}
     </Text>
   );
@@ -44,6 +51,7 @@ export function Display({ children, style }: { children: string; style?: TextSty
   const t = useTheme();
   return (
     <Text
+      maxFontSizeMultiplier={1.25}
       style={[
         { fontFamily: t.fonts.display, fontSize: t.displaySize, color: t.colors.text, lineHeight: t.displaySize * (t.upper ? 1.4 : 1.15) },
         style,
@@ -57,7 +65,9 @@ export function Display({ children, style }: { children: string; style?: TextSty
 export function Muted({ children, style }: { children: ReactNode; style?: TextStyle }) {
   const t = useTheme();
   return (
-    <Text style={[{ fontSize: 14, color: t.colors.muted, lineHeight: 20, fontFamily: t.fonts.body }, style]}>{children}</Text>
+    <Text maxFontSizeMultiplier={1.25} style={[{ fontSize: 14, color: t.colors.muted, lineHeight: 20, fontFamily: t.fonts.body }, style]}>
+      {children}
+    </Text>
   );
 }
 
@@ -65,6 +75,7 @@ export function Pill({ children }: { children: string }) {
   const t = useTheme();
   return (
     <Text
+      maxFontSizeMultiplier={1.25}
       style={{
         alignSelf: 'flex-start',
         backgroundColor: t.accentBar ? 'transparent' : t.colors.primarySoft,
@@ -140,6 +151,7 @@ export function Button({ label, onPress, variant = 'primary', busy, style }: But
         <ActivityIndicator color={fg} />
       ) : (
         <Text
+          maxFontSizeMultiplier={1.25}
           style={{
             fontSize: 16,
             fontWeight: t.fonts.button ? undefined : '600',
@@ -182,7 +194,11 @@ export function Input(props: TextInputProps) {
 export function ErrorText({ children }: { children: ReactNode }) {
   const t = useTheme();
   if (!children) return null;
-  return <Text style={{ color: t.colors.primary, fontSize: 14, fontFamily: t.fonts.body }}>{children}</Text>;
+  return (
+    <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 14, fontFamily: t.fonts.body }}>
+      {children}
+    </Text>
+  );
 }
 
 export function Loading() {

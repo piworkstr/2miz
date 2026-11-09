@@ -52,25 +52,36 @@ export default function Setup() {
       <Title>Biraz daha tanışalım</Title>
       <Muted>Görevleri ve ileride date önerilerini sana göre seçmek için. İstersen sonra doldurabilirsin.</Muted>
 
-      <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>Nelerden hoşlanırsın?</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
+        Nelerden hoşlanırsın?
+      </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {INTERESTS.map((i) => {
           const on = interests.includes(i);
           return (
             <Pressable key={i} onPress={() => toggle(i)} style={chip(on)}>
-              <Text style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}>{i}</Text>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}
+              >
+                {i}
+              </Text>
             </Pressable>
           );
         })}
       </View>
 
-      <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>Günün görevi ne zaman gelsin?</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
+        Günün görevi ne zaman gelsin?
+      </Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {TIMES.map((o) => {
           const on = time === o.id;
           return (
             <Pressable key={o.id} onPress={() => setTime(o.id)} style={[chip(on), { flex: 1, alignItems: 'center' }]}>
-              <Text style={{ color: on ? t.colors.primary : t.colors.text, fontWeight: '600', fontSize: 15 }}>{o.label}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: on ? t.colors.primary : t.colors.text, fontWeight: '600', fontSize: 15 }}>
+                {o.label}
+              </Text>
               <Muted style={{ fontSize: 12 }}>{o.hint}</Muted>
             </Pressable>
           );

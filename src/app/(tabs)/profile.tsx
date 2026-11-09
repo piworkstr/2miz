@@ -170,8 +170,15 @@ function PlusCard() {
     >
       <Ionicons name={plus.paid ? 'gift' : 'heart'} size={24} color={t.colors.primary} />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: t.colors.onPrimarySoft, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}>2miz Plus</Text>
-        <Text style={{ color: t.colors.onPrimarySoft, fontSize: 13, opacity: 0.85 }}>{line}</Text>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{ color: t.colors.onPrimarySoft, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}
+        >
+          2miz Plus
+        </Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimarySoft, fontSize: 13, opacity: 0.85 }}>
+          {line}
+        </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimarySoft} />
     </Pressable>
@@ -228,11 +235,15 @@ function StoryCard({
           <Avatar p={partner} name={partnerName} size={56} showMood={false} />
         </View>
       </View>
-      <Text style={{ fontFamily: t.fonts.title, fontSize: t.titleSize * 0.95, lineHeight: t.titleSize * 1.15, color: on }}>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ fontFamily: t.fonts.title, fontSize: t.titleSize * 0.95, lineHeight: t.titleSize * 1.15, color: on }}
+      >
         {tx(t, `${myName} & ${partnerName}`)}
       </Text>
       {couple.status && (
         <Text
+          maxFontSizeMultiplier={1.25}
           style={{
             alignSelf: 'flex-start',
             color: t.colors.primary,
@@ -251,16 +262,20 @@ function StoryCard({
       {count ? (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8 }}>
-            <Text style={{ fontSize: 44, fontWeight: '800', color: on, fontVariant: ['tabular-nums'] }}>{count}</Text>
-            <Text style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>gündür birlikte</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 44, fontWeight: '800', color: on, fontVariant: ['tabular-nums'] }}>
+              {count}
+            </Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>
+              gündür birlikte
+            </Text>
           </View>
-          <Text style={{ color: on, opacity: 0.9, fontSize: 14, fontFamily: t.fonts.body }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: on, opacity: 0.9, fontSize: 14, fontFamily: t.fonts.body }}>
             Başlangıç: {prettyDate(couple.startDate!)}
             {upcoming ? `\n${upcoming}` : ''}
           </Text>
         </>
       ) : (
-        <Text style={{ color: on, fontSize: 14, fontFamily: t.fonts.body }}>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: on, fontSize: 14, fontFamily: t.fonts.body }}>
           Ne zamandan beri birlikte olduğunuzu ekleyin, gün sayacınız burada başlasın.
         </Text>
       )}
@@ -301,7 +316,11 @@ function AboutUs({
       </View>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         {values.map((v, i) => (
-          <Text key={i} style={{ flex: 1, fontSize: 14, lineHeight: 19, color: t.colors.text, fontFamily: t.fonts.body }}>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            key={i}
+            style={{ flex: 1, fontSize: 14, lineHeight: 19, color: t.colors.text, fontFamily: t.fonts.body }}
+          >
             {v}
           </Text>
         ))}
@@ -356,6 +375,7 @@ function AboutUs({
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {common.map((c) => (
               <Text
+                maxFontSizeMultiplier={1.25}
                 key={c}
                 style={{
                   color: t.colors.primary,
@@ -394,7 +414,7 @@ function Stat({ icon, value, label }: { icon: IconName; value: number | undefine
       }}
     >
       <Ionicons name={icon} size={20} color={t.colors.primary} />
-      <Text style={{ fontSize: 26, fontWeight: '700', color: t.colors.text, fontVariant: ['tabular-nums'] }}>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 26, fontWeight: '700', color: t.colors.text, fontVariant: ['tabular-nums'] }}>
         {value === undefined ? '–' : value}
       </Text>
       <Muted style={{ fontSize: 12 }}>{tx(t, label)}</Muted>

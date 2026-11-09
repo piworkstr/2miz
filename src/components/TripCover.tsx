@@ -24,10 +24,14 @@ export function TripCover({ trip, coupleId }: { trip: Trip; coupleId: string }) 
     >
       <Stamp style={{ position: 'absolute', top: 12, right: 12 }} />
       <View style={{ gap: 2, paddingRight: 70 }}>
-        <Text style={{ fontFamily: handFont, fontSize: 30, lineHeight: 34, color: inkColor }} numberOfLines={2}>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{ fontFamily: handFont, fontSize: 30, lineHeight: 34, color: inkColor }}
+          numberOfLines={2}
+        >
           {trip.name}
         </Text>
-        <Text style={{ fontSize: 13, color: '#7A6650' }}>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: '#7A6650' }}>
           {trip.place ? `${trip.place} · ` : ''}
           {tripDates(trip)}
         </Text>
@@ -52,16 +56,23 @@ export function TripCover({ trip, coupleId }: { trip: Trip; coupleId: string }) 
                 elevation: 3,
               }}
             >
-              <Image source={{ uri: `data:image/jpeg;base64,${p.data}` }} style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }} />
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${p.data}` }}
+                style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }}
+              />
             </View>
           ))
         ) : (
-          <Text style={{ fontFamily: handFont, fontSize: 20, color: '#9A8468' }}>Fotoğraflarınızı ekleyin</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 20, color: '#9A8468' }}>
+            Fotoğraflarınızı ekleyin
+          </Text>
         )}
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 12, color: '#7A6650' }}>{trip.count} fotoğraf</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#7A6650' }}>
+          {trip.count} fotoğraf
+        </Text>
         <Ionicons name="chevron-forward" size={18} color="#7A6650" />
       </View>
     </Pressable>
@@ -88,7 +99,9 @@ export function Stamp({ style }: { style?: object }) {
       ]}
     >
       <Ionicons name="airplane" size={20} color="#C0566A" />
-      <Text style={{ fontSize: 8, fontWeight: '700', letterSpacing: 1, color: '#C0566A' }}>2MİZ</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 8, fontWeight: '700', letterSpacing: 1, color: '#C0566A' }}>
+        2MİZ
+      </Text>
     </View>
   );
 }

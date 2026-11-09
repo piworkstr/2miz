@@ -36,7 +36,9 @@ export function DeleteAccount() {
   if (!open) {
     return (
       <Pressable onPress={() => setOpen(true)} style={{ alignItems: 'center', padding: 10 }}>
-        <Text style={{ color: t.colors.muted, fontSize: 14 }}>Hesabımı sil</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 14 }}>
+          Hesabımı sil
+        </Text>
       </Pressable>
     );
   }
@@ -45,12 +47,12 @@ export function DeleteAccount() {
     <Card style={{ borderColor: '#D9534F' }}>
       <T style={{ fontSize: 17, fontWeight: '600' }}>Hesabını silmek üzeresin</T>
       <Muted>
-        Hesabın, profilin ve {partnerName} ile ortak albümünüz, görev geçmişiniz, date'leriniz ve kuponlarınız kalıcı
-        olarak silinir. Bu işlem geri alınamaz. {partnerName}'in hesabı açık kalır ama eşleşmeniz sona erer.
+        Hesabın, profilin ve {partnerName} ile ortak albümünüz, görev geçmişiniz, date'leriniz ve kuponlarınız kalıcı olarak silinir. Bu
+        işlem geri alınamaz. {partnerName}'in hesabı açık kalır ama eşleşmeniz sona erer.
       </Muted>
       <Muted>
-        İleride premium aboneliğin olursa, faturalandırma Apple veya Google üzerinden devam eder; önce telefonunun
-        abonelik ayarlarından iptal etmelisin.
+        İleride premium aboneliğin olursa, faturalandırma Apple veya Google üzerinden devam eder; önce telefonunun abonelik ayarlarından
+        iptal etmelisin.
       </Muted>
       <Input placeholder="Şifren" secureTextEntry value={password} onChangeText={setPassword} />
       <ErrorText>{error}</ErrorText>

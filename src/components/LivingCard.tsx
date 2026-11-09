@@ -38,6 +38,7 @@ export function LivingChips({ compact }: { compact?: boolean }) {
           >
             <Ionicons name={ICON[l.id]} size={20} color={on ? t.colors.primary : t.colors.muted} />
             <Text
+              maxFontSizeMultiplier={1.25}
               numberOfLines={2}
               style={{
                 fontSize: 12,

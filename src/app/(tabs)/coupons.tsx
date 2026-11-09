@@ -112,17 +112,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
-function Ticket({
-  coupon,
-  badge,
-  faded,
-  children,
-}: {
-  coupon: Coupon;
-  badge?: string;
-  faded?: boolean;
-  children?: ReactNode;
-}) {
+function Ticket({ coupon, badge, faded, children }: { coupon: Coupon; badge?: string; faded?: boolean; children?: ReactNode }) {
   const t = useTheme();
   return (
     <View
@@ -138,13 +128,19 @@ function Ticket({
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-        <Text style={{ flex: 1, fontFamily: t.fonts.note, fontSize: 25, lineHeight: 28, color: t.colors.text }}>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{ flex: 1, fontFamily: t.fonts.note, fontSize: 25, lineHeight: 28, color: t.colors.text }}
+        >
           {coupon.title}
         </Text>
-        <Text style={{ color: t.colors.primary, fontWeight: '700', fontSize: 14 }}>{coupon.cost} puan</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '700', fontSize: 14 }}>
+          {coupon.cost} puan
+        </Text>
       </View>
       {badge && (
         <Text
+          maxFontSizeMultiplier={1.25}
           style={{
             alignSelf: 'flex-start',
             backgroundColor: t.colors.primarySoft,
@@ -218,7 +214,9 @@ function MyTicket({ coupon, coupleId, partnerName }: { coupon: Coupon; coupleId:
   return (
     <Ticket coupon={coupon}>
       <Pressable onPress={() => removeCoupon(coupleId, coupon.id)} hitSlop={8} style={{ alignSelf: 'flex-end' }}>
-        <Text style={{ color: t.colors.muted, fontSize: 13 }}>Kaldır</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 13 }}>
+          Kaldır
+        </Text>
       </Pressable>
     </Ticket>
   );
@@ -259,7 +257,9 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {IDEAS.map((idea) => (
           <Pressable key={idea} onPress={() => setTitle(idea)} style={chip(title === idea)}>
-            <Text style={{ color: t.colors.text, fontSize: 13 }}>{idea}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 13 }}>
+              {idea}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -267,7 +267,9 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         {COSTS.map((c) => (
           <Pressable key={c} onPress={() => setCost(c)} style={chip(cost === c)}>
-            <Text style={{ color: cost === c ? t.colors.primary : t.colors.text, fontWeight: '600' }}>{c}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: cost === c ? t.colors.primary : t.colors.text, fontWeight: '600' }}>
+              {c}
+            </Text>
           </Pressable>
         ))}
       </View>

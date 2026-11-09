@@ -56,16 +56,22 @@ export function Hint({ id, children }: { id: string; children: ReactNode }) {
             elevation: 6,
           }}
         >
-          <Text style={{ color: t.colors.text, fontSize: 13, lineHeight: 18, fontFamily: t.fonts.body }}>{children}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 13, lineHeight: 18, fontFamily: t.fonts.body }}>
+            {children}
+          </Text>
           <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
             <Pressable onPress={() => setOpen(false)} style={{ paddingVertical: 6, paddingHorizontal: 10 }}>
-              <Text style={{ color: t.colors.muted, fontWeight: '700', fontSize: 13 }}>{tx(t, 'Tekrar göster')}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontWeight: '700', fontSize: 13 }}>
+                {tx(t, 'Tekrar göster')}
+              </Text>
             </Pressable>
             <Pressable
               onPress={dismiss}
               style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: t.colors.primary }}
             >
-              <Text style={{ color: t.colors.onPrimary, fontWeight: '700', fontSize: 13 }}>{tx(t, 'Anladım')}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '700', fontSize: 13 }}>
+                {tx(t, 'Anladım')}
+              </Text>
             </Pressable>
           </View>
         </View>

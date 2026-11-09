@@ -57,12 +57,11 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
   if (value) {
     return (
       <View style={{ gap: 8 }}>
-        <Image
-          source={{ uri: `data:image/jpeg;base64,${value}` }}
-          style={{ width: '100%', aspectRatio: aspect, borderRadius: radius }}
-        />
+        <Image source={{ uri: `data:image/jpeg;base64,${value}` }} style={{ width: '100%', aspectRatio: aspect, borderRadius: radius }} />
         <Pressable onPress={() => onChange(null)} style={{ alignItems: 'center', padding: 6 }}>
-          <Text style={{ color: t.colors.primary, fontFamily: t.fonts.body }}>Yeniden çek</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontFamily: t.fonts.body }}>
+            Yeniden çek
+          </Text>
         </Pressable>
       </View>
     );
@@ -72,13 +71,7 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
     return (
       <View style={{ gap: 10 }}>
         <View style={{ width: '100%', aspectRatio: aspect, borderRadius: radius, overflow: 'hidden', backgroundColor: '#000' }}>
-          <CameraView
-            ref={camera}
-            style={{ flex: 1 }}
-            facing={facing}
-            mirror={facing === 'front'}
-            onCameraReady={() => setReady(true)}
-          />
+          <CameraView ref={camera} style={{ flex: 1 }} facing={facing} mirror={facing === 'front'} onCameraReady={() => setReady(true)} />
           {/* Kamerayı çevir: önizlemenin üstünde ayrı bir düğme (kamerayı saran dokunma alanı dokunmaları yutabiliyor). */}
           <Pressable
             onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
@@ -127,12 +120,16 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
         })}
       >
         <Ionicons name="camera-outline" size={30} color={t.colors.primary} />
-        <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>Fotoğraf çek</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+          Fotoğraf çek
+        </Text>
         {hint && <Muted style={{ textAlign: 'center', paddingHorizontal: 12 }}>{hint}</Muted>}
       </Pressable>
       {!!error && (
         <Pressable onPress={() => (permission && !permission.canAskAgain ? Linking.openSettings() : start())}>
-          <Text style={{ color: t.colors.primary, fontSize: 14, textAlign: 'center' }}>{error}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 14, textAlign: 'center' }}>
+            {error}
+          </Text>
         </Pressable>
       )}
     </View>

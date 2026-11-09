@@ -67,7 +67,9 @@ export function WeekStrip() {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Bu hafta')}</T>
           <Pressable onPress={() => setOpen((o) => !o)} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '700' }}>{open ? 'Haftayı göster' : 'Takvimi aç'}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '700' }}>
+              {open ? 'Haftayı göster' : 'Takvimi aç'}
+            </Text>
             <Ionicons name={open ? 'chevron-up' : 'chevron-forward'} size={14} color={t.colors.primary} />
           </Pressable>
         </View>
@@ -78,7 +80,9 @@ export function WeekStrip() {
             const dots = dotsFor(k);
             return (
               <View key={k} style={{ alignItems: 'center', width: 40 }}>
-                <Text style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>{WEEK[i]}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
+                  {WEEK[i]}
+                </Text>
                 <View
                   style={{
                     width: 34,
@@ -95,6 +99,7 @@ export function WeekStrip() {
                   }}
                 >
                   <Text
+                    maxFontSizeMultiplier={1.25}
                     style={{
                       fontSize: 15,
                       fontWeight: '700',
@@ -125,17 +130,19 @@ export function WeekStrip() {
               paddingVertical: 8,
             }}
           >
-            <Text style={{ fontSize: 14 }}>{next.icon}</Text>
-            <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '700', color: t.colors.text }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14 }}>
+              {next.icon}
+            </Text>
+            <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ flex: 1, fontSize: 13, fontWeight: '700', color: t.colors.text }}>
               {next.text}
             </Text>
-            <Text style={{ fontSize: 12, color: t.colors.muted }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.muted }}>
               {next.when === 0 ? 'bugün' : next.when === 1 ? 'yarın' : `${next.when} gün kaldı`}
             </Text>
           </View>
         )}
         {!next && (
-          <Text style={{ fontSize: 12, color: t.colors.muted, fontFamily: t.fonts.body }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.muted, fontFamily: t.fonts.body }}>
             Bu hafta plan yok. Takvimi açıp bir şey ekleyin; {partnerName} da görür.
           </Text>
         )}

@@ -119,7 +119,9 @@ export function ScenePanel({
     <>
       <Head title={meta.title} />
       {extra}
-      <Text style={{ fontSize: 17, fontWeight: '800', color: INK, lineHeight: 22 }}>{scene.question}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '800', color: INK, lineHeight: 22 }}>
+        {scene.question}
+      </Text>
       {myAnswer ? (
         <View style={{ gap: 6 }}>
           <AnswerRow p={profile} name="Sen" text={myAnswer} />
@@ -158,7 +160,9 @@ export function ScenePanel({
       )}
       {onClose && (
         <Pressable onPress={onClose} style={{ alignSelf: 'center', padding: 4 }}>
-          <Text style={{ color: MUTED, fontSize: 13 }}>Sonra cevaplarım</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: MUTED, fontSize: 13 }}>
+            Sonra cevaplarım
+          </Text>
         </Pressable>
       )}
     </>
@@ -170,8 +174,12 @@ function AnswerRow({ p, name, text }: { p: Profile | null | undefined; name: str
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
       <Avatar p={p} name={name} size={28} showMood={false} />
       <View style={{ flex: 1, backgroundColor: '#FFF8F0', borderRadius: 12, padding: 8 }}>
-        <Text style={{ fontSize: 11, color: MUTED, fontWeight: '700' }}>{name}</Text>
-        <Text style={{ color: INK, fontSize: 14 }}>{text}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: MUTED, fontWeight: '700' }}>
+          {name}
+        </Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: INK, fontSize: 14 }}>
+          {text}
+        </Text>
       </View>
     </View>
   );

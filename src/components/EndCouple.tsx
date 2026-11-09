@@ -25,7 +25,9 @@ export function EndCouple() {
       await endCouple(password, couple.id);
     } catch (e: unknown) {
       const code = (e as { code?: string }).code ?? '';
-      setError(code === 'auth/invalid-credential' || code === 'auth/wrong-password' ? 'Şifre hatalı.' : 'İşlem tamamlanamadı, tekrar dene.');
+      setError(
+        code === 'auth/invalid-credential' || code === 'auth/wrong-password' ? 'Şifre hatalı.' : 'İşlem tamamlanamadı, tekrar dene.',
+      );
       setBusy(false);
     }
   }
@@ -33,7 +35,9 @@ export function EndCouple() {
   if (!open) {
     return (
       <Pressable onPress={() => setOpen(true)} style={{ alignItems: 'center', padding: 10 }}>
-        <Text style={{ color: t.colors.muted, fontSize: 14 }}>Eşleşmeyi bitir ve engelle</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 14 }}>
+          Eşleşmeyi bitir ve engelle
+        </Text>
       </Pressable>
     );
   }
@@ -42,9 +46,8 @@ export function EndCouple() {
     <Card style={{ borderColor: '#D9534F' }}>
       <T style={{ fontSize: 17, fontWeight: '600' }}>{partnerName} ile eşleşmeyi bitir</T>
       <Muted>
-        Ortak albümünüz, mesajlarınız, görev geçmişiniz, date'leriniz, kuponlarınız ve oyunlarınız ikiniz için de kalıcı
-        olarak silinir. {partnerName} sana bir daha mesaj gönderemez ve sen yeni bir davet kodu paylaşmadıkça seninle
-        eşleşemez. Hesabın açık kalır.
+        Ortak albümünüz, mesajlarınız, görev geçmişiniz, date'leriniz, kuponlarınız ve oyunlarınız ikiniz için de kalıcı olarak silinir.{' '}
+        {partnerName} sana bir daha mesaj gönderemez ve sen yeni bir davet kodu paylaşmadıkça seninle eşleşemez. Hesabın açık kalır.
       </Muted>
       <Input placeholder="Şifren" secureTextEntry value={password} onChangeText={setPassword} />
       <ErrorText>{error}</ErrorText>

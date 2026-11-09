@@ -239,14 +239,19 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
           <Ionicons name="close" size={26} color="#fff" />
         </Pressable>
-        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Birlikte Blok</Text>
+        <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>
+          Birlikte Blok
+        </Text>
       </View>
 
       {/* üst: solda rekor (taç), sağda ikiniz; ortada büyük skor */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Ionicons name="trophy" size={22} color={GOLD} />
-          <Text style={{ color: GOLD, fontSize: 22, fontWeight: '900', textShadowColor: 'rgba(255,210,63,0.7)', textShadowRadius: 10 }}>
+          <Text
+            maxFontSizeMultiplier={1.1}
+            style={{ color: GOLD, fontSize: 22, fontWeight: '900', textShadowColor: 'rgba(255,210,63,0.7)', textShadowRadius: 10 }}
+          >
             {best}
           </Text>
         </View>
@@ -267,7 +272,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
               <Avatar p={partnerProfile} name={partnerName} size={30} showMood={false} />
             </View>
           </View>
-          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '700' }}>
+          <Text maxFontSizeMultiplier={1.1} style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '700' }}>
             {b.over ? 'Oyun bitti' : myTurn ? 'Senin setin' : `${partnerName} oynuyor…`}
           </Text>
         </View>
@@ -290,6 +295,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
           }}
         />
         <Text
+          maxFontSizeMultiplier={1.1}
           style={{
             color: GOLD,
             fontSize: 48,
@@ -358,6 +364,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
       </View>
 
       <Text
+        maxFontSizeMultiplier={1.1}
         style={{
           textAlign: 'center',
           color: GOLD,
@@ -387,7 +394,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
         })}
       </View>
 
-      <Text style={{ textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>
+      <Text maxFontSizeMultiplier={1.1} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>
         {myTurn ? `3 parçanı koyunca set ${partnerName}’a geçer` : ' '}
       </Text>
 
@@ -439,16 +446,25 @@ function GameOver({ score, best }: { score: number; best: number }) {
         shadowOffset: { width: 0, height: 0 },
       }}
     >
-      <Text style={{ fontSize: 48, fontWeight: '900', color: GOLD, textShadowColor: 'rgba(255,170,0,0.8)', textShadowRadius: 14 }}>
+      <Text
+        maxFontSizeMultiplier={1.1}
+        style={{ fontSize: 48, fontWeight: '900', color: GOLD, textShadowColor: 'rgba(255,170,0,0.8)', textShadowRadius: 14 }}
+      >
         {score}
       </Text>
-      <Text style={{ color: '#fff', fontWeight: '700' }}>{score >= best ? 'Yeni çift rekorunuz!' : `Rekorunuz ${best}`}</Text>
-      <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>Günün ilk oyunuysa ikinize de +10 puan</Text>
+      <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontWeight: '700' }}>
+        {score >= best ? 'Yeni çift rekorunuz!' : `Rekorunuz ${best}`}
+      </Text>
+      <Text maxFontSizeMultiplier={1.1} style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+        Günün ilk oyunuysa ikinize de +10 puan
+      </Text>
       <Pressable
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         style={{ marginTop: 6, backgroundColor: '#3D8BFF', borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10 }}
       >
-        <Text style={{ color: '#fff', fontWeight: '800' }}>Bitir</Text>
+        <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontWeight: '800' }}>
+          Bitir
+        </Text>
       </Pressable>
     </Animated.View>
   );

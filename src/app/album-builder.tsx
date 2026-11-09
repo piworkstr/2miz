@@ -50,7 +50,7 @@ export default function AlbumBuilder() {
     const months = PERIODS.find((p) => p.key === period)?.months;
     const from = new Date();
     if (months) from.setMonth(from.getMonth() - months);
-    return { kind: 'period' as const, from: months ? dayKey(from) : couple?.startDate ?? '2000-01-01', to: dayKey() };
+    return { kind: 'period' as const, from: months ? dayKey(from) : (couple?.startDate ?? '2000-01-01'), to: dayKey() };
   }, [period, couple?.startDate]);
 
   useEffect(() => {
@@ -105,21 +105,27 @@ export default function AlbumBuilder() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={t.colors.text} />
         </Pressable>
-        <Text style={{ flex: 1, fontSize: 18, fontWeight: '700', color: t.colors.text }}>Albümünü oluştur</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 18, fontWeight: '700', color: t.colors.text }}>
+          Albümünü oluştur
+        </Text>
       </View>
 
       <View style={{ gap: 8, paddingBottom: 6 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
           {PERIODS.map((p) => (
             <Pressable key={p.key} onPress={() => setPeriod(p.key)} style={chip(period === p.key)}>
-              <Text style={chipText(period === p.key)}>{p.label}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={chipText(period === p.key)}>
+                {p.label}
+              </Text>
             </Pressable>
           ))}
           {(trips ?? []).map((tr) => {
             const k = `trip:${tr.id}` as Period;
             return (
               <Pressable key={k} onPress={() => setPeriod(k)} style={chip(period === k)}>
-                <Text style={chipText(period === k)}>✈ {tr.name}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={chipText(period === k)}>
+                  ✈ {tr.name}
+                </Text>
               </Pressable>
             );
           })}
@@ -127,13 +133,15 @@ export default function AlbumBuilder() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
           {(['21x21', 'A4'] as AlbumSize[]).map((s) => (
             <Pressable key={s} onPress={() => setSize(s)} style={chip(size === s)}>
-              <Text style={chipText(size === s)}>{s === '21x21' ? '21×21 cm kare' : 'A4 dikey'}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={chipText(size === s)}>
+                {s === '21x21' ? '21×21 cm kare' : 'A4 dikey'}
+              </Text>
             </Pressable>
           ))}
           <View style={{ width: 1, backgroundColor: t.colors.border, marginHorizontal: 4 }} />
           {THEMES.map((th) => (
             <View key={th.key} style={chip(th.key === 'polaroid', !th.ready)}>
-              <Text style={chipText(th.key === 'polaroid')}>
+              <Text maxFontSizeMultiplier={1.25} style={chipText(th.key === 'polaroid')}>
                 {th.label}
                 {th.ready ? '' : ' · yakında'}
               </Text>
@@ -172,22 +180,25 @@ export default function AlbumBuilder() {
       {plan && (
         <View style={{ padding: 16, gap: 8, borderTopWidth: 1, borderTopColor: t.colors.border, backgroundColor: t.colors.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: t.colors.text }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 15, fontWeight: '700', color: t.colors.text }}>
               {plan.pages.length} sayfa
-              <Text style={{ fontWeight: '400', color: t.colors.muted }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '400', color: t.colors.muted }}>
                 {' '}
                 · {page === 0 ? 'kapak' : `${page}. sayfa`}
               </Text>
             </Text>
             {exclude.length > 0 && (
               <Pressable onPress={() => setExclude([])} hitSlop={8}>
-                <Text style={{ color: t.colors.primary, fontWeight: '600', fontSize: 13 }}>{exclude.length} sayfayı geri al</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontSize: 13 }}>
+                  {exclude.length} sayfayı geri al
+                </Text>
               </Pressable>
             )}
           </View>
           <Muted style={{ fontSize: 12 }}>
             {plan.contentPages} anı sayfası
-            {plan.fillers > 0 ? ` · ${plan.fillers} not sayfası (baskı ${PAGE_STEP}'ün katı olduğu için)` : ''}. Çıkarmak istediğin sayfaya dokun.
+            {plan.fillers > 0 ? ` · ${plan.fillers} not sayfası (baskı ${PAGE_STEP}'ün katı olduğu için)` : ''}. Çıkarmak istediğin sayfaya
+            dokun.
           </Muted>
           {plan.tooFew && (
             <Muted style={{ fontSize: 12, color: t.colors.primary }}>
@@ -195,12 +206,25 @@ export default function AlbumBuilder() {
             </Muted>
           )}
           {plan.tooMany && (
-            <Muted style={{ fontSize: 12, color: t.colors.primary }}>Albüm en fazla 100 sayfa olabilir; son anılar sığmadı. Dönemi kısalt.</Muted>
+            <Muted style={{ fontSize: 12, color: t.colors.primary }}>
+              Albüm en fazla 100 sayfa olabilir; son anılar sığmadı. Dönemi kısalt.
+            </Muted>
           )}
           {sent ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 12, backgroundColor: t.colors.successSoft }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                padding: 12,
+                borderRadius: 12,
+                backgroundColor: t.colors.successSoft,
+              }}
+            >
               <Ionicons name="checkmark-circle" size={22} color={t.colors.success} />
-              <Text style={{ flex: 1, color: t.colors.text }}>Baskı talebin alındı. Sipariş ve ödeme çok yakında; hazır olunca haber vereceğiz.</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text }}>
+                Baskı talebin alındı. Sipariş ve ödeme çok yakında; hazır olunca haber vereceğiz.
+              </Text>
             </View>
           ) : (
             <Button label="Baskı talebi bırak" onPress={request} busy={busy} />
@@ -210,9 +234,22 @@ export default function AlbumBuilder() {
 
       <Modal visible={!!tapped} transparent animationType="fade" onRequestClose={() => setTapped(null)}>
         <Pressable onPress={() => setTapped(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36, gap: 10 }}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: t.colors.text }}>Bu sayfa albümde olmasın mı?</Text>
-            <Muted style={{ fontSize: 13 }}>Sayfa sadece bu albümden çıkar, fotoğraflar silinmez. Sayfa sayısı yine 4'ün katına tamamlanır.</Muted>
+          <View
+            style={{
+              backgroundColor: t.colors.card,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              paddingBottom: 36,
+              gap: 10,
+            }}
+          >
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '700', color: t.colors.text }}>
+              Bu sayfa albümde olmasın mı?
+            </Text>
+            <Muted style={{ fontSize: 13 }}>
+              Sayfa sadece bu albümden çıkar, fotoğraflar silinmez. Sayfa sayısı yine 4'ün katına tamamlanır.
+            </Muted>
             <Button
               label="Albümden çıkar"
               onPress={() => {

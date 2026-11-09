@@ -72,7 +72,10 @@ export function CoupleInfoCard() {
                 backgroundColor: on ? t.colors.primarySoft : 'transparent',
               }}
             >
-              <Text style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 14 }}>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 14 }}
+              >
                 {tx(t, s.label)}
               </Text>
             </Pressable>
@@ -82,7 +85,9 @@ export function CoupleInfoCard() {
       <ErrorText>{error}</ErrorText>
       <Button label="Kaydet" onPress={save} busy={busy} />
       <Pressable onPress={() => setHidden(true)} style={{ alignItems: 'center', padding: 4 }}>
-        <Text style={{ color: t.colors.muted }}>Sonra</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+          Sonra
+        </Text>
       </Pressable>
     </Card>
   );

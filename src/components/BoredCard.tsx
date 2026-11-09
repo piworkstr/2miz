@@ -106,14 +106,21 @@ export function BoredCard() {
             >
               <Ionicons name={GAMES[g].icon as IconName} size={24} color={t.colors.primary} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: t.colors.text, fontWeight: '600', fontSize: 15, fontFamily: t.fonts.body }}>{GAMES[g].name}</Text>
+                <Text
+                  maxFontSizeMultiplier={1.25}
+                  style={{ color: t.colors.text, fontWeight: '600', fontSize: 15, fontFamily: t.fonts.body }}
+                >
+                  {GAMES[g].name}
+                </Text>
                 <Muted style={{ fontSize: 12 }}>{busy === g ? 'Davet gönderiliyor…' : GAMES[g].blurb}</Muted>
               </View>
             </Pressable>
           ))}
           <ErrorText>{error}</ErrorText>
           <Pressable onPress={() => setChoosing(false)} style={{ alignItems: 'center', padding: 4 }}>
-            <Text style={{ color: t.colors.muted }}>Vazgeç</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+              Vazgeç
+            </Text>
           </Pressable>
         </>
       ) : (

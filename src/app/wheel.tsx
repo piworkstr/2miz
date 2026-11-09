@@ -13,7 +13,9 @@ export default function WheelScreen() {
     <Screen>
       <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Ionicons name="chevron-back" size={22} color={t.colors.text} />
-        <Text style={{ color: t.colors.text, fontSize: 15, fontFamily: t.fonts.body }}>{tx(t, 'Bugün')}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 15, fontFamily: t.fonts.body }}>
+          {tx(t, 'Bugün')}
+        </Text>
       </Pressable>
       <TaskWheel />
     </Screen>

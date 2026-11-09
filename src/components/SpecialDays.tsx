@@ -51,12 +51,22 @@ function useSpecials(): Special[] {
       title: `${partnerName}'in doğum günü`,
       today: `Bugün ${partnerName}'in doğum günü! 🎂`,
       days: b.days,
-      remind: (d) => (d === 0 ? `Bugün ${partnerName}'in doğum günü! 🎂 Kutlamayı unutma.` : `${partnerName}'in doğum gününe ${d} gün kaldı 🎂 Hediye düşündün mü?`),
+      remind: (d) =>
+        d === 0
+          ? `Bugün ${partnerName}'in doğum günü! 🎂 Kutlamayı unutma.`
+          : `${partnerName}'in doğum gününe ${d} gün kaldı 🎂 Hediye düşündün mü?`,
     });
   }
   if (profile?.birthDate) {
     const b = daysUntilYearly(profile.birthDate);
-    list.push({ id: 'my-birthday', icon: 'balloon', color: '#5B8DB8', title: 'Senin doğum günün', today: 'İyi ki doğdun! 🎈', days: b.days });
+    list.push({
+      id: 'my-birthday',
+      icon: 'balloon',
+      color: '#5B8DB8',
+      title: 'Senin doğum günün',
+      today: 'İyi ki doğdun! 🎈',
+      days: b.days,
+    });
   }
   return list.sort((x, y) => x.days - y.days);
 }
@@ -105,7 +115,12 @@ export function SpecialDays() {
       {todays.map((s) => (
         <View key={s.id} style={{ backgroundColor: s.color, borderRadius: t.radius.card, padding: 18, alignItems: 'center', gap: 6 }}>
           <Ionicons name={s.icon} size={34} color="#fff" />
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', textAlign: 'center', fontFamily: t.fonts.button }}>{tx(t, s.today)}</Text>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ color: '#fff', fontSize: 20, fontWeight: '700', textAlign: 'center', fontFamily: t.fonts.button }}
+          >
+            {tx(t, s.today)}
+          </Text>
         </View>
       ))}
       {soon.length > 0 && (
@@ -113,12 +128,25 @@ export function SpecialDays() {
           <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Yaklaşan özel günler')}</T>
           {soon.map((s) => (
             <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: s.color, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: s.color,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Ionicons name={s.icon} size={18} color="#fff" />
               </View>
-              <Text style={{ flex: 1, fontSize: 15, color: t.colors.text, fontFamily: t.fonts.body }}>{s.title}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 15, color: t.colors.text, fontFamily: t.fonts.body }}>
+                {s.title}
+              </Text>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: s.color }}>{s.days}</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 20, fontWeight: '700', color: s.color }}>
+                  {s.days}
+                </Text>
                 <Muted style={{ fontSize: 11 }}>{s.days === 1 ? 'yarın' : 'gün kaldı'}</Muted>
               </View>
             </View>

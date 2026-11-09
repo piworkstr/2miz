@@ -361,7 +361,9 @@ function Badge({ x, y, art, z, n }: { x: number; y: number; art: string; z: numb
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 10, fontWeight: '900', color: '#5A3E00' }}>{n}</Text>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 10, fontWeight: '900', color: '#5A3E00' }}>
+            {n}
+          </Text>
         </View>
       )}
     </Animated.View>
@@ -867,7 +869,9 @@ export default function GardenScreen() {
         <View style={[pill, { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 3, paddingRight: 10 }]}>
           <Avatar p={profile} name={myName} size={30} showMood={false} />
           <View>
-            <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>Seviye {lv.level}</Text>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+              Seviye {lv.level}
+            </Text>
             <View style={{ width: 70, height: 6, borderRadius: 3, backgroundColor: '#EADFD8', overflow: 'hidden' }}>
               <View
                 style={{ width: `${Math.round(((farm.xp - lv.from) / (lv.to - lv.from)) * 100)}%`, height: 6, backgroundColor: '#6DB33F' }}
@@ -889,7 +893,9 @@ export default function GardenScreen() {
           }}
         >
           <Image source={ART.coin.src} style={{ width: 24, height: 21 }} />
-          <Text style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>{farm.coins}</Text>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>
+            {farm.coins}
+          </Text>
         </View>
       </View>
       {placing && (
@@ -906,7 +912,7 @@ export default function GardenScreen() {
               paddingVertical: 8,
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
               {placing.a === 'plant' ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun` : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
@@ -915,6 +921,7 @@ export default function GardenScreen() {
       )}
       <View pointerEvents="none" style={{ position: 'absolute', left: 10, top: insets.top + 52 }}>
         <Text
+          maxFontSizeMultiplier={1.0}
           style={[pill, { fontWeight: '800', fontSize: 11, color: INK, paddingHorizontal: 10, paddingVertical: 5, overflow: 'hidden' }]}
         >
           {SEASON_NAME[season]}
@@ -947,6 +954,7 @@ export default function GardenScreen() {
       {!!toast && (
         <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 52, left: 56, right: 56, alignItems: 'center' }}>
           <Text
+            maxFontSizeMultiplier={1.0}
             numberOfLines={2}
             style={{
               backgroundColor: 'rgba(43,29,34,0.86)',
@@ -1145,7 +1153,9 @@ function Btn({
         opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
       })}
     >
-      <Text style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15 }}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.0} style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15 }}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -1194,11 +1204,14 @@ function Round({
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontWeight: '900', fontSize: 12, color: '#5A3E00' }}>{badge}</Text>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: '#5A3E00' }}>
+              {badge}
+            </Text>
           </View>
         )}
       </GlassCircle>
       <Text
+        maxFontSizeMultiplier={1.0}
         numberOfLines={1}
         style={{
           marginTop: 3,
@@ -1220,7 +1233,9 @@ function Head({ art, title, onClose }: { art?: string; title: string; onClose: (
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       {art && ART[art] && <Image source={ART[art].src} style={{ width: 34, height: 30 }} resizeMode="contain" />}
-      <Text style={{ flex: 1, fontWeight: '900', fontSize: 17, color: INK }}>{title}</Text>
+      <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '900', fontSize: 17, color: INK }}>
+        {title}
+      </Text>
       <Pressable
         onPress={onClose}
         accessibilityLabel="Kapat"
@@ -1234,7 +1249,11 @@ function Head({ art, title, onClose }: { art?: string; title: string; onClose: (
 }
 
 function Note({ children }: { children: ReactNode }) {
-  return <Text style={{ color: MUTED, fontSize: 13, lineHeight: 18 }}>{children}</Text>;
+  return (
+    <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 13, lineHeight: 18 }}>
+      {children}
+    </Text>
+  );
 }
 
 type Item = { id: string; art: string; name: string; cost: number; lvl: number; sub: string; a: Action };
@@ -1260,13 +1279,13 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
             })}
           >
             <Image source={ART[it.art].src} style={{ width: 54, height: 44 }} resizeMode="contain" />
-            <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+            <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
               {it.name}
             </Text>
-            <Text style={{ fontWeight: '900', fontSize: 12, color: '#7A5A00' }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: '#7A5A00' }}>
               {level < it.lvl ? `Seviye ${it.lvl}` : `${it.cost} altın`}
             </Text>
-            <Text numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+            <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
               {it.sub}
             </Text>
           </Pressable>
@@ -1293,7 +1312,9 @@ function Tabs({ tabs, value, onChange, extra }: { tabs: [Shop, string][]; value:
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontWeight: '800', fontSize: 13, color: value === k ? '#fff' : INK }}>{l}</Text>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: value === k ? '#fff' : INK }}>
+            {l}
+          </Text>
         </Pressable>
       ))}
       {extra}
@@ -1339,8 +1360,12 @@ function Sheet(p: SheetProps) {
           {farm.log.length === 0 && <Note>Henüz bir şey olmadı. İlk tohumu ekin!</Note>}
           {farm.log.map((l, k) => (
             <View key={k} style={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}>
-              <Text style={{ width: 46, color: MUTED, fontSize: 12 }}>{ago(now - l.at)}</Text>
-              <Text style={{ flex: 1, color: INK, fontSize: 13 }}>{l.text}</Text>
+              <Text maxFontSizeMultiplier={1.0} style={{ width: 46, color: MUTED, fontSize: 12 }}>
+                {ago(now - l.at)}
+              </Text>
+              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: INK, fontSize: 13 }}>
+                {l.text}
+              </Text>
             </View>
           ))}
         </ScrollView>
@@ -1366,6 +1391,7 @@ function Sheet(p: SheetProps) {
         {!!hint && (
           <View pointerEvents="none" style={{ alignItems: 'center' }}>
             <Text
+              maxFontSizeMultiplier={1.0}
               style={{
                 backgroundColor: 'rgba(43,29,34,0.78)',
                 color: '#fff',
@@ -1455,10 +1481,12 @@ function Sheet(p: SheetProps) {
                   }}
                 >
                   <Image source={(ART[k] ?? ART.coin).src} style={{ width: 44, height: 40 }} resizeMode="contain" />
-                  <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
+                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
                     {PRODUCT_NAME[k] ?? k}
                   </Text>
-                  <Text style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>×{v}</Text>
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>
+                    ×{v}
+                  </Text>
                 </View>
               ))}
             </ScrollView>
@@ -1505,7 +1533,9 @@ function Sheet(p: SheetProps) {
         {empties > 1 && (
           <Pressable onPress={() => p.setPlantAll(!p.plantAll)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name={p.plantAll ? 'checkbox' : 'square-outline'} size={20} color={GREEN} />
-            <Text style={{ color: INK, fontSize: 13 }}>Boş tarlaların hepsine ek ({empties})</Text>
+            <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontSize: 13 }}>
+              Boş tarlaların hepsine ek ({empties})
+            </Text>
           </Pressable>
         )}
       </>
@@ -1614,8 +1644,13 @@ function Sheet(p: SheetProps) {
               return (
                 <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Image source={ART[r.id].src} style={{ width: 34, height: 30 }} resizeMode="contain" />
-                  <Text style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>{an.name}</Text>
-                  <Text style={{ fontSize: 12, color: isReady ? GREEN : hungryOne ? '#B4521E' : MUTED, fontWeight: '700' }}>
+                  <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+                    {an.name}
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={1.0}
+                    style={{ fontSize: 12, color: isReady ? GREEN : hungryOne ? '#B4521E' : MUTED, fontWeight: '700' }}
+                  >
                     {isReady
                       ? `${productNames(r.id)} hazır`
                       : hungryOne
@@ -1831,14 +1866,14 @@ function Orders({
                     {Object.entries(o.items).map(([k, q]) => (
                       <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                         {ART[k] && <Image source={ART[k].src} style={{ width: 22, height: 22 }} resizeMode="contain" />}
-                        <Text style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
+                        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
                           {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
                         </Text>
                       </View>
                     ))}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ flex: 1, color: MUTED, fontSize: 12 }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
                       +{o.coins} altın · +{o.xp} tecrübe{who(o) ? ` · ${who(o)}` : ''}
                     </Text>
                     <Btn
@@ -1850,7 +1885,9 @@ function Orders({
                   </View>
                 </>
               ) : (
-                <Text style={{ color: MUTED, fontSize: 13 }}>Yeni sipariş {timeLeft(o.openAt - now)} sonra</Text>
+                <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 13 }}>
+                  Yeni sipariş {timeLeft(o.openAt - now)} sonra
+                </Text>
               )}
             </View>
           );
@@ -1926,8 +1963,10 @@ function NoteTree({
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: INK, fontSize: 14 }}>{n.text}</Text>
-              <Text style={{ color: MUTED, fontSize: 10, textAlign: mine ? 'right' : 'left' }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontSize: 14 }}>
+                {n.text}
+              </Text>
+              <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 10, textAlign: mine ? 'right' : 'left' }}>
                 {mine ? 'sen' : partnerName} · {ago(now - n.at)}
               </Text>
             </View>

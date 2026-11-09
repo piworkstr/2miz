@@ -33,8 +33,12 @@ export function DreamHud({ title, sub, coins, left }: { title: string; sub: stri
       <View style={[pill, { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 3, paddingRight: 12 }]}>
         {left}
         <View>
-          <Text style={{ fontWeight: '800', fontSize: 13, color: INK }}>{title}</Text>
-          <Text style={{ fontSize: 11, color: MUTED }}>{sub}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+            {title}
+          </Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: MUTED }}>
+            {sub}
+          </Text>
         </View>
       </View>
       <View style={{ flex: 1 }} />
@@ -51,7 +55,9 @@ export function DreamHud({ title, sub, coins, left }: { title: string; sub: stri
         }}
       >
         <Image source={ART.coin.src} style={{ width: 24, height: 21 }} />
-        <Text style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>{coins}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>
+          {coins}
+        </Text>
       </View>
     </View>
   );
@@ -63,6 +69,7 @@ export function DreamToast({ text }: { text: string }) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 50, left: 24, right: 24, alignItems: 'center' }}>
       <Text
+        maxFontSizeMultiplier={1.25}
         numberOfLines={2}
         style={{
           backgroundColor: 'rgba(43,29,34,0.86)',
@@ -137,7 +144,12 @@ export function Btn({
         opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
       })}
     >
-      <Text style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15, textAlign: 'center' }}>{label}</Text>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15, textAlign: 'center' }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -146,7 +158,9 @@ export function Head({ img, title, onClose }: { img?: ImageSourcePropType; title
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       {img && <Image source={img} style={{ width: 36, height: 32 }} resizeMode="contain" />}
-      <Text style={{ flex: 1, fontWeight: '900', fontSize: 17, color: INK }}>{title}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontWeight: '900', fontSize: 17, color: INK }}>
+        {title}
+      </Text>
       {onClose && (
         <Pressable
           onPress={onClose}
@@ -162,7 +176,11 @@ export function Head({ img, title, onClose }: { img?: ImageSourcePropType; title
 }
 
 export function Note({ children, center }: { children: ReactNode; center?: boolean }) {
-  return <Text style={{ color: MUTED, fontSize: 13, lineHeight: 18, textAlign: center ? 'center' : 'left' }}>{children}</Text>;
+  return (
+    <Text maxFontSizeMultiplier={1.25} style={{ color: MUTED, fontSize: 13, lineHeight: 18, textAlign: center ? 'center' : 'left' }}>
+      {children}
+    </Text>
+  );
 }
 
 export type ShopItem = {
@@ -194,13 +212,13 @@ export function Shop({ list }: { list: ShopItem[] }) {
           })}
         >
           <Image source={it.img} style={{ width: 56, height: 44 }} resizeMode="contain" />
-          <Text numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+          <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
             {it.name}
           </Text>
-          <Text numberOfLines={1} style={{ fontWeight: '900', fontSize: 11, color: '#7A5A00' }}>
+          <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ fontWeight: '900', fontSize: 11, color: '#7A5A00' }}>
             {it.price}
           </Text>
-          <Text numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+          <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
             {it.sub}
           </Text>
         </Pressable>
@@ -238,8 +256,10 @@ export function ActTile({
       })}
     >
       <Image source={img} style={{ width: 40, height: 34 }} resizeMode="contain" />
-      <Text style={{ fontSize: 11, fontWeight: '800', color: INK }}>{title}</Text>
-      <Text numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, fontWeight: '800', color: INK }}>
+        {title}
+      </Text>
+      <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
         {sub}
       </Text>
     </Pressable>

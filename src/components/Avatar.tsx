@@ -6,7 +6,17 @@ import { useTheme } from '../lib/useTheme';
 
 // Kişinin avatarı: çizilmiş karakter, fotoğraf ya da (hiçbiri yoksa) adının baş harfi.
 // Ruh hali varsa çizilmiş avatarın yüz ifadesi değişir; fotoğrafta köşede emoji çıkar.
-export function Avatar({ p, name, size = 44, showMood = true }: { p: Profile | null | undefined; name: string; size?: number; showMood?: boolean }) {
+export function Avatar({
+  p,
+  name,
+  size = 44,
+  showMood = true,
+}: {
+  p: Profile | null | undefined;
+  name: string;
+  size?: number;
+  showMood?: boolean;
+}) {
   const t = useTheme();
   const mood = showMood ? activeMood(p?.mood) : null;
   const a = p?.avatar;
@@ -28,7 +38,9 @@ export function Avatar({ p, name, size = 44, showMood = true }: { p: Profile | n
         borderColor: t.colors.border,
       }}
     >
-      <Text style={{ fontSize: Math.max(11, size * 0.26) }}>{MOODS[mood].emoji}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: Math.max(11, size * 0.26) }}>
+        {MOODS[mood].emoji}
+      </Text>
     </View>
   );
 
@@ -49,7 +61,9 @@ export function Avatar({ p, name, size = 44, showMood = true }: { p: Profile | n
             justifyContent: 'center',
           }}
         >
-          <Text style={{ color: t.colors.primary, fontWeight: '700', fontSize: size * 0.4 }}>{(name || '?').slice(0, 1).toLocaleUpperCase('tr-TR')}</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '700', fontSize: size * 0.4 }}>
+            {(name || '?').slice(0, 1).toLocaleUpperCase('tr-TR')}
+          </Text>
         </View>
       )}
       {badge}

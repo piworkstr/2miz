@@ -105,7 +105,8 @@ export function TaskWheel() {
     const seen = couple?.seenTasks ?? [];
     // Yaşam düzenine uymayan görevler çarktan da çıkmaz (ayrı yaşayana "kahvaltı hazırla" gibi).
     const living = couple?.living ?? (couple?.status === 'uzak' ? 'far' : undefined);
-    const pool = mode === 'fav' ? favTasks.filter((x) => x.category === cat) : TASKS.filter((x) => x.category === cat && allowed(x, living));
+    const pool =
+      mode === 'fav' ? favTasks.filter((x) => x.category === cat) : TASKS.filter((x) => x.category === cat && allowed(x, living));
     const fresh = pool.filter((x) => x.id !== shown?.taskId && (mode === 'fav' || !seen.includes(x.id)));
     const list = fresh.length ? fresh : pool;
     return list[Math.floor(Math.random() * list.length)];
@@ -215,6 +216,7 @@ export function TaskWheel() {
               }}
             >
               <Text
+                maxFontSizeMultiplier={1.25}
                 style={{
                   fontSize: 13,
                   fontWeight: '600',
@@ -283,7 +285,7 @@ export function TaskWheel() {
                   }}
                 >
                   <Ionicons name={categoryStyle[c].icon as IconName} size={22} color="#fff" />
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
                     {c === 'yeni' ? 'Yeni' : categoryLabels[c]}
                   </Text>
                 </View>
@@ -313,6 +315,7 @@ export function TaskWheel() {
             })}
           >
             <Text
+              maxFontSizeMultiplier={1.25}
               style={{
                 fontWeight: '800',
                 fontSize: 14,
@@ -393,6 +396,7 @@ function Answers({
       }}
     >
       <Text
+        maxFontSizeMultiplier={1.25}
         style={{
           fontSize: 12,
           fontWeight: '600',
@@ -403,6 +407,7 @@ function Answers({
         {name}
       </Text>
       <Text
+        maxFontSizeMultiplier={1.25}
         style={{
           fontSize: 21,
           lineHeight: 25,
@@ -504,7 +509,7 @@ function DecideBox({
           }}
         >
           <Ionicons name="checkmark-circle" size={22} color="#4FA37E" />
-          <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
             {spin.decidedBy === uid ? 'Kabul ettin' : `${partnerName} kabul etti`}. Görev ana sayfadaki görevlerinize eklendi; yapınca orada
             "Tamamladım" deyin.
           </Text>

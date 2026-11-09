@@ -145,14 +145,17 @@ export default function Chat() {
       <View style={{ paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: t.colors.border }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Avatar p={partnerProfile} name={partnerName} size={40} />
-          <Text style={{ flex: 1, fontFamily: t.fonts.title, fontSize: t.titleSize * 0.8, lineHeight: t.titleSize, color: t.colors.text }}>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ flex: 1, fontFamily: t.fonts.title, fontSize: t.titleSize * 0.8, lineHeight: t.titleSize, color: t.colors.text }}
+          >
             {tx(t, partnerName)}
           </Text>
           <BondStreak compact />
           <BondHeart box={40} max={30} showLabel={false} />
         </View>
         {partnerTyping ? (
-          <Text style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
             {partnerTyping === 'voice' ? '🎤 ses kaydediyor…' : 'yazıyor…'}
           </Text>
         ) : (
@@ -200,36 +203,46 @@ export default function Chat() {
           {voice.recording ? (
             <View style={{ flex: 1, minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#E53935' }} />
-              <Text style={{ fontSize: 16, fontWeight: '600', color: t.colors.text, fontVariant: ['tabular-nums'] }}>{fmt(voice.ms)}</Text>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ fontSize: 16, fontWeight: '600', color: t.colors.text, fontVariant: ['tabular-nums'] }}
+              >
+                {fmt(voice.ms)}
+              </Text>
               <Muted style={{ flex: 1, fontSize: 12 }}>Bırakınca gönderilir · iptal için yukarı kaydır</Muted>
             </View>
           ) : (
-          <>
-          <Pressable onPress={() => router.push('/camera')} hitSlop={8} accessibilityLabel="Anlık fotoğraf gönder" style={{ padding: 8 }}>
-            <Ionicons name="camera" size={26} color={t.colors.primary} />
-          </Pressable>
-          <TextInput
-            value={text}
-            onChangeText={onType}
-            placeholder="Mesaj yaz…"
-            placeholderTextColor={t.colors.muted}
-            multiline
-            maxLength={1000}
-            style={{
-              flex: 1,
-              maxHeight: 120,
-              minHeight: 42,
-              backgroundColor: t.colors.bg,
-              borderRadius: 21,
-              paddingHorizontal: 14,
-              paddingTop: 11,
-              paddingBottom: 11,
-              fontSize: 16,
-              color: t.colors.text,
-              fontFamily: t.fonts.body,
-            }}
-          />
-          </>
+            <>
+              <Pressable
+                onPress={() => router.push('/camera')}
+                hitSlop={8}
+                accessibilityLabel="Anlık fotoğraf gönder"
+                style={{ padding: 8 }}
+              >
+                <Ionicons name="camera" size={26} color={t.colors.primary} />
+              </Pressable>
+              <TextInput
+                value={text}
+                onChangeText={onType}
+                placeholder="Mesaj yaz…"
+                placeholderTextColor={t.colors.muted}
+                multiline
+                maxLength={1000}
+                style={{
+                  flex: 1,
+                  maxHeight: 120,
+                  minHeight: 42,
+                  backgroundColor: t.colors.bg,
+                  borderRadius: 21,
+                  paddingHorizontal: 14,
+                  paddingTop: 11,
+                  paddingBottom: 11,
+                  fontSize: 16,
+                  color: t.colors.text,
+                  fontFamily: t.fonts.body,
+                }}
+              />
+            </>
           )}
           {text.trim() && !voice.recording ? (
             <Pressable
@@ -290,7 +303,11 @@ function TypingBubble({ kind, name }: { kind: 'text' | 'voice'; name: string }) 
     return () => loop.stop();
   }, [anim]);
   const dot = (i: number) => ({
-    opacity: anim.interpolate({ inputRange: [0, (i + 0.5) / 4, (i + 1.5) / 4, 1], outputRange: [0.3, 1, 0.3, 0.3], extrapolate: 'clamp' as const }),
+    opacity: anim.interpolate({
+      inputRange: [0, (i + 0.5) / 4, (i + 1.5) / 4, 1],
+      outputRange: [0.3, 1, 0.3, 0.3],
+      extrapolate: 'clamp' as const,
+    }),
   });
   return (
     <View style={{ alignItems: 'flex-start', paddingTop: 4 }}>
@@ -311,7 +328,9 @@ function TypingBubble({ kind, name }: { kind: 'text' | 'voice'; name: string }) 
         {kind === 'voice' ? (
           <>
             <Ionicons name="mic" size={16} color={t.colors.primary} />
-            <Text style={{ fontSize: 13, color: t.colors.muted }}>{name} ses kaydediyor</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
+              {name} ses kaydediyor
+            </Text>
           </>
         ) : null}
         {[0, 1, 2].map((i) => (
@@ -381,7 +400,7 @@ function Bubble({
       }}
     >
       {reactions.map((e, i) => (
-        <Text key={i} style={{ fontSize: 14 }}>
+        <Text maxFontSizeMultiplier={1.25} key={i} style={{ fontSize: 14 }}>
           {e}
         </Text>
       ))}
@@ -414,19 +433,26 @@ function Bubble({
           }}
         >
           {photo ? (
-            <Image source={{ uri: `data:image/jpeg;base64,${photo}` }} style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: '#eee' }} />
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${photo}` }}
+              style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: '#eee' }}
+            />
           ) : (
             <View style={{ width: '100%', aspectRatio: 3 / 4, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3ECE8' }}>
               <ActivityIndicator color="#E8516A" />
             </View>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 6, minHeight: 30 }}>
-            <Text style={{ fontFamily: handFont, fontSize: 20, color: inkColor }}>{time}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 20, color: inkColor }}>
+              {time}
+            </Text>
             {m.inAlbum && <Ionicons name="bookmark" size={14} color="#E8516A" />}
             {status && <StatusIcon state={status} size={15} />}
           </View>
           {!!m.text && (
-            <Text style={{ fontFamily: handFont, fontSize: 19, color: inkColor, textAlign: 'center' }}>{m.text}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 19, color: inkColor, textAlign: 'center' }}>
+              {m.text}
+            </Text>
           )}
         </Pressable>
         {badge}
@@ -455,6 +481,7 @@ function Bubble({
           <VoicePlayer coupleId={coupleId} m={m} mine={mine} />
         ) : (
           <Text
+            maxFontSizeMultiplier={1.25}
             style={{
               color: mine ? t.colors.onPrimary : t.colors.text,
               fontSize: 16,
@@ -471,7 +498,11 @@ function Bubble({
       {badge}
       {(showTime || status) && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginHorizontal: 6 }}>
-          {showTime && <Text style={{ fontSize: 11, color: t.colors.muted }}>{time}</Text>}
+          {showTime && (
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: t.colors.muted }}>
+              {time}
+            </Text>
+          )}
           {status && <StatusIcon state={status} />}
         </View>
       )}
@@ -482,7 +513,19 @@ function Bubble({
 const REASONS = ['Uygunsuz içerik', 'Taciz ya da tehdit', 'Rızam olmadan paylaşılan fotoğraf', 'Diğer'];
 
 // Uzun basınca: kendi mesajını silme, partnerin mesajını şikayet etme.
-function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | null; uid: string; coupleId: string; partnerName: string; onClose: () => void }) {
+function MessageMenu({
+  m,
+  uid,
+  coupleId,
+  partnerName,
+  onClose,
+}: {
+  m: Message | null;
+  uid: string;
+  coupleId: string;
+  partnerName: string;
+  onClose: () => void;
+}) {
   const t = useTheme();
   const [reporting, setReporting] = useState(false);
   const [done, setDone] = useState(false);
@@ -535,7 +578,9 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
               backgroundColor: on ? t.colors.primarySoft : 'transparent',
             }}
           >
-            <Text style={{ fontSize: 26 }}>{e}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 26 }}>
+              {e}
+            </Text>
           </Pressable>
         );
       })}
@@ -564,8 +609,18 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
 
   function row(label: string, onPress: () => void, danger?: boolean) {
     return (
-      <Pressable key={label} onPress={onPress} style={({ pressed }) => ({ paddingVertical: 16, paddingHorizontal: 20, backgroundColor: pressed ? t.colors.primarySoft : 'transparent' })}>
-        <Text style={{ fontSize: 16, color: danger ? '#C0392B' : t.colors.text, fontFamily: t.fonts.body }}>{label}</Text>
+      <Pressable
+        key={label}
+        onPress={onPress}
+        style={({ pressed }) => ({
+          paddingVertical: 16,
+          paddingHorizontal: 20,
+          backgroundColor: pressed ? t.colors.primarySoft : 'transparent',
+        })}
+      >
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: danger ? '#C0392B' : t.colors.text, fontFamily: t.fonts.body }}>
+          {label}
+        </Text>
       </Pressable>
     );
   }
@@ -573,73 +628,97 @@ function MessageMenu({ m, uid, coupleId, partnerName, onClose }: { m: Message | 
   return (
     <Modal visible={!!m} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Pressable onPress={close} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-        <Pressable style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 34, paddingTop: 8 }}>
-          {adding ? (
-            <View style={{ padding: 20, gap: 12 }}>
-              <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Albüme anı olarak ekle</Text>
-              <Muted>Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).</Muted>
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder="Örn. O akşamki gün batımı"
-                placeholderTextColor={t.colors.muted}
-                maxLength={80}
-                autoFocus
-                style={{
-                  backgroundColor: t.colors.bg,
-                  borderRadius: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
-                  fontSize: 22,
-                  color: inkColor,
-                  fontFamily: handFont,
-                }}
-              />
-              {!!err && <Text style={{ color: '#C0392B' }}>{err}</Text>}
-              <Pressable
-                onPress={add}
-                style={{ backgroundColor: t.colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
-              >
-                {busy ? <ActivityIndicator color={t.colors.onPrimary} /> : <Text style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600' }}>Albüme ekle</Text>}
-              </Pressable>
-              {row('Vazgeç', close)}
-            </View>
-          ) : done ? (
-            <View style={{ padding: 20, gap: 8 }}>
-              <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Şikayetin alındı</Text>
-              <Muted>
-                Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan Biz
-                ekranından eşleşmeni bitirebilirsin.
-              </Muted>
-              {row('Tamam', close)}
-            </View>
-          ) : reporting ? (
-            <>
-              <Muted style={{ paddingHorizontal: 20, paddingVertical: 10 }}>Neden şikayet ediyorsun?</Muted>
-              {busy ? <ActivityIndicator style={{ padding: 20 }} color={t.colors.primary} /> : REASONS.map((r) => row(r, () => report(r)))}
-              {row('Vazgeç', close)}
-            </>
-          ) : m?.from === uid ? (
-            <>
-              {emojiRow}
-              {albumRow}
-              {row('Mesajı sil', async () => {
-                if (m) await deleteMessage(coupleId, m);
-                close();
-              }, true)}
-              {row('Vazgeç', close)}
-            </>
-          ) : (
-            <>
-              {emojiRow}
-              {albumRow}
-              {row(`${partnerName}'in mesajını şikayet et`, () => setReporting(true), true)}
-              {row('Vazgeç', close)}
-            </>
-          )}
+        <Pressable onPress={close} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <Pressable
+            style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 34, paddingTop: 8 }}
+          >
+            {adding ? (
+              <View style={{ padding: 20, gap: 12 }}>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
+                  Albüme anı olarak ekle
+                </Text>
+                <Muted>Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).</Muted>
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder="Örn. O akşamki gün batımı"
+                  placeholderTextColor={t.colors.muted}
+                  maxLength={80}
+                  autoFocus
+                  style={{
+                    backgroundColor: t.colors.bg,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 22,
+                    color: inkColor,
+                    fontFamily: handFont,
+                  }}
+                />
+                {!!err && (
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: '#C0392B' }}>
+                    {err}
+                  </Text>
+                )}
+                <Pressable
+                  onPress={add}
+                  style={{ backgroundColor: t.colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
+                >
+                  {busy ? (
+                    <ActivityIndicator color={t.colors.onPrimary} />
+                  ) : (
+                    <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600' }}>
+                      Albüme ekle
+                    </Text>
+                  )}
+                </Pressable>
+                {row('Vazgeç', close)}
+              </View>
+            ) : done ? (
+              <View style={{ padding: 20, gap: 8 }}>
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
+                  Şikayetin alındı
+                </Text>
+                <Muted>
+                  Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan Biz ekranından
+                  eşleşmeni bitirebilirsin.
+                </Muted>
+                {row('Tamam', close)}
+              </View>
+            ) : reporting ? (
+              <>
+                <Muted style={{ paddingHorizontal: 20, paddingVertical: 10 }}>Neden şikayet ediyorsun?</Muted>
+                {busy ? (
+                  <ActivityIndicator style={{ padding: 20 }} color={t.colors.primary} />
+                ) : (
+                  REASONS.map((r) => row(r, () => report(r)))
+                )}
+                {row('Vazgeç', close)}
+              </>
+            ) : m?.from === uid ? (
+              <>
+                {emojiRow}
+                {albumRow}
+                {row(
+                  'Mesajı sil',
+                  async () => {
+                    if (m) await deleteMessage(coupleId, m);
+                    close();
+                  },
+                  true,
+                )}
+                {row('Vazgeç', close)}
+              </>
+            ) : (
+              <>
+                {emojiRow}
+                {albumRow}
+                {row(`${partnerName}'in mesajını şikayet et`, () => setReporting(true), true)}
+                {row('Vazgeç', close)}
+              </>
+            )}
+          </Pressable>
         </Pressable>
-      </Pressable>
       </KeyboardAvoidingView>
     </Modal>
   );

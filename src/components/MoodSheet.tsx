@@ -21,12 +21,25 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-        <Pressable style={{ backgroundColor: t.colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36, gap: 14 }}>
+        <Pressable
+          style={{
+            backgroundColor: t.colors.card,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            paddingBottom: 36,
+            gap: 14,
+          }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Avatar p={profile} name={profile?.name ?? ''} size={56} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.text }}>Bugün nasılsın?</Text>
-              <Text style={{ fontSize: 13, color: t.colors.muted }}>Partnerin görür; 24 saat sonra kendiliğinden kalkar.</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 18, fontWeight: '700', color: t.colors.text }}>
+                Bugün nasılsın?
+              </Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
+                Partnerin görür; 24 saat sonra kendiliğinden kalkar.
+              </Text>
             </View>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -48,8 +61,12 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
                     backgroundColor: on ? t.colors.primarySoft : t.colors.bg,
                   }}
                 >
-                  <Text style={{ fontSize: 18 }}>{MOODS[k].emoji}</Text>
-                  <Text style={{ fontSize: 14, color: t.colors.text }}>{MOODS[k].label}</Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 18 }}>
+                    {MOODS[k].emoji}
+                  </Text>
+                  <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: t.colors.text }}>
+                    {MOODS[k].label}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -57,7 +74,9 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             {current ? (
               <Pressable onPress={() => choose(null)} hitSlop={8}>
-                <Text style={{ color: t.colors.muted }}>Ruh halini kaldır</Text>
+                <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+                  Ruh halini kaldır
+                </Text>
               </Pressable>
             ) : (
               <View />
@@ -71,7 +90,9 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
             >
               <Ionicons name="color-palette-outline" size={16} color={t.colors.primary} />
-              <Text style={{ color: t.colors.primary, fontWeight: '600' }}>{profile?.avatar ? 'Avatarımı düzenle' : 'Avatarımı oluştur'}</Text>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
+                {profile?.avatar ? 'Avatarımı düzenle' : 'Avatarımı oluştur'}
+              </Text>
             </Pressable>
           </View>
         </Pressable>

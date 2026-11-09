@@ -41,7 +41,10 @@ export function KnowMe({ game, coupleId, uid, partnerId, partnerName, myName }: 
           total={total}
           label={`Soru ${mySelf.length + 1}/${total} · ${partnerName} ${Math.min(theirSelf.length, total)}/${total}`}
         />
-        <Text style={{ fontFamily: t.fonts.display, fontSize: t.displaySize, lineHeight: t.displaySize * 1.3, color: t.colors.text }}>
+        <Text
+          maxFontSizeMultiplier={1.25}
+          style={{ fontFamily: t.fonts.display, fontSize: t.displaySize, lineHeight: t.displaySize * 1.3, color: t.colors.text }}
+        >
           {q.q}
         </Text>
         {self === null ? (
@@ -57,7 +60,11 @@ export function KnowMe({ game, coupleId, uid, partnerId, partnerName, myName }: 
             {q.options.map((o, i) => (
               <Option key={o} label={o} onPress={() => guess(i)} />
             ))}
-            <Text onPress={() => setSelf(null)} style={{ color: t.colors.muted, textAlign: 'center', padding: 6 }}>
+            <Text
+              maxFontSizeMultiplier={1.25}
+              onPress={() => setSelf(null)}
+              style={{ color: t.colors.muted, textAlign: 'center', padding: 6 }}
+            >
               Kendi cevabımı değiştir ({q.options[self]})
             </Text>
           </>
@@ -94,8 +101,13 @@ export function KnowMe({ game, coupleId, uid, partnerId, partnerName, myName }: 
         const q = KNOW_ME[qi];
         return (
           <Card key={i} style={{ gap: 6, paddingVertical: 14 }}>
-            <Text style={{ color: t.colors.text, fontWeight: '600', fontSize: 15, fontFamily: t.fonts.body }}>{q.q}</Text>
-            <Row ok={myGuess[i] === theirSelf[i]} text={`${partnerName}: ${q.options[theirSelf[i]]} · senin tahminin: ${q.options[myGuess[i]]}`} />
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontWeight: '600', fontSize: 15, fontFamily: t.fonts.body }}>
+              {q.q}
+            </Text>
+            <Row
+              ok={myGuess[i] === theirSelf[i]}
+              text={`${partnerName}: ${q.options[theirSelf[i]]} · senin tahminin: ${q.options[myGuess[i]]}`}
+            />
             <Row ok={theirGuess[i] === mySelf[i]} text={`${myName}: ${q.options[mySelf[i]]} · onun tahmini: ${q.options[theirGuess[i]]}`} />
           </Card>
         );
@@ -109,7 +121,9 @@ function Row({ ok, text }: { ok: boolean; text: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
       <Ionicons name={ok ? 'checkmark-circle' : 'close-circle'} size={18} color={ok ? t.colors.success : t.colors.muted} />
-      <Text style={{ flex: 1, color: t.colors.text, fontSize: 14, fontFamily: t.fonts.body }}>{text}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text, fontSize: 14, fontFamily: t.fonts.body }}>
+        {text}
+      </Text>
     </View>
   );
 }

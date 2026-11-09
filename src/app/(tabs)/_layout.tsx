@@ -84,7 +84,9 @@ function GlassTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBa
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: t.colors.onPrimary, fontSize: 10, fontWeight: '800' }}>{badge}</Text>
+                    <Text maxFontSizeMultiplier={1.0} style={{ color: t.colors.onPrimary, fontSize: 10, fontWeight: '800' }}>
+                      {badge}
+                    </Text>
                   </View>
                 )}
               </View>

@@ -101,7 +101,9 @@ export function VoicePlayer({ coupleId, m, mine }: { coupleId: string; m: Messag
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, width: 220 }}>
         <ActivityIndicator color={fg} />
-        <Text style={{ color: mine ? t.colors.onPrimary : t.colors.text }}>{fmt(m.audioMs ?? 0)}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: mine ? t.colors.onPrimary : t.colors.text }}>
+          {fmt(m.audioMs ?? 0)}
+        </Text>
       </View>
     );
   }
@@ -148,7 +150,7 @@ function Player({ uri, id, ms, mine }: { uri: string; id: string; ms: number; mi
           <View key={i} style={{ flex: 1, height: b, borderRadius: 2, backgroundColor: i / bars.length < progress ? fg : dim }} />
         ))}
       </View>
-      <Text style={{ fontSize: 12, color: mine ? t.colors.onPrimary : t.colors.muted, minWidth: 30 }}>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: mine ? t.colors.onPrimary : t.colors.muted, minWidth: 30 }}>
         {fmt(st.playing || pos > 0 ? pos : dur)}
       </Text>
     </View>

@@ -47,7 +47,9 @@ export function InviteModal() {
   return (
     <Modal transparent animationType="fade" visible>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 24 }}>
-        <View style={{ backgroundColor: t.colors.card, borderRadius: Math.max(t.radius.card, 8), padding: 22, gap: 14, alignItems: 'center' }}>
+        <View
+          style={{ backgroundColor: t.colors.card, borderRadius: Math.max(t.radius.card, 8), padding: 22, gap: 14, alignItems: 'center' }}
+        >
           <View
             style={{
               width: 64,
@@ -60,7 +62,10 @@ export function InviteModal() {
           >
             <Ionicons name={game.icon as ComponentProps<typeof Ionicons>['name']} size={32} color={t.colors.primary} />
           </View>
-          <Text style={{ fontFamily: t.fonts.title, fontSize: 30, lineHeight: 36, color: t.colors.text, textAlign: 'center' }}>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ fontFamily: t.fonts.title, fontSize: 30, lineHeight: 36, color: t.colors.text, textAlign: 'center' }}
+          >
             {partnerName} seni oyuna çağırıyor
           </Text>
           <Muted style={{ textAlign: 'center' }}>
@@ -77,8 +82,8 @@ export function InviteModal() {
             />
           ) : (
             <Muted style={{ textAlign: 'center', fontSize: 13 }}>
-              Bu haftaki "şimdi olmaz" hakların bitti. Davet {INVITE_MINUTES} dakika içinde kendiliğinden kapanır ama seri
-              için oynamak iyi olur 😉
+              Bu haftaki "şimdi olmaz" hakların bitti. Davet {INVITE_MINUTES} dakika içinde kendiliğinden kapanır ama seri için oynamak iyi
+              olur 😉
             </Muted>
           )}
           <ErrorText>{error}</ErrorText>

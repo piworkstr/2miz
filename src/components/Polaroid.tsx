@@ -38,13 +38,21 @@ export function Polaroid({ photo, name, tilt = 0, aspect = 1, style }: Props) {
         <Image source={{ uri: photoUri(photo) }} style={{ width: '100%', aspectRatio: aspect, backgroundColor: '#eee' }} />
       ) : (
         <View style={{ width: '100%', aspectRatio: aspect, backgroundColor: '#F3ECE8', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: HAND, fontSize: 20, color: '#B9A9A3' }}>henüz yok</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: HAND, fontSize: 20, color: '#B9A9A3' }}>
+            henüz yok
+          </Text>
         </View>
       )}
-      <Text style={{ fontFamily: HAND, fontSize: 21, lineHeight: 23, color: INK, textAlign: 'center', marginTop: 8 }} numberOfLines={3}>
+      <Text
+        maxFontSizeMultiplier={1.25}
+        style={{ fontFamily: HAND, fontSize: 21, lineHeight: 23, color: INK, textAlign: 'center', marginTop: 8 }}
+        numberOfLines={3}
+      >
         {photo?.note || ' '}
       </Text>
-      <Text style={{ fontSize: 11, color: '#9C8C87', textAlign: 'center', marginTop: 2 }}>{name}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: '#9C8C87', textAlign: 'center', marginTop: 2 }}>
+        {name}
+      </Text>
     </View>
   );
 }

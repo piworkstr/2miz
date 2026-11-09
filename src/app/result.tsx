@@ -16,15 +16,21 @@ export default function Result() {
     <Screen>
       <View style={{ gap: 4, marginTop: 8 }}>
         <Muted>Senin sevgi dilin</Muted>
-        <Text style={{ fontFamily: t.fonts.title, fontSize: 44, lineHeight: 48, color: t.colors.primary }}>{lang.name}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 44, lineHeight: 48, color: t.colors.primary }}>
+          {lang.name}
+        </Text>
       </View>
       <Card>
-        <Text style={{ fontSize: 16, lineHeight: 23, color: t.colors.text, fontFamily: t.fonts.body }}>{lang.description}</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, lineHeight: 23, color: t.colors.text, fontFamily: t.fonts.body }}>
+          {lang.description}
+        </Text>
         <Muted>Partnerin de testi çözünce görevleriniz ikinizin sevgi diline göre seçilecek.</Muted>
       </Card>
 
       <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>Sana bir tema seçtik</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
+          Sana bir tema seçtik
+        </Text>
         <Muted>Uygulamanın görünüşü ve konuşma tarzı. İstediğin zaman değiştirebilirsin.</Muted>
       </View>
 

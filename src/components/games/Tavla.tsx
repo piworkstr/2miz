@@ -631,15 +631,24 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
               paddingVertical: 8,
             }}
           >
-            <Text style={{ color: myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
-              <Text style={{ fontWeight: '800' }}>⚪ Sen</Text> · {wins[uid] ?? 0} · {pipCount(view)} pip
+            <Text maxFontSizeMultiplier={1.1} style={{ color: myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
+              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800' }}>
+                ⚪ Sen
+              </Text>{' '}
+              · {wins[uid] ?? 0} · {pipCount(view)} pip
             </Text>
-            <Text style={{ color: !myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
-              <Text style={{ fontWeight: '800' }}>🟤 {partnerName}</Text> · {wins[partnerId] ?? 0} · {oppPip}
+            <Text maxFontSizeMultiplier={1.1} style={{ color: !myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
+              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800' }}>
+                🟤 {partnerName}
+              </Text>{' '}
+              · {wins[partnerId] ?? 0} · {oppPip}
             </Text>
           </View>
           {board}
-          <Text style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '800', minHeight: 20, fontFamily: t.fonts.body }}>
+          <Text
+            maxFontSizeMultiplier={1.1}
+            style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '800', minHeight: 20, fontFamily: t.fonts.body }}
+          >
             {status}
           </Text>
         </>,

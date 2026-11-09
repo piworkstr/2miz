@@ -135,7 +135,7 @@ export default function Today() {
             })}
           >
             <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
-            <Text style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
               Avatarını oluştur; ruh haline göre yüz ifaden değişsin.
             </Text>
             <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
@@ -168,7 +168,7 @@ export default function Today() {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 4 }}
         >
           <Ionicons name="time-outline" size={16} color={t.colors.primary} />
-          <Text style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
             {tx(t, 'Görev arşivi ve favoriler')}
           </Text>
         </Pressable>
@@ -253,7 +253,12 @@ function MemoryCorner() {
           </View>
         )}
         {!!caption && (
-          <Text style={{ fontFamily: 'Caveat_500Medium', fontSize: 22, color: '#2B1D22', textAlign: 'center' }}>{caption}</Text>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ fontFamily: 'Caveat_500Medium', fontSize: 22, color: '#2B1D22', textAlign: 'center' }}
+          >
+            {caption}
+          </Text>
         )}
       </View>
     </Pressable>
@@ -390,8 +395,12 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
                 style={{ marginTop: 2 }}
               />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
-                  {r.who ? <Text style={{ color: t.colors.muted }}>{r.who}: </Text> : null}
+                <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
+                  {r.who ? (
+                    <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+                      {r.who}:{' '}
+                    </Text>
+                  ) : null}
                   {r.task.title}
                 </Text>
                 {open && !!r.note && <T style={{ fontFamily: t.fonts.note, fontSize: 21 }}>“{r.note}”</T>}
@@ -423,7 +432,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
             elevation: 3,
           }}
         >
-          <Text style={{ fontFamily: 'Caveat_700Bold', fontSize: 20, color: '#2B1D22' }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: 'Caveat_700Bold', fontSize: 20, color: '#2B1D22' }}>
             {day.rewarded ? 'Bugün tamam! ✓' : `${partnerName} bekleniyor…`}
           </Text>
         </View>

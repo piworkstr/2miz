@@ -53,10 +53,14 @@ export default function Pair() {
       <Muted>Biriniz davet kodu oluştursun, diğeriniz bu kodu girsin. Hepsi bu kadar.</Muted>
 
       <Card>
-        <Text style={styles.cardTitle}>Davet kodu oluştur</Text>
+        <Text maxFontSizeMultiplier={1.25} style={styles.cardTitle}>
+          Davet kodu oluştur
+        </Text>
         {code ? (
           <View style={{ gap: 12 }}>
-            <Text style={styles.code}>{code}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={styles.code}>
+              {code}
+            </Text>
             <Muted>Partnerin bu kodu girdiğinde otomatik olarak eşleşeceksiniz.</Muted>
             <Button
               label="Kodu paylaş"
@@ -69,10 +73,14 @@ export default function Pair() {
         )}
       </Card>
 
-      <Text style={styles.or}>ya da</Text>
+      <Text maxFontSizeMultiplier={1.25} style={styles.or}>
+        ya da
+      </Text>
 
       <Card>
-        <Text style={styles.cardTitle}>Partnerinin kodunu gir</Text>
+        <Text maxFontSizeMultiplier={1.25} style={styles.cardTitle}>
+          Partnerinin kodunu gir
+        </Text>
         <Input
           placeholder="ABC123"
           value={partnerCode}
@@ -87,7 +95,9 @@ export default function Pair() {
       <ErrorText>{error}</ErrorText>
 
       <Pressable onPress={() => signOut(auth)} style={{ alignItems: 'center', padding: 8 }}>
-        <Text style={{ color: colors.muted }}>Çıkış yap</Text>
+        <Text maxFontSizeMultiplier={1.25} style={{ color: colors.muted }}>
+          Çıkış yap
+        </Text>
       </Pressable>
     </Screen>
   );

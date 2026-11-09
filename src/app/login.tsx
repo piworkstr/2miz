@@ -77,7 +77,7 @@ export default function Login() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
         <View style={{ gap: 4, marginTop: 16, marginBottom: 8 }}>
-          <Text style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 46, color: t.colors.text }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 46, color: t.colors.text }}>
             {mode === 'signup' ? 'Hesabını oluştur' : 'Tekrar hoş geldin'}
           </Text>
           {mode === 'signup' && <Muted>Son bir adım, sonra partnerini bağlayacağız.</Muted>}
@@ -105,10 +105,12 @@ export default function Login() {
 
         <Button label={mode === 'signup' ? 'Hesap oluştur' : 'Giriş yap'} onPress={submit} busy={busy} />
         <Pressable
-          onPress={() => (mode === 'signin' && !loveLanguage ? router.replace('/welcome') : setMode(mode === 'signup' ? 'signin' : 'signup'))}
+          onPress={() =>
+            mode === 'signin' && !loveLanguage ? router.replace('/welcome') : setMode(mode === 'signup' ? 'signin' : 'signup')
+          }
           style={{ alignItems: 'center', padding: 8 }}
         >
-          <Text style={{ color: t.colors.primary, fontSize: 15 }}>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 15 }}>
             {mode === 'signup' ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kayıt ol'}
           </Text>
         </Pressable>

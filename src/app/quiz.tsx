@@ -33,16 +33,15 @@ export default function Quiz() {
     <Screen>
       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
         {QUESTIONS.map((_, i) => (
-          <View
-            key={i}
-            style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: i <= step ? t.colors.primary : t.colors.border }}
-          />
+          <View key={i} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: i <= step ? t.colors.primary : t.colors.border }} />
         ))}
       </View>
       <Muted>
         Soru {step + 1} / {QUESTIONS.length}
       </Muted>
-      <Text style={{ fontFamily: t.fonts.title, fontSize: 34, lineHeight: 38, color: t.colors.text }}>{question.q}</Text>
+      <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 34, lineHeight: 38, color: t.colors.text }}>
+        {question.q}
+      </Text>
 
       <View style={{ gap: 10, marginTop: 8 }}>
         {options.map((o) => (
@@ -58,7 +57,9 @@ export default function Quiz() {
               paddingHorizontal: 16,
             })}
           >
-            <Text style={{ fontSize: 16, color: t.colors.text, lineHeight: 22 }}>{o.text}</Text>
+            <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: t.colors.text, lineHeight: 22 }}>
+              {o.text}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -71,7 +72,9 @@ export default function Quiz() {
           }}
           style={{ alignItems: 'center', padding: 10 }}
         >
-          <Text style={{ color: t.colors.muted }}>Geri</Text>
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+            Geri
+          </Text>
         </Pressable>
       )}
     </Screen>
