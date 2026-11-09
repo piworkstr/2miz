@@ -449,9 +449,16 @@ export default function GardenScreen() {
   const s = fit * zoom;
   const tx = box.w / 2 - ((BOUNDS.x0 + BOUNDS.x1) / 2) * s + pan.x;
   const ty = top + (box.h - top - bottom) / 2 - ((BOUNDS.y0 + BOUNDS.y1) / 2) * s + pan.y;
-  const cam = useRef({ s, tx, ty, zoom, pan });
-  cam.current = { s, tx, ty, zoom, pan };
+  const ox = box.w / 2;
+  const oy = top + (box.h - top - bottom) / 2;
+  const cx = (BOUNDS.x0 + BOUNDS.x1) / 2;
+  const cy = (BOUNDS.y0 + BOUNDS.y1) / 2;
+  const cam = useRef({ s, tx, ty, zoom, pan, fit, ox, oy, cx, cy });
+  cam.current = { s, tx, ty, zoom, pan, fit, ox, oy, cx, cy };
   const drag = useRef({ x: 0, y: 0, moved: false });
+  // İki parmakla yakınlaştırma (fotoğraf gibi): parmakların ortasındaki nokta yerinde kalır.
+  const pinch = useRef<{ d0: number; z0: number; wx: number; wy: number } | null>(null);
+  const MAX_ZOOM = 4;
   // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
   const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
 
@@ -459,15 +466,38 @@ export default function GardenScreen() {
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           drag.current = { ...cam.current.pan, moved: false };
+          pinch.current = null;
         },
-        onPanResponderMove: (_, g) => {
+        onPanResponderMove: (e, g) => {
+          const t = e.nativeEvent.touches;
+          if (t.length >= 2) {
+            drag.current.moved = true;
+            const c = cam.current;
+            const d = Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
+            const mx = (t[0].locationX + t[1].locationX) / 2;
+            const my = (t[0].locationY + t[1].locationY) / 2;
+            if (!pinch.current) {
+              // Parmakların ortasındaki dünya noktası
+              pinch.current = { d0: d, z0: c.zoom, wx: (mx - c.tx) / c.s, wy: (my - c.ty) / c.s };
+              return;
+            }
+            const z = Math.min(MAX_ZOOM, Math.max(1, (pinch.current.z0 * d) / pinch.current.d0));
+            const s2 = c.fit * z;
+            setZoom(z);
+            if (z <= 1) setPan({ x: 0, y: 0 });
+            else setPan({ x: mx - c.ox - (pinch.current.wx - c.cx) * s2, y: my - c.oy - (pinch.current.wy - c.cy) * s2 });
+            return;
+          }
+          if (pinch.current) return; // iki parmaktan tek parmağa düşünce sürükleme başlamasın
           if (Math.hypot(g.dx, g.dy) > 6) drag.current.moved = true;
           if (drag.current.moved && cam.current.zoom > 1) setPan({ x: drag.current.x + g.dx, y: drag.current.y + g.dy });
         },
         onPanResponderRelease: (e) => {
-          if (drag.current.moved) return;
+          if (drag.current.moved || pinch.current) return;
           const c = cam.current;
           const wx = (e.nativeEvent.locationX - c.tx) / c.s;
           const wy = (e.nativeEvent.locationY - c.ty) / c.s;
@@ -753,22 +783,29 @@ export default function GardenScreen() {
           {season === 'kis' ? ' · ürünler yavaş' : ''} · {farm.harvests} ortak hasat
         </Text>
       </View>
-      <View style={{ position: 'absolute', right: 10, top: insets.top + 52, gap: 6 }}>
-        {(['in', 'out'] as const).map((k) => (
-          <Pressable
-            key={k}
-            accessibilityLabel={k === 'in' ? 'Yakınlaş' : 'Uzaklaş'}
-            onPress={() => {
-              const z = k === 'in' ? Math.min(2.2, zoom * 1.4) : Math.max(1, zoom / 1.4);
-              setZoom(z);
-              if (z === 1) setPan({ x: 0, y: 0 });
-            }}
-            style={[pill, { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }]}
-          >
-            <Ionicons name={k === 'in' ? 'add' : 'remove'} size={20} color={INK} />
-          </Pressable>
-        ))}
-      </View>
+      {zoom > 1 && (
+        <Pressable
+          accessibilityLabel="Bütün çiftliği göster"
+          onPress={() => {
+            setZoom(1);
+            setPan({ x: 0, y: 0 });
+          }}
+          style={[
+            pill,
+            {
+              position: 'absolute',
+              right: 10,
+              top: insets.top + 52,
+              width: 36,
+              height: 36,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
+        >
+          <Ionicons name="contract-outline" size={20} color={INK} />
+        </Pressable>
+      )}
       {!!toast && (
         <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 52, left: 56, right: 56, alignItems: 'center' }}>
           <Text
