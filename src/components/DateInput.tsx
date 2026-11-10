@@ -1,16 +1,18 @@
 import { View } from 'react-native';
+import { useL } from '../lib/i18n';
 import { Input } from './ui';
 
 export type DateParts = { d: string; m: string; y: string };
 
 // Gün / ay / yıl için üç kutu. Ek bir kütüphane gerektirmez, Expo Go'da sorunsuz çalışır.
 export function DateInput({ value, onChange }: { value: DateParts; onChange: (v: DateParts) => void }) {
+  const l = useL();
   const digits = (s: string) => s.replace(/[^0-9]/g, '');
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
       <Input
         style={{ flex: 1, textAlign: 'center' }}
-        placeholder="Gün"
+        placeholder={l('Gün', 'Day')}
         keyboardType="number-pad"
         maxLength={2}
         value={value.d}
@@ -18,7 +20,7 @@ export function DateInput({ value, onChange }: { value: DateParts; onChange: (v:
       />
       <Input
         style={{ flex: 1, textAlign: 'center' }}
-        placeholder="Ay"
+        placeholder={l('Ay', 'Month')}
         keyboardType="number-pad"
         maxLength={2}
         value={value.m}
@@ -26,7 +28,7 @@ export function DateInput({ value, onChange }: { value: DateParts; onChange: (v:
       />
       <Input
         style={{ flex: 1.4, textAlign: 'center' }}
-        placeholder="Yıl"
+        placeholder={l('Yıl', 'Year')}
         keyboardType="number-pad"
         maxLength={4}
         value={value.y}

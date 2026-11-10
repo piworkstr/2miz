@@ -2,14 +2,17 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Muted, Screen } from '../components/ui';
-import { QUESTIONS, scoreAnswers, shuffled, type LoveLanguage } from '../lib/loveLanguage';
-import { LOVE_LANGUAGES } from '../lib/loveLanguage';
+import { useL, useLang } from '../lib/i18n';
+import { LOVE_LANGUAGES, questions, scoreAnswers, shuffled, type LoveLanguage } from '../lib/loveLanguage';
 import { useOnboarding } from '../lib/onboarding';
 import { useTheme } from '../lib/useTheme';
 
 export default function Quiz() {
   const t = useTheme();
   const { setLoveLanguage, setTheme } = useOnboarding();
+  const l = useL();
+  const { lang: uiLang } = useLang();
+  const QUESTIONS = questions(uiLang);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<LoveLanguage[]>([]);
 
@@ -37,7 +40,7 @@ export default function Quiz() {
         ))}
       </View>
       <Muted>
-        Soru {step + 1} / {QUESTIONS.length}
+        {l('Soru', 'Question')} {step + 1} / {QUESTIONS.length}
       </Muted>
       <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 34, lineHeight: 38, color: t.colors.text }}>
         {question.q}
@@ -73,7 +76,7 @@ export default function Quiz() {
           style={{ alignItems: 'center', padding: 10 }}
         >
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-            Geri
+            {l('Geri', 'Back')}
           </Text>
         </Pressable>
       )}

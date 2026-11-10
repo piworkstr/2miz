@@ -1,5 +1,6 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { useLang } from './i18n';
 import { useOnboarding } from './onboarding';
 import { useSession } from './session';
 import { getTheme, type ThemeId } from './theme';
@@ -9,7 +10,8 @@ import { getTheme, type ThemeId } from './theme';
 export function useTheme() {
   const { profile } = useSession();
   const { theme } = useOnboarding();
-  return getTheme(profile?.theme ?? theme);
+  const { lang } = useLang();
+  return getTheme(profile?.theme ?? theme, lang);
 }
 
 export async function saveTheme(uid: string, id: ThemeId) {

@@ -1,3 +1,4 @@
+import type { Lang } from './i18n';
 import type { ThemeId } from './theme';
 
 export type LoveLanguage = 'soz' | 'zaman' | 'hediye' | 'temas' | 'hizmet';
@@ -84,6 +85,77 @@ export const QUESTIONS: Question[] = [
     ],
   },
 ];
+
+// İngilizce: aynı sevgi dilleri, aynı sırayla (seçenek karışımı iki dilde de aynı kalsın).
+const LOVE_LANGUAGES_EN: Record<LoveLanguage, { name: string; description: string }> = {
+  soz: { name: 'Words of affirmation', description: 'Kind words, "I love you"s and feeling appreciated make you happiest.' },
+  zaman: { name: 'Quality time', description: 'Phones down, no interruptions, time that belongs to just the two of you means everything.' },
+  hediye: { name: 'Gifts', description: "It's the thought, not the price: being remembered, little surprises." },
+  temas: { name: 'Physical touch', description: 'Hugs, holding hands, sitting close: that is when you feel most loved.' },
+  hizmet: { name: 'Acts of service', description: 'Actions over words: taking something off your plate, sharing the load.' },
+};
+
+const QUESTIONS_EN: Question[] = [
+  {
+    q: 'What does your partner do that makes you happiest?',
+    options: [
+      { text: 'Says "I\'m proud of you"', lang: 'soz' },
+      { text: 'Puts the phone away and is all yours', lang: 'zaman' },
+      { text: 'Picks up a little something because they thought of you', lang: 'hediye' },
+      { text: 'Hugs you and holds your hand', lang: 'temas' },
+      { text: 'Takes care of a chore for you', lang: 'hizmet' },
+    ],
+  },
+  {
+    q: 'You had a rough day. What do you need most?',
+    options: [
+      { text: 'Kind words that lift me up', lang: 'soz' },
+      { text: 'Them sitting with me and listening', lang: 'zaman' },
+      { text: 'Them showing up with something I love', lang: 'hediye' },
+      { text: 'A long hug', lang: 'temas' },
+      { text: 'Them handling the evening chores', lang: 'hizmet' },
+    ],
+  },
+  {
+    q: 'What hurts you the most?',
+    options: [
+      { text: 'Never getting a compliment', lang: 'soz' },
+      { text: 'Their mind being elsewhere when we are together', lang: 'zaman' },
+      { text: 'Forgetting special days', lang: 'hediye' },
+      { text: 'Them being distant and cold', lang: 'temas' },
+      { text: 'Not doing what they promised', lang: 'hizmet' },
+    ],
+  },
+  {
+    q: 'What does your dream anniversary look like?',
+    options: [
+      { text: 'A long letter they wrote for me', lang: 'soz' },
+      { text: 'A weekend that is just the two of us', lang: 'zaman' },
+      { text: 'A thoughtful, meaningful gift', lang: 'hediye' },
+      { text: 'A cuddly movie night', lang: 'temas' },
+      { text: 'Them having planned everything for me', lang: 'hizmet' },
+    ],
+  },
+  {
+    q: 'How do you show love the most?',
+    options: [
+      { text: 'By saying it, sending messages', lang: 'soz' },
+      { text: 'By making time for them', lang: 'zaman' },
+      { text: 'With surprises', lang: 'hediye' },
+      { text: 'With touch and hugs', lang: 'temas' },
+      { text: 'By helping them out', lang: 'hizmet' },
+    ],
+  },
+];
+
+export function loveLanguage(id: LoveLanguage, lang: Lang): { name: string; description: string; theme: ThemeId } {
+  const base = LOVE_LANGUAGES[id];
+  return lang === 'en' ? { ...base, ...LOVE_LANGUAGES_EN[id] } : base;
+}
+
+export function questions(lang: Lang): Question[] {
+  return lang === 'en' ? QUESTIONS_EN : QUESTIONS;
+}
 
 // Seçenek sırası her soruda karışsın ki cevaplar bir kalıba oturmasın (sabit karışım, her açılışta aynı).
 export function shuffled<T>(arr: T[], seed: number): T[] {

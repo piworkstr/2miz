@@ -16,6 +16,7 @@ export type Profile = {
   calendarShare?: 'titles' | 'busy' | null; // telefon takvimini paylaşıyor mu
   mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
   hints?: Record<string, boolean>; // "Anladım" denen ipuçları; ünlem bir daha çıkmaz
+  lang?: 'tr' | 'en'; // uygulama dili (src/lib/i18n.tsx)
 };
 
 export type Couple = {

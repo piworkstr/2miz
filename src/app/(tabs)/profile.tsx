@@ -14,15 +14,16 @@ import { activeMood, MOODS } from '../../lib/avatar';
 import { prettyDate } from '../../lib/date';
 import { useUpcomingDates } from '../../lib/dates';
 import { auth } from '../../lib/firebase';
-import { LOVE_LANGUAGES, type LoveLanguage } from '../../lib/loveLanguage';
+import { loveLanguage as loveLanguageOf, type LoveLanguage } from '../../lib/loveLanguage';
 import { openPlus, usePlus } from '../../lib/plus';
 import { useSession, type Couple, type Profile } from '../../lib/session';
 import { Hint } from '../../components/Hint';
 import { LivingChips } from '../../components/LivingCard';
 import { FeedbackCard } from '../../components/FeedbackCard';
 import { PersonaCard } from '../../components/PersonaCard';
+import { LanguageCard } from '../../components/LanguageCard';
 import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
-import { THEME_LIST, tx, type Theme } from '../../lib/theme';
+import { themeList, tx, type Theme } from '../../lib/theme';
 import { saveTheme, useTheme } from '../../lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -73,6 +74,7 @@ export default function Profile() {
         <LivingChips compact />
       </Card>
       <PersonaCard />
+      <LanguageCard />
       <FeedbackCard />
       <PlusCard />
 
@@ -128,7 +130,7 @@ export default function Profile() {
         {themesOpen && (
           <>
             <Muted>Tema sadece senin telefonunu değiştirir, {partnerName} kendi temasını seçer.</Muted>
-            {THEME_LIST.map((theme) => (
+            {themeList(t.lang).map((theme) => (
               <ThemeOption
                 key={theme.id}
                 theme={theme}
@@ -304,7 +306,8 @@ function AboutUs({
     { name: myName, p: me, mine: true },
     { name: partnerName, p: partner, mine: false },
   ];
-  const lang = (p: Profile | null) => (p?.loveLanguage ? LOVE_LANGUAGES[p.loveLanguage as LoveLanguage]?.name : null) ?? 'Test çözülmedi';
+  const lang = (p: Profile | null) =>
+    (p?.loveLanguage ? loveLanguageOf(p.loveLanguage as LoveLanguage, t.lang)?.name : null) ?? 'Test çözülmedi';
   const bday = (p: Profile | null) => {
     if (!p?.birthDate) return '–';
     const d = daysUntilYearly(p.birthDate);

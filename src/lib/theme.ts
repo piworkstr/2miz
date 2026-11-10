@@ -1,3 +1,5 @@
+import { localeOf, type Lang } from './i18n';
+
 export type ThemeId = 'standart' | 'agir' | 'asko';
 
 type Colors = {
@@ -60,6 +62,7 @@ type Copy = {
 
 export type Theme = {
   id: ThemeId;
+  lang: Lang; // metinlerin dili (copy, name, tagline)
   name: string;
   tagline: string;
   colors: Colors;
@@ -78,8 +81,12 @@ export type Theme = {
   copy: Copy;
 };
 
+// Temanın İngilizcesi: birebir çeviri değil, her tema İngilizcede de kendi karakteriyle konuşur.
+type ThemeText = { name: string; tagline: string; copy: Copy };
+
 const standart: Theme = {
   id: 'standart',
+  lang: 'tr',
   name: 'Standart',
   tagline: 'Sade, sıcak, el yazısı dokunuşlu',
   colors: {
@@ -148,6 +155,7 @@ const standart: Theme = {
 
 const agir: Theme = {
   id: 'agir',
+  lang: 'tr',
   name: 'Ağır Abi',
   tagline: 'Koyu, net, lafı dolandırmaz',
   colors: {
@@ -212,7 +220,7 @@ const agir: Theme = {
       partnerPlanned: (p, d) => `${p} ${d} için date ayarladı.`,
       confirm: 'Tamam',
       waiting: (p) => `${p} onaylayınca kesinleşir.`,
-      upcoming: 'Ayarlanan date\'ler',
+      upcoming: "Ayarlanan date'ler",
       pickDay: 'Hangi gün?',
       cancel: 'İptal',
     },
@@ -221,6 +229,7 @@ const agir: Theme = {
 
 const asko: Theme = {
   id: 'asko',
+  lang: 'tr',
   name: 'Aşko Kuşko',
   tagline: 'Pembe, yumuşacık, bol kalpli',
   colors: {
@@ -293,14 +302,166 @@ const asko: Theme = {
   },
 };
 
+const EN: Record<ThemeId, ThemeText> = {
+  standart: {
+    name: 'Classic',
+    tagline: 'Simple, warm, with a handwritten touch',
+    copy: {
+      hello: (n) => `Hi ${n}`,
+      dateLine: (d, p) => `${d} · with ${p}`,
+      streak: 'day streak',
+      points: 'points',
+      sharedLabel: "Today's task together",
+      sharedHint: "Want to do this one together? If either of you passes, you'll each get your own task.",
+      accept: "Let's do it together",
+      decline: "I'd like another task",
+      waiting: (p) => `You're in. The task starts as soon as ${p} answers.`,
+      sharedTask: 'Shared task',
+      myTask: 'Your task',
+      partnerTask: "Your partner's task",
+      selfieSoon: 'Selfies are coming here in the next update.',
+      notePlaceholder: 'A little note from today...',
+      noteRequired: 'Leave a little note for today.',
+      complete: 'Complete task',
+      completed: 'Done',
+      partnerDone: (p) => `${p} finished their task`,
+      partnerNotDone: (p) => `${p} hasn't finished yet`,
+      reward: (n) => `You finished today together! +${n} points`,
+      surpriseTitle: 'Bonus task',
+      surpriseHint: 'Up for one more memory today? Draw an extra task.',
+      surpriseLabel: 'Bonus task',
+      surpriseBtn: 'Draw a bonus task',
+      surpriseAgain: 'Another one',
+      tabs: { today: 'Today', chat: 'Messages', album: 'Album', coupons: 'Coupons', us: 'Us' },
+      date: {
+        today: "It's date day!",
+        selfieHint: "Take a selfie with both of you in the frame. It'll get its own page in the album.",
+        weAreOnDate: "We're on a date today",
+        plan: 'Plan a date',
+        partnerSaysToday: (p) => `${p} says you're on a date today.`,
+        confirmToday: "Yes, we're together",
+        partnerPlanned: (p, d) => `${p} planned a date for ${d}.`,
+        confirm: 'Confirm',
+        waiting: (p) => `The date is set once ${p} confirms.`,
+        upcoming: 'Planned dates',
+        pickDay: 'Which day?',
+        cancel: 'Cancel',
+      },
+    },
+  },
+  agir: {
+    name: 'Big Bro',
+    tagline: 'Dark, direct, no small talk',
+    copy: {
+      hello: () => "What's up, boss",
+      dateLine: (d, p) => `${d} · with ${p}`,
+      streak: "day streak. don't break it.",
+      points: 'points',
+      sharedLabel: "Today's job",
+      sharedHint: 'No fuss. You do it together, or you each get your own job.',
+      accept: "We're on it",
+      decline: 'Give us another',
+      waiting: (p) => `You're set. ${p} answers next.`,
+      sharedTask: 'Joint job',
+      myTask: 'Your job',
+      partnerTask: 'Their job',
+      selfieSoon: 'Selfies land in the next update.',
+      notePlaceholder: 'Drop a short note',
+      noteRequired: 'A word or two. That works.',
+      complete: 'Job done',
+      completed: 'Handled',
+      partnerDone: (p) => `${p} got it done`,
+      partnerNotDone: (p) => `${p} isn't done yet`,
+      reward: (n) => `Day closed. +${n} points`,
+      surpriseTitle: 'Extra job',
+      surpriseHint: "Today's job done? Pull another.",
+      surpriseLabel: 'Extra job',
+      surpriseBtn: 'Pull an extra job',
+      surpriseAgain: 'Next',
+      tabs: { today: 'Today', chat: 'Radio', album: 'Archive', coupons: 'Tickets', us: 'Crew' },
+      date: {
+        today: 'Date today',
+        selfieHint: 'One selfie, both in the frame. Gets its own page in the album.',
+        weAreOnDate: 'On a date',
+        plan: 'Set a date',
+        partnerSaysToday: (p) => `${p}: date today.`,
+        confirmToday: 'Correct',
+        partnerPlanned: (p, d) => `${p} set a date for ${d}.`,
+        confirm: 'OK',
+        waiting: (p) => `Locked in once ${p} confirms.`,
+        upcoming: 'Dates set',
+        pickDay: 'Which day?',
+        cancel: 'Cancel',
+      },
+    },
+  },
+  asko: {
+    name: 'Lovey Dovey',
+    tagline: 'Pink, soft and full of hearts',
+    copy: {
+      hello: () => 'Morning, honeybun',
+      dateLine: (d, p) => `${d} · with your sweet ${p}`,
+      streak: 'days of love',
+      points: 'kiss points',
+      sharedLabel: "Today's sweet task",
+      sharedHint: "Shall we do it together? If one of you isn't feeling it, you'll each get a sweet task of your own.",
+      accept: "Yes yes, let's!",
+      decline: 'Something else, please',
+      waiting: (p) => `You're all set, sweetie. ${p} will answer any minute.`,
+      sharedTask: 'Our sweet task',
+      myTask: 'Your sweet task',
+      partnerTask: "Your love's task",
+      selfieSoon: 'A cute selfie corner is coming here very soon.',
+      notePlaceholder: "Write what's in your heart...",
+      noteRequired: 'Leave a teeny little note, pretty please?',
+      complete: 'I did it!',
+      completed: 'You did it, so proud of you',
+      partnerDone: (p) => `${p} did it too, aww`,
+      partnerNotDone: (p) => `${p} hasn't done it yet`,
+      reward: (n) => `You both did it! +${n} kiss points`,
+      surpriseTitle: 'Sweet bonus',
+      surpriseHint: 'Shall we pull one more sweet task?',
+      surpriseLabel: 'Sweet bonus',
+      surpriseBtn: 'Pull a bonus',
+      surpriseAgain: 'One more',
+      tabs: { today: 'Today', chat: 'Whispers', album: 'Memories', coupons: 'Coupons', us: 'Us' },
+      date: {
+        today: "It's our date day!",
+        selfieHint: "Snap a cheek-to-cheek selfie. It'll be a big special page in the album.",
+        weAreOnDate: "We're on a date right now",
+        plan: "Let's plan a date",
+        partnerSaysToday: (p) => `${p} says you're on a date today, how cute.`,
+        confirmToday: 'Yes yes!',
+        partnerPlanned: (p, d) => `${p} planned a date for ${d}. Say yes?`,
+        confirm: 'Yes, sounds lovely',
+        waiting: (p) => `Our date day is set once ${p} says yes.`,
+        upcoming: 'Our sweet dates',
+        pickDay: 'Which day, sweetie?',
+        cancel: 'Never mind',
+      },
+    },
+  },
+};
+
 export const THEMES: Record<ThemeId, Theme> = { standart, agir, asko };
 export const THEME_LIST: Theme[] = [standart, agir, asko];
 
-export function getTheme(id: string | undefined | null): Theme {
-  return THEMES[(id as ThemeId) ?? 'standart'] ?? standart;
+// Temayı istenen dile çevirir (renk, font, biçim aynı kalır; yalnız metinler değişir).
+export function localize(theme: Theme, lang: Lang): Theme {
+  if (lang === theme.lang) return theme;
+  if (lang === 'tr') return THEMES[theme.id];
+  return { ...theme, lang, ...EN[theme.id] };
 }
 
-// Yazıyı temaya göre büyük harfe çevirir (Türkçe İ/ı kurallarıyla).
+export function themeList(lang: Lang): Theme[] {
+  return THEME_LIST.map((th) => localize(th, lang));
+}
+
+export function getTheme(id: string | undefined | null, lang: Lang = 'tr'): Theme {
+  return localize(THEMES[(id as ThemeId) ?? 'standart'] ?? standart, lang);
+}
+
+// Yazıyı temaya göre büyük harfe çevirir (Türkçede İ/ı kurallarıyla).
 export function tx(theme: Theme, s: string): string {
-  return theme.upper ? s.toLocaleUpperCase('tr-TR') : s;
+  return theme.upper ? s.toLocaleUpperCase(localeOf(theme.lang)) : s;
 }

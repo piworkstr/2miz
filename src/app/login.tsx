@@ -6,30 +6,33 @@ import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-nat
 import { ageFrom, DateInput, toDateKey, type DateParts } from '../components/DateInput';
 import { Button, ErrorText, Input, Muted, Screen } from '../components/ui';
 import { auth, db } from '../lib/firebase';
+import { useL, useLang } from '../lib/i18n';
 import { useOnboarding } from '../lib/onboarding';
 import { useTheme } from '../lib/useTheme';
 
-function friendlyError(code: string): string {
+function friendlyError(code: string, l: (tr: string, en: string) => string): string {
   switch (code) {
     case 'auth/invalid-email':
-      return 'E-posta adresi geçerli görünmüyor.';
+      return l('E-posta adresi geçerli görünmüyor.', "That email address doesn't look right.");
     case 'auth/email-already-in-use':
-      return 'Bu e-postayla zaten bir hesap var. Giriş yapmayı dene.';
+      return l('Bu e-postayla zaten bir hesap var. Giriş yapmayı dene.', 'There is already an account with this email. Try signing in.');
     case 'auth/weak-password':
-      return 'Şifre en az 6 karakter olmalı.';
+      return l('Şifre en az 6 karakter olmalı.', 'Password must be at least 6 characters.');
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
     case 'auth/user-not-found':
-      return 'E-posta ya da şifre hatalı.';
+      return l('E-posta ya da şifre hatalı.', 'Wrong email or password.');
     case 'auth/network-request-failed':
-      return 'İnternet bağlantını kontrol et.';
+      return l('İnternet bağlantını kontrol et.', 'Check your internet connection.');
     default:
-      return 'Bir şeyler ters gitti, tekrar dene.';
+      return l('Bir şeyler ters gitti, tekrar dene.', 'Something went wrong, please try again.');
   }
 }
 
 export default function Login() {
   const t = useTheme();
+  const l = useL();
+  const { lang } = useLang();
   const params = useLocalSearchParams<{ mode?: string }>();
   const { loveLanguage, theme } = useOnboarding();
   const [mode, setMode] = useState<'signup' | 'signin'>(params.mode === 'signin' ? 'signin' : 'signup');
@@ -44,12 +47,12 @@ export default function Login() {
     setError('');
     let birthDate: string | null = null;
     if (mode === 'signup') {
-      if (!name.trim()) return setError('Partnerinin göreceği adını yaz.');
+      if (!name.trim()) return setError(l('Partnerinin göreceği adını yaz.', 'Enter the name your partner will see.'));
       birthDate = toDateKey(birth);
-      if (!birthDate) return setError('Doğum tarihini gün / ay / yıl olarak gir.');
-      if (ageFrom(birthDate) < 18) return setError('2miz, 18 yaş ve üzeri içindir.');
+      if (!birthDate) return setError(l('Doğum tarihini gün / ay / yıl olarak gir.', 'Enter your date of birth as day / month / year.'));
+      if (ageFrom(birthDate) < 18) return setError(l('2miz, 18 yaş ve üzeri içindir.', '2miz is for ages 18 and up.'));
     }
-    if (!email.trim() || !password) return setError('E-posta ve şifre gerekli.');
+    if (!email.trim() || !password) return setError(l('E-posta ve şifre gerekli.', 'Email and password are required.'));
 
     setBusy(true);
     try {
@@ -61,13 +64,14 @@ export default function Login() {
           birthDate,
           theme: theme ?? 'standart',
           ...(loveLanguage ? { loveLanguage } : {}),
+          lang,
           onboarded: false,
         });
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       }
     } catch (e: unknown) {
-      setError(friendlyError((e as { code?: string }).code ?? ''));
+      setError(friendlyError((e as { code?: string }).code ?? '', l));
     } finally {
       setBusy(false);
     }
@@ -78,32 +82,34 @@ export default function Login() {
       <Screen>
         <View style={{ gap: 4, marginTop: 16, marginBottom: 8 }}>
           <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.title, fontSize: 40, lineHeight: 46, color: t.colors.text }}>
-            {mode === 'signup' ? 'Hesabını oluştur' : 'Tekrar hoş geldin'}
+            {mode === 'signup' ? l('Hesabını oluştur', 'Create your account') : l('Tekrar hoş geldin', 'Welcome back')}
           </Text>
-          {mode === 'signup' && <Muted>Son bir adım, sonra partnerini bağlayacağız.</Muted>}
+          {mode === 'signup' && (
+            <Muted>{l('Son bir adım, sonra partnerini bağlayacağız.', "One last step, then we'll connect your partner.")}</Muted>
+          )}
         </View>
 
         {mode === 'signup' && (
           <>
-            <Input placeholder="Adın" value={name} onChangeText={setName} autoCapitalize="words" />
+            <Input placeholder={l('Adın', 'Your name')} value={name} onChangeText={setName} autoCapitalize="words" />
             <View style={{ gap: 6 }}>
-              <Muted style={{ fontSize: 13 }}>Doğum tarihin</Muted>
+              <Muted style={{ fontSize: 13 }}>{l('Doğum tarihin', 'Date of birth')}</Muted>
               <DateInput value={birth} onChange={setBirth} />
             </View>
           </>
         )}
         <Input
-          placeholder="E-posta"
+          placeholder={l('E-posta', 'Email')}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
         />
-        <Input placeholder="Şifre" value={password} onChangeText={setPassword} secureTextEntry />
+        <Input placeholder={l('Şifre', 'Password')} value={password} onChangeText={setPassword} secureTextEntry />
         <ErrorText>{error}</ErrorText>
 
-        <Button label={mode === 'signup' ? 'Hesap oluştur' : 'Giriş yap'} onPress={submit} busy={busy} />
+        <Button label={mode === 'signup' ? l('Hesap oluştur', 'Create account') : l('Giriş yap', 'Sign in')} onPress={submit} busy={busy} />
         <Pressable
           onPress={() =>
             mode === 'signin' && !loveLanguage ? router.replace('/welcome') : setMode(mode === 'signup' ? 'signin' : 'signup')
@@ -111,7 +117,9 @@ export default function Login() {
           style={{ alignItems: 'center', padding: 8 }}
         >
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 15 }}>
-            {mode === 'signup' ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kayıt ol'}
+            {mode === 'signup'
+              ? l('Zaten hesabın var mı? Giriş yap', 'Already have an account? Sign in')
+              : l('Hesabın yok mu? Kayıt ol', "Don't have an account? Sign up")}
           </Text>
         </Pressable>
       </Screen>

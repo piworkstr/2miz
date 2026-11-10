@@ -7,6 +7,7 @@ import { useRef } from 'react';
 import { LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '../components/ui';
+import { LangProvider } from '../lib/i18n';
 import { OnboardingProvider } from '../lib/onboarding';
 import { SessionProvider, useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
@@ -85,7 +86,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <OnboardingProvider>
         <SessionProvider>
-          <RootNavigator />
+          <LangProvider>
+            <RootNavigator />
+          </LangProvider>
         </SessionProvider>
       </OnboardingProvider>
     </SafeAreaProvider>
