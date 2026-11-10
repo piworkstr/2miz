@@ -657,6 +657,7 @@ export default function GardenScreen() {
     });
   const queue = useRef<Action[]>([]);
   const busy = useRef(false);
+  const lastFarmPush = useRef(0); // ekim/sulama özet bildirimi en son ne zaman gitti
   const flash = (text: string) => {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
@@ -667,6 +668,8 @@ export default function GardenScreen() {
     if (busy.current || !couple || !partnerId) return;
     busy.current = true;
     let planted = 0;
+    let watered = 0;
+    let wateredCrop: CropId | null = null;
     let plantedCrop: CropId | null = null;
     // Kalp için: bu partide tek başına mı iş yapıldı, yoksa birlikte bir şey mi?
     let solo = false;
@@ -708,17 +711,10 @@ export default function GardenScreen() {
           if (job.a === 'note')
             notifyPartner(partnerId, `${myName} Not Ağacı’na bir not astı 🍃`, job.text.slice(0, 80), { type: 'mood', url: '/garden' });
           if (job.a === 'deliver' && r.gained) notifyPartner(partnerId, r.text, 'Bizim Çiftlik', { type: 'mood', url: '/garden' });
-          if (job.a === 'water' && before.k === 'crop') {
-            notifyPartner(
-              before.by,
-              `${myName} ektiğin ${CROPS[before.crop].name.toLowerCase()} ürününü suladı 💧`,
-              'İki kat hızlı büyüyor.',
-              {
-                type: 'mood',
-                url: '/garden',
-              },
-            );
-            flash(`${partnerName}’e bildirim gitti`);
+          if (job.a === 'water' && before.k === 'crop' && before.by !== uid) {
+            // Bildirim döngü sonunda tek seferde gider (10 tarla → 10 bildirim olmasın)
+            watered++;
+            wateredCrop = before.crop;
           }
         }
       } catch {
@@ -727,7 +723,23 @@ export default function GardenScreen() {
     }
     if (together) logActivityCapped(couple.id, uid, 'farmTogether');
     else if (solo) logActivityCapped(couple.id, uid, 'farm');
-    if (planted && plantedCrop) {
+    // Ekim/sulama bildirimleri: tek özet, en çok 15 dakikada bir (her işlemde telefon titremesin)
+    const quiet = Date.now() - lastFarmPush.current < 15 * 60_000;
+    if (watered && wateredCrop && !quiet) {
+      lastFarmPush.current = Date.now();
+      const c = CROPS[wateredCrop].name.toLowerCase();
+      notifyPartner(
+        partnerId,
+        `${myName} ${watered > 1 ? `${watered} tarlanı` : `ektiğin ${c} ürününü`} suladı 💧`,
+        'İki kat hızlı büyüyor.',
+        {
+          type: 'mood',
+          url: '/garden',
+        },
+      );
+      flash(`${partnerName}’e bildirim gitti`);
+    } else if (planted && plantedCrop && !quiet) {
+      lastFarmPush.current = Date.now();
       const c = CROPS[plantedCrop].name.toLowerCase();
       notifyPartner(
         partnerId,
@@ -2070,7 +2082,10 @@ function Orders({
   return (
     <>
       <Head title="Kasaba siparişleri" onClose={onClose} />
-      <Note>Siparişi depodan teslim edin; ikiniz de katkı verirseniz ortak hasat sayılır. Ödül ham satışın 1,4 katı.</Note>
+      <Note>
+        Sayılar teslim edilen/istenen; yanında depodaki miktar yazar. İkiniz de katkı verirseniz ortak hasat sayılır. Ödül ham satışın 1,4
+        katı.
+      </Note>
       <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
         {farm.orders.length === 0 && <Note>Kasaba ilk işinizden sonra sipariş göndermeye başlar.</Note>}
         {farm.orders.map((o) => {
@@ -2091,6 +2106,11 @@ function Orders({
                         <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
                           {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
                         </Text>
+                        {left[k] > 0 && (
+                          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}>
+                            · depoda {farm.stock[k] ?? 0}
+                          </Text>
+                        )}
                       </View>
                     ))}
                   </View>
