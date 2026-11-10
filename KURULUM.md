@@ -61,3 +61,21 @@ Biriniz **Kod oluştur** der, diğeri o kodu girer. Ardından "Bugün" ekranınd
 - `npx expo start -c` → önbelleği temizleyerek başlatır.
 - `.env` değerlerini değiştirdikten sonra sunucuyu kapatıp (Ctrl + C) tekrar başlat.
 - Hata mesajını olduğu gibi bana gönder, birlikte çözeriz.
+
+## 6. TestFlight ve güncellemeler
+
+Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Terminal'de, proje klasöründe çalıştırılır (`npx eas-cli@latest login` bir kez).
+
+- **Yalnızca JavaScript değişen düzeltmeler** (ekranlar, çiftlik, metinler; yani Claude'un günlük commit'lerinin hemen hepsi) yeni derleme gerektirmez, havadan (OTA) gider ve telefonlar uygulamayı bir sonraki açışta alır:
+  ```bash
+  npm run cek
+  npx eas-cli@latest update --branch production --message "düzeltmeler"
+  ```
+- **Yeni yerel paket** (ör. yeni bir expo-* modülü), `app.json` değişikliği ya da sürüm artışı varsa yeni derleme + TestFlight gerekir:
+  ```bash
+  npm run cek && npm install
+  npx eas-cli@latest build --platform ios --profile production
+  npx eas-cli@latest submit --platform ios --latest
+  ```
+  Derleme 10–20 dakika sürer; TestFlight'a düşünce test grubundaki telefonlara bildirim gider.
+- Hangisinin gerektiğini Claude her yayında söyler ("OTA yeter" / "derleme gerekir").

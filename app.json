@@ -84,6 +84,13 @@
         "projectId": "61b32801-60da-4f82-8f2a-a26940aaf8df"
       }
     },
-    "owner": "tanerbentesens-team"
+    "owner": "tanerbentesens-team",
+    "updates": {
+      "url": "https://u.expo.dev/61b32801-60da-4f82-8f2a-a26940aaf8df",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
