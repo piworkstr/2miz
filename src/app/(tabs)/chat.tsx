@@ -7,10 +7,12 @@ import {
   Easing,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -18,16 +20,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../../components/Avatar';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
+import { KeyboardSpace, useKeyboardVisible } from '../../components/KeyboardSpace';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
 import { fmt, useVoice, VoicePlayer } from '../../components/Voice';
 import {
   addToAlbum,
+  addToTrip,
   deleteMessage,
   markRead,
   REACTIONS,
   reactToMessage,
-  removeFromAlbum,
   reportMessage,
   sendMessage,
   sendVoice,
@@ -39,6 +42,7 @@ import {
   type Message,
 } from '../../lib/chat';
 import { setChatOpen } from '../../lib/push';
+import { useTrips } from '../../lib/trips';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
@@ -53,6 +57,7 @@ export default function Chat() {
   const startY = useRef(0);
   const partnerTyping = usePartnerTyping(couple?.id, partnerId);
   const lastTyping = useRef(0);
+  const kbOpen = useKeyboardVisible();
   const voice = useVoice((uri, ms) => {
     if (!couple || !user) return;
     voice.setHint('Sesli mesaj gönderiliyor…');
@@ -151,8 +156,28 @@ export default function Chat() {
           >
             {tx(t, partnerName)}
           </Text>
-          <BondStreak compact />
-          <BondHeart box={40} max={30} showLabel={false} />
+          {kbOpen ? (
+            <Pressable
+              onPress={() => Keyboard.dismiss()}
+              hitSlop={10}
+              accessibilityLabel="Klavyeyi kapat"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.colors.primarySoft,
+              }}
+            >
+              <Ionicons name="chevron-down" size={22} color={t.colors.primary} />
+            </Pressable>
+          ) : (
+            <>
+              <BondStreak compact />
+              <BondHeart box={40} max={30} showLabel={false} />
+            </>
+          )}
         </View>
         {partnerTyping ? (
           <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
@@ -163,11 +188,12 @@ export default function Chat() {
         )}
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={{ flex: 1 }}>
         <FlatList
           inverted
           data={visible}
           keyExtractor={(m) => m.id}
+          keyboardDismissMode="on-drag"
           contentContainerStyle={{ padding: 14, gap: 6 }}
           ListHeaderComponent={partnerTyping ? <TypingBubble kind={partnerTyping} name={partnerName} /> : undefined}
           ListEmptyComponent={
@@ -286,7 +312,8 @@ export default function Chat() {
             <Muted style={{ fontSize: 12, textAlign: 'center' }}>{voice.hint}</Muted>
           </Pressable>
         )}
-      </KeyboardAvoidingView>
+        <KeyboardSpace />
+      </View>
 
       <MessageMenu m={menu} uid={uid} coupleId={couple.id} partnerName={partnerName} onClose={() => setMenu(null)} />
     </SafeAreaView>
@@ -534,6 +561,9 @@ function MessageMenu({
   const [adding, setAdding] = useState(false);
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
+  // Hedef: genel albüm ('album') ya da daha önce açılmış bir seyahat albümü.
+  const [target, setTarget] = useState<string>('album');
+  const trips = useTrips(coupleId);
 
   function close() {
     setReporting(false);
@@ -541,6 +571,7 @@ function MessageMenu({
     setAdding(false);
     setNote('');
     setErr('');
+    setTarget('album');
     onClose();
   }
 
@@ -549,7 +580,8 @@ function MessageMenu({
     setBusy(true);
     setErr('');
     try {
-      await addToAlbum(coupleId, m, uid, note);
+      if (target === 'album') await addToAlbum(coupleId, m, uid, note);
+      else await addToTrip(coupleId, m, uid, target, note);
       close();
     } catch {
       setErr('Eklenemedi, tekrar dene.');
@@ -590,10 +622,7 @@ function MessageMenu({
 
   const albumRow = m?.hasPhoto
     ? m.inAlbum
-      ? row('Albümden çıkar', async () => {
-          if (m) await removeFromAlbum(coupleId, m.id).catch(() => {});
-          close();
-        })
+      ? row('Albümde ✓ · çıkarmak için Albüm’de üstüne basılı tut', close) // silme partner onayıyla, albüm ekranında
       : row('Albüme ekle', () => setAdding(true))
     : null;
 
@@ -638,6 +667,36 @@ function MessageMenu({
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
                   Albüme anı olarak ekle
                 </Text>
+                {!!trips?.length && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8 }}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {[{ id: 'album', name: 'Genel albüm' }, ...trips].map((tr) => {
+                      const on = target === tr.id;
+                      return (
+                        <Pressable
+                          key={tr.id}
+                          onPress={() => setTarget(tr.id)}
+                          style={{
+                            paddingVertical: 8,
+                            paddingHorizontal: 14,
+                            borderRadius: 18,
+                            borderWidth: 1,
+                            borderColor: on ? t.colors.primary : t.colors.border,
+                            backgroundColor: on ? t.colors.primary : t.colors.bg,
+                          }}
+                        >
+                          <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '600', color: on ? t.colors.onPrimary : t.colors.text }}>
+                            {tr.id === 'album' ? tr.name : `✈️ ${tr.name}`}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
                 <Muted>Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).</Muted>
                 <TextInput
                   value={note}
@@ -669,7 +728,7 @@ function MessageMenu({
                     <ActivityIndicator color={t.colors.onPrimary} />
                   ) : (
                     <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600' }}>
-                      Albüme ekle
+                      {target === 'album' ? 'Albüme ekle' : 'Seyahat albümüne ekle'}
                     </Text>
                   )}
                 </Pressable>

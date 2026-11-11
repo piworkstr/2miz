@@ -54,6 +54,8 @@ export default function Today() {
       style={{ flex: 1, backgroundColor: t.colors.bg }}
       contentContainerStyle={{ paddingBottom: 24 }}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      automaticallyAdjustKeyboardInsets
     >
       {/* Arka plandaki yumuşak renk lekeleri: cam yüzeyler bir şeyi bulanıklaştırsın */}
       <View

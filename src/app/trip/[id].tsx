@@ -15,9 +15,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DeleteRequest } from '../../components/DeleteRequest';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { KRAFT, Stamp } from '../../components/TripCover';
 import { Loading } from '../../components/ui';
+import { delKey } from '../../lib/delreq';
 import { openPlus, tripPhotoLimit, usePlus } from '../../lib/plus';
 import { notifyPartner } from '../../lib/push';
 import { useSession } from '../../lib/session';
@@ -44,6 +46,7 @@ export default function TripScreen() {
   const [menu, setMenu] = useState<TripPhoto | null>(null);
   const [viewing, setViewing] = useState<TripPhoto | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [delPhoto, setDelPhoto] = useState<string | null>(null); // uzun basıp "sil" denen fotoğraf
   const plus = usePlus();
   const LIMIT = tripPhotoLimit(plus);
 
@@ -157,13 +160,35 @@ export default function TripScreen() {
           )}
         </Pressable>
         <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#7A6650', textAlign: 'center', marginTop: -10 }}>
-          {trip.count}/{LIMIT} fotoğraf · Uzun basarak not yazabilir ya da silebilirsiniz
+          {trip.count}/{LIMIT} fotoğraf · Uzun basarak not yazabilir ya da silmeyi isteyebilirsiniz
         </Text>
         {!!error && (
           <Text maxFontSizeMultiplier={1.25} style={{ color: '#A93246', textAlign: 'center' }}>
             {error}
           </Text>
         )}
+
+        {photos
+          .filter((p) => p.id === delPhoto || couple.delReq?.[delKey('tripPhoto', p.id)])
+          .map((p) => (
+            <View
+              key={`del-${p.id}`}
+              style={{ flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10 }}
+            >
+              <Image source={{ uri: `data:image/jpeg;base64,${p.data}` }} style={{ width: 56, height: 56, borderRadius: 8 }} />
+              <View style={{ flex: 1 }}>
+                <DeleteRequest
+                  kind="tripPhoto"
+                  id={p.id}
+                  label={`${trip.name} albümünden bir fotoğraf`}
+                  url={`/trip/${trip.id}`}
+                  open={delPhoto === p.id}
+                  onClose={() => setDelPhoto(null)}
+                  doDelete={() => deleteTripPhoto(couple.id, p)}
+                />
+              </View>
+            </View>
+          ))}
 
         {photos.length === 0 ? (
           <Text
@@ -222,34 +247,19 @@ export default function TripScreen() {
         )}
 
         <View style={{ alignItems: 'center', marginTop: 20, gap: 10 }}>
-          {confirmDelete ? (
-            <>
-              <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, textAlign: 'center' }}>
-                Seyahat ve içindeki {trip.count} fotoğraf ikiniz için de silinecek.
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable
-                  onPress={async () => {
-                    await deleteTrip(couple.id, trip.id).catch(() => {});
-                    router.back();
-                  }}
-                  style={{ backgroundColor: '#A93246', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
-                >
-                  <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600' }}>
-                    Evet, sil
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setConfirmDelete(false)}
-                  style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#B9A88F' }}
-                >
-                  <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, fontWeight: '600' }}>
-                    Vazgeç
-                  </Text>
-                </Pressable>
-              </View>
-            </>
-          ) : (
+          <DeleteRequest
+            kind="trip"
+            id={trip.id}
+            label={`${trip.name} seyahat albümü (${trip.count} fotoğraf)`}
+            url={`/trip/${trip.id}`}
+            open={confirmDelete}
+            onClose={() => setConfirmDelete(false)}
+            doDelete={async () => {
+              await deleteTrip(couple.id, trip.id);
+              router.back();
+            }}
+          />
+          {!confirmDelete && !couple.delReq?.[delKey('trip', trip.id)] && (
             <Pressable onPress={() => setConfirmDelete(true)}>
               <Text maxFontSizeMultiplier={1.25} style={{ color: '#A93246', fontSize: 14 }}>
                 Seyahati sil
@@ -259,7 +269,7 @@ export default function TripScreen() {
         </View>
       </ScrollView>
 
-      <PhotoMenu photo={menu} coupleId={couple.id} onClose={() => setMenu(null)} />
+      <PhotoMenu photo={menu} coupleId={couple.id} onClose={() => setMenu(null)} onDelete={(id) => setDelPhoto(id)} />
 
       <Modal visible={!!viewing} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
         <Pressable
@@ -286,7 +296,17 @@ export default function TripScreen() {
   );
 }
 
-function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coupleId: string; onClose: () => void }) {
+function PhotoMenu({
+  photo,
+  coupleId,
+  onClose,
+  onDelete,
+}: {
+  photo: TripPhoto | null;
+  coupleId: string;
+  onClose: () => void;
+  onDelete: (id: string) => void;
+}) {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -361,8 +381,8 @@ function PhotoMenu({ photo, coupleId, onClose }: { photo: TripPhoto | null; coup
                 {row(photo?.note ? 'Notu düzenle' : 'Not yaz', () => setNote(photo?.note ?? ''))}
                 {row(
                   'Fotoğrafı sil',
-                  async () => {
-                    if (photo) await deleteTripPhoto(coupleId, photo).catch(() => {});
+                  () => {
+                    if (photo) onDelete(photo.id); // partner onaylayınca silinir
                     close();
                   },
                   true,

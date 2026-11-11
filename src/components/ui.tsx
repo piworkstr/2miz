@@ -20,7 +20,12 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
+        >
           {children}
         </ScrollView>
       ) : (

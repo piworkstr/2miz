@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { dayKey, prettyDate } from '../lib/date';
-import { cancelDate, confirmDate, markDateSelfie, nextDays, proposeDate, useUpcomingDates, type DatePlan } from '../lib/dates';
+import { Pressable, Text, View } from 'react-native';
+import { dayKey, prettyDate, trMonth } from '../lib/date';
+import { cancelDate, confirmDate, markDateSelfie, proposeDate, useUpcomingDates, type DatePlan } from '../lib/dates';
 import { saveDatePhoto } from '../lib/photos';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -99,38 +99,16 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
       {picking && (
         <Card>
           <T style={{ fontWeight: '600' }}>{tx(t, t.copy.date.pickDay)}</T>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {nextDays()
-              .slice(1)
-              .map((d) => {
-                const taken = dates.some((x) => x.id === d.key);
-                return (
-                  <Pressable
-                    key={d.key}
-                    disabled={taken}
-                    onPress={() =>
-                      run(d.key, async () => {
-                        await proposeDate(couple.id, d.key, uid, false);
-                        setPicking(false);
-                      })
-                    }
-                    style={{
-                      alignItems: 'center',
-                      paddingVertical: 10,
-                      paddingHorizontal: 14,
-                      borderRadius: Math.min(t.radius.card, 14),
-                      borderWidth: 1,
-                      borderColor: t.colors.border,
-                      backgroundColor: taken ? t.colors.primarySoft : t.colors.bg,
-                      opacity: taken ? 0.5 : 1,
-                    }}
-                  >
-                    <Muted style={{ fontSize: 12 }}>{d.weekday}</Muted>
-                    <T style={{ fontWeight: '600' }}>{d.label}</T>
-                  </Pressable>
-                );
-              })}
-          </ScrollView>
+          <MonthPicker
+            taken={new Set(dates.map((x) => x.id))}
+            busy={busy}
+            onPick={(key) =>
+              run(key, async () => {
+                await proposeDate(couple.id, key, uid, false);
+                setPicking(false);
+              })
+            }
+          />
         </Card>
       )}
 
@@ -251,6 +229,87 @@ function DateToday({ plan, coupleId, uid }: { plan: DatePlan; coupleId: string; 
           <Button label="Albüme ekle" onPress={save} busy={busy} />
         </View>
       )}
+    </View>
+  );
+}
+
+// Aylık takvim: bugünden itibaren 12 ay ileri; geçmiş günler kapalı, planlı günler işaretli.
+const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+function MonthPicker({ taken, busy, onPick }: { taken: Set<string>; busy: string | null; onPick: (key: string) => void }) {
+  const t = useTheme();
+  const now = new Date();
+  const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const first = new Date(ym.y, ym.m, 1);
+  const daysInMonth = new Date(ym.y, ym.m + 1, 0).getDate();
+  const lead = (first.getDay() + 6) % 7; // Pazartesi başlangıç
+  const today = dayKey(now);
+  const isFirst = ym.y === now.getFullYear() && ym.m === now.getMonth();
+  const isLast = ym.y * 12 + ym.m >= now.getFullYear() * 12 + now.getMonth() + 11;
+  const cells: (number | null)[] = [...Array<null>(lead).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  while (cells.length % 7) cells.push(null);
+  const arrow = (dir: -1 | 1, off: boolean) => (
+    <Pressable
+      disabled={off}
+      hitSlop={10}
+      onPress={() => setYm(({ y, m }) => ({ y: y + Math.floor((m + dir) / 12), m: (m + dir + 12) % 12 }))}
+      style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', opacity: off ? 0.25 : 1 }}
+    >
+      <Ionicons name={dir < 0 ? 'chevron-back' : 'chevron-forward'} size={20} color={t.colors.text} />
+    </Pressable>
+  );
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {arrow(-1, isFirst)}
+        <T style={{ flex: 1, textAlign: 'center', fontWeight: '700', fontSize: 16 }}>
+          {trMonth(ym.m)} {ym.y}
+        </T>
+        {arrow(1, isLast)}
+      </View>
+      <View style={{ flexDirection: 'row' }}>
+        {WEEKDAYS.map((w) => (
+          <Muted key={w} style={{ flex: 1, textAlign: 'center', fontSize: 11 }}>
+            {w}
+          </Muted>
+        ))}
+      </View>
+      {Array.from({ length: cells.length / 7 }, (_, r) => (
+        <View key={r} style={{ flexDirection: 'row' }}>
+          {cells.slice(r * 7, r * 7 + 7).map((d, c) => {
+            if (!d) return <View key={c} style={{ flex: 1, aspectRatio: 1 }} />;
+            const key = dayKey(new Date(ym.y, ym.m, d));
+            const past = key <= today; // bugün için "Şu an date'teyiz" düğmesi var
+            const on = taken.has(key);
+            const off = past || on || busy === key;
+            return (
+              <Pressable
+                key={c}
+                disabled={off}
+                onPress={() => onPick(key)}
+                style={{ flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 2 }}
+              >
+                <View
+                  style={{
+                    width: '100%',
+                    maxWidth: 40,
+                    aspectRatio: 1,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: on ? t.colors.primary : key === today ? t.colors.primarySoft : 'transparent',
+                    borderWidth: past && !on ? 0 : 1,
+                    borderColor: t.colors.border,
+                    opacity: past && !on ? 0.3 : 1,
+                  }}
+                >
+                  <T style={{ fontWeight: on || key === today ? '700' : '500', color: on ? t.colors.onPrimary : t.colors.text }}>{d}</T>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+      <Muted style={{ fontSize: 11, textAlign: 'center' }}>Dolu günler renkli. Dokunduğun gün partnerine önerilir.</Muted>
     </View>
   );
 }

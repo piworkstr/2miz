@@ -58,6 +58,8 @@ export default function Coupons() {
         </View>
       </View>
 
+      <HowItWorks partnerName={partnerName} open={coupons.length === 0} />
+
       {owedToMe.length > 0 && (
         <Section title={`${partnerName} sana borçlu`} hint="Açtığın kuponlar. Yerine getirdiğinde o işaretleyecek.">
           {owedToMe.map((c) => (
@@ -96,6 +98,44 @@ export default function Coupons() {
         </Section>
       )}
     </Screen>
+  );
+}
+
+// "Buranın olayı ne?" — kuponların mantığı üç adımda. Hiç kupon yokken açık gelir, sonra tek dokunuşla açılır.
+function HowItWorks({ partnerName, open: openAtStart }: { partnerName: string; open: boolean }) {
+  const t = useTheme();
+  const [open, setOpen] = useState(openAtStart);
+  const steps = [
+    [
+      'create-outline',
+      'Kupon yaz',
+      `Partnerine vermek istediğin bir sözü yaz: "Kahvaltı benden", "Bir akşam telefonsuz". Bir de puan fiyatı koy.`,
+    ],
+    ['star-outline', 'Puan birikir', 'Günlük görevleri birlikte tamamladıkça ortak puanınız artar. İkiniz de aynı kasadan harcarsınız.'],
+    [
+      'gift-outline',
+      'Kuponu aç',
+      `${partnerName} puanıyla kuponunu açar; sen sözünü gerçek hayatta yerine getirince "Yapıldı" dersin. Tersi de aynı.`,
+    ],
+  ] as const;
+  return (
+    <View style={{ borderWidth: 1, borderColor: t.colors.border, borderRadius: t.radius.card, padding: 14, gap: 10 }}>
+      <Pressable onPress={() => setOpen((o) => !o)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="help-circle-outline" size={20} color={t.colors.primary} />
+        <T style={{ flex: 1, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Kuponlar nasıl çalışır?')}</T>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={t.colors.muted} />
+      </Pressable>
+      {open &&
+        steps.map(([icon, title, text]) => (
+          <View key={title} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+            <Ionicons name={icon} size={20} color={t.colors.primary} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <T style={{ fontWeight: '600' }}>{title}</T>
+              <Muted style={{ fontSize: 13 }}>{text}</Muted>
+            </View>
+          </View>
+        ))}
+    </View>
   );
 }
 

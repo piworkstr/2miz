@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { handFont, inkColor, Polaroid } from '../../components/Polaroid';
 import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
+import { DeleteRequest } from '../../components/DeleteRequest';
 import { removeFromAlbum } from '../../lib/chat';
 import { usePhotos, type Photo } from '../../lib/photos';
 import { FREE, openPlus, usePlus } from '../../lib/plus';
@@ -199,29 +200,15 @@ export default function Album() {
                   tilt={1.5}
                   style={{ alignSelf: 'center', width: '74%' }}
                 />
-                {removing === page.photo.id && (
-                  <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
-                    <Pressable
-                      onPress={() => {
-                        setRemoving(null);
-                        removeFromAlbum(couple!.id, page.photo.messageId ?? page.photo.id.replace(/^moment_/, '')).catch(() => {});
-                      }}
-                      style={{ backgroundColor: '#C0392B', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 }}
-                    >
-                      <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontWeight: '600' }}>
-                        Albümden çıkar
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => setRemoving(null)}
-                      style={{ borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, borderColor: '#D9CCC6' }}
-                    >
-                      <Text maxFontSizeMultiplier={1.25} style={{ color: inkColor, fontWeight: '600' }}>
-                        Vazgeç
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
+                <DeleteRequest
+                  kind="moment"
+                  id={page.photo.messageId ?? page.photo.id.replace(/^moment_/, '')}
+                  label="Albümdeki bir anı"
+                  url="/album"
+                  open={removing === page.photo.id}
+                  onClose={() => setRemoving(null)}
+                  doDelete={() => removeFromAlbum(couple!.id, page.photo.messageId ?? page.photo.id.replace(/^moment_/, ''))}
+                />
               </>
             ) : page.kind === 'date' ? (
               <>

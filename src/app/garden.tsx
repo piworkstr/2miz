@@ -48,6 +48,7 @@ import {
   residentReadyAt,
   needsFeed,
   rc,
+  restNear,
   readyTiles,
   SEASON_NAME,
   seasonOf,
@@ -721,6 +722,9 @@ export default function GardenScreen() {
         flash('Olmadı, tekrar dene');
       }
     }
+    // İş bitti: tarlanın içinde dikilme, yanındaki yola çekil.
+    const rest = restNear(farmOf(couple), myTileRef.current);
+    if (rest !== myTileRef.current) void walkTo(rest);
     if (together) logActivityCapped(couple.id, uid, 'farmTogether');
     else if (solo) logActivityCapped(couple.id, uid, 'farm');
     // Ekim/sulama bildirimleri: tek özet, en çok 15 dakikada bir (her işlemde telefon titremesin)
@@ -1220,6 +1224,8 @@ export default function GardenScreen() {
                 setSel(null);
                 setShowLog(false);
                 setShowOrders(false);
+                setShowShop(false);
+                setPlantAll(false);
               }}
               onLog={() => setShowLog(true)}
               onAll={() =>

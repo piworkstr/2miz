@@ -222,6 +222,25 @@ export function levelOf(xp: number) {
 }
 
 export const rc = (i: number) => [Math.floor(i / N), i % N] as const;
+// İş bitince karakter tarlanın içinde kalmaz: en yakın yol (yoksa çim) karesine çekilir.
+export function restNear(f: Farm, i: number): number {
+  const ok = (j: number) => f.tiles[j]?.k === 'path' || f.tiles[j]?.k === 'grass';
+  if (ok(i)) return i;
+  const [r0, c0] = rc(i);
+  let best = i;
+  let bestD = Infinity;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      const j = r * N + c;
+      if (!ok(j)) continue;
+      const d = Math.abs(r - r0) + Math.abs(c - c0) + (f.tiles[j].k === 'path' ? 0 : 0.5);
+      if (d < bestD) {
+        bestD = d;
+        best = j;
+      }
+    }
+  return best;
+}
 export const parcelOf = (i: number) => `${Math.floor(Math.floor(i / N) / 2)}-${Math.floor((i % N) / 2)}`;
 export const parcelTiles = (f: Farm, i: number) =>
   f.tiles.map((t, j) => (t.k === 'locked' && parcelOf(j) === parcelOf(i) ? j : -1)).filter((j) => j >= 0);
@@ -684,7 +703,7 @@ export function applyAction(
       break;
     }
   }
-  f.pos[uid] = act.i;
+  f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
   return { farm: f, text, gained, ready };
 }

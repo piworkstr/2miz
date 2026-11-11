@@ -5,6 +5,7 @@ import {
   deleteField,
   doc,
   getDoc,
+  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -81,7 +82,8 @@ export async function sendMessage(
     createdAt: serverTimestamp(),
   });
   logActivity(coupleId, from, photo ? 'photo' : 'message');
-  if (notify?.to) notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
+  if (notify?.to)
+    notifyPartner(notify.to, notify.fromName, photo ? '📷 Anlık fotoğraf gönderdi' : text.trim(), { type: 'message', url: '/chat' });
 }
 
 export async function deleteMessage(coupleId: string, m: Pick<Message, 'id' | 'hasPhoto' | 'audioMs'>) {
@@ -206,6 +208,21 @@ export async function addToAlbum(coupleId: string, msg: Message, uid: string, no
   });
   await updateDoc(doc(messagesCol(coupleId), msg.id), { inAlbum: true }).catch(() => {});
   logActivity(coupleId, uid, 'album');
+}
+
+// Mesajdaki fotoğraf daha önce açılmış bir seyahat albümüne de konabilir (ayrı kopya).
+export async function addToTrip(coupleId: string, msg: Message, uid: string, tripId: string, note: string) {
+  const data = await photoData(coupleId, msg.id);
+  await addDoc(collection(db, 'couples', coupleId, 'tripPhotos'), {
+    tripId,
+    uid,
+    note: note.trim().slice(0, 80),
+    data,
+    createdAtMs: Date.now(),
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, 'couples', coupleId, 'trips', tripId), { count: increment(1) }).catch(() => {});
+  logActivity(coupleId, uid, 'trip');
 }
 
 export async function removeFromAlbum(coupleId: string, messageId: string) {
