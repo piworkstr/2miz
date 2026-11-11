@@ -31,6 +31,7 @@ import {
   markRead,
   REACTIONS,
   reactToMessage,
+  removeFromAlbum,
   reportMessage,
   sendMessage,
   sendVoice,
@@ -622,7 +623,10 @@ function MessageMenu({
 
   const albumRow = m?.hasPhoto
     ? m.inAlbum
-      ? row('Albümde ✓ · çıkarmak için Albüm’de üstüne basılı tut', close) // silme partner onayıyla, albüm ekranında
+      ? row('Albümden çıkar', async () => {
+          if (m) await removeFromAlbum(coupleId, m.id).catch(() => {});
+          close();
+        })
       : row('Albüme ekle', () => setAdding(true))
     : null;
 
