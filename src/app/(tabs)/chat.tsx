@@ -407,7 +407,8 @@ function Bubble({
     </View>
   );
   const photo = useMessagePhoto(coupleId, m.id, m.hasPhoto);
-  const time = new Date(m.createdAtMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  const dt = new Date(m.createdAtMs);
+  const time = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`; // cihaz Intl ayarından bağımsız
 
   // Fotoğraflar sohbette de polaroid olarak görünür; albüme eklenenlerde küçük bir kalp olur.
   if (m.hasPhoto) {
