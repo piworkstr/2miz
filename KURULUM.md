@@ -79,3 +79,16 @@ Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Termin
   ```
   Derleme 10–20 dakika sürer; TestFlight'a düşünce test grubundaki telefonlara bildirim gider.
 - Hangisinin gerektiğini Claude her yayında söyler ("OTA yeter" / "derleme gerekir").
+
+### 6b. OTA'yı otomatiğe bağlama (bir kez, Terminal sonra hiç gerekmez)
+
+`.eas/workflows/ota.yml` main'e her push'ta `eas update`'i EAS sunucusunda çalıştırır. Açmak için ofiste, bir kez:
+
+1. Terminal, proje klasörü — Firebase ayarlarını (.env'deki EXPO_PUBLIC_* satırları) EAS'in production ortamına yükle:
+   ```bash
+   npx eas-cli@latest env:push --environment production --path .env
+   ```
+2. https://expo.dev → tanerbentesens-team → usdaily → **Project settings → GitHub** → "Connect repository" → piworkstr/2miz
+   (ilk kez GitHub'da Expo uygulamasına izin ister).
+3. Aynı sayfada **Workflows**'un açık olduğunu kontrol et. Bundan sonra Claude'un her push'u 2–3 dakikada
+   production kanalına düşer; sonucu expo.dev → Workflows'ta görürsün.

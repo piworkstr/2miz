@@ -1,0 +1,17 @@
+# main'e her push'ta OTA güncellemesi (eas update) EAS sunucusunda yayınlanır; Terminal gerekmez.
+# Çalışması için bir kez: expo.dev → proje → GitHub bağlantısı + production ortamına EXPO_PUBLIC_FIREBASE_* değişkenleri
+# (bkz. KURULUM.md §6b).
+name: OTA güncelleme (production)
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  update_production:
+    name: eas update → production
+    type: update
+    environment: production
+    params:
+      branch: production
+      platform: all
