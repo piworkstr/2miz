@@ -63,9 +63,11 @@ export default function GameScreen() {
     myName: profile?.name ?? 'Sen',
   };
 
+  // Blok sürüklemeyle oynanır: kaydırma yok (ekran yukarı kaymasın); kendi kapat düğmesi var.
+  const drag = game.type === 'blocks';
   return (
-    <Screen>
-      {header}
+    <Screen scroll={!drag}>
+      {game.type !== 'blocks' && header}
       {game.type === 'thisthat' && <ThisThat {...props} />}
       {game.type === 'knowme' && <KnowMe {...props} />}
       {game.type === 'memory' && <Memory {...props} />}

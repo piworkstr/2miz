@@ -1,14 +1,5 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import {
-  collection,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-} from 'firebase/firestore';
+import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
 
@@ -29,9 +20,18 @@ export type Photo = {
 
 export const PHOTO_WIDTH = 720;
 
+// Firestore belgesi 1 MB; kural 900.000 karakter ister. Uzun kenar da sınırlanır (panorama), sığmazsa daha çok sıkıştırılır.
+const MAX_B64 = 820_000;
 export async function shrink(uri: string): Promise<string> {
-  const rendered = await ImageManipulator.manipulate(uri).resize({ width: PHOTO_WIDTH }).renderAsync();
-  const result = await rendered.saveAsync({ compress: 0.55, format: SaveFormat.JPEG, base64: true });
+  const first = await ImageManipulator.manipulate(uri).resize({ width: PHOTO_WIDTH }).renderAsync();
+  let rendered = first;
+  if (first.height > PHOTO_WIDTH * 1.8)
+    rendered = await ImageManipulator.manipulate(uri)
+      .resize({ height: PHOTO_WIDTH * 1.8 })
+      .renderAsync();
+  let result = await rendered.saveAsync({ compress: 0.55, format: SaveFormat.JPEG, base64: true });
+  if (result.base64 && result.base64.length > MAX_B64)
+    result = await rendered.saveAsync({ compress: 0.3, format: SaveFormat.JPEG, base64: true });
   if (!result.base64) throw new Error('Fotoğraf işlenemedi.');
   return result.base64;
 }
@@ -52,14 +52,7 @@ export function photosCol(coupleId: string) {
   return collection(db, 'couples', coupleId, 'photos');
 }
 
-export async function saveTaskPhoto(
-  coupleId: string,
-  day: string,
-  uid: string,
-  taskId: string,
-  note: string,
-  data: string,
-) {
+export async function saveTaskPhoto(coupleId: string, day: string, uid: string, taskId: string, note: string, data: string) {
   await setDoc(doc(photosCol(coupleId), `${day}_${uid}`), {
     kind: 'task',
     day,

@@ -93,8 +93,8 @@ export default function TripScreen() {
           url: `/trip/${trip.id}`,
         });
       }
-    } catch {
-      setError('Bazı fotoğraflar eklenemedi, tekrar dene.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Bazı fotoğraflar eklenemedi, tekrar dene.');
     } finally {
       setAdding(null);
     }

@@ -14,13 +14,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 
-export function Screen({ children }: { children: ReactNode }) {
+// scroll=false: sürüklemeyle oynanan oyunlar (blok, tavla) kaydırma listesine girmez; yoksa parmak hareketi sayfayı kaydırır.
+export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   const t = useTheme();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
+      {scroll ? (
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={{ flex: 1, padding: 20, gap: 16 }}>{children}</View>
+      )}
     </SafeAreaView>
   );
 }

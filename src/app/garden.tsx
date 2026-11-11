@@ -72,7 +72,7 @@ import {
 import { logActivityCapped } from '../lib/bond';
 import { ART } from '../lib/farmArt';
 import { notifyPartner } from '../lib/push';
-import { startScene, useOpenScene, type Scene } from '../lib/scenes';
+import { finishScene, startScene, useOpenScene, type Scene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 
 // Bizim Çiftlik: 2.5D ortak çiftlik. Bütün arazi tek ekranda; avatarın dokunduğun kareye yürüyüp işi yapar.
@@ -766,7 +766,8 @@ export default function GardenScreen() {
   async function begin(kind: 'harvest' | 'market') {
     if (scene) return flash('Önce açık sahneyi bitirin.');
     try {
-      await startScene(couple!.id, uid, { world: 'farm', kind, place: 'Bizim Çiftlik', windowMin: 120 });
+      // Çiftlik sahnelerinde soru yok: hasat ve pazar iş günüdür, sohbet sorusu hayal dünyalarında kalır.
+      await startScene(couple!.id, uid, { world: 'farm', kind, place: 'Bizim Çiftlik', windowMin: 120, qkind: 'none' });
       notifyPartner(partnerId!, `${myName} seni ${FARM_SCENES[kind].verb} için çağırıyor`, 'Bizim Çiftlik', {
         type: 'mood',
         url: '/garden',
@@ -776,10 +777,13 @@ export default function GardenScreen() {
     }
   }
   // Sahneye katılan kişi işi yapar: hasadı kaldırır ya da tezgâhı açıp satar.
-  const doScene = (sc: Scene) =>
-    sc.kind === 'harvest'
+  const doScene = async (sc: Scene) => {
+    await (sc.kind === 'harvest'
       ? work({ a: 'harvestDay', i: bigIds[0] ?? PILE_TILE, scene: sc.id })
-      : work({ a: 'sell', i: PILE_TILE, scene: sc.id });
+      : work({ a: 'sell', i: PILE_TILE, scene: sc.id }));
+    // soru yoksa sahne işle biter; açık kalıp yenisini engellemesin
+    if (!sc.question && couple) setTimeout(() => finishScene(couple.id, sc.id), 8000);
+  };
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer

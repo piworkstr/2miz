@@ -89,6 +89,10 @@ export async function answerScene(coupleId: string, scene: Scene, uid: string, t
 export async function attachPhoto(coupleId: string, sceneId: string, photoId: string | null) {
   await updateDoc(doc(scenesCol(coupleId), sceneId), { photo: photoId });
 }
+// Sorusuz sahne (çiftlikte hasat günü, pazar): iş bitince kapanır; defter sayfası olmaz.
+export async function finishScene(coupleId: string, sceneId: string) {
+  await updateDoc(doc(scenesCol(coupleId), sceneId), { status: 'done', done: true }).catch(() => {});
+}
 export async function cancelScene(coupleId: string, sceneId: string) {
   await updateDoc(doc(scenesCol(coupleId), sceneId), { status: 'expired' });
 }
@@ -130,7 +134,10 @@ export function usePages(coupleId: string | undefined, max = 120) {
     const q = query(scenesCol(coupleId), orderBy('startedAt', 'desc'), limit(max));
     return onSnapshot(
       q,
-      (snap) => setPages(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Scene, 'id'>) })).filter((x) => x.status === 'done')),
+      (snap) =>
+        setPages(
+          snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Scene, 'id'>) })).filter((x) => x.status === 'done' && !!x.question),
+        ), // sorusuz iş sahneleri (hasat, pazar) deftere girmez
       () => setPages([]),
     );
   }, [coupleId, max]);

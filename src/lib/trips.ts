@@ -119,14 +119,28 @@ export async function addTripPhotos(
   const room = Math.max(0, max - trip.count);
   const list = uris.slice(0, room);
   let done = 0;
+  let lastError = '';
+  // Bir fotoğraf eklenemezse (format, boyut, izin) diğerleri yine eklenir; sebep çağırana döner.
   for (const uri of list) {
-    const data = await shrink(uri);
-    await addDoc(tripPhotosCol(coupleId), { tripId: trip.id, uid, note: '', data, createdAtMs: Date.now(), createdAt: serverTimestamp() });
-    await updateDoc(doc(tripsCol(coupleId), trip.id), { count: increment(1) });
-    done++;
-    onProgress?.(done);
+    try {
+      const data = await shrink(uri);
+      await addDoc(tripPhotosCol(coupleId), {
+        tripId: trip.id,
+        uid,
+        note: '',
+        data,
+        createdAtMs: Date.now(),
+        createdAt: serverTimestamp(),
+      });
+      await updateDoc(doc(tripsCol(coupleId), trip.id), { count: increment(1) });
+      done++;
+      onProgress?.(done);
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
   }
   if (done) logActivity(coupleId, uid, 'trip', Math.min(done, 5));
+  if (done < list.length) throw new Error(`${list.length - done} fotoğraf eklenemedi${lastError ? ` (${lastError.slice(0, 80)})` : ''}`);
   return done;
 }
 
