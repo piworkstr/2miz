@@ -1,7 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { collection, doc, limit, onSnapshot, query, where } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { auth, db } from './firebase';
+
+export const LAST_EMAIL_KEY = '2miz.lastEmail';
 
 export type Profile = {
   name: string;
@@ -91,6 +94,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       onAuthStateChanged(auth, (u) => {
         setUser(u);
         setAuthReady(true);
+        // Çıkış yapıp tekrar girişte hoş geldin ekranı "Giriş yap"ı öne alsın, e-posta hazır gelsin (şifre saklanmaz).
+        if (u?.email) AsyncStorage.setItem(LAST_EMAIL_KEY, u.email).catch(() => {});
       }),
     [],
   );

@@ -1,11 +1,13 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { ageFrom, DateInput, toDateKey, type DateParts } from '../components/DateInput';
 import { Button, ErrorText, Input, Muted, Screen } from '../components/ui';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../lib/firebase';
+import { LAST_EMAIL_KEY } from '../lib/session';
 import { useL, useLang } from '../lib/i18n';
 import { useOnboarding } from '../lib/onboarding';
 import { useTheme } from '../lib/useTheme';
@@ -42,6 +44,12 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Daha önce giriş yapılmış e-posta hazır gelir; yalnızca şifre yazılır.
+  useEffect(() => {
+    AsyncStorage.getItem(LAST_EMAIL_KEY)
+      .then((v) => v && setEmail((cur) => cur || v))
+      .catch(() => {});
+  }, []);
 
   async function submit() {
     setError('');
