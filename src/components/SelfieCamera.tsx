@@ -43,9 +43,9 @@ export function SelfieCamera({ value, onChange, hint, aspect = 3 / 4 }: Props) {
     if (!camera.current || busy) return;
     setBusy(true);
     try {
-      const pic = await camera.current.takePictureAsync({ quality: 0.8 });
+      const pic = await camera.current.takePictureAsync({ quality: 0.8, exif: true });
       if (!pic?.uri) throw new Error('no-uri');
-      onChange(await shrink(pic.uri));
+      onChange(await shrink(pic.uri, { width: pic.width, height: pic.height, orientation: pic.exif?.Orientation }));
       setOpen(false);
     } catch {
       setError(ready ? 'Fotoğraf çekilemedi, tekrar dene.' : 'Kamera hazırlanıyor, bir saniye sonra tekrar dene.');

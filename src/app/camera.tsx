@@ -31,9 +31,9 @@ export default function CameraScreen() {
     setError('');
     setBusy(true);
     try {
-      const pic = await camera.current.takePictureAsync({ quality: 0.8 });
+      const pic = await camera.current.takePictureAsync({ quality: 0.8, exif: true });
       if (!pic?.uri) throw new Error('no-uri');
-      setShot(await shrink(pic.uri));
+      setShot(await shrink(pic.uri, { width: pic.width, height: pic.height, orientation: pic.exif?.Orientation }));
     } catch {
       setError(ready ? 'Fotoğraf çekilemedi, tekrar dene.' : 'Kamera hazırlanıyor, bir saniye sonra tekrar dene.');
     } finally {

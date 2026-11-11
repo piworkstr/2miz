@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { logActivity } from './bond';
-import { shrink } from './photos';
+import { shrink, type PhotoMeta } from './photos';
 
 // Seyahat albümleri: galeriden seçilen fotoğraflar. Anlık selfie kuralı görevlerde ve sohbette kalır.
 // Fotoğraflar şimdilik Firestore'da; bu yüzden seyahat başına sınır var (ücretsiz 20, Plus 100; bkz. plus.ts).
@@ -112,7 +112,7 @@ export async function addTripPhotos(
   coupleId: string,
   trip: Trip,
   uid: string,
-  uris: string[],
+  uris: { uri: string; meta?: PhotoMeta }[],
   max: number,
   onProgress?: (done: number) => void,
 ) {
@@ -121,9 +121,9 @@ export async function addTripPhotos(
   let done = 0;
   let lastError = '';
   // Bir fotoğraf eklenemezse (format, boyut, izin) diğerleri yine eklenir; sebep çağırana döner.
-  for (const uri of list) {
+  for (const { uri, meta } of list) {
     try {
-      const data = await shrink(uri);
+      const data = await shrink(uri, meta);
       await addDoc(tripPhotosCol(coupleId), {
         tripId: trip.id,
         uid,

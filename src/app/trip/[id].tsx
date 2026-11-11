@@ -81,9 +81,12 @@ export default function TripScreen() {
       selectionLimit: room,
       orderedSelection: true,
       quality: 1,
+      exif: true,
     });
     if (res.canceled || !res.assets.length) return;
-    const uris = res.assets.map((a) => a.uri).slice(0, room);
+    const uris = res.assets
+      .map((a) => ({ uri: a.uri, meta: { width: a.width, height: a.height, orientation: a.exif?.Orientation as number | undefined } }))
+      .slice(0, room);
     setAdding({ done: 0, total: uris.length });
     try {
       const n = await addTripPhotos(couple.id, trip, user.uid, uris, LIMIT, (done) => setAdding({ done, total: uris.length }));
