@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { trDate } from '../lib/date';
 import { router } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
@@ -235,7 +236,7 @@ export default function DreamsScreen() {
           {pages && pages.length > 0 ? (
             pages.map((p) => (
               <Muted key={p.id} style={{ fontSize: 13 }}>
-                {new Date(p.startedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} · {p.place}
+                {trDate(new Date(p.startedAt), { month: 'short' })} · {p.place}
                 {p.question ? ` · “${p.question}”` : ''}
               </Muted>
             ))

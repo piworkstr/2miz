@@ -12,7 +12,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { dayKey } from './date';
+import { dayKey, trDate } from './date';
 import { db } from './firebase';
 
 // Her date günü, gün anahtarıyla saklanır: couples/{id}/dates/2026-11-08
@@ -74,8 +74,8 @@ export function nextDays(count = 14): { key: string; label: string; weekday: str
     d.setDate(d.getDate() + i);
     out.push({
       key: dayKey(d),
-      label: i === 0 ? 'Bugün' : i === 1 ? 'Yarın' : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }),
-      weekday: d.toLocaleDateString('tr-TR', { weekday: 'short' }),
+      label: i === 0 ? 'Bugün' : i === 1 ? 'Yarın' : trDate(d, { month: 'short' }),
+      weekday: trDate(d, { month: false, weekday: 'short' }),
     });
   }
   return out;

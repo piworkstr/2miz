@@ -14,7 +14,7 @@ import {
 } from '../lib/calendar';
 import type { DayDoc } from '../lib/daily';
 import type { DatePlan } from '../lib/dates';
-import { dayKey } from '../lib/date';
+import { dayKey, trDate } from '../lib/date';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
@@ -231,7 +231,7 @@ function DaySheet({
   const label = k
     ? (() => {
         const [y, m, d] = k.split('-').map(Number);
-        return new Date(y, m - 1, d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+        return trDate(new Date(y, m - 1, d), { weekday: 'long' });
       })()
     : '';
   const bothDone = !!day && couple.members.every((m) => day.completions?.[m]);

@@ -1,18 +1,7 @@
 import * as Cal from 'expo-calendar/legacy';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  documentId,
-  onSnapshot,
-  query,
-  setDoc,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, documentId, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { dayKey } from './date';
+import { dayKey, trMonth } from './date';
 import { db } from './firebase';
 import { notifyPartner } from './push';
 
@@ -81,7 +70,7 @@ export async function addEvent(
   await addDoc(eventsCol(coupleId), { ...e, title: e.title.trim().slice(0, 60), createdAtMs: Date.now() });
   if (notify?.to && e.owner !== e.by) {
     const [y, mo, d] = e.day.split('-').map(Number);
-    const when = `${d} ${new Date(y, mo - 1, d).toLocaleDateString('tr-TR', { month: 'long' })}${e.time ? ` ${e.time}` : ''}`;
+    const when = `${d} ${trMonth(mo - 1)}${e.time ? ` ${e.time}` : ''}`;
     const what = e.owner === 'both' ? 'ortak plan ekledi' : 'senin için plan ekledi';
     notifyPartner(notify.to, `${notify.fromName} ${what} 📅`, `${e.title} · ${when}`, { type: 'message', url: '/' });
   }
@@ -114,19 +103,23 @@ export async function syncPhoneCalendar(coupleId: string, uid: string, mode: 'ti
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start.getTime() + 35 * 86400000);
-  const events = cals.length ? await Cal.getEventsAsync(cals.map((c) => c.id), start, end) : [];
-  const items: BusyItem[] = events
-    .slice(0, 200)
-    .map((e) => {
-      const s = new Date(e.startDate);
-      const en = new Date(e.endDate);
-      return {
-        day: dayKey(s),
-        allDay: !!e.allDay,
-        ...(e.allDay ? {} : { start: hhmm(s), end: hhmm(en) }),
-        ...(mode === 'titles' && e.title ? { title: e.title.slice(0, 40) } : {}),
-      };
-    });
+  const events = cals.length
+    ? await Cal.getEventsAsync(
+        cals.map((c) => c.id),
+        start,
+        end,
+      )
+    : [];
+  const items: BusyItem[] = events.slice(0, 200).map((e) => {
+    const s = new Date(e.startDate);
+    const en = new Date(e.endDate);
+    return {
+      day: dayKey(s),
+      allDay: !!e.allDay,
+      ...(e.allDay ? {} : { start: hhmm(s), end: hhmm(en) }),
+      ...(mode === 'titles' && e.title ? { title: e.title.slice(0, 40) } : {}),
+    };
+  });
   await setDoc(doc(db, 'couples', coupleId, 'busy', uid), { mode, items, syncedAtMs: Date.now() });
   await updateDoc(doc(db, 'users', uid), { calendarShare: mode });
 }

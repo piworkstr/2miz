@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { trDate } from '../lib/date';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -44,7 +45,7 @@ export default function PlusScreen() {
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const payer = plus.by === user?.uid ? 'Senin' : `${partnerName}’in`;
-  const until = plus.until ? new Date(plus.until).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const until = plus.until ? trDate(new Date(plus.until), { year: true }) : '';
 
   return (
     <Screen>

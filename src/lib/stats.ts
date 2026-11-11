@@ -1,4 +1,5 @@
 import { useFocusEffect } from 'expo-router';
+import { trDate } from './date';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
 import { useCallback, useState } from 'react';
 import { db } from './firebase';
@@ -60,7 +61,7 @@ export function nextMilestone(dayCount: number): { at: number; inDays: number } 
 
 export function birthdayLabel(key: string) {
   const { m, d } = parse(key);
-  return new Date(2000, m - 1, d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  return trDate(new Date(2000, m - 1, d));
 }
 
 // Partnerin sevgi diline göre küçük bir öneri.

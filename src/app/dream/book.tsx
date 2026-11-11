@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { trDate } from '../../lib/date';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
@@ -42,7 +43,7 @@ export default function BookScreen() {
   if (!user || !couple || !partnerId) return null;
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/dreams'));
-  const fmt = (ms: number) => new Date(ms).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const fmt = (ms: number) => trDate(new Date(ms), { year: true });
 
   return (
     <Screen>

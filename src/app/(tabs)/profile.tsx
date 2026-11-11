@@ -11,7 +11,7 @@ import { PetNames } from '../../components/PetNames';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
 import { activeMood, MOODS } from '../../lib/avatar';
-import { prettyDate } from '../../lib/date';
+import { prettyDate, trDate } from '../../lib/date';
 import { useUpcomingDates } from '../../lib/dates';
 import { auth } from '../../lib/firebase';
 import { loveLanguage as loveLanguageOf, type LoveLanguage } from '../../lib/loveLanguage';
@@ -155,7 +155,7 @@ function PlusCard() {
   const t = useTheme();
   const { user, partnerName } = useSession();
   const plus = usePlus();
-  const until = plus.until ? new Date(plus.until).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) : '';
+  const until = plus.until ? trDate(new Date(plus.until)) : '';
   const line = plus.paid
     ? `${plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
     : plus.beta
