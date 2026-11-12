@@ -1,0 +1,23 @@
+# iOS derlemesi + TestFlight'a gönderim, EAS sunucusunda. Elle başlatılır: expo.dev → Workflows → Run workflow.
+# Simge, açılış ekranı, yerel paket ya da app.json değişince gerekir; diğer her şey OTA ile gider.
+name: iOS derleme ve TestFlight
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build_ios:
+    name: iOS derleme (production)
+    type: build
+    environment: production
+    params:
+      platform: ios
+      profile: production
+  submit_ios:
+    name: TestFlight'a gönder
+    needs: [build_ios]
+    type: submit
+    environment: production
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      profile: production
