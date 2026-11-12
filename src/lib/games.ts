@@ -18,7 +18,7 @@ import { db } from './firebase';
 import { logActivity } from './bond';
 import { applyMove, newBlocks, type BlocksState } from './blocks';
 import { KNOW_ME, THIS_THAT } from './gameData';
-import { diceOf, flipMove, fromView, legalMoves, newTavla, toView, type TavlaState, type View } from './tavla';
+import { diceOf, flipMove, fromView, legalMoves, newTavla, play, toView, type TavlaState, type View } from './tavla';
 import type { Couple } from './session';
 
 export type GameType = 'thisthat' | 'knowme' | 'memory' | 'blocks' | 'tavla';
@@ -62,7 +62,18 @@ export type Game = {
   blocks?: BlocksState;
   tavla?: TavlaState;
   finished?: Record<string, boolean>;
+  // Oyun kuran hemen oynar; partner katılınca joined[to] = true. Eski kayıtlarda alan yok: katılmış sayılır.
+  joined?: Record<string, boolean>;
+  declined?: Record<string, boolean>; // "şimdi olmaz" dedi; oyun yalnız sürer
 };
+
+// Partner (davet edilen) oyuna katıldı mı? Yalnız oynarken sıra hep kuranda kalır; Tavla'da bilgisayar oynar.
+export const partnerJoined = (g: Game) => (g.joined ? !!g.joined[g.to] : g.status !== 'invited');
+// Sıradaki oyuncu: partner katılmadıysa sıra yine kuranda.
+export function nextOf(g: Game, uid: string) {
+  const other = uid === g.from ? g.to : g.from;
+  return other === g.to && !partnerJoined(g) ? uid : other;
+}
 
 export type GameProps = {
   game: Game;
@@ -134,14 +145,18 @@ async function recentPhotoIds(coupleId: string): Promise<string[]> {
   return snap.docs.map((d) => d.id);
 }
 
+// Oyun hemen başlar: kuran yalnız oynar, partner istediği an katılır (katılma çağrısı JOIN_HOURS boyunca görünür).
+export const JOIN_HOURS = 12;
 export async function sendInvite(coupleId: string, from: string, to: string, type: GameType) {
   const base = {
     type,
     from,
     to,
-    status: 'invited' as GameStatus,
-    expiresAt: Date.now() + INVITE_MINUTES * 60_000,
+    status: 'playing' as GameStatus,
+    joined: { [from]: true },
+    expiresAt: Date.now() + JOIN_HOURS * 3_600_000,
     createdAt: serverTimestamp(),
+    startedAt: serverTimestamp(),
   };
   const coupleRef = doc(db, 'couples', coupleId);
   const coupleSnap = await getDoc(coupleRef);
@@ -159,14 +174,19 @@ export async function sendInvite(coupleId: string, from: string, to: string, typ
     await updateDoc(coupleRef, { 'seenGames.knowme': nextSeen(seen.knowme ?? [], questions, KNOW_ME.length, 5) });
   }
   if (type === 'memory') extra = { memory: newMemory(await recentPhotoIds(coupleId), from, to) };
-  if (type === 'blocks') extra = { blocks: newBlocks(to) };
-  if (type === 'tavla') extra = { tavla: newTavla(to) };
+  if (type === 'blocks') extra = { blocks: newBlocks(from) };
+  if (type === 'tavla') extra = { tavla: newTavla(from) };
   const ref = await addDoc(gamesCol(coupleId), { ...base, ...extra, finished: {} });
   return ref.id;
 }
 
-export async function acceptInvite(coupleId: string, id: string) {
-  await updateDoc(doc(gamesCol(coupleId), id), { status: 'playing', startedAt: serverTimestamp() });
+// Partner katılır: oyun zaten sürüyor; bundan sonra sıra ona da geçer.
+export async function acceptInvite(coupleId: string, id: string, uid?: string) {
+  await updateDoc(doc(gamesCol(coupleId), id), {
+    status: 'playing',
+    ...(uid ? { [`joined.${uid}`]: true } : {}),
+    joinedAt: serverTimestamp(),
+  });
 }
 
 export async function cancelInvite(coupleId: string, id: string) {
@@ -185,7 +205,8 @@ export async function declineInvite(coupleId: string, id: string, uid: string) {
     const prev = couple.passes?.[uid];
     const used = prev && prev.week === week ? prev.used + 1 : 1;
     tx.update(coupleRef, { [`passes.${uid}`]: { week, used } });
-    tx.update(doc(gamesCol(coupleId), id), { status: 'declined' });
+    // Oyun kuran için sürer (yalnız); yalnızca katılma çağrısı kapanır.
+    tx.update(doc(gamesCol(coupleId), id), { [`declined.${uid}`]: true });
   });
 }
 
@@ -208,17 +229,28 @@ export function useGame(coupleId: string | undefined, id: string | undefined) {
   return game;
 }
 
-// Bana gelen ve süresi dolmamış son davet.
+// Oyun bitti mi (tahta/kartlar/sorular açısından)?
+export function gameOver(g: Game) {
+  if (g.status === 'done' || g.status === 'cancelled') return true;
+  if (g.blocks) return g.blocks.over;
+  if (g.tavla) return !!g.tavla.winner;
+  if (g.memory) return g.memory.matched.length >= g.memory.deck.length;
+  return false;
+}
+
+// Bana gelen katılma çağrısı: partnerin başlattığı, benim henüz katılmadığım ve bitmemiş oyun.
 export function useIncomingInvite(coupleId: string | undefined, uid: string | undefined) {
   const [invite, setInvite] = useState<Game | null>(null);
   const [, tick] = useState(0);
   useEffect(() => {
     if (!coupleId || !uid) return;
-    const q = query(gamesCol(coupleId), where('to', '==', uid), where('status', '==', 'invited'), limit(5));
+    const q = query(gamesCol(coupleId), where('to', '==', uid), where('status', 'in', ['invited', 'playing']), limit(10));
     return onSnapshot(
       q,
       (snap) => {
-        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }));
+        const list = snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }))
+          .filter((g) => !partnerJoined(g) && !g.declined?.[uid] && !gameOver(g) && Date.now() < g.expiresAt);
         list.sort((a, b) => b.expiresAt - a.expiresAt);
         setInvite(list[0] ?? null);
       },
@@ -231,10 +263,10 @@ export function useIncomingInvite(coupleId: string | undefined, uid: string | un
     const t = setTimeout(() => tick((n) => n + 1), Math.max(0, invite.expiresAt - Date.now()) + 500);
     return () => clearTimeout(t);
   }, [invite]);
-  return invite && !isExpired(invite) ? invite : null;
+  return invite && Date.now() < invite.expiresAt ? invite : null;
 }
 
-// Benim gönderdiğim, hâlâ açık olan davet (aynı anda tek davet).
+// Benim gönderdiğim, hâlâ kabul bekleyen eski tip davet (yeni oyunlar hemen başlar; bkz. useActiveTurnGame).
 export function useMyOpenInvite(coupleId: string | undefined, uid: string | undefined) {
   const [game, setGame] = useState<Game | null>(null);
   useEffect(() => {
@@ -299,7 +331,7 @@ function newMemory(photoIds: string[], from: string, to: string): MemoryState {
   const icons = ['heart', 'star', 'cafe', 'musical-notes', 'airplane', 'pizza', 'moon', 'flower'];
   while (faces.length < 6) faces.push(`icon:${icons[faces.length]}`);
   const deck = seededShuffle([...faces, ...faces], `${Math.random()}`);
-  return { deck, matched: [], flipped: [], turn: to, scores: { [from]: 0, [to]: 0 } };
+  return { deck, matched: [], flipped: [], turn: from, scores: { [from]: 0, [to]: 0 } };
 }
 
 export async function flipCard(coupleId: string, id: string, uid: string, index: number) {
@@ -332,8 +364,14 @@ export async function flipCard(coupleId: string, id: string, uid: string, index:
 }
 
 // Eşleşmeyen iki kart bir süre açık kalır, sonra kapanır ve sıra diğerine geçer.
-export async function endTurn(coupleId: string, id: string, next: string) {
-  await updateDoc(doc(gamesCol(coupleId), id), { 'memory.flipped': [], 'memory.turn': next });
+export async function endTurn(coupleId: string, id: string, uid: string) {
+  const ref = doc(gamesCol(coupleId), id);
+  await runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    if (!s.exists()) return;
+    const g = { id, ...(s.data() as Omit<Game, 'id'>) };
+    tx.update(ref, { 'memory.flipped': [], 'memory.turn': nextOf(g, uid) });
+  });
 }
 
 // ---------- Birlikte Blok ----------
@@ -349,7 +387,7 @@ export async function placeBlock(coupleId: string, id: string, uid: string, slot
     const game = s.data() as Game;
     const b = game.blocks;
     if (!b || b.turn !== uid) return null;
-    const next = uid === game.from ? game.to : game.from;
+    const next = nextOf(game, uid);
     const res = applyMove(b, slot, r, c, uid, next);
     if (!res) return null;
     tx.update(ref, { blocks: res.state });
@@ -361,7 +399,7 @@ export async function placeBlock(coupleId: string, id: string, uid: string, slot
 
 // Devam eden sıralı oyun (Birlikte Blok, Tavla): bildirim kaçarsa ana ekrandan geri dönülsün.
 export function turnOf(g: Game) {
-  return g.blocks?.turn ?? g.tavla?.turn ?? '';
+  return g.blocks?.turn ?? g.tavla?.turn ?? g.memory?.turn ?? '';
 }
 
 export function useActiveTurnGame(coupleId: string | undefined) {
@@ -374,7 +412,7 @@ export function useActiveTurnGame(coupleId: string | undefined) {
       (snap) => {
         const list = snap.docs
           .map((d) => ({ id: d.id, ...(d.data() as Omit<Game, 'id'>) }))
-          .filter((g) => (g.type === 'blocks' && g.blocks && !g.blocks.over) || (g.type === 'tavla' && g.tavla && !g.tavla.winner));
+          .filter((g) => (g.blocks || g.tavla || g.memory) && !gameOver(g));
         list.sort((a, b) => b.expiresAt - a.expiresAt);
         setGame(list[0] ?? null);
       },
@@ -399,7 +437,7 @@ export async function rollTavla(coupleId: string, id: string, uid: string) {
     if (!tv || tv.turn !== uid || tv.rolled.length || tv.winner) return null;
     const rolled = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
     const blocked = legalMoves(toView(tv, sideOf(game, uid)), diceOf(rolled)).length === 0;
-    const next = uid === game.from ? game.to : game.from;
+    const next = nextOf(game, uid);
     tx.update(
       ref,
       blocked ? { 'tavla.rolled': [], 'tavla.turn': next, 'tavla.last': { by: uid, dice: rolled, moves: 0 } } : { 'tavla.rolled': rolled },
@@ -419,7 +457,7 @@ export async function commitTavla(coupleId: string, id: string, uid: string, vie
     const game = s.data() as Game;
     const tv = game.tavla;
     if (!tv || tv.turn !== uid || !tv.rolled.length || tv.winner) return null;
-    const next = uid === game.from ? game.to : game.from;
+    const next = nextOf(game, uid);
     const won = view.offMe === 15;
     const mars = won && view.offOpp === 0;
     const state: TavlaState = {
@@ -435,6 +473,52 @@ export async function commitTavla(coupleId: string, id: string, uid: string, vie
       const wins = (cs.data() as Couple | undefined)?.tavlaWins ?? {};
       tx.update(coupleRef, { [`tavlaWins.${uid}`]: (wins[uid] ?? 0) + (mars ? 2 : 1) });
     }
+    return state;
+  });
+}
+
+// ---------- Tavla: partner gelene kadar bilgisayar ----------
+
+// Partner katılmadıysa "to" tarafını basit bir rakip oynar: kuranın telefonu sırası gelince çağırır.
+// Hamle seçimi: kırma > toplama > kapı yapma > rastgele. Partner katılınca devreye girmez.
+export async function botTavla(coupleId: string, id: string) {
+  const ref = doc(gamesCol(coupleId), id);
+  return runTransaction(db, async (tx) => {
+    const s = await tx.get(ref);
+    if (!s.exists()) return null;
+    const game = { id, ...(s.data() as Omit<Game, 'id'>) };
+    const tv = game.tavla;
+    if (!tv || tv.winner || tv.turn !== game.to || partnerJoined(game) || tv.rolled.length) return null;
+    const rolled = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    let view = toView(tv, 'b');
+    let dice = diceOf(rolled);
+    const path: { from: number; to: number }[] = [];
+    for (let guard = 0; guard < 4; guard++) {
+      const moves = legalMoves(view, dice);
+      if (!moves.length) break;
+      const score = (m: { from: number; to: number }) => {
+        if (m.to === -1) return 3; // toplama
+        const dst = view.pts[m.to] ?? 0;
+        if (dst === -1) return 4; // rakibi kırar
+        if (dst >= 1) return 2; // kapı
+        return 1 + Math.random();
+      };
+      const m = [...moves].sort((a, b) => score(b) - score(a))[0];
+      const r = play(view, dice, m);
+      view = r.view;
+      dice = r.dice;
+      path.push({ from: m.from, to: m.to });
+    }
+    const won = view.offMe === 15;
+    const state: TavlaState = {
+      ...tv,
+      ...fromView(view, 'b'),
+      turn: game.from,
+      rolled: [],
+      last: { by: game.to, dice: rolled, moves: path.length, path: path.map((m) => flipMove('b', m)) },
+      ...(won ? { winner: game.to, mars: view.offOpp === 0 } : {}),
+    };
+    tx.update(ref, { tavla: state });
     return state;
   });
 }

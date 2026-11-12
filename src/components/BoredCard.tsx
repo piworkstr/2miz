@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { notifyPartner } from '../lib/push';
-import { GAMES, sendInvite, turnOf, useActiveTurnGame, useMyOpenInvite, type GameType } from '../lib/games';
+import { acceptInvite, GAMES, partnerJoined, sendInvite, turnOf, useActiveTurnGame, useMyOpenInvite, type GameType } from '../lib/games';
 import { countGame, FREE, gamesToday, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -33,10 +33,15 @@ export function BoredCard() {
     try {
       const id = await sendInvite(couple.id, user.uid, partnerId, type);
       countGame(couple.id, couple).catch(() => {});
-      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} seni oyuna çağırıyor 🎲`, `${GAMES[type].name} · 15 dakika içinde katıl`, {
-        type: 'game',
-        url: '/',
-      });
+      notifyPartner(
+        partnerId,
+        `${profile?.name ?? 'Partnerin'} ${GAMES[type].name} oynuyor 🎲`,
+        'Müsait olunca katıl; oyun seni bekliyor.',
+        {
+          type: 'game',
+          url: '/',
+        },
+      );
       setChoosing(false);
       router.push({ pathname: '/game/[id]', params: { id } });
     } catch {
@@ -49,6 +54,8 @@ export function BoredCard() {
   if (active && user) {
     const mine = turnOf(active) === user.uid;
     const name = GAMES[active.type].name;
+    const solo = !partnerJoined(active);
+    const iStarted = active.from === user.uid;
     return (
       <Card accent>
         <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
@@ -56,12 +63,21 @@ export function BoredCard() {
         </T>
         <Muted>
           {active.blocks ? `Ortak skorunuz ${active.blocks.score}. ` : ''}
-          {mine ? `${partnerName} hamlesini yaptı.` : `${partnerName}'in hamlesi bekleniyor.`}
+          {solo
+            ? iStarted
+              ? `${partnerName} henüz katılmadı; yalnız oynuyorsun.`
+              : `${partnerName} başlattı, seni bekliyor.`
+            : mine
+              ? `${partnerName} hamlesini yaptı.`
+              : `${partnerName}'in hamlesi bekleniyor.`}
         </Muted>
         <Button
-          label={mine ? 'Hamleni yap' : 'Oyuna bak'}
-          variant={mine ? 'primary' : 'secondary'}
-          onPress={() => router.push({ pathname: '/game/[id]', params: { id: active.id } })}
+          label={solo && !iStarted ? 'Katıl' : mine ? 'Hamleni yap' : 'Oyuna bak'}
+          variant={mine || solo ? 'primary' : 'secondary'}
+          onPress={async () => {
+            if (solo && !iStarted) await acceptInvite(couple.id, active.id, user.uid).catch(() => {});
+            router.push({ pathname: '/game/[id]', params: { id: active.id } });
+          }}
         />
       </Card>
     );
@@ -87,7 +103,7 @@ export function BoredCard() {
       </View>
       {choosing ? (
         <>
-          <Muted>Hangi oyunu oynayalım? {partnerName}'e davet gidecek.</Muted>
+          <Muted>Hangi oyun? Hemen başlarsın; {partnerName} müsait olunca katılır.</Muted>
           {(Object.keys(GAMES) as GameType[]).map((g) => (
             <Pressable
               key={g}
@@ -125,8 +141,8 @@ export function BoredCard() {
         </>
       ) : (
         <>
-          <Muted>{partnerName}'i 2-3 dakikalık canlı bir oyuna davet et. Günün ilk oyunu ikinize de +10 puan kazandırır.</Muted>
-          <Button label="Oyun daveti gönder" onPress={() => setChoosing(true)} />
+          <Muted>Hemen oynamaya başla; {partnerName} müsait olunca oyuna katılır. Günün ilk oyunu ikinize de +10 puan kazandırır.</Muted>
+          <Button label="Oyun başlat" onPress={() => setChoosing(true)} />
         </>
       )}
     </Card>

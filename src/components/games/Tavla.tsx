@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg';
-import { commitTavla, rollTavla, sideOf, type GameProps } from '../../lib/games';
+import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Move, type View as TView } from '../../lib/tavla';
@@ -259,6 +259,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   const server = useMemo(() => toView(tv, side), [tv, side]);
   const myTurn = tv.turn === uid && !tv.winner;
   const rolled = tv.rolled.length > 0;
+  // Partner henüz katılmadıysa onun tarafını bilgisayar oynar (kuranın telefonundan, sırası gelince).
+  const solo = !partnerJoined(game);
+  const botTurn = solo && uid === game.from && tv.turn === partnerId && !tv.rolled.length && !tv.winner;
   const turnKey = `${tv.turn}|${tv.rolled.join(',')}|${tv.pts.join(',')}`;
 
   const [W, setW] = useState(0);
@@ -318,6 +321,12 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turnKey, W]);
+
+  useEffect(() => {
+    if (!botTurn || animating) return;
+    const tm = setTimeout(() => botTavla(coupleId, game.id).catch(() => {}), 1400);
+    return () => clearTimeout(tm);
+  }, [botTurn, animating, coupleId, game.id, turnKey]);
 
   useEffect(() => {
     setGameOpen(game.id);
@@ -428,10 +437,11 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
       const r = await rollTavla(coupleId, game.id, uid);
       if (r?.blocked) {
         setMsg(`${r.rolled.join('-')} attın, oynanacak hamle yok. Sıra ${partnerName}'de.`);
-        notifyPartner(partnerId, 'Sıra sende 🎲', `${myName} ${r.rolled.join('-')} attı ama oynayamadı.`, {
-          type: 'game',
-          url: `/game/${game.id}`,
-        });
+        if (!solo)
+          notifyPartner(partnerId, 'Sıra sende 🎲', `${myName} ${r.rolled.join('-')} attı ama oynayamadı.`, {
+            type: 'game',
+            url: `/game/${game.id}`,
+          });
       }
     } catch {
       setMsg('Zar atılamadı, tekrar dene.');
@@ -444,7 +454,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
     setBusy(true);
     try {
       const s = await commitTavla(coupleId, game.id, uid, view, path);
-      if (s) {
+      if (s && !solo) {
         notifyPartner(
           partnerId,
           s.winner ? `${myName} tavlada kazandı${s.mars ? ', mars!' : ''} 🎲` : 'Sıra sende 🎲',

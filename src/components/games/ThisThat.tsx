@@ -35,7 +35,7 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
   }, [both]);
 
   async function choose(choice: number) {
-    if (busy || mine.length > both) return; // bu soruya zaten cevap verdin
+    if (busy || mine.length >= total) return; // hepsini cevapladın
     setBusy(true);
     try {
       await answerThisThat(coupleId, game, uid, choice);
@@ -44,8 +44,22 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
     }
   }
 
+  // Herkes kendi hızında ilerler (partner henüz katılmadıysa bile); ikisinin de cevapladığı soru kısa süre açılır.
+  if (reveal === null && mine.length >= total && !bothDone) {
+    return (
+      <>
+        <Progress value={theirs.length} total={total} label={`${partnerName} ${theirs.length}/${total}`} />
+        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+          <ActivityIndicator color={t.colors.primary} />
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontFamily: t.fonts.body, textAlign: 'center' }}>
+            Sen bitirdin. {partnerName} cevaplayınca sonuçlar burada görünecek.
+          </Text>
+        </View>
+      </>
+    );
+  }
   if (!bothDone || reveal !== null) {
-    const index = reveal ?? both;
+    const index = reveal ?? Math.min(mine.length, total - 1);
     const [a, b] = THIS_THAT[pairs[index]];
     const myPick = mine[index];
     const theirPick = theirs[index];
@@ -54,7 +68,7 @@ export function ThisThat({ game, coupleId, uid, partnerId, partnerName, myName }
 
     return (
       <>
-        <Progress value={both} total={total} label={`Soru ${index + 1}/${total}`} />
+        <Progress value={reveal === null ? mine.length : both} total={total} label={`Soru ${index + 1}/${total}`} />
 
         <Half title="Senin cevabın" highlight={!revealed && myPick === undefined}>
           <View style={{ flexDirection: 'row', gap: 10 }}>

@@ -16,7 +16,7 @@ import {
   type BlocksState,
   type Piece,
 } from '../../lib/blocks';
-import { placeBlock, type GameProps } from '../../lib/games';
+import { partnerJoined, placeBlock, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { useFinishOnce } from './shared';
@@ -191,7 +191,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
           );
         } else setFlash(`+${res.gained}`);
         setTimeout(() => setFlash(''), 1500);
-        if (res.setEnded) {
+        if (res.setEnded && partnerJoined(game)) {
           notifyPartner(
             partnerId,
             res.state.over ? 'Birlikte Blok bitti 🧩' : 'Sıra sende 🧩',

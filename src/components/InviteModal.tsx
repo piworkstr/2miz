@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
-import { Modal, Text, View } from 'react-native';
-import { acceptInvite, declineInvite, GAMES, INVITE_MINUTES, passesLeft, useIncomingInvite } from '../lib/games';
+import { Modal, Pressable, Text, View } from 'react-native';
+import { acceptInvite, declineInvite, GAMES, JOIN_HOURS, passesLeft, useIncomingInvite } from '../lib/games';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Button, ErrorText, Muted } from './ui';
@@ -15,8 +15,9 @@ export function InviteModal() {
   const invite = useIncomingInvite(couple?.id, user?.uid);
   const [busy, setBusy] = useState<'go' | 'no' | null>(null);
   const [error, setError] = useState('');
+  const [later, setLater] = useState<string | null>(null); // "sonra bakarım": bu açılışta bir daha çıkmaz, hak düşmez
 
-  if (!invite || !user || !couple) return null;
+  if (!invite || !user || !couple || later === invite.id) return null;
   const left = passesLeft(couple, user.uid);
   const game = GAMES[invite.type];
 
@@ -24,7 +25,7 @@ export function InviteModal() {
     if (!invite || !couple) return;
     setBusy('go');
     try {
-      await acceptInvite(couple.id, invite.id);
+      await acceptInvite(couple.id, invite.id, user?.uid);
       router.push({ pathname: '/game/[id]', params: { id: invite.id } });
     } finally {
       setBusy(null);
@@ -66,12 +67,10 @@ export function InviteModal() {
             maxFontSizeMultiplier={1.25}
             style={{ fontFamily: t.fonts.title, fontSize: 30, lineHeight: 36, color: t.colors.text, textAlign: 'center' }}
           >
-            {partnerName} seni oyuna çağırıyor
+            {partnerName} {game.name} oynuyor
           </Text>
-          <Muted style={{ textAlign: 'center' }}>
-            {game.name} · {game.blurb}
-          </Muted>
-          <Button style={{ alignSelf: 'stretch' }} label="Hadi oynayalım" onPress={go} busy={busy === 'go'} />
+          <Muted style={{ textAlign: 'center' }}>{game.blurb} · Katılınca sıra sana da gelir; oyun seni bekliyor.</Muted>
+          <Button style={{ alignSelf: 'stretch' }} label="Katıl" onPress={go} busy={busy === 'go'} />
           {left > 0 ? (
             <Button
               style={{ alignSelf: 'stretch' }}
@@ -82,11 +81,15 @@ export function InviteModal() {
             />
           ) : (
             <Muted style={{ textAlign: 'center', fontSize: 13 }}>
-              Bu haftaki "şimdi olmaz" hakların bitti. Davet {INVITE_MINUTES} dakika içinde kendiliğinden kapanır ama seri için oynamak iyi
-              olur 😉
+              Bu haftaki "şimdi olmaz" hakların bitti. Çağrı {JOIN_HOURS} saat açık kalır; müsait olunca katıl 😉
             </Muted>
           )}
           <ErrorText>{error}</ErrorText>
+          <Pressable onPress={() => setLater(invite.id)} hitSlop={8} style={{ padding: 6 }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 13 }}>
+              Sonra bakarım (ana ekranda "Katıl" olarak kalır)
+            </Text>
+          </Pressable>
         </View>
       </View>
     </Modal>

@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -49,6 +50,7 @@ import {
   needsFeed,
   rc,
   restNear,
+  type FarmLog,
   readyTiles,
   SEASON_NAME,
   seasonOf,
@@ -516,6 +518,31 @@ export default function GardenScreen() {
     }
   }, [last?.at, last?.by, last?.text, partnerId, last]);
 
+  // "Sen yokken": çiftlik bildirim göndermez; partnerin son ziyaretten beri yaptıkları açılışta kartta listelenir.
+  const [away, setAway] = useState<FarmLog[] | null>(null);
+  useEffect(() => {
+    if (!couple?.id) return;
+    const key = `farm.seen.${couple.id}`;
+    AsyncStorage.getItem(key)
+      .then((v) => {
+        const since = Number(v ?? 0);
+        const items = farmOf(couple)
+          .log.filter((l) => l.by === partnerId && l.at > since)
+          .slice(0, 4);
+        if (items.length) setAway(items);
+      })
+      .catch(() => {});
+    return () => {
+      AsyncStorage.setItem(key, String(Date.now())).catch(() => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couple?.id]);
+  useEffect(() => {
+    if (!away) return;
+    const id = setTimeout(() => setAway(null), 12_000);
+    return () => clearTimeout(id);
+  }, [away]);
+
   // Kamera: bütün araziyi ekrana sığdır; + ile yaklaşılır, sürükleyerek gezilir.
   const top = insets.top + 54;
   const bottom = 170 + insets.bottom; // sabit Sula/Topla satırı + alt menü
@@ -658,7 +685,6 @@ export default function GardenScreen() {
     });
   const queue = useRef<Action[]>([]);
   const busy = useRef(false);
-  const lastFarmPush = useRef(0); // ekim/sulama özet bildirimi en son ne zaman gitti
   const flash = (text: string) => {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
@@ -668,10 +694,6 @@ export default function GardenScreen() {
     queue.current.push(a);
     if (busy.current || !couple || !partnerId) return;
     busy.current = true;
-    let planted = 0;
-    let watered = 0;
-    let wateredCrop: CropId | null = null;
-    let plantedCrop: CropId | null = null;
     // Kalp için: bu partide tek başına mı iş yapıldı, yoksa birlikte bir şey mi?
     let solo = false;
     let together = false;
@@ -706,16 +728,10 @@ export default function GardenScreen() {
             setTimeout(() => setFloats((f) => f.filter((q) => q.id !== id)), 1300);
           }
           if (job.a === 'plant') {
-            planted++;
-            plantedCrop = job.crop;
           }
-          if (job.a === 'note')
-            notifyPartner(partnerId, `${myName} Not Ağacı’na bir not astı 🍃`, job.text.slice(0, 80), { type: 'mood', url: '/garden' });
-          if (job.a === 'deliver' && r.gained) notifyPartner(partnerId, r.text, 'Bizim Çiftlik', { type: 'mood', url: '/garden' });
+          if (job.a === 'note') void 0; // Not Ağacı: bildirim yok, çiftlik açılınca kartta görünür
           if (job.a === 'water' && before.k === 'crop' && before.by !== uid) {
             // Bildirim döngü sonunda tek seferde gider (10 tarla → 10 bildirim olmasın)
-            watered++;
-            wateredCrop = before.crop;
           }
         }
       } catch {
@@ -727,34 +743,7 @@ export default function GardenScreen() {
     if (rest !== myTileRef.current) void walkTo(rest);
     if (together) logActivityCapped(couple.id, uid, 'farmTogether');
     else if (solo) logActivityCapped(couple.id, uid, 'farm');
-    // Ekim/sulama bildirimleri: tek özet, en çok 15 dakikada bir (her işlemde telefon titremesin)
-    const quiet = Date.now() - lastFarmPush.current < 15 * 60_000;
-    if (watered && wateredCrop && !quiet) {
-      lastFarmPush.current = Date.now();
-      const c = CROPS[wateredCrop].name.toLowerCase();
-      notifyPartner(
-        partnerId,
-        `${myName} ${watered > 1 ? `${watered} tarlanı` : `ektiğin ${c} ürününü`} suladı 💧`,
-        'İki kat hızlı büyüyor.',
-        {
-          type: 'mood',
-          url: '/garden',
-        },
-      );
-      flash(`${partnerName}’e bildirim gitti`);
-    } else if (planted && plantedCrop && !quiet) {
-      lastFarmPush.current = Date.now();
-      const c = CROPS[plantedCrop].name.toLowerCase();
-      notifyPartner(
-        partnerId,
-        `${myName} bahçeye ${planted > 1 ? `${planted} tarla ` : ''}${c} ekti`,
-        'Sen sularsan iki kat hızlı büyür 💧',
-        {
-          type: 'mood',
-          url: '/garden',
-        },
-      );
-    }
+    // Çiftlik işleri için bildirim gitmez; partner çiftliği açınca "sen yokken" kartında görür.
     busy.current = false;
   }
 
@@ -1078,6 +1067,35 @@ export default function GardenScreen() {
                   : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
+          </Pressable>
+        </View>
+      )}
+      {away && !placing && (
+        <View style={{ position: 'absolute', left: 14, right: 14, top: insets.top + 96, alignItems: 'center', zIndex: 30 }}>
+          <Pressable
+            onPress={() => setAway(null)}
+            style={{
+              maxWidth: 420,
+              alignSelf: 'stretch',
+              backgroundColor: 'rgba(43,29,34,0.88)',
+              borderRadius: 18,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              gap: 4,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Avatar p={partnerProfile} name={partnerName} size={26} showMood={false} />
+              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFE08A', fontWeight: '800', fontSize: 13 }}>
+                Sen yokken {partnerName} 🌾
+              </Text>
+              <Ionicons name="close-circle" size={18} color="#fff" />
+            </View>
+            {away.map((l, i) => (
+              <Text key={i} maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+                · {l.text.replace(`${partnerName} `, '')}
+              </Text>
+            ))}
           </Pressable>
         </View>
       )}

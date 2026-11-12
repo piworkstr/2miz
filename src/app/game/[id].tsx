@@ -8,7 +8,7 @@ import { KnowMe } from '../../components/games/KnowMe';
 import { Memory } from '../../components/games/Memory';
 import { ThisThat } from '../../components/games/ThisThat';
 import { Button, Card, Loading, Muted, Screen } from '../../components/ui';
-import { cancelInvite, GAMES, isExpired, useGame, type Game, type GameProps } from '../../lib/games';
+import { acceptInvite, cancelInvite, GAMES, gameOver, isExpired, partnerJoined, useGame, type Game, type GameProps } from '../../lib/games';
 import { useSession } from '../../lib/session';
 import { useTheme } from '../../lib/useTheme';
 
@@ -17,6 +17,12 @@ export default function GameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const game = useGame(couple?.id, id);
+
+  // Oyunu açmak katılmak demektir: partnerin başlattığı oyuna girince sıra bana da gelmeye başlar.
+  useEffect(() => {
+    if (!game || !user || !couple) return;
+    if (user.uid === game.to && !partnerJoined(game) && !gameOver(game)) acceptInvite(couple.id, game.id, user.uid).catch(() => {});
+  }, [game?.id, game?.joined?.[user?.uid ?? ''], user?.uid, couple?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (game === undefined || !user || !couple || !partnerId) return <Loading />;
 
@@ -65,9 +71,32 @@ export default function GameScreen() {
 
   // Blok sürüklemeyle oynanır: kaydırma yok (ekran yukarı kaymasın); kendi kapat düğmesi var.
   const drag = game.type === 'blocks';
+  // Partner henüz katılmadı: yalnız oynanıyor; katılınca sıra ona da geçer (Tavla'da o zamana dek bilgisayar).
+  const solo = !partnerJoined(game) && !gameOver(game);
+  const soloNote = solo && (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: t.colors.primarySoft,
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+      }}
+    >
+      <Ionicons name="person-outline" size={16} color={t.colors.primary} />
+      <Muted style={{ flex: 1, fontSize: 12 }}>
+        {game.declined?.[partnerId]
+          ? `${partnerName} şimdi müsait değil; yalnız devam ediyorsun.`
+          : `${partnerName}'e haber gitti; katılana kadar yalnız oynuyorsun${game.type === 'tavla' ? ', rakibin bilgisayar' : ''}.`}
+      </Muted>
+    </View>
+  );
   return (
     <Screen scroll={!drag}>
       {game.type !== 'blocks' && header}
+      {soloNote}
       {game.type === 'thisthat' && <ThisThat {...props} />}
       {game.type === 'knowme' && <KnowMe {...props} />}
       {game.type === 'memory' && <Memory {...props} />}

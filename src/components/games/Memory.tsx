@@ -25,9 +25,9 @@ export function Memory({ game, coupleId, uid, partnerId, partnerName }: GameProp
   const stuck = myTurn && m.flipped.length === 2 && !busy;
   useEffect(() => {
     if (!stuck) return;
-    const tm = setTimeout(() => endTurn(coupleId, game.id, partnerId), 1300);
+    const tm = setTimeout(() => endTurn(coupleId, game.id, uid), 1300);
     return () => clearTimeout(tm);
-  }, [stuck, coupleId, game.id, partnerId]);
+  }, [stuck, coupleId, game.id, uid]);
   const myScore = m.scores[uid] ?? 0;
   const theirScore = m.scores[partnerId] ?? 0;
 
@@ -39,7 +39,7 @@ export function Memory({ game, coupleId, uid, partnerId, partnerName }: GameProp
       if (r === 'miss') {
         // İkinize de kartları göstermek için kısa bir bekleme, sonra sıra partnere geçer.
         setTimeout(() => {
-          endTurn(coupleId, game.id, partnerId).finally(() => setBusy(false));
+          endTurn(coupleId, game.id, uid).finally(() => setBusy(false));
         }, 1300);
         return;
       }
