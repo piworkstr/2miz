@@ -17,7 +17,7 @@ import {
   type Piece,
 } from '../../lib/blocks';
 import { partnerJoined, placeBlock, type GameProps } from '../../lib/games';
-import { notifyPartner, setGameOpen } from '../../lib/push';
+import { setGameOpen } from '../../lib/push';
 import { CallButton } from '../CallButton';
 import { useSession } from '../../lib/session';
 import { useFinishOnce } from './shared';
@@ -192,14 +192,6 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
           );
         } else setFlash(`+${res.gained}`);
         setTimeout(() => setFlash(''), 1500);
-        if (res.setEnded && partnerJoined(game)) {
-          notifyPartner(
-            partnerId,
-            res.state.over ? 'Birlikte Blok bitti 🧩' : 'Sıra sende 🧩',
-            res.state.over ? `Ortak skorunuz ${res.state.score}` : `${myName} setini koydu. Skorunuz ${res.state.score}`,
-            { type: 'game', url: `/game/${game.id}` },
-          );
-        }
       } else setLocal(null);
     } catch {
       setLocal(null);

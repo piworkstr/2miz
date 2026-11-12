@@ -5,7 +5,7 @@ import { Animated, Easing, PanResponder, Pressable, Text, useWindowDimensions, V
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg';
 import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
-import { notifyPartner, setGameOpen } from '../../lib/push';
+import { setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { setSfxMuted, sfx, sfxMuted } from '../../lib/sfx';
 import { CallButton } from '../CallButton';
@@ -530,11 +530,6 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       }
       if (r?.blocked) {
         setMsg(`${r.rolled.join('-')} attın, oynanacak hamle yok. Sıra ${partnerName}'de.`);
-        if (!solo)
-          notifyPartner(partnerId, 'Sıra sende 🎲', `${myName} ${r.rolled.join('-')} attı ama oynayamadı.`, {
-            type: 'game',
-            url: `/game/${game.id}`,
-          });
       }
     } catch {
       setMsg('Zar atılamadı, tekrar dene.');
@@ -546,15 +541,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     if (busy) return;
     setBusy(true);
     try {
-      const s = await commitTavla(coupleId, game.id, uid, view, path);
-      if (s && !solo) {
-        notifyPartner(
-          partnerId,
-          s.winner ? `${myName} tavlada kazandı${s.mars ? ', mars!' : ''} 🎲` : 'Sıra sende 🎲',
-          s.winner ? 'Rövanş ister misin?' : `${myName} ${tv.rolled.join('-')} oynadı.`,
-          { type: 'game', url: `/game/${game.id}` },
-        );
-      }
+      // Hamle bildirimi gitmez: sıra, oyun açıkken ekranda ve ana ekrandaki oyun kartında görünür.
+      await commitTavla(coupleId, game.id, uid, view, path);
     } catch {
       setMsg('Kaydedilemedi, tekrar dene.');
     }

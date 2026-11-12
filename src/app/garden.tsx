@@ -761,10 +761,6 @@ export default function GardenScreen() {
     try {
       // Çiftlik sahnelerinde soru yok: hasat ve pazar iş günüdür, sohbet sorusu hayal dünyalarında kalır.
       await startScene(couple!.id, uid, { world: 'farm', kind, place: 'Bizim Çiftlik', windowMin: 120, qkind: 'none' });
-      notifyPartner(partnerId!, `${myName} seni ${FARM_SCENES[kind].verb} için çağırıyor`, 'Bizim Çiftlik', {
-        type: 'mood',
-        url: '/garden',
-      });
     } catch {
       flash('Sahne başlatılamadı');
     }
@@ -1189,10 +1185,6 @@ export default function GardenScreen() {
               profile={profile}
               partnerProfile={partnerProfile}
               onJoined={() => {
-                notifyPartner(partnerId, `${myName} geldi 💛`, `${FARM_SCENES[scene.kind]?.title} başlıyor`, {
-                  type: 'mood',
-                  url: '/garden',
-                });
                 doScene(scene);
               }}
               extra={
