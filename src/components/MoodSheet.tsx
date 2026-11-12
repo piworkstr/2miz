@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Modal, Pressable, Text, View } from 'react-native';
-import { activeMood, MOODS, setMood, type MoodKey } from '../lib/avatar';
+import { activeMood, MOODS, moodLabel, setMood, type MoodKey } from '../lib/avatar';
+import { useL, useLang } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Avatar } from './Avatar';
@@ -9,6 +10,8 @@ import { Avatar } from './Avatar';
 // Kendi avatarına dokununca: ruh halini seç (partnerine görünür ve bildirim gider) ya da avatarını düzenle.
 export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTheme();
+  const l = useL();
+  const { lang } = useLang();
   const { user, couple, profile, partnerId } = useSession();
   const current = activeMood(profile?.mood);
 
@@ -35,10 +38,10 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
             <Avatar p={profile} name={profile?.name ?? ''} size={56} />
             <View style={{ flex: 1 }}>
               <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 18, fontWeight: '700', color: t.colors.text }}>
-                Bugün nasılsın?
+                {l('Bugün nasılsın?', 'How are you today?')}
               </Text>
               <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
-                Partnerin görür; 24 saat sonra kendiliğinden kalkar.
+                {l('Partnerin görür; 24 saat sonra kendiliğinden kalkar.', 'Your partner sees it; it clears itself after 24 hours.')}
               </Text>
             </View>
           </View>
@@ -65,7 +68,7 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
                     {MOODS[k].emoji}
                   </Text>
                   <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: t.colors.text }}>
-                    {MOODS[k].label}
+                    {moodLabel(k, lang)}
                   </Text>
                 </Pressable>
               );
@@ -75,7 +78,7 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
             {current ? (
               <Pressable onPress={() => choose(null)} hitSlop={8}>
                 <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-                  Ruh halini kaldır
+                  {l('Ruh halini kaldır', 'Clear mood')}
                 </Text>
               </Pressable>
             ) : (
@@ -91,7 +94,7 @@ export function MoodSheet({ open, onClose }: { open: boolean; onClose: () => voi
             >
               <Ionicons name="color-palette-outline" size={16} color={t.colors.primary} />
               <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
-                {profile?.avatar ? 'Avatarımı düzenle' : 'Avatarımı oluştur'}
+                {profile?.avatar ? l('Avatarımı düzenle', 'Edit my avatar') : l('Avatarımı oluştur', 'Create my avatar')}
               </Text>
             </Pressable>
           </View>

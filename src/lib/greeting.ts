@@ -27,6 +27,34 @@ const PHRASES: Record<ThemeId, Record<Part, string[]>> = {
   },
 };
 
+// İngilizcede her tema kendi karakteriyle (birebir çeviri değil).
+const PHRASES_EN: Record<ThemeId, Record<Part, string[]>> = {
+  standart: {
+    sabah: ['Good morning {x}', 'Morning, {x}', 'Good morning {x}, today will be good'],
+    gun: ['Good afternoon {x}', 'Hi {x}', "How's it going, {x}?"],
+    aksam: ['Good evening {x}', 'Have a lovely evening {x}', 'Welcome back {x}'],
+    gece: ['Good night {x}', "It's late, {x}", 'Sweet dreams {x}'],
+  },
+  agir: {
+    sabah: ['Rise and shine {x}', 'Morning, {x}', 'Up, {x}. Work to do'],
+    gun: ['Hey {x}', "What's up, {x}", 'Keep it moving {x}'],
+    aksam: ['Evening, {x}', "Shift's over, {x}", 'Good evening {x}'],
+    gece: ['Night shift, {x}?', 'Go to bed {x}', 'Night, {x}'],
+  },
+  asko: {
+    sabah: ['Good morning {x}', 'Gooood morning {x} ☀️', 'Are you awake, {x}?'],
+    gun: ['Hello {x}', 'Hi {x}', 'Thinking of you, {x}'],
+    aksam: ['Good evening {x}', 'Sweet evening, {x}', 'Missing you {x}'],
+    gece: ['Sweet dreams {x}', 'Good night {x} 🌙', 'Still awake, {x}?'],
+  },
+};
+
+const DEFAULT_PET_EN: Record<ThemeId, string[] | null> = {
+  standart: null,
+  agir: ['boss', 'champ', 'chief'],
+  asko: ['honey bun', 'sweetie', 'sugar'],
+};
+
 const DEFAULT_PET: Record<ThemeId, string[] | null> = {
   standart: null, // adın
   agir: ['reis', 'kral', 'usta'],
@@ -46,12 +74,18 @@ function hash(s: string) {
   return h;
 }
 
-export function greeting(theme: ThemeId, myName: string, petNames: string[] | undefined, now = new Date()): string {
+export function greeting(
+  theme: ThemeId,
+  myName: string,
+  petNames: string[] | undefined,
+  now = new Date(),
+  lang: 'tr' | 'en' = 'tr',
+): string {
   const part = partOfDay(now.getHours());
   const seed = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${part}`;
-  const list = PHRASES[theme][part];
+  const list = (lang === 'en' ? PHRASES_EN : PHRASES)[theme][part];
   const pets = petNames?.filter((p) => p.trim()) ?? [];
-  const pool = pets.length ? pets : DEFAULT_PET[theme] ?? [myName];
+  const pool = pets.length ? pets : ((lang === 'en' ? DEFAULT_PET_EN : DEFAULT_PET)[theme] ?? [myName]);
   const x = pool[hash(seed + 'x') % pool.length] || myName;
   return list[hash(seed) % list.length].replace('{x}', x).trim();
 }

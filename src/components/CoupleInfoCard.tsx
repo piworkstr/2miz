@@ -2,17 +2,18 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { db } from '../lib/firebase';
+import { useL } from '../lib/i18n';
 import { useSession, type Couple } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 import { DateInput, toDateKey, type DateParts } from './DateInput';
 import { Button, Card, ErrorText, Muted, T } from './ui';
 
-const STATUSES: { id: NonNullable<Couple['status']>; label: string }[] = [
-  { id: 'sevgili', label: 'Sevgili' },
-  { id: 'nisanli', label: 'Nişanlı' },
-  { id: 'evli', label: 'Evli' },
-  { id: 'uzak', label: 'Uzak mesafe' },
+const STATUSES: { id: NonNullable<Couple['status']>; label: string; en: string }[] = [
+  { id: 'sevgili', label: 'Sevgili', en: 'Dating' },
+  { id: 'nisanli', label: 'Nişanlı', en: 'Engaged' },
+  { id: 'evli', label: 'Evli', en: 'Married' },
+  { id: 'uzak', label: 'Uzak mesafe', en: 'Long distance' },
 ];
 
 export function daysTogether(startDate: string): number {
@@ -26,6 +27,7 @@ export function daysTogether(startDate: string): number {
 // Eşleşmeden sonra "Bugün" ekranında çıkar; biriniz doldurur, ikiniz de görürsünüz.
 export function CoupleInfoCard() {
   const t = useTheme();
+  const l = useL();
   const { couple } = useSession();
   const [hidden, setHidden] = useState(false);
   const [start, setStart] = useState<DateParts>({ d: '', m: '', y: '' });
@@ -39,13 +41,13 @@ export function CoupleInfoCard() {
     if (!couple) return;
     setError('');
     const key = toDateKey(start);
-    if (!key) return setError('Tarihi gün / ay / yıl olarak gir.');
-    if (!status) return setError('İlişki durumunuzu seç.');
+    if (!key) return setError(l('Tarihi gün / ay / yıl olarak gir.', 'Enter the date as day / month / year.'));
+    if (!status) return setError(l('İlişki durumunuzu seç.', 'Pick your relationship status.'));
     setBusy(true);
     try {
       await updateDoc(doc(db, 'couples', couple.id), { startDate: key, status });
     } catch {
-      setError('Kaydedilemedi, tekrar dene.');
+      setError(l('Kaydedilemedi, tekrar dene.', "Couldn't save, please try again."));
     } finally {
       setBusy(false);
     }
@@ -53,8 +55,15 @@ export function CoupleInfoCard() {
 
   return (
     <Card accent>
-      <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Hikayenizi başlatalım')}</T>
-      <Muted>Ne zamandan beri birliktesiniz? Gün sayacınız ve yıl dönümü hatırlatmanız buradan gelecek.</Muted>
+      <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
+        {tx(t, l('Hikayenizi başlatalım', "Let's start your story"))}
+      </T>
+      <Muted>
+        {l(
+          'Ne zamandan beri birliktesiniz? Gün sayacınız ve yıl dönümü hatırlatmanız buradan gelecek.',
+          'How long have you been together? Your day counter and anniversary reminder come from this.',
+        )}
+      </Muted>
       <DateInput value={start} onChange={setStart} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {STATUSES.map((s) => {
@@ -76,17 +85,17 @@ export function CoupleInfoCard() {
                 maxFontSizeMultiplier={1.25}
                 style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 14 }}
               >
-                {tx(t, s.label)}
+                {tx(t, l(s.label, s.en))}
               </Text>
             </Pressable>
           );
         })}
       </View>
       <ErrorText>{error}</ErrorText>
-      <Button label="Kaydet" onPress={save} busy={busy} />
+      <Button label={l('Kaydet', 'Save')} onPress={save} busy={busy} />
       <Pressable onPress={() => setHidden(true)} style={{ alignItems: 'center', padding: 4 }}>
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-          Sonra
+          {l('Sonra', 'Later')}
         </Text>
       </Pressable>
     </Card>

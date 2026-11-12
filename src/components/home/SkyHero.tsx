@@ -4,8 +4,9 @@ import { useState, type ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Ellipse } from 'react-native-svg';
-import { activeMood, avatarBustSvg, MOODS } from '../../lib/avatar';
-import { bondOf } from '../../lib/bond';
+import { activeMood, avatarBustSvg, MOODS, moodLabel } from '../../lib/avatar';
+import { bondLabel, bondOf } from '../../lib/bond';
+import { localeOf, useL, useLang } from '../../lib/i18n';
 import { useSession, type Profile } from '../../lib/session';
 import { useTheme } from '../../lib/useTheme';
 import { SvgXml } from 'react-native-svg';
@@ -58,6 +59,7 @@ export function skyFor(h: number): Sky {
 
 function Bust({ p, name, size }: { p: Profile | null; name: string; size: number }) {
   const t = useTheme();
+  const { lang } = useLang();
   const a = p?.avatar;
   // çizgi avatar: ruh hali yüze yansır; omuzlara kadar, zemin bandına oturur
   if (a?.kind === 'art')
@@ -85,7 +87,7 @@ function Bust({ p, name, size }: { p: Profile | null; name: string; size: number
           }}
         >
           <Text maxFontSizeMultiplier={1.0} style={{ color: t.colors.primary, fontWeight: '800', fontSize: r * 0.4 }}>
-            {(name || '?').slice(0, 1).toLocaleUpperCase('tr-TR')}
+            {(name || '?').slice(0, 1).toLocaleUpperCase(localeOf(lang))}
           </Text>
         </View>
       )}
@@ -120,6 +122,8 @@ export function SkyHero({
 }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const l = useL();
+  const { lang } = useLang();
   const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
   const [moodOpen, setMoodOpen] = useState(false);
   const sky = skyFor(new Date().getHours());
@@ -175,7 +179,7 @@ export function SkyHero({
           <Glass radius={999} style={{ paddingHorizontal: 11, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Ionicons name="flame" size={14} color="#E07A45" />
             <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 13, fontWeight: '800', color: '#2B1D22' }}>
-              {streak} gün
+              {l(`${streak} gün`, streak === 1 ? '1 day' : `${streak} days`)}
             </Text>
           </Glass>
           <Glass radius={999} style={{ paddingHorizontal: 11, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -201,7 +205,9 @@ export function SkyHero({
         }}
       >
         <Pressable onPress={() => setMoodOpen(true)} style={{ alignItems: 'center', gap: 6 }}>
-          <Bubble onPress={() => setMoodOpen(true)}>{myMood ? `${MOODS[myMood].emoji} ${MOODS[myMood].label}` : 'Nasılsın? +'}</Bubble>
+          <Bubble onPress={() => setMoodOpen(true)}>
+            {myMood ? `${MOODS[myMood].emoji} ${moodLabel(myMood, lang)}` : l('Nasılsın? +', 'How are you? +')}
+          </Bubble>
           <Bust p={profile} name={profile?.name ?? ''} size={118} />
         </Pressable>
         <View style={{ alignItems: 'center', gap: 4, marginBottom: 46 }}>
@@ -210,12 +216,12 @@ export function SkyHero({
           </Glass>
           <Glass radius={999} strong style={{ paddingHorizontal: 9, paddingVertical: 3 }}>
             <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '700', color: '#2B1D22' }}>
-              {bond.label}
+              {bondLabel(bond.level, lang)}
             </Text>
           </Glass>
         </View>
         <View style={{ alignItems: 'center', gap: 6 }}>
-          <Bubble>{theirMood ? `${MOODS[theirMood].emoji} ${MOODS[theirMood].label}` : partnerName}</Bubble>
+          <Bubble>{theirMood ? `${MOODS[theirMood].emoji} ${moodLabel(theirMood, lang)}` : partnerName}</Bubble>
           <Bust p={partnerProfile} name={partnerName} size={118} />
         </View>
       </View>

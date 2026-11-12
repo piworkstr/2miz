@@ -85,8 +85,24 @@ export function bondOf(couple: Couple | null, uid: string | undefined, partnerId
   let streak = 0;
   for (let i = both(today) ? 0 : 1; i < 400 && both(keyDaysAgo(i)); i++) streak++;
 
-  const label = level >= 0.75 ? 'Alev alev' : level >= 0.5 ? 'Sıcacık' : level >= 0.25 ? 'Ilık' : level > 0 ? 'Soğuyor' : 'Kalp üşüyor';
-  return { level, label, streak, atRisk: streak > 0 && !both(today), meToday: get(today, uid), themToday: get(today, partnerId) };
+  return {
+    level,
+    label: bondLabel(level),
+    streak,
+    atRisk: streak > 0 && !both(today),
+    meToday: get(today, uid),
+    themToday: get(today, partnerId),
+  };
+}
+
+// Kalbin sıcaklık adı. Bond.label Türkçedir; ekranda dile göre bunu kullan.
+export function bondLabel(level: number, lang: 'tr' | 'en' = 'tr'): string {
+  const i = level >= 0.75 ? 0 : level >= 0.5 ? 1 : level >= 0.25 ? 2 : level > 0 ? 3 : 4;
+  return (
+    lang === 'en'
+      ? ['On fire', 'Warm & cozy', 'Lukewarm', 'Cooling off', 'Heart feels cold']
+      : ['Alev alev', 'Sıcacık', 'Ilık', 'Soğuyor', 'Kalp üşüyor']
+  )[i];
 }
 
 const RISK_ID = 'streak-risk';

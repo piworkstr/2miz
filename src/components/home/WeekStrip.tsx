@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useMonthEvents, type CalEvent } from '../../lib/calendar';
 import { useUpcomingDates } from '../../lib/dates';
 import { dayKey } from '../../lib/date';
+import { useL, useLang } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
@@ -15,10 +16,14 @@ const ME = '#5B8DB8';
 const BOTH = '#8C6BC2';
 const DATE = '#E8516A';
 const WEEK = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+const WEEK_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export function WeekStrip() {
   const t = useTheme();
+  const l = useL();
+  const { lang } = useLang();
+  const week = lang === 'en' ? WEEK_EN : WEEK;
   const { user, couple, partnerName } = useSession();
   const [open, setOpen] = useState(false);
   const now = new Date();
@@ -46,11 +51,11 @@ export function WeekStrip() {
   const upcomingDate = dates.find((d) => d.id >= today);
   const nextEvent = events.filter((e) => e.day >= today).sort((a, b) => a.day.localeCompare(b.day))[0];
   const daysTo = (k: string) => Math.round((new Date(k).getTime() - new Date(today).getTime()) / 86400000);
-  const dayName = (k: string) => WEEK[(new Date(k).getDay() + 6) % 7];
+  const dayName = (k: string) => week[(new Date(k).getDay() + 6) % 7];
   const next = upcomingDate
     ? {
         icon: '🍷',
-        text: upcomingDate.status === 'confirmed' ? `${dayName(upcomingDate.id)} · Date` : `${dayName(upcomingDate.id)} · Date önerisi`,
+        text: `${dayName(upcomingDate.id)} · ${upcomingDate.status === 'confirmed' ? 'Date' : l('Date önerisi', 'Date idea')}`,
         when: daysTo(upcomingDate.id),
       }
     : nextEvent
@@ -65,10 +70,10 @@ export function WeekStrip() {
     <View style={{ gap: 12 }}>
       <Card style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Bu hafta')}</T>
+          <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, l('Bu hafta', 'This week'))}</T>
           <Pressable onPress={() => setOpen((o) => !o)} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '700' }}>
-              {open ? 'Haftayı göster' : 'Takvimi aç'}
+              {open ? l('Haftayı göster', 'Show the week') : l('Takvimi aç', 'Open calendar')}
             </Text>
             <Ionicons name={open ? 'chevron-up' : 'chevron-forward'} size={14} color={t.colors.primary} />
           </Pressable>
@@ -81,7 +86,7 @@ export function WeekStrip() {
             return (
               <View key={k} style={{ alignItems: 'center', width: 40 }}>
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
-                  {WEEK[i]}
+                  {week[i]}
                 </Text>
                 <View
                   style={{
@@ -137,13 +142,20 @@ export function WeekStrip() {
               {next.text}
             </Text>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.muted }}>
-              {next.when === 0 ? 'bugün' : next.when === 1 ? 'yarın' : `${next.when} gün kaldı`}
+              {next.when === 0
+                ? l('bugün', 'today')
+                : next.when === 1
+                  ? l('yarın', 'tomorrow')
+                  : l(`${next.when} gün kaldı`, `in ${next.when} days`)}
             </Text>
           </View>
         )}
         {!next && (
           <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.muted, fontFamily: t.fonts.body }}>
-            Bu hafta plan yok. Takvimi açıp bir şey ekleyin; {partnerName} da görür.
+            {l(
+              `Bu hafta plan yok. Takvimi açıp bir şey ekleyin; ${partnerName} da görür.`,
+              `No plans this week. Open the calendar and add something; ${partnerName} will see it too.`,
+            )}
           </Text>
         )}
       </Card>

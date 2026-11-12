@@ -12,9 +12,10 @@ export function yesterdayKey(): string {
   return dayKey(d);
 }
 
-export function prettyDate(key: string): string {
+export function prettyDate(key: string, lang: 'tr' | 'en' = 'tr'): string {
   const [y, m, d] = key.split('-').map(Number);
-  return trDate(new Date(y, m - 1, d), { year: true });
+  const date = new Date(y, m - 1, d);
+  return lang === 'en' ? enDate(date, { year: true }) : trDate(date, { year: true });
 }
 
 // Türkçe tarih yazımı, cihazın Intl ayarından bağımsız. (Bazı telefonlarda toLocaleDateString yerel geceyarısını
@@ -32,3 +33,33 @@ export function trDate(d: Date, o: { month?: 'long' | 'short' | false; year?: bo
   return s;
 }
 export const trMonth = (m: number, short = false) => (short ? TR_MONTHS_SHORT : TR_MONTHS)[m]; // m: 0..11
+
+// İngilizce tarih yazımı (ABD düzeni: "November 12, 2026"), trDate ile aynı seçenekler.
+const EN_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+const EN_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export function enDate(d: Date, o: { month?: 'long' | 'short' | false; year?: boolean; weekday?: 'long' | 'short' } = {}): string {
+  let s = '';
+  if (o.month !== false) {
+    const name = EN_MONTHS[d.getMonth()];
+    s = `${o.month === 'short' ? name.slice(0, 3) : name} ${d.getDate()}`;
+  }
+  if (o.year) s = s ? `${s}, ${d.getFullYear()}` : String(d.getFullYear());
+  if (o.weekday) {
+    const day = EN_DAYS[d.getDay()];
+    s = `${o.weekday === 'short' ? day.slice(0, 3) : day}${s ? `, ${s}` : ''}`;
+  }
+  return s;
+}

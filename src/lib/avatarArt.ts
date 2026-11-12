@@ -138,18 +138,19 @@ export function randomOpts(): AvatarOpts {
 
 // Ruh hali: avatarın yüz ifadesi değişir; fotoğraflı profilde köşede emoji çıkar. 24 saat geçerli.
 export const MOODS = {
-  mutlu: { emoji: '😊', label: 'Mutluyum', face: ['happy', 'smile', 'defaultNatural'] },
-  asik: { emoji: '😍', label: 'Aşığım', face: ['hearts', 'smile', 'raisedExcitedNatural'] },
-  ozledim: { emoji: '🥺', label: 'Seni özledim', face: ['default', 'concerned', 'sadConcernedNatural'] },
-  heyecanli: { emoji: '🤩', label: 'Heyecanlıyım', face: ['surprised', 'smile', 'raisedExcitedNatural'] },
-  yorgun: { emoji: '🥱', label: 'Yorgunum', face: ['squint', 'serious', 'sadConcerned'] },
-  uykulu: { emoji: '😴', label: 'Uykum var', face: ['closed', 'default', 'defaultNatural'] },
-  uzgun: { emoji: '😢', label: 'Üzgünüm', face: ['cry', 'sad', 'sadConcernedNatural'] },
-  sinirli: { emoji: '😤', label: 'Sinirliyim', face: ['squint', 'serious', 'angryNatural'] },
-  hasta: { emoji: '🤒', label: 'Hastayım', face: ['xDizzy', 'concerned', 'sadConcernedNatural'] },
-  ac: { emoji: '🍕', label: 'Acıktım', face: ['default', 'eating', 'raisedExcitedNatural'] },
+  mutlu: { emoji: '😊', label: 'Mutluyum', en: 'Happy', face: ['happy', 'smile', 'defaultNatural'] },
+  asik: { emoji: '😍', label: 'Aşığım', en: 'In love', face: ['hearts', 'smile', 'raisedExcitedNatural'] },
+  ozledim: { emoji: '🥺', label: 'Seni özledim', en: 'Missing you', face: ['default', 'concerned', 'sadConcernedNatural'] },
+  heyecanli: { emoji: '🤩', label: 'Heyecanlıyım', en: 'Excited', face: ['surprised', 'smile', 'raisedExcitedNatural'] },
+  yorgun: { emoji: '🥱', label: 'Yorgunum', en: 'Tired', face: ['squint', 'serious', 'sadConcerned'] },
+  uykulu: { emoji: '😴', label: 'Uykum var', en: 'Sleepy', face: ['closed', 'default', 'defaultNatural'] },
+  uzgun: { emoji: '😢', label: 'Üzgünüm', en: 'Sad', face: ['cry', 'sad', 'sadConcernedNatural'] },
+  sinirli: { emoji: '😤', label: 'Sinirliyim', en: 'Grumpy', face: ['squint', 'serious', 'angryNatural'] },
+  hasta: { emoji: '🤒', label: 'Hastayım', en: 'Feeling sick', face: ['xDizzy', 'concerned', 'sadConcernedNatural'] },
+  ac: { emoji: '🍕', label: 'Acıktım', en: 'Hungry', face: ['default', 'eating', 'raisedExcitedNatural'] },
 } as const;
 export type MoodKey = keyof typeof MOODS;
+export const moodLabel = (k: MoodKey, lang: 'tr' | 'en' = 'tr') => (lang === 'en' ? MOODS[k].en : MOODS[k].label);
 export const MOOD_TTL = 24 * 60 * 60 * 1000;
 
 export function activeMood(m?: { key: MoodKey; atMs: number } | null): MoodKey | null {

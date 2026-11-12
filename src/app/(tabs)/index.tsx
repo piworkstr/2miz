@@ -25,6 +25,7 @@ import { categoryLabels, taskById, type Task } from '../../lib/tasks';
 import { BONUS_POINTS, toggleFavorite } from '../../lib/archive';
 import { finishOpenBonus } from '../../lib/daily';
 import { notifyPartner } from '../../lib/push';
+import { useL, useLang } from '../../lib/i18n';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
@@ -34,6 +35,8 @@ export default function Today() {
   const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
   const t = useTheme();
+  const l = useL();
+  const { lang } = useLang();
   const [panel, setPanel] = useState<Panel>(null);
 
   // Seri varken bugün henüz bir şey yapmadıysan akşam 21:00'de hatırlatma kurulur.
@@ -99,8 +102,8 @@ export default function Today() {
       />
 
       <SkyHero
-        greeting={greeting(t.id, profile?.name ?? '', partnerProfile?.petNames)}
-        line={`${tx(t, t.copy.dateLine(prettyDate(key), partnerName))}${couple.startDate ? ` · ${daysTogether(couple.startDate)}. gününüz` : ''}`}
+        greeting={greeting(t.id, profile?.name ?? '', partnerProfile?.petNames, new Date(), lang)}
+        line={`${tx(t, t.copy.dateLine(prettyDate(key, lang), partnerName))}${couple.startDate ? ` · ${l(`${daysTogether(couple.startDate)}. gününüz`, `day ${daysTogether(couple.startDate)} together`)}` : ''}`}
         streak={streakAlive ? couple.streak : 0}
         points={couple.points}
         pointsLabel={t.copy.points}
@@ -108,7 +111,13 @@ export default function Today() {
 
       {/* kısayollar: gök bölümünün alt kenarına oturur */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 26, marginTop: -30, zIndex: 5 }}>
-        <Shortcut icon="game-controller" color="#8C6BC2" label="Birlikte oyna" active={panel === 'play'} onPress={() => toggle('play')} />
+        <Shortcut
+          icon="game-controller"
+          color="#8C6BC2"
+          label={l('Birlikte oyna', 'Play together')}
+          active={panel === 'play'}
+          onPress={() => toggle('play')}
+        />
         <Shortcut icon="color-wand" color="#E07A45" label={t.copy.surpriseTitle} active={false} onPress={() => router.push('/wheel')} />
         <Shortcut icon="heart" color={t.colors.primary} label="Date" active={panel === 'date'} onPress={() => toggle('date')} />
       </View>
@@ -138,7 +147,7 @@ export default function Today() {
           >
             <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
             <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
-              Avatarını oluştur; ruh haline göre yüz ifaden değişsin.
+              {l('Avatarını oluştur; ruh haline göre yüz ifaden değişsin.', 'Create your avatar; its face changes with your mood.')}
             </Text>
             <Ionicons name="chevron-forward" size={18} color={t.colors.primary} />
           </Pressable>
@@ -171,7 +180,7 @@ export default function Today() {
         >
           <Ionicons name="time-outline" size={16} color={t.colors.primary} />
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-            {tx(t, 'Görev arşivi ve favoriler')}
+            {tx(t, l('Görev arşivi ve favoriler', 'Task archive and favorites'))}
           </Text>
         </Pressable>
 
@@ -207,6 +216,7 @@ function Shortcut({
 // Albümden her gün değişen bir anı ("12 gün önce"). Geçmiş anılara geri çağırır.
 function MemoryCorner() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerName, profile } = useSession();
   const photos = usePhotos(couple?.id, 30);
   if (!photos || !user) return null;
@@ -228,14 +238,14 @@ function MemoryCorner() {
     (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(y, m - 1, d).getTime()) / 86400000,
   );
   const taskId = (mine ?? theirs)?.taskId;
-  const caption = datePhoto ? 'Date gününüz' : taskId ? taskById(taskId).title : moment ? 'Bir anı' : '';
-  const myName = profile?.name ?? 'Sen';
+  const caption = datePhoto ? l('Date gününüz', 'Your date day') : taskId ? taskById(taskId).title : moment ? l('Bir anı', 'A moment') : '';
+  const myName = profile?.name ?? l('Sen', 'You');
 
   return (
     <Pressable onPress={() => router.push('/album')} style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Anı köşesi')}</T>
-        <Muted style={{ fontSize: 13 }}>{ago === 1 ? 'Dün' : `${ago} gün önce`}</Muted>
+        <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, l('Anı köşesi', 'Memory corner'))}</T>
+        <Muted style={{ fontSize: 13 }}>{ago === 1 ? l('Dün', 'Yesterday') : l(`${ago} gün önce`, `${ago} days ago`)}</Muted>
       </View>
       <View style={{ backgroundColor: '#FBF7F2', borderRadius: 8, padding: 16, gap: 10 }}>
         {datePhoto ? (
@@ -270,6 +280,7 @@ function MemoryCorner() {
 function TaskTitle({ task, label }: { task: Task; label: string }) {
   const t = useTheme();
   const { couple } = useSession();
+  const l = useL();
   const fav = !!couple?.favorites?.includes(task.id);
   return (
     <View style={{ gap: 6 }}>
@@ -277,7 +288,11 @@ function TaskTitle({ task, label }: { task: Task; label: string }) {
         <Pill>{label}</Pill>
         <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabels[task.category])}</Muted>
         {couple && (
-          <Pressable onPress={() => toggleFavorite(couple.id, task.id, !fav).catch(() => {})} hitSlop={10} accessibilityLabel="Favori">
+          <Pressable
+            onPress={() => toggleFavorite(couple.id, task.id, !fav).catch(() => {})}
+            hitSlop={10}
+            accessibilityLabel={l('Favori', 'Favorite')}
+          >
             <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.colors.primary} />
           </Pressable>
         )}
@@ -337,6 +352,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
+  const l = useL();
 
   const myTask = taskById(shared ? day.sharedTaskId : day.separate[uid]);
   const partnerTask = taskById(day.separate[partnerId]);
@@ -344,7 +360,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 
   async function finish() {
     setError('');
-    if (!selfie) return setError('Görevi tamamlamak için bir selfie çek.');
+    if (!selfie) return setError(l('Görevi tamamlamak için bir selfie çek.', 'Take a selfie to complete the task.'));
     if (!note.trim()) return setError(t.copy.noteRequired);
     setBusy(true);
     try {
@@ -352,7 +368,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
       await saveTaskPhoto(coupleId, dayId, uid, myTask.id, note, selfie);
       await completeTask(coupleId, dayId, uid, members, note);
     } catch {
-      setError('Kaydedilemedi, tekrar dene.');
+      setError(l('Kaydedilemedi, tekrar dene.', "Couldn't save, please try again."));
     } finally {
       setBusy(false);
     }
@@ -364,7 +380,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
     const rows = shared
       ? [{ who: null as string | null, task: myTask, note: myDone.note, theirNote: theirDone?.note }]
       : [
-          { who: 'Sen', task: myTask, note: myDone.note, theirNote: undefined },
+          { who: l('Sen', 'You'), task: myTask, note: myDone.note, theirNote: undefined },
           { who: partnerName, task: partnerTask, note: theirDone?.note, theirNote: undefined },
         ];
     return (
@@ -383,7 +399,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
               <T style={{ fontWeight: '700', color: t.colors.success }}>
                 {day.rewarded
                   ? tx(t, t.copy.reward(shared ? POINTS.shared : POINTS.separate))
-                  : tx(t, `Görevini tamamladın · ${partnerName} bekleniyor`)}
+                  : tx(t, l(`Görevini tamamladın · ${partnerName} bekleniyor`, `You're done · waiting for ${partnerName}`))}
               </T>
             </View>
             <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={t.colors.muted} />
@@ -414,7 +430,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
               </View>
             </View>
           ))}
-          {!open && <Muted style={{ fontSize: 12 }}>Notları görmek için dokun</Muted>}
+          {!open && <Muted style={{ fontSize: 12 }}>{l('Notları görmek için dokun', 'Tap to see the notes')}</Muted>}
         </Card>
         {/* Post-it: ne durumda olduğunu bir bakışta söyler. */}
         <View
@@ -435,7 +451,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
           }}
         >
           <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: 'Caveat_700Bold', fontSize: 20, color: '#2B1D22' }}>
-            {day.rewarded ? 'Bugün tamam! ✓' : `${partnerName} bekleniyor…`}
+            {day.rewarded ? l('Bugün tamam! ✓', 'Done for today! ✓') : l(`${partnerName} bekleniyor…`, `Waiting for ${partnerName}…`)}
           </Text>
         </View>
       </Pressable>
@@ -447,7 +463,11 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
       <Card accent>
         <TaskTitle task={myTask} label={shared ? t.copy.sharedTask : t.copy.myTask} />
 
-        <SelfieCamera value={selfie} onChange={setSelfie} hint="Bu an albümünüze polaroid olarak girecek." />
+        <SelfieCamera
+          value={selfie}
+          onChange={setSelfie}
+          hint={l('Bu an albümünüze polaroid olarak girecek.', 'This moment goes into your album as a polaroid.')}
+        />
         <Input placeholder={t.copy.notePlaceholder} value={note} onChangeText={setNote} maxLength={80} />
         <ErrorText>{error}</ErrorText>
         <Button label={t.copy.complete} onPress={finish} busy={busy} />
@@ -467,6 +487,8 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
 function OpenBonusCard() {
   const t = useTheme();
   const { user, couple, partnerId, partnerName, profile } = useSession();
+  const l = useL();
+  const { lang } = useLang();
   const [busy, setBusy] = useState<string | null>(null);
   const open = couple?.openBonus ?? [];
   if (!user || !couple || open.length === 0) return null;
@@ -493,18 +515,17 @@ function OpenBonusCard() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name="color-wand-outline" size={20} color={t.colors.primary} />
         <T style={{ flex: 1, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>
-          {tx(
-            t,
-            t.copy.surpriseTitle.endsWith('bonus') ? `${t.copy.surpriseTitle.slice(0, -5)}bonuslarınız` : `${t.copy.surpriseTitle}leriniz`,
-          )}
+          {tx(t, openBonusTitle(t.copy.surpriseTitle, lang))}
         </T>
       </View>
       {open.map((o) => (
         <View key={o.id} style={{ gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.colors.border }}>
           <Display style={{ fontSize: t.displaySize * 0.8 }}>{taskById(o.taskId).title}</Display>
-          <Muted style={{ fontSize: 12 }}>{o.by === user.uid ? 'Sen kabul ettin' : `${partnerName} kabul etti`}</Muted>
+          <Muted style={{ fontSize: 12 }}>
+            {o.by === user.uid ? l('Sen kabul ettin', 'You accepted') : l(`${partnerName} kabul etti`, `${partnerName} accepted`)}
+          </Muted>
           <Button
-            label={doneToday ? 'Tamamladım' : `Tamamladım · +${BONUS_POINTS} puan`}
+            label={doneToday ? l('Tamamladım', 'Done') : l(`Tamamladım · +${BONUS_POINTS} puan`, `Done · +${BONUS_POINTS} points`)}
             onPress={() => finish(o.id, o.taskId)}
             busy={busy === o.id}
           />
@@ -512,4 +533,10 @@ function OpenBonusCard() {
       ))}
     </Card>
   );
+}
+
+// "Bonus görev" → "Bonus görevleriniz", "Tatlı bonus" → "Tatlı bonuslarınız"; İngilizcede "Your bonus tasks".
+function openBonusTitle(title: string, lang: 'tr' | 'en'): string {
+  if (lang === 'en') return `Your ${title.toLowerCase()}${title.endsWith('s') ? 'es' : 's'}`;
+  return title.endsWith('bonus') ? `${title.slice(0, -5)}bonuslarınız` : `${title}leriniz`;
 }

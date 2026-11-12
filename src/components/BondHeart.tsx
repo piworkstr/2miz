@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, Text, View } from 'react-native';
-import { bondOf } from '../lib/bond';
+import { bondLabel, bondOf } from '../lib/bond';
+import { useL, useLang } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 
@@ -9,7 +10,10 @@ import { useTheme } from '../lib/useTheme';
 export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: number; max?: number; showLabel?: boolean }) {
   const t = useTheme();
   const { user, couple, partnerId, partnerName } = useSession();
+  const l = useL();
+  const { lang } = useLang();
   const bond = bondOf(couple, user?.uid, partnerId);
+  const label = bondLabel(bond.level, lang);
   const size = Math.round(16 + bond.level * (max - 16));
   const beat = useRef(new Animated.Value(1)).current;
   const [info, setInfo] = useState(false);
@@ -38,7 +42,7 @@ export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: numb
       <Pressable
         onPress={() => setInfo(true)}
         hitSlop={8}
-        accessibilityLabel={`İlişki kalbi: ${bond.label}`}
+        accessibilityLabel={l(`İlişki kalbi: ${label}`, `Relationship heart: ${label}`)}
         style={{ alignItems: 'center', width: box }}
       >
         <View style={{ height: max + 4, justifyContent: 'center', alignItems: 'center' }}>
@@ -48,7 +52,7 @@ export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: numb
         </View>
         {showLabel && (
           <Text maxFontSizeMultiplier={1.25} numberOfLines={1} style={{ fontSize: 10, color: t.colors.muted, fontFamily: t.fonts.body }}>
-            {bond.label}
+            {label}
           </Text>
         )}
       </Pressable>
@@ -68,27 +72,42 @@ export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: numb
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Ionicons name="heart" size={28} color={t.colors.primary} />
               <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 19, fontWeight: '700', color: t.colors.text }}>
-                Kalbiniz: {bond.label}
+                {l(`Kalbiniz: ${label}`, `Your heart: ${label}`)}
               </Text>
             </View>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 15, lineHeight: 21, color: t.colors.text }}>
-              Kalp, son 7 gündeki iletişiminize göre büyür ya da küçülür. Mesajlar, anlık fotoğraflar, görevler, oyunlar, bonus görevler ve
-              çiftlikte yaptıklarınız kalbi büyütür (birbirinizin ürününü sulamak, birlikte hasat ve pazar en çok sayılır); en çok da
-              ikinizin de aynı gün bir şey yaptığı günler sayılır. Birkaç gün sessiz kalırsanız kalp küçülür.
+              {l(
+                'Kalp, son 7 gündeki iletişiminize göre büyür ya da küçülür. Mesajlar, anlık fotoğraflar, görevler, oyunlar, bonus görevler ve çiftlikte yaptıklarınız kalbi büyütür (birbirinizin ürününü sulamak, birlikte hasat ve pazar en çok sayılır); en çok da ikinizin de aynı gün bir şey yaptığı günler sayılır. Birkaç gün sessiz kalırsanız kalp küçülür.',
+                "The heart grows or shrinks with how much you've connected over the last 7 days. Messages, snaps, tasks, games, bonus tasks and what you do on the farm make it grow (watering each other's crops, harvesting together and market day count the most); days when you both do something count most of all. A few quiet days and the heart shrinks.",
+              )}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="flame" size={20} color="#E07A45" />
               <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 15, lineHeight: 21, color: t.colors.text }}>
                 {bond.streak > 0
-                  ? `${bond.streak} gündür ikiniz de her gün iletişimdesiniz.`
-                  : 'İkiniz de aynı gün bir şey yaptığınızda iletişim seriniz başlar.'}
+                  ? l(
+                      `${bond.streak} gündür ikiniz de her gün iletişimdesiniz.`,
+                      `You've both connected every day for ${bond.streak} days.`,
+                    )
+                  : l(
+                      'İkiniz de aynı gün bir şey yaptığınızda iletişim seriniz başlar.',
+                      'Your streak starts when you both do something on the same day.',
+                    )}
                 {bond.atRisk
-                  ? ` Bugün henüz ${bond.meToday ? partnerName : 'sen'} bir şey yapmadı; gün bitmeden yaparsanız seri devam eder.`
+                  ? l(
+                      ` Bugün henüz ${bond.meToday ? partnerName : 'sen'} bir şey yapmadı; gün bitmeden yaparsanız seri devam eder.`,
+                      bond.meToday
+                        ? ` ${partnerName} hasn't done anything yet today; do it before the day ends to keep the streak.`
+                        : " You haven't done anything yet today; do it before the day ends to keep the streak.",
+                    )
                   : ''}
               </Text>
             </View>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
-              Bugün: sen {bond.meToday} puan · {partnerName} {bond.themToday} puan
+              {l(
+                `Bugün: sen ${bond.meToday} puan · ${partnerName} ${bond.themToday} puan`,
+                `Today: you ${bond.meToday} pts · ${partnerName} ${bond.themToday} pts`,
+              )}
             </Text>
           </Pressable>
         </Pressable>
@@ -101,6 +120,7 @@ export function BondHeart({ box = 64, max = 58, showLabel = true }: { box?: numb
 export function BondStreak({ compact }: { compact?: boolean }) {
   const t = useTheme();
   const { user, couple, partnerId } = useSession();
+  const l = useL();
   const bond = bondOf(couple, user?.uid, partnerId);
   if (compact && bond.streak === 0) return null;
   return (
@@ -114,7 +134,7 @@ export function BondStreak({ compact }: { compact?: boolean }) {
         maxFontSizeMultiplier={1.25}
         style={{ fontSize: compact ? 13 : 14, fontWeight: '700', color: t.colors.text, fontFamily: t.fonts.body }}
       >
-        {bond.streak} gün
+        {l(`${bond.streak} gün`, bond.streak === 1 ? '1 day' : `${bond.streak} days`)}
       </Text>
       {bond.atRisk && <Ionicons name="hourglass-outline" size={compact ? 13 : 15} color="#E07A45" />}
     </View>

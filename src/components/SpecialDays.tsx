@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Notifications from 'expo-notifications';
 import { useEffect, type ComponentProps } from 'react';
 import { Text, View } from 'react-native';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { daysUntilYearly, nextMilestone } from '../lib/stats';
 import { tx } from '../lib/theme';
@@ -17,6 +18,7 @@ const WINDOW = 30; // ana sayfada kaç gün öncesinden görünsün
 // Yaklaşan yıl dönümü, doğum günleri ve yuvarlak gün sayıları (1700. gün gibi).
 function useSpecials(): Special[] {
   const { couple, profile, partnerProfile, partnerName } = useSession();
+  const l = useL();
   const list: Special[] = [];
   if (couple?.startDate) {
     const a = daysUntilYearly(couple.startDate);
@@ -25,10 +27,16 @@ function useSpecials(): Special[] {
         id: 'anniversary',
         icon: 'heart-circle',
         color: '#E8516A',
-        title: `${a.years}. yıl dönümünüz`,
-        today: `Bugün ${a.years}. yıl dönümünüz! 🎉`,
+        title: l(`${a.years}. yıl dönümünüz`, `Your ${ordinal(a.years)} anniversary`),
+        today: l(`Bugün ${a.years}. yıl dönümünüz! 🎉`, `Happy ${ordinal(a.years)} anniversary! 🎉`),
         days: a.days,
-        remind: (d) => (d === 0 ? `Bugün ${a.years}. yıl dönümünüz! 🎉` : `${a.years}. yıl dönümünüze ${d} gün kaldı 💝`),
+        remind: (d) =>
+          d === 0
+            ? l(`Bugün ${a.years}. yıl dönümünüz! 🎉`, `Happy ${ordinal(a.years)} anniversary! 🎉`)
+            : l(
+                `${a.years}. yıl dönümünüze ${d} gün kaldı 💝`,
+                `${d} ${d === 1 ? 'day' : 'days'} until your ${ordinal(a.years)} anniversary 💝`,
+              ),
       });
     }
     const together = daysTogether(couple.startDate);
@@ -37,8 +45,8 @@ function useSpecials(): Special[] {
       id: 'milestone',
       icon: 'sparkles',
       color: '#8C6BC2',
-      title: `Birlikteliğinizin ${ms.at}. günü`,
-      today: `Bugün birlikteliğinizin ${ms.at}. günü! ✨`,
+      title: l(`Birlikteliğinizin ${ms.at}. günü`, `Day ${ms.at} together`),
+      today: l(`Bugün birlikteliğinizin ${ms.at}. günü! ✨`, `Today is day ${ms.at} together! ✨`),
       days: ms.inDays,
     });
   }
@@ -48,13 +56,19 @@ function useSpecials(): Special[] {
       id: 'partner-birthday',
       icon: 'gift',
       color: '#E07A45',
-      title: `${partnerName}'in doğum günü`,
-      today: `Bugün ${partnerName}'in doğum günü! 🎂`,
+      title: l(`${partnerName}'in doğum günü`, `${partnerName}'s birthday`),
+      today: l(`Bugün ${partnerName}'in doğum günü! 🎂`, `It's ${partnerName}'s birthday today! 🎂`),
       days: b.days,
       remind: (d) =>
         d === 0
-          ? `Bugün ${partnerName}'in doğum günü! 🎂 Kutlamayı unutma.`
-          : `${partnerName}'in doğum gününe ${d} gün kaldı 🎂 Hediye düşündün mü?`,
+          ? l(
+              `Bugün ${partnerName}'in doğum günü! 🎂 Kutlamayı unutma.`,
+              `It's ${partnerName}'s birthday today! 🎂 Don't forget to celebrate.`,
+            )
+          : l(
+              `${partnerName}'in doğum gününe ${d} gün kaldı 🎂 Hediye düşündün mü?`,
+              `${d} ${d === 1 ? 'day' : 'days'} until ${partnerName}'s birthday 🎂 Thought of a gift yet?`,
+            ),
     });
   }
   if (profile?.birthDate) {
@@ -63,8 +77,8 @@ function useSpecials(): Special[] {
       id: 'my-birthday',
       icon: 'balloon',
       color: '#5B8DB8',
-      title: 'Senin doğum günün',
-      today: 'İyi ki doğdun! 🎈',
+      title: l('Senin doğum günün', 'Your birthday'),
+      today: l('İyi ki doğdun! 🎈', 'Happy birthday! 🎈'),
       days: b.days,
     });
   }
@@ -98,8 +112,15 @@ async function scheduleReminders(specials: Special[]) {
   }
 }
 
+// 1st, 2nd, 3rd, 4th … 11th, 12th, 13th, 21st
+function ordinal(n: number): string {
+  const s = n % 100 >= 11 && n % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th');
+  return `${n}${s}`;
+}
+
 export function SpecialDays() {
   const t = useTheme();
+  const l = useL();
   const specials = useSpecials();
   const key = specials.map((s) => `${s.id}:${s.days}`).join(',');
   useEffect(() => {
@@ -125,7 +146,7 @@ export function SpecialDays() {
       ))}
       {soon.length > 0 && (
         <Card>
-          <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Yaklaşan özel günler')}</T>
+          <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, l('Yaklaşan özel günler', 'Coming up'))}</T>
           {soon.map((s) => (
             <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View
@@ -147,7 +168,7 @@ export function SpecialDays() {
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 20, fontWeight: '700', color: s.color }}>
                   {s.days}
                 </Text>
-                <Muted style={{ fontSize: 11 }}>{s.days === 1 ? 'yarın' : 'gün kaldı'}</Muted>
+                <Muted style={{ fontSize: 11 }}>{s.days === 1 ? l('yarın', 'tomorrow') : l('gün kaldı', 'days left')}</Muted>
               </View>
             </View>
           ))}
