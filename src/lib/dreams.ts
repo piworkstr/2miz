@@ -1,6 +1,6 @@
 import { doc, runTransaction } from 'firebase/firestore';
 import { dayKey } from './date';
-import { farmOf, MIN, type Farm } from './farm';
+import { farmOf, farmWrite, MIN, type Farm } from './farm';
 import { db } from './firebase';
 import type { Couple } from './session';
 
@@ -258,11 +258,11 @@ export async function dreamAction(
     if (act.w === 'sea') {
       const s = seaOf(c, now);
       out = seaApply(s, act.x, uid, name, now, c.sceneCount ?? 0, pay);
-      if (typeof out !== 'string') tx.update(ref, { sea: clean(s), farm: clean(farm) });
+      if (typeof out !== 'string') tx.update(ref, { sea: clean(s), ...farmWrite(farm) });
     } else {
       const h = homeOf(c);
       out = homeApply(h, act.x, uid, name, pay);
-      if (typeof out !== 'string') tx.update(ref, { home: clean(h), farm: clean(farm) });
+      if (typeof out !== 'string') tx.update(ref, { home: clean(h), ...farmWrite(farm) });
     }
     return out;
   });

@@ -59,6 +59,7 @@ export type Couple = {
   plus?: { until: number; by: string; product?: 'monthly' | 'yearly' }; // 2miz Plus; yalnızca ödeme sunucusu yazar
   gameUse?: { day: string; n: number }; // ücretsizde günlük oyun hakkı
   delReq?: Record<string, import('./delreq').DelReq>; // ortak albümlerde bekleyen silme istekleri
+  farmKeep?: unknown; // çiftliğin v3 yedeği (eski sürüm üstüne yazarsa buradan döner)
 };
 
 type Session = {

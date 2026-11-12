@@ -188,11 +188,21 @@ export function newFarm(): Farm {
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
-  const f = couple?.farm as Farm | undefined;
+  let f = couple?.farm as Farm | undefined;
+  // Güvenlik ağı: eski sürümdeki bir telefon v3 çiftliği tanımayıp üstüne boş v2 çiftlik yazarsa, yeni kodun her
+  // kayıtta tuttuğu v3 yedeği (farmKeep) geçerli sayılır. Eski sürümün o aradaki birkaç işlemi kaybolur, çiftlik kalır.
+  const keep = couple?.farmKeep as Farm | undefined;
+  if (keep?.v === 3 && (!f || f.v !== 3)) f = keep;
   if (!f || (f.v !== 2 && f.v !== 3)) return newFarm();
   const g: Farm = { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0, orders: f.orders ?? [], notes: f.notes ?? [] };
   return g.v === 3 ? g : migrate10to14(g);
 }
+
+// Çiftlik yazarken yedeğiyle birlikte yazılır (bkz. farmOf).
+export const farmWrite = (farm: Farm) => {
+  const c = clean(farm);
+  return { farm: c, farmKeep: c };
+};
 
 // v2 (10x10) kayıt → v3 (14x14): eski kareler ortaya taşınır, dış halka satılık olur. İlk işlemde kaydedilir.
 function migrate10to14(f: Farm): Farm {
@@ -733,7 +743,7 @@ export async function farmAction(coupleId: string, uid: string, name: string, pa
       Date.now(),
       live,
     );
-    if (typeof r !== 'string') tx.update(ref, { farm: clean(r.farm) });
+    if (typeof r !== 'string') tx.update(ref, farmWrite(r.farm));
     return r;
   });
   if (typeof res !== 'string' && res.ready && (act.a === 'plant' || act.a === 'water')) {
@@ -768,7 +778,7 @@ export async function collectDreamBank(coupleId: string, uid: string, name: stri
       coins: f.coins + bank,
       log: [{ by: uid, text: `${name} günlük görevden gelen ${bank} altını topladı`, at: Date.now() }, ...f.log].slice(0, 14),
     };
-    tx.update(ref, { farm: clean(farm), dreamBank: 0 });
+    tx.update(ref, { ...farmWrite(farm), dreamBank: 0 });
     return bank;
   });
 }
