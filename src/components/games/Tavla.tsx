@@ -175,6 +175,8 @@ function Die({ n, mine, used }: { n: number; mine: boolean; used?: boolean }) {
         flexDirection: 'row',
         flexWrap: 'wrap',
         backgroundColor: mine ? '#FBF6E9' : '#62291D',
+        borderWidth: mine ? 0 : 1.5,
+        borderColor: '#F3E6C9', // rakibin koyu zarı koyu zeminde kaybolmasın
         opacity: used ? 0.35 : 1,
         shadowColor: '#000',
         shadowOpacity: 0.45,
@@ -628,9 +630,12 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     if (view.offOpp) stack(false, OFF, view.offOpp);
   }
 
-  const allDice = oppDice ? diceOf(oppDice) : diceOf(tv.rolled);
-  const usedN = oppDice ? 0 : allDice.length - dice.length;
-  const diceOwnerMine = !oppDice && tv.turn === uid;
+  // Rakibin son zarı, ben zar atana kadar tahtada kalır (ne oynadığı belli olsun).
+  const lastOpp = tv.last && tv.last.by !== uid ? tv.last.dice : null;
+  const showOpp = oppDice ?? (myTurn && !rolled ? lastOpp : null);
+  const allDice = showOpp ? diceOf(showOpp) : diceOf(tv.rolled);
+  const usedN = showOpp ? 0 : allDice.length - dice.length;
+  const diceOwnerMine = !showOpp && tv.turn === uid;
   const wins = couple?.tavlaWins ?? {};
   const oppPip = pipCount({
     pts: view.pts.map((_, i) => -view.pts[23 - i]),
@@ -658,7 +663,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: g.W, height: g.H }}>
           <BoardArt g={g} />
           {pieces}
-          {(rolled || !!oppDice) && (
+          {(rolled || !!showOpp) && (
             <View
               style={{
                 position: 'absolute',
@@ -731,7 +736,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       : !myTurn
         ? `${partnerName} oynuyor…`
         : !rolled
-          ? 'Sıra sende, zarı at'
+          ? lastOpp
+            ? `${oppName} ${lastOpp.join('-')} oynadı. Sıra sende, zarı at`
+            : 'Sıra sende, zarı at'
           : turnDone
             ? dice.length
               ? 'Kalan zar oynanamıyor, sıra geçiyor…'
