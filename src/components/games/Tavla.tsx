@@ -357,18 +357,43 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
     return () => clearTimeout(t);
   }, [turnDone, busy, hist.length]);
 
+  // Bir puldan gidilebilecek haneler: tek zar ya da aynı pulla zarların toplamı (6-2 ile 8 hane gibi).
+  function routesFrom(from: number) {
+    const out = new Map<number, Move[]>();
+    const walk = (v: TView, ds: number[], cur: number, pathSoFar: Move[]) => {
+      for (const m of legalMoves(v, ds)) {
+        if (m.from !== cur) continue;
+        const next = [...pathSoFar, m];
+        if (!out.has(m.to) || out.get(m.to)!.length > next.length) out.set(m.to, next);
+        if (m.to === OFF) continue;
+        const r = play(v, ds, m);
+        walk(r.view, r.dice, m.to, next);
+      }
+    };
+    if (myTurn && rolled && !animating) walk(view, dice, from, []);
+    return out;
+  }
+
   function tryMove(from: number, to: number) {
-    const m = legal.filter((x) => x.from === from && x.to === to).sort((a, b) => a.die - b.die)[0];
-    if (!m) {
-      setMsg('Bu zarlarla oraya gidemezsin');
-      setTimeout(() => setMsg(''), 1600);
+    const route = routesFrom(from).get(to);
+    if (!route) {
+      setMsg('Bu zarlarla oraya gidemezsin · parlayan hanelere bırak');
+      setTimeout(() => setMsg(''), 2200);
       return false;
     }
-    setHist((h) => [...h, { view, dice }]);
-    setPath((p) => [...p, m]);
-    const r = play(view, dice, m);
-    setView(r.view);
-    setDice(r.dice);
+    let v = view;
+    let ds = dice;
+    const steps: { view: TView; dice: number[] }[] = [];
+    for (const m of route) {
+      steps.push({ view: v, dice: ds });
+      const r = play(v, ds, m);
+      v = r.view;
+      ds = r.dice;
+    }
+    setHist((h) => [...h, ...steps]);
+    setPath((p) => [...p, ...route]);
+    setView(v);
+    setDice(ds);
     setMsg('');
     return true;
   }
@@ -511,6 +536,31 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
       pieces.push(<Checker key={`${mine}-${loc}-${k}`} x={p.x} y={p.y} d={g.d} mine={mine} lift={lifted} dim={hidden} />);
     }
   };
+  // Seçili ya da sürüklenen pulun gidebileceği haneler parlar.
+  const active = ghost?.from ?? sel;
+  if (W && active !== null && active !== undefined) {
+    for (const to of routesFrom(active).keys()) {
+      const n = to === OFF ? view.offMe : Math.max(0, view.pts[to]);
+      const p = slot(g, true, to, Math.min(n, 5), Math.max(n + 1, 1));
+      const y = to === OFF ? g.H * 0.75 : p.y;
+      pieces.push(
+        <View
+          key={`hint-${to}`}
+          style={{
+            position: 'absolute',
+            left: p.x - g.d / 2,
+            top: y - g.d / 2,
+            width: g.d,
+            height: g.d,
+            borderRadius: g.d / 2,
+            borderWidth: 2,
+            borderColor: '#FFD27A',
+            backgroundColor: 'rgba(255,210,122,0.28)',
+          }}
+        />,
+      );
+    }
+  }
   if (W) {
     view.pts.forEach((n, i) => n !== 0 && stack(n > 0, i, Math.abs(n)));
     if (view.barMe) stack(true, BAR, view.barMe);
@@ -588,7 +638,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   );
 
   const table = (children: React.ReactNode) => (
-    <View style={{ borderRadius: 18, padding: 10, gap: 10, backgroundColor: '#9A5B32', overflow: 'hidden' }}>
+    <View style={{ borderRadius: 18, padding: 8, gap: 10, backgroundColor: '#9A5B32', overflow: 'hidden', marginHorizontal: -14 }}>
       <Svg style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} width="100%" height="100%">
         {Array.from({ length: 30 }, (_, k) => (
           <Rect key={k} x={k * 16} y={0} width={k % 3 === 0 ? 9 : 5} height={2000} fill={k % 2 ? '#A4653A' : '#8F5330'} opacity={0.6} />

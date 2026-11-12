@@ -70,7 +70,7 @@ export default function GameScreen() {
   };
 
   // Blok sürüklemeyle oynanır: kaydırma yok (ekran yukarı kaymasın); kendi kapat düğmesi var.
-  const drag = game.type === 'blocks';
+  const drag = game.type === 'blocks' || game.type === 'tavla';
   // Partner henüz katılmadı: yalnız oynanıyor; katılınca sıra ona da geçer (Tavla'da o zamana dek bilgisayar).
   const solo = !partnerJoined(game) && !gameOver(game);
   const soloNote = solo && (
