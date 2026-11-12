@@ -104,7 +104,7 @@ export default function GameScreen() {
       <Muted style={{ flex: 1, fontSize: 12 }}>
         {game.declined?.[partnerId]
           ? `${partnerName} şimdi müsait değil; yalnız devam ediyorsun.`
-          : `${partnerName}'e haber gitti; katılana kadar yalnız oynuyorsun${game.type === 'tavla' ? ', rakibin bilgisayar' : ''}.`}
+          : `${partnerName}'e haber gitti; katılana kadar yalnız oynuyorsun${game.type === 'tavla' ? ', rakibin Usta' : ''}.`}
       </Muted>
     </View>
   );

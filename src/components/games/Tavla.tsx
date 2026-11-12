@@ -280,7 +280,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   const rolled = tv.rolled.length > 0;
   // Partner henüz katılmadıysa onun tarafını bilgisayar oynar (kuranın telefonundan, sırası gelince).
   const solo = !partnerJoined(game);
-  const oppName = solo ? 'Bilgisayar' : partnerName;
+  const oppName = solo ? 'Usta' : partnerName;
   const botTurn = solo && uid === game.from && tv.turn === partnerId && !tv.rolled.length && !tv.winner;
   const turnKey = `${tv.turn}|${tv.rolled.join(',')}|${tv.pts.join(',')}`;
 
@@ -744,7 +744,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         numberOfLines={1}
         style={{ color: mine === myTurn ? '#FFD27A' : '#FFF6E6', fontWeight: '800', fontSize: 14 }}
       >
-        {mine ? '⚪ Sen' : `🟤 ${solo ? 'Bilgisayar' : partnerName}`}
+        {mine ? '⚪ Sen' : `🟤 ${solo ? 'Usta' : partnerName}`}
       </Text>
       <Text maxFontSizeMultiplier={1.0} style={{ color: '#FFF6E6', fontSize: 12, opacity: 0.85 }}>
         {mine ? pipCount(view) : oppPip} pip · {wins[mine ? uid : partnerId] ?? 0} galibiyet
@@ -806,7 +806,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             {myTurn && rolled && !animating && hist.length > 0 && !busy && pbtn(countdown ? 'Geri al (1,5 sn)' : 'Geri al', undo)}
             {solo && (
               <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', opacity: 0.6, fontSize: 10 }}>
-                {partnerName} katılınca bilgisayarın yerine geçer
+                {partnerName} katılınca Usta’nın yerine geçer
               </Text>
             )}
           </View>
