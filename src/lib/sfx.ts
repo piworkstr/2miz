@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 
@@ -11,8 +12,21 @@ export type Sfx = keyof typeof SRC;
 
 const players: Partial<Record<Sfx, AudioPlayer>> = {};
 
+// Ses kapatılabilir (işte, okulda); seçim telefonda saklanır. Titreşim açık kalır.
+const KEY = '2miz.sfxMuted';
+let muted = false;
+AsyncStorage.getItem(KEY)
+  .then((v) => (muted = v === '1'))
+  .catch(() => {});
+export const sfxMuted = () => muted;
+export function setSfxMuted(m: boolean) {
+  muted = m;
+  AsyncStorage.setItem(KEY, m ? '1' : '0').catch(() => {});
+}
+
 export function sfx(name: Sfx) {
   try {
+    if (muted) throw new Error('sessiz');
     const p = (players[name] ??= createAudioPlayer(SRC[name]));
     p.volume = name === 'tas' ? 0.6 : 0.8;
     p.seekTo(0);

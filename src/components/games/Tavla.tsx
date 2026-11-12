@@ -7,7 +7,7 @@ import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg
 import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
-import { sfx } from '../../lib/sfx';
+import { setSfxMuted, sfx, sfxMuted } from '../../lib/sfx';
 import { CallButton } from '../CallButton';
 import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Move, type View as TView } from '../../lib/tavla';
 import { useTheme } from '../../lib/useTheme';
@@ -310,6 +310,15 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   const flyV = useRef(new Animated.Value(0)).current;
   const prevServer = useRef<TView>(server);
   const [animating, setAnimating] = useState(false);
+  // Esprili cümleler tahtanın üstünde balon olarak çıkar, birkaç saniye sonra kaybolur.
+  const [quip, setQuip] = useState('');
+  const quipT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const say = (text: string) => {
+    if (quipT.current) clearTimeout(quipT.current);
+    setQuip(text);
+    quipT.current = setTimeout(() => setQuip(''), 3600);
+  };
+  const [mute, setMute] = useState(sfxMuted());
   const [seenKey, setSeenKey] = useState(''); // rakibin son hamlesi ekranda tamamlandı mı
   const [oppDice, setOppDice] = useState<number[] | null>(null); // rakibin hamlesi oynanırken zarları
 
@@ -336,7 +345,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       setOppDice(last.dice);
       sfx('zar');
       const dbl = last.dice[0] === last.dice[1] ? DOUBLES[last.dice[0]] : '';
-      if (dbl) setMsg(`${oppName}: ${dbl}`);
+      if (dbl) say(`${oppName}: ${dbl}`);
       await new Promise((res) => setTimeout(res, 900));
       let hit = false;
       for (const abs of last.path!) {
@@ -361,8 +370,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       }
       setView(server);
       setOppDice(null);
-      setMsg(hit ? GOT_HIT(oppName) : '');
-      if (hit) setTimeout(() => setMsg(''), 2600);
+      if (hit) say(GOT_HIT(oppName));
       setSeenKey(turnKey);
       setAnimating(false);
     })();
@@ -447,8 +455,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     setView(v);
     setDice(ds);
     sfx(hit ? 'kir' : 'tas');
-    setMsg(hit ? I_HIT(oppName) : '');
-    if (hit) setTimeout(() => setMsg(''), 2600);
+    setMsg('');
+    if (hit) say(I_HIT(oppName));
     return true;
   }
 
@@ -518,8 +526,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       sfx('zar');
       const r = await rollTavla(coupleId, game.id, uid);
       if (r && !r.blocked && r.rolled[0] === r.rolled[1]) {
-        setMsg(DOUBLES[r.rolled[0]]);
-        setTimeout(() => setMsg(''), 1800);
+        say(DOUBLES[r.rolled[0]]);
       }
       if (r?.blocked) {
         setMsg(`${r.rolled.join('-')} attın, oynanacak hamle yok. Sıra ${partnerName}'de.`);
@@ -695,6 +702,27 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             </Animated.View>
           )}
           {ghost && <Checker x={ghost.x} y={ghost.y} d={g.d} mine lift />}
+          {!!quip && (
+            <View style={{ position: 'absolute', left: 0, right: 0, top: g.H / 2 - 62, alignItems: 'center', zIndex: 60 }}>
+              <Text
+                maxFontSizeMultiplier={1.0}
+                style={{
+                  maxWidth: g.W * 0.8,
+                  backgroundColor: 'rgba(30,14,9,0.92)',
+                  color: '#FFE08A',
+                  fontWeight: '800',
+                  fontSize: 16,
+                  textAlign: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 9,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                }}
+              >
+                {quip}
+              </Text>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -804,6 +832,16 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFF6E6', fontWeight: '800', fontSize: 16 }}>
               Tavla
             </Text>
+            <Pressable
+              hitSlop={10}
+              accessibilityLabel={mute ? 'Sesi aç' : 'Sesi kapat'}
+              onPress={() => {
+                setSfxMuted(!mute);
+                setMute(!mute);
+              }}
+            >
+              <Ionicons name={mute ? 'volume-mute-outline' : 'volume-high-outline'} size={22} color="#FFF6E6" />
+            </Pressable>
             <CallButton where="tavla" color="#FFF6E6" />
           </View>
           {who(false)}
