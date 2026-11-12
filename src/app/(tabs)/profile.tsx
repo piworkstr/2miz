@@ -20,6 +20,7 @@ import { useSession, type Couple, type Profile } from '../../lib/session';
 import { Hint } from '../../components/Hint';
 import { LivingChips } from '../../components/LivingCard';
 import { FeedbackCard } from '../../components/FeedbackCard';
+import { UpdateCard } from '../../components/UpdateCard';
 import { PersonaCard } from '../../components/PersonaCard';
 import { LanguageCard } from '../../components/LanguageCard';
 import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
@@ -146,6 +147,7 @@ export default function Profile() {
       <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth)} />
       <EndCouple />
       <DeleteAccount />
+      <UpdateCard />
     </Screen>
   );
 }
