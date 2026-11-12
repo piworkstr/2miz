@@ -443,7 +443,7 @@ export async function rollTavla(coupleId: string, id: string, uid: string) {
     if (!tv || tv.turn !== uid || tv.rolled.length || tv.winner) return null;
     const rolled = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
     const blocked = legalMoves(toView(tv, sideOf(game, uid)), diceOf(rolled)).length === 0;
-    const next = nextOf(game, uid);
+    const next = uid === game.from ? game.to : game.from; // partner yoksa karşı tarafı bilgisayar oynar
     tx.update(
       ref,
       blocked ? { 'tavla.rolled': [], 'tavla.turn': next, 'tavla.last': { by: uid, dice: rolled, moves: 0 } } : { 'tavla.rolled': rolled },
@@ -463,7 +463,7 @@ export async function commitTavla(coupleId: string, id: string, uid: string, vie
     const game = s.data() as Game;
     const tv = game.tavla;
     if (!tv || tv.turn !== uid || !tv.rolled.length || tv.winner) return null;
-    const next = nextOf(game, uid);
+    const next = uid === game.from ? game.to : game.from; // partner yoksa karşı tarafı bilgisayar oynar
     const won = view.offMe === 15;
     const mars = won && view.offOpp === 0;
     const state: TavlaState = {
