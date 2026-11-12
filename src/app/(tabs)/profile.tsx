@@ -144,7 +144,7 @@ export default function Profile() {
         )}
       </Section>
 
-      <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth)} />
+      <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth).then(() => router.replace('/welcome'))} />
       <EndCouple />
       <DeleteAccount />
       <UpdateCard />

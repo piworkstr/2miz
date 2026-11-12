@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
@@ -94,7 +95,7 @@ export default function Pair() {
 
       <ErrorText>{error}</ErrorText>
 
-      <Pressable onPress={() => signOut(auth)} style={{ alignItems: 'center', padding: 8 }}>
+      <Pressable onPress={() => signOut(auth).then(() => router.replace('/welcome'))} style={{ alignItems: 'center', padding: 8 }}>
         <Text maxFontSizeMultiplier={1.25} style={{ color: colors.muted }}>
           Çıkış yap
         </Text>

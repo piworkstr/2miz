@@ -16,6 +16,9 @@ import { useTheme } from '../lib/useTheme';
 // geliştirme modunda bu uyarı kırmızı tam ekran hata gibi açılıyordu. Hata değil, gizlenir; uygulama bağlanınca devam eder.
 LogBox.ignoreLogs([/Could not reach Cloud Firestore backend/, /operate in offline mode/]);
 
+// Hesap yokken ilk ekran her zaman hoş geldin; aksi halde çıkış sonrası grup içindeki başka bir ekran (test) açılabiliyordu.
+export const unstable_settings = { anchor: 'welcome' };
+
 function RootNavigator() {
   const session = useSession();
   const theme = useTheme();
