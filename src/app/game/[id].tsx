@@ -85,7 +85,7 @@ export default function GameScreen() {
   };
 
   // Blok sürüklemeyle oynanır: kaydırma yok (ekran yukarı kaymasın); kendi kapat düğmesi var.
-  const drag = game.type === 'blocks' || game.type === 'tavla';
+  const drag = game.type === 'blocks';
   // Partner henüz katılmadı: yalnız oynanıyor; katılınca sıra ona da geçer (Tavla'da o zamana dek bilgisayar).
   const solo = !partnerJoined(game) && !gameOver(game);
   const soloNote = solo && (
@@ -108,6 +108,65 @@ export default function GameScreen() {
       </Muted>
     </View>
   );
+  const exitModal = (
+    <Modal transparent animationType="fade" visible={asking} onRequestClose={() => setAsking(false)}>
+      <Pressable
+        onPress={() => setAsking(false)}
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: game.type === 'tavla' && !gameOver(game) ? 'center' : 'flex-end',
+          padding: 16,
+          paddingBottom: 34,
+        }}
+      >
+        <Pressable
+          style={[
+            { backgroundColor: t.colors.card, borderRadius: Math.max(t.radius.card, 14), padding: 18, gap: 10 },
+            // Tavla yatay oynanır: soru da yan dursun.
+            game.type === 'tavla' && !gameOver(game) ? { width: 320, alignSelf: 'center', transform: [{ rotate: '90deg' }] } : null,
+          ]}
+        >
+          <Text
+            maxFontSizeMultiplier={1.25}
+            style={{ color: t.colors.text, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button, textAlign: 'center' }}
+          >
+            Oyundan çıkıyorsun
+          </Text>
+          <Muted style={{ textAlign: 'center' }}>Oyun sonlandırılsın mı? Sonlandırırsan yeni bir oyun başlatabilirsin.</Muted>
+          <Button
+            label="Sonra devam et"
+            onPress={() => {
+              setAsking(false);
+              close();
+            }}
+          />
+          <Button
+            label="Oyunu sonlandır"
+            variant="secondary"
+            onPress={async () => {
+              setAsking(false);
+              await abandonGame(couple.id, game.id).catch(() => {});
+              close();
+            }}
+          />
+          <Pressable onPress={() => setAsking(false)} style={{ alignItems: 'center', padding: 6 }}>
+            <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+              Oyuna dön
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+  // Tavla yatay tam ekran oynanır (tahta kendi içinde döner); başlık ve çıkış düğmesi tahtanın yanında.
+  if (game.type === 'tavla')
+    return (
+      <View style={{ flex: 1 }}>
+        <Tavla {...props} />
+        {exitModal}
+      </View>
+    );
   return (
     <Screen scroll={!drag}>
       {game.type !== 'blocks' && header}
@@ -116,44 +175,7 @@ export default function GameScreen() {
       {game.type === 'knowme' && <KnowMe {...props} />}
       {game.type === 'memory' && <Memory {...props} />}
       {game.type === 'blocks' && <Blocks {...props} />}
-      {game.type === 'tavla' && <Tavla {...props} />}
-      <Modal transparent animationType="fade" visible={asking} onRequestClose={() => setAsking(false)}>
-        <Pressable
-          onPress={() => setAsking(false)}
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', padding: 16, paddingBottom: 34 }}
-        >
-          <Pressable style={{ backgroundColor: t.colors.card, borderRadius: Math.max(t.radius.card, 14), padding: 18, gap: 10 }}>
-            <Text
-              maxFontSizeMultiplier={1.25}
-              style={{ color: t.colors.text, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button, textAlign: 'center' }}
-            >
-              Oyundan çıkıyorsun
-            </Text>
-            <Muted style={{ textAlign: 'center' }}>Oyun sonlandırılsın mı? Sonlandırırsan yeni bir oyun başlatabilirsin.</Muted>
-            <Button
-              label="Sonra devam et"
-              onPress={() => {
-                setAsking(false);
-                close();
-              }}
-            />
-            <Button
-              label="Oyunu sonlandır"
-              variant="secondary"
-              onPress={async () => {
-                setAsking(false);
-                await abandonGame(couple.id, game.id).catch(() => {});
-                close();
-              }}
-            />
-            <Pressable onPress={() => setAsking(false)} style={{ alignItems: 'center', padding: 6 }}>
-              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-                Oyuna dön
-              </Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {exitModal}
     </Screen>
   );
 }

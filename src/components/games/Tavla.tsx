@@ -1,12 +1,14 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Text, View } from 'react-native';
+import { Animated, Easing, PanResponder, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg';
 import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Move, type View as TView } from '../../lib/tavla';
 import { useTheme } from '../../lib/useTheme';
-import { Button, Muted } from '../ui';
 import { Done, ResultHeader, useFinishOnce } from './shared';
 
 // Tavla: deri kutulu, keçe zeminli tahta. Gidilecek yer gösterilmez; oyuncu pulu sürükler ya da pula sonra haneye dokunur.
@@ -33,8 +35,8 @@ type Geo = {
   barX: number;
   trayX: number;
 };
-function geo(W: number): Geo {
-  const H = Math.round(W * 0.8);
+function geo(W: number, H0?: number): Geo {
+  const H = H0 ?? Math.round(W * 0.8);
   const f = 9;
   const tray = 22;
   const bar = 16;
@@ -251,7 +253,7 @@ function BoardArt({ g }: { g: Geo }) {
   );
 }
 
-export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: GameProps) {
+export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onExit }: GameProps) {
   const t = useTheme();
   const { couple } = useSession();
   const tv = game.tavla!;
@@ -264,8 +266,17 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   const botTurn = solo && uid === game.from && tv.turn === partnerId && !tv.rolled.length && !tv.winner;
   const turnKey = `${tv.turn}|${tv.rolled.join(',')}|${tv.pts.join(',')}`;
 
-  const [W, setW] = useState(0);
-  const g = useMemo(() => geo(W || 300), [W]);
+  // Yatay tam ekran: uygulama dikey kilitli olduğundan tahta 90° döndürülür; telefon yan çevrilerek oynanır.
+  const win = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const PANEL = 148;
+  const Lw = win.height - insets.top - Math.max(insets.bottom, 10) - 12; // yatay genişlik
+  const Lh = win.width - 12; // yatay yükseklik
+  const land = !tv.winner;
+  const W = land ? Math.round(Lw - PANEL - 8 - 16) : Math.round(Math.min(win.width - 40, 420));
+  const g = useMemo(() => (land ? geo(W, Math.round(Math.min(Lh - 16, W * 0.8))) : geo(W)), [W, land, Lh]);
+  const landRef = useRef(land);
+  landRef.current = land;
   const [view, setView] = useState<TView>(server);
   const [dice, setDice] = useState<number[]>(diceOf(tv.rolled));
   const [hist, setHist] = useState<{ view: TView; dice: number[] }[]>([]);
@@ -426,13 +437,15 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
           const d = drag.current;
           if (d.from === null) return;
           if (!d.moved && Math.hypot(gs.dx, gs.dy) > 6) d.moved = true;
-          if (d.moved) act.current.setGhost({ from: d.from, x: d.x0 + gs.dx, y: d.y0 + gs.dy });
+          const [lx, ly] = landRef.current ? [gs.dy, -gs.dx] : [gs.dx, gs.dy]; // döndürülmüş tahtada eksenler
+          if (d.moved) act.current.setGhost({ from: d.from, x: d.x0 + lx, y: d.y0 + ly });
         },
         onPanResponderRelease: (e, gs) => {
           const d = drag.current;
           const { g: gg, sel: s, view: v, myTurn: mt, rolled: rl } = ref.current;
-          const x = d.x0 + gs.dx;
-          const y = d.y0 + gs.dy;
+          const [lx, ly] = landRef.current ? [gs.dy, -gs.dx] : [gs.dx, gs.dy];
+          const x = d.x0 + lx;
+          const y = d.y0 + ly;
           act.current.setGhost(null);
           if (d.from !== null && d.moved) {
             const to = dropTarget(gg, x, y);
@@ -583,10 +596,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
 
   const board = (
     <View
-      onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))}
       style={{
-        width: '100%',
-        height: W ? g.H : 260,
+        width: g.W,
+        height: g.H,
         borderRadius: 10,
         shadowColor: '#000',
         shadowOpacity: 0.45,
@@ -638,7 +650,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   );
 
   const table = (children: React.ReactNode) => (
-    <View style={{ borderRadius: 18, padding: 8, gap: 10, backgroundColor: '#9A5B32', overflow: 'hidden', marginHorizontal: -14 }}>
+    <View style={{ borderRadius: 18, padding: 8, gap: 10, backgroundColor: '#9A5B32', overflow: 'hidden', alignSelf: 'center' }}>
       <Svg style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} width="100%" height="100%">
         {Array.from({ length: 30 }, (_, k) => (
           <Rect key={k} x={k * 16} y={0} width={k % 3 === 0 ? 9 : 5} height={2000} fill={k % 2 ? '#A4653A' : '#8F5330'} opacity={0.6} />
@@ -651,15 +663,18 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
   if (tv.winner) {
     const iWon = tv.winner === uid;
     return (
-      <Done>
-        <ResultHeader
-          big={iWon ? 'Kazandın!' : `${partnerName} kazandı`}
-          line={`${tv.mars ? 'Mars! 2 sayı. ' : ''}Genel skor: Sen ${wins[uid] ?? 0} - ${wins[partnerId] ?? 0} ${partnerName}`}
-          game={game}
-          uid={uid}
-        />
-        {table(board)}
-      </Done>
+      <View style={{ flex: 1, backgroundColor: t.colors.bg, paddingHorizontal: 20 }}>
+        <Done>
+          <View style={{ height: insets.top + 8 }} />
+          <ResultHeader
+            big={iWon ? 'Kazandın!' : `${partnerName} kazandı`}
+            line={`${tv.mars ? 'Mars! 2 sayı. ' : ''}Genel skor: Sen ${wins[uid] ?? 0} - ${wins[partnerId] ?? 0} ${partnerName}`}
+            game={game}
+            uid={uid}
+          />
+          {table(board)}
+        </Done>
+      </View>
     );
   }
 
@@ -677,49 +692,82 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName }: G
               : 'Hamlen tamam, sıra geçiyor…'
             : `Kalan zar: ${dice.join(', ')}`);
 
+  const who = (mine: boolean) => (
+    <View style={{ backgroundColor: 'rgba(43,20,14,0.5)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 }}>
+      <Text
+        maxFontSizeMultiplier={1.0}
+        numberOfLines={1}
+        style={{ color: mine === myTurn ? '#FFD27A' : '#FFF6E6', fontWeight: '800', fontSize: 14 }}
+      >
+        {mine ? '⚪ Sen' : `🟤 ${solo ? 'Bilgisayar' : partnerName}`}
+      </Text>
+      <Text maxFontSizeMultiplier={1.0} style={{ color: '#FFF6E6', fontSize: 12, opacity: 0.85 }}>
+        {mine ? pipCount(view) : oppPip} pip · {wins[mine ? uid : partnerId] ?? 0} galibiyet
+      </Text>
+    </View>
+  );
+  const pbtn = (label: string, onPress: () => void, primary?: boolean) => (
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      style={({ pressed }) => ({
+        borderRadius: 14,
+        paddingVertical: 12,
+        alignItems: 'center',
+        backgroundColor: primary ? '#FFD27A' : 'rgba(255,246,230,0.16)',
+        opacity: pressed || busy ? 0.6 : 1,
+      })}
+    >
+      <Text maxFontSizeMultiplier={1.0} style={{ color: primary ? '#3A1D10' : '#FFF6E6', fontWeight: '800', fontSize: 15 }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+
   return (
-    <>
-      {table(
-        <>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              backgroundColor: 'rgba(43,20,14,0.45)',
-              borderRadius: 12,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-            }}
-          >
-            <Text maxFontSizeMultiplier={1.1} style={{ color: myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
-              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800' }}>
-                ⚪ Sen
-              </Text>{' '}
-              · {wins[uid] ?? 0} · {pipCount(view)} pip
-            </Text>
-            <Text maxFontSizeMultiplier={1.1} style={{ color: !myTurn ? '#FFD27A' : '#FFF6E6', fontSize: 13 }}>
-              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800' }}>
-                🟤 {partnerName}
-              </Text>{' '}
-              · {wins[partnerId] ?? 0} · {oppPip}
+    <View style={{ flex: 1, backgroundColor: '#3A1D10' }}>
+      <View
+        style={{
+          position: 'absolute',
+          width: win.height,
+          height: win.width,
+          left: (win.width - win.height) / 2,
+          top: (win.height - win.width) / 2,
+          transform: [{ rotate: '90deg' }],
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingLeft: insets.top + 4,
+          paddingRight: Math.max(insets.bottom, 10),
+          paddingVertical: 6,
+        }}
+      >
+        {table(board)}
+        <View style={{ width: PANEL, alignSelf: 'stretch', gap: 8, paddingVertical: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pressable onPress={() => (onExit ? onExit() : router.back())} hitSlop={12}>
+              <Ionicons name="close" size={26} color="#FFF6E6" />
+            </Pressable>
+            <Text maxFontSizeMultiplier={1.0} style={{ color: '#FFF6E6', fontWeight: '800', fontSize: 16 }}>
+              Tavla
             </Text>
           </View>
-          {board}
-          <Text
-            maxFontSizeMultiplier={1.1}
-            style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '800', minHeight: 20, fontFamily: t.fonts.body }}
-          >
-            {status}
-          </Text>
-        </>,
-      )}
-      {myTurn && !rolled && !animating && <Button label="Zar at" busy={busy} onPress={roll} />}
-      {myTurn && rolled && !animating && hist.length > 0 && !busy && (
-        <Button variant="secondary" label={countdown ? 'Geri al (1,5 sn)' : 'Geri al'} onPress={undo} />
-      )}
-      <Muted style={{ textAlign: 'center', fontSize: 12 }}>
-        Pulu parmağınla sürükle ya da önce pula sonra gideceği haneye dokun. Toplarken sağdaki kutuya bırak. Mars 2 sayı.
-      </Muted>
-    </>
+          {who(false)}
+          <View style={{ flex: 1, justifyContent: 'center', gap: 8 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '700', fontSize: 13 }}>
+              {status}
+            </Text>
+            {myTurn && !rolled && !animating && pbtn('Zar at', roll, true)}
+            {myTurn && rolled && !animating && hist.length > 0 && !busy && pbtn(countdown ? 'Geri al (1,5 sn)' : 'Geri al', undo)}
+            {solo && (
+              <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', opacity: 0.6, fontSize: 10 }}>
+                {partnerName} katılınca bilgisayarın yerine geçer
+              </Text>
+            )}
+          </View>
+          {who(true)}
+        </View>
+      </View>
+    </View>
   );
 }
