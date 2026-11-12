@@ -746,35 +746,17 @@ export async function farmAction(coupleId: string, uid: string, name: string, pa
     if (typeof r !== 'string') tx.update(ref, farmWrite(r.farm));
     return r;
   });
-  if (typeof res !== 'string' && res.ready && (act.a === 'plant' || act.a === 'water')) {
-    const t = res.farm.tiles[act.i];
-    if (t.k === 'crop' && t.by === uid) scheduleReady(coupleId, act.i, t.crop, res.ready).catch(() => {});
-  }
   return res;
 }
 
-// Hasat hatırlatması: tarla başına değil, tek bildirim. Son ekilen/sulanan ürün hazır olunca bir kez haber verir;
-// her yeni ekim aynı bildirimi ileri alır. (Eskiden her tarla ayrı bildirim kuruyordu: 10 tarla = 10 bildirim.)
-let readyAt = 0;
-let cleanedOld = false;
-async function scheduleReady(coupleId: string, _i: number, _crop: CropId, at: number) {
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted' || at <= Date.now()) return;
-  if (!cleanedOld) {
-    cleanedOld = true;
-    const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
-    await Promise.all(
-      all
-        .filter((n) => n.identifier.startsWith(`farm-${coupleId}-`))
-        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})),
-    );
-  }
-  readyAt = Math.max(readyAt > Date.now() ? readyAt : 0, at);
-  await Notifications.scheduleNotificationAsync({
-    identifier: `farm-${coupleId}`,
-    content: { title: 'Hasat zamanı 🌾', body: 'Tarlalarınız hazır, Bizim Çiftlik seni bekliyor.', data: { type: 'mood', url: '/garden' } },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(readyAt) },
-  });
+// Hasat hatırlatması yok (istenmedi). Eski sürümlerin telefonda kurduğu bekleyen hatırlatmalar da iptal edilir.
+export async function clearFarmReminders() {
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await Promise.all(
+    all
+      .filter((n) => n.identifier.startsWith('farm-'))
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})),
+  );
 }
 
 // Günlük görevden biriken altını çiftliğe aktarır.

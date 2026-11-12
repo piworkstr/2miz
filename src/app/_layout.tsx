@@ -1,9 +1,10 @@
+import { clearFarmReminders } from '../lib/farm';
 import { Baloo2_500Medium, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { Caveat_500Medium, Caveat_700Bold, useFonts } from '@expo-google-fonts/caveat';
 import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '../components/ui';
@@ -22,6 +23,10 @@ export const unstable_settings = { anchor: 'welcome' };
 function RootNavigator() {
   const session = useSession();
   const theme = useTheme();
+  // Eski sürümlerin kurduğu "hasada hazır" hatırlatmalarını açılışta temizle.
+  useEffect(() => {
+    clearFarmReminders().catch(() => {});
+  }, []);
 
   // İlk açılışta yükleme ekranı gösterilir. Sonraki geçişlerde (kayıt, giriş, eşleşme)
   // ekranlar kaldırılmaz; veriler gelene kadar son bilinen durum kullanılır.
