@@ -384,8 +384,9 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
           const p = shown.tray[k];
           return (
             <View key={k} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} {...(p ? responders[k].panHandlers : {})}>
-              {p && hidden !== k && (
-                <View style={{ opacity: myTurn ? 1 : 0.35 }}>
+              {/* Sürüklenirken parça kaldırılmaz, saydam olur: dokunulan görünüm yok olursa iOS dokunuşu düşürüyor. */}
+              {p && (
+                <View style={{ opacity: hidden === k ? 0 : myTurn ? 1 : 0.35 }}>
                   <PieceView p={p} cell={trayCell} />
                 </View>
               )}
