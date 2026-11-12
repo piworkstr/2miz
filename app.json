@@ -9,6 +9,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ikimiz.couples",
+      "config": { "usesNonExemptEncryption": false },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
