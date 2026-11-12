@@ -67,7 +67,7 @@ export default function Quiz() {
         ))}
       </View>
 
-      {step > 0 && (
+      {step > 0 ? (
         <Pressable
           onPress={() => {
             setAnswers(answers.slice(0, -1));
@@ -77,6 +77,16 @@ export default function Quiz() {
         >
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
             {l('Geri', 'Back')}
+          </Text>
+        </Pressable>
+      ) : (
+        // Hesabı olan biri burada sıkışmasın: teste girmeden girişe geçebilsin.
+        <Pressable
+          onPress={() => router.replace({ pathname: '/login', params: { mode: 'signin' } })}
+          style={{ alignItems: 'center', padding: 10 }}
+        >
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 15 }}>
+            {l('Zaten hesabım var, giriş yap', 'I already have an account, sign in')}
           </Text>
         </Pressable>
       )}
