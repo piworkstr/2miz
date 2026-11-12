@@ -309,6 +309,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   const [fly, setFly] = useState<{ mine: boolean; x0: number; y0: number; x1: number; y1: number } | null>(null);
   const flyV = useRef(new Animated.Value(0)).current;
   const prevServer = useRef<TView>(server);
+  const prevBoard = useRef(JSON.stringify(server)); // rakibin hamlesi yalnızca tahta gerçekten değiştiyse oynatılır
   const [animating, setAnimating] = useState(false);
   // Esprili cümleler tahtanın üstünde balon olarak çıkar, birkaç saniye sonra kaybolur.
   const [quip, setQuip] = useState('');
@@ -331,7 +332,15 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     setHist([]);
     setPath([]);
     setSel(null);
-    if (!last || last.by === uid || !last.path?.length || !W) {
+    // Zar atmak tahtayı değiştirmez: o anda rakibin son hamlesi yeniden oynatılmamalı
+    // (yoksa "rakip benim zarımla bir daha oynuyor" gibi görünür).
+    const board = JSON.stringify(server);
+    const boardChanged = board !== prevBoard.current;
+    prevBoard.current = board;
+    if (!last || last.by === uid || !last.path?.length || !W || !boardChanged) {
+      setAnimating(false);
+      setOppDice(null);
+      setFly(null);
       setView(server);
       setSeenKey(turnKey);
       return;
