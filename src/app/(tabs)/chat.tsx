@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../../components/Avatar';
 import { BondHeart, BondStreak } from '../../components/BondHeart';
+import { CallButton } from '../../components/CallButton';
 import { KeyboardSpace, useKeyboardVisible } from '../../components/KeyboardSpace';
 import { handFont, inkColor } from '../../components/Polaroid';
 import { Loading, Muted } from '../../components/ui';
@@ -157,6 +158,7 @@ export default function Chat() {
           >
             {tx(t, partnerName)}
           </Text>
+          <CallButton where="sohbet" color={t.colors.primary} />
           {kbOpen ? (
             <Pressable
               onPress={() => Keyboard.dismiss()}

@@ -8,6 +8,7 @@ import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { sfx } from '../../lib/sfx';
+import { CallButton } from '../CallButton';
 import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Move, type View as TView } from '../../lib/tavla';
 import { useTheme } from '../../lib/useTheme';
 import { Done, ResultHeader, useFinishOnce } from './shared';
@@ -793,9 +794,10 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             <Pressable onPress={() => (onExit ? onExit() : router.back())} hitSlop={12}>
               <Ionicons name="close" size={26} color="#FFF6E6" />
             </Pressable>
-            <Text maxFontSizeMultiplier={1.0} style={{ color: '#FFF6E6', fontWeight: '800', fontSize: 16 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFF6E6', fontWeight: '800', fontSize: 16 }}>
               Tavla
             </Text>
+            <CallButton where="tavla" color="#FFF6E6" />
           </View>
           {who(false)}
           <View style={{ flex: 1, justifyContent: 'center', gap: 8 }}>

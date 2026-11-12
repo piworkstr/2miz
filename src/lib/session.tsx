@@ -11,6 +11,7 @@ export type Profile = {
   theme?: string;
   loveLanguage?: string;
   birthDate?: string; // YYYY-MM-DD
+  phone?: string; // partnerin arayabilmesi için (isteğe bağlı); yalnızca partner görür
   interests?: string[];
   notifyTime?: 'sabah' | 'ogle' | 'aksam';
   onboarded?: boolean;

@@ -23,6 +23,7 @@ export function ProfileEditCard() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [birth, setBirth] = useState<DateParts>({ d: '', m: '', y: '' });
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   if (!user || !profile) return null;
@@ -30,6 +31,7 @@ export function ProfileEditCard() {
   const start = () => {
     setName(profile.name ?? '');
     setBirth(partsOf(profile.birthDate));
+    setPhone(profile.phone ?? '');
     setError('');
     setOpen(true);
   };
@@ -44,7 +46,7 @@ export function ProfileEditCard() {
     setBusy(true);
     setError('');
     try {
-      await updateDoc(doc(db, 'users', user.uid), { name: n, birthDate: key });
+      await updateDoc(doc(db, 'users', user.uid), { name: n, birthDate: key, phone: phone.replace(/[^0-9+]/g, '').slice(0, 16) });
       if (couple) await updateDoc(doc(db, 'couples', couple.id), { [`names.${user.uid}`]: n }).catch(() => {});
       if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: n }).catch(() => {});
       setOpen(false);
@@ -83,6 +85,8 @@ export function ProfileEditCard() {
           <Input value={name} onChangeText={setName} maxLength={30} placeholder="Adın" autoCapitalize="words" />
           <Muted style={{ fontSize: 12 }}>Doğum tarihin (partnerin kutlaması için)</Muted>
           <DateInput value={birth} onChange={setBirth} />
+          <Muted style={{ fontSize: 12 }}>Telefon numaran (isteğe bağlı · yalnızca partnerin görür, oyunda “Ara” için)</Muted>
+          <Input value={phone} onChangeText={setPhone} maxLength={18} placeholder="+90 5xx xxx xx xx" keyboardType="phone-pad" />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button style={{ flex: 1 }} label="Vazgeç" variant="secondary" onPress={() => setOpen(false)} />
             <Button style={{ flex: 1 }} label="Kaydet" onPress={save} busy={busy} />

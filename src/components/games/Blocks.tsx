@@ -18,6 +18,7 @@ import {
 } from '../../lib/blocks';
 import { partnerJoined, placeBlock, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
+import { CallButton } from '../CallButton';
 import { useSession } from '../../lib/session';
 import { useFinishOnce } from './shared';
 
@@ -256,6 +257,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
           </Text>
         </View>
         <View style={{ flex: 1 }} />
+        <CallButton where="blocks" color="#fff" />
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <View style={{ flexDirection: 'row', gap: 4 }}>
             <View style={{ opacity: myTurn ? 1 : 0.4, borderWidth: 2, borderColor: myTurn ? GOLD : 'transparent', borderRadius: 18 }}>

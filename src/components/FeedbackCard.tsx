@@ -12,7 +12,7 @@ import { Button, Card, Input, Muted, T } from './ui';
 
 // Deneme kullanıcıları hata ve eksikleri buradan bildirir. Cihaz ve sürüm bilgisi otomatik eklenir.
 // Kurucu çift aynı kartın altında gelen bildirimleri görür ve "yapıldı" işaretler.
-type Kind = 'hata' | 'eksik' | 'oneri';
+type Kind = 'hata' | 'eksik' | 'oneri' | 'olay'; // olay: kullanım sayacı (ör. arama düğmesi), listede görünmez
 const KINDS: { id: Kind; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { id: 'hata', label: 'Hata', icon: 'bug-outline' },
   { id: 'eksik', label: 'Eksik', icon: 'remove-circle-outline' },
@@ -132,14 +132,18 @@ function FeedbackInbox() {
   useEffect(
     () =>
       onSnapshot(
-        query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(100)),
+        query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(300)),
         (snap) => setItems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Feedback, 'id'>) }))),
         () => setItems([]),
       ),
     [],
   );
-  const list = items.filter((f) => showDone || f.status !== 'yapildi');
-  const fresh = items.filter((f) => f.status !== 'yapildi').length;
+  const events = items.filter((f) => f.kind === 'olay');
+  const real = items.filter((f) => f.kind !== 'olay');
+  const list = real.filter((f) => showDone || f.status !== 'yapildi');
+  const fresh = real.filter((f) => f.status !== 'yapildi').length;
+  const calls = events.filter((e) => e.text.startsWith('arama:'));
+  const called = calls.filter((e) => e.text.endsWith(':arandi'));
   const when = (f: Feedback) => {
     const ms = f.createdAt?.toMillis?.();
     if (!ms) return '';
@@ -156,6 +160,10 @@ function FeedbackInbox() {
           </Text>
         </Pressable>
       </View>
+      <Muted style={{ fontSize: 12 }}>
+        📞 Ara düğmesi: {calls.length} dokunuş · {called.length} arama · {new Set(calls.map((e) => e.by)).size} kişi ·{' '}
+        {new Set(calls.map((e) => e.coupleId)).size} çift
+      </Muted>
       {list.length === 0 && <Muted style={{ fontSize: 12 }}>Yeni bildirim yok.</Muted>}
       {list.map((f) => (
         <View

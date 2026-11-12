@@ -7,6 +7,7 @@ import { Tavla } from '../../components/games/Tavla';
 import { KnowMe } from '../../components/games/KnowMe';
 import { Memory } from '../../components/games/Memory';
 import { ThisThat } from '../../components/games/ThisThat';
+import { CallButton } from '../../components/CallButton';
 import { Button, Card, Loading, Muted, Screen } from '../../components/ui';
 import {
   abandonGame,
@@ -52,6 +53,7 @@ export default function GameScreen() {
       >
         {game ? GAMES[game.type].name : 'Oyun'}
       </Text>
+      {game && <CallButton where={game.type} color={t.colors.text} />}
     </View>
   );
 
