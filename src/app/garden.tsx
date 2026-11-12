@@ -74,7 +74,6 @@ import {
 } from '../lib/farm';
 import { logActivityCapped } from '../lib/bond';
 import { ART } from '../lib/farmArt';
-import { notifyPartner } from '../lib/push';
 import { finishScene, startScene, useOpenScene, type Scene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 

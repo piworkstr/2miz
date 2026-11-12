@@ -28,7 +28,10 @@ export const setGameOpen = (id: string | null) => {
 Notifications.setNotificationHandler({
   handleNotification: async (n) => {
     const data = n.request.content.data as Partial<PushData> | undefined;
-    const hide = (data?.type === 'message' && chatOpen) || (data?.type === 'game' && !!gameOpen && data.url === `/game/${gameOpen}`);
+    const hide =
+      data?.url === '/garden' || // çiftlikten bildirim yok (eski sürümdeki partnerden gelse de uygulama açıkken gösterilmez)
+      (data?.type === 'message' && chatOpen) ||
+      (data?.type === 'game' && !!gameOpen && data.url === `/game/${gameOpen}`);
     return { shouldShowBanner: !hide, shouldShowList: !hide, shouldPlaySound: !hide, shouldSetBadge: false };
   },
 });
@@ -77,6 +80,7 @@ const tokens = new Map<string, string | null>();
 
 // Partnere bildirim gönderir. Başarısız olursa sessizce geçer; asıl işlem (mesaj vb.) zaten kaydedildi.
 export async function notifyPartner(partnerId: string, title: string, body: string, data: PushData) {
+  if (data.url === '/garden') return; // çiftlik hiçbir koşulda bildirim göndermez
   try {
     if (!tokens.has(partnerId)) {
       const s = await getDoc(doc(db, 'users', partnerId));
