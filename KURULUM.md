@@ -91,4 +91,4 @@ Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Termin
 2. https://expo.dev → tanerbentesens-team → usdaily → **Project settings → GitHub** → "Connect repository" → piworkstr/2miz
    (ilk kez GitHub'da Expo uygulamasına izin ister).
 3. Aynı sayfada **Workflows**'un açık olduğunu kontrol et. Bundan sonra Claude'un her push'u 2–3 dakikada
-   production kanalına düşer; sonucu expo.dev → Workflows'ta görürsün.
+   production kanalına düşer; sonucu expo.dev → Workflows'ta görürsün. (Expo GitHub uygulaması yalnızca bu depoya yetkili.)
