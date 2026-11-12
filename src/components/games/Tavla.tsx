@@ -7,6 +7,7 @@ import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg
 import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
 import { notifyPartner, setGameOpen } from '../../lib/push';
 import { useSession } from '../../lib/session';
+import { sfx } from '../../lib/sfx';
 import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Move, type View as TView } from '../../lib/tavla';
 import { useTheme } from '../../lib/useTheme';
 import { Done, ResultHeader, useFinishOnce } from './shared';
@@ -87,6 +88,22 @@ function dropTarget(g: Geo, x: number, y: number): number | null {
   else return null;
   return y < g.H / 2 ? 12 + k : 11 - k;
 }
+
+const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
+const DOUBLES = ['', 'Hep yek!', 'Dubara!', 'Dü se!', 'Dört cihar!', 'Dü beş!', 'Düşeş!'];
+const I_HIT = (n: string) =>
+  pick([
+    `Kırdın! ${n} kapıda bekliyor 🚪`,
+    `Oh! ${n} başa döndü, çayını tazelesin ☕`,
+    `Affetmedin! ${n} şimdi düşünsün 😏`,
+    `Bu pul burada yalnız kalmamalıydı 😄`,
+  ]);
+const GOT_HIT = (n: string) =>
+  pick([
+    `Ah! ${n} seni kırdı, intikam soğuk yenir 🥶`,
+    `Pulun misafirliğe gitti… ${n} gülüyor 😅`,
+    `Açık bırakmayacaktın! Kapıdan giriş var 🚪`,
+  ]);
 
 // Partnerin hamlesini benim açımdan uygular.
 function applyOpp(v: TView, m: { from: number; to: number }): TView {
@@ -263,6 +280,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   const rolled = tv.rolled.length > 0;
   // Partner henüz katılmadıysa onun tarafını bilgisayar oynar (kuranın telefonundan, sırası gelince).
   const solo = !partnerJoined(game);
+  const oppName = solo ? 'Bilgisayar' : partnerName;
   const botTurn = solo && uid === game.from && tv.turn === partnerId && !tv.rolled.length && !tv.winner;
   const turnKey = `${tv.turn}|${tv.rolled.join(',')}|${tv.pts.join(',')}`;
 
@@ -289,6 +307,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   const flyV = useRef(new Animated.Value(0)).current;
   const prevServer = useRef<TView>(server);
   const [animating, setAnimating] = useState(false);
+  const [seenKey, setSeenKey] = useState(''); // rakibin son hamlesi ekranda tamamlandı mı
+  const [oppDice, setOppDice] = useState<number[] | null>(null); // rakibin hamlesi oynanırken zarları
 
   // Sunucudan yeni durum geldi: partner oynadıysa hamlelerini tek tek kaydır.
   useEffect(() => {
@@ -301,6 +321,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     setSel(null);
     if (!last || last.by === uid || !last.path?.length || !W) {
       setView(server);
+      setSeenKey(turnKey);
       return;
     }
     let cancelled = false;
@@ -308,6 +329,13 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
       setAnimating(true);
       let v = from;
       setView(v);
+      // Önce rakibin zarı görünür, sonra pulları tek tek yürür.
+      setOppDice(last.dice);
+      sfx('zar');
+      const dbl = last.dice[0] === last.dice[1] ? DOUBLES[last.dice[0]] : '';
+      if (dbl) setMsg(`${oppName}: ${dbl}`);
+      await new Promise((res) => setTimeout(res, 900));
+      let hit = false;
       for (const abs of last.path!) {
         if (cancelled) return;
         const m = flipMove(side, abs);
@@ -315,16 +343,24 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         const a = slot(g, false, m.from, Math.max(0, count - 1), count);
         const toCount = m.to === BAR || m.to === OFF ? 0 : Math.max(0, -v.pts[m.to]);
         const b = slot(g, false, m.to, toCount, toCount + 1);
+        const kills = m.to !== OFF && m.to !== BAR && v.pts[m.to] === 1;
+        hit = hit || kills;
         v = applyOpp(v, m);
         flyV.setValue(0);
         setFly({ mine: false, x0: a.x, y0: a.y, x1: b.x, y1: b.y });
         await new Promise<void>((res) =>
-          Animated.timing(flyV, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => res()),
+          Animated.timing(flyV, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => res()),
         );
         setView(v);
         setFly(null);
+        sfx(kills ? 'kir' : 'tas');
+        await new Promise((res) => setTimeout(res, 180));
       }
       setView(server);
+      setOppDice(null);
+      setMsg(hit ? GOT_HIT(oppName) : '');
+      if (hit) setTimeout(() => setMsg(''), 2600);
+      setSeenKey(turnKey);
       setAnimating(false);
     })();
     return () => {
@@ -395,8 +431,10 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     let v = view;
     let ds = dice;
     const steps: { view: TView; dice: number[] }[] = [];
+    let hit = false;
     for (const m of route) {
       steps.push({ view: v, dice: ds });
+      if (m.to !== OFF && v.pts[m.to] === -1) hit = true;
       const r = play(v, ds, m);
       v = r.view;
       ds = r.dice;
@@ -405,7 +443,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     setPath((p) => [...p, ...route]);
     setView(v);
     setDice(ds);
-    setMsg('');
+    sfx(hit ? 'kir' : 'tas');
+    setMsg(hit ? I_HIT(oppName) : '');
+    if (hit) setTimeout(() => setMsg(''), 2600);
     return true;
   }
 
@@ -472,7 +512,12 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     setBusy(true);
     setMsg('');
     try {
+      sfx('zar');
       const r = await rollTavla(coupleId, game.id, uid);
+      if (r && !r.blocked && r.rolled[0] === r.rolled[1]) {
+        setMsg(DOUBLES[r.rolled[0]]);
+        setTimeout(() => setMsg(''), 1800);
+      }
       if (r?.blocked) {
         setMsg(`${r.rolled.join('-')} attın, oynanacak hamle yok. Sıra ${partnerName}'de.`);
         if (!solo)
@@ -582,9 +627,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
     if (view.offOpp) stack(false, OFF, view.offOpp);
   }
 
-  const allDice = diceOf(tv.rolled);
-  const usedN = allDice.length - dice.length;
-  const diceOwnerMine = tv.turn === uid;
+  const allDice = oppDice ? diceOf(oppDice) : diceOf(tv.rolled);
+  const usedN = oppDice ? 0 : allDice.length - dice.length;
+  const diceOwnerMine = !oppDice && tv.turn === uid;
   const wins = couple?.tavlaWins ?? {};
   const oppPip = pipCount({
     pts: view.pts.map((_, i) => -view.pts[23 - i]),
@@ -612,7 +657,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: g.W, height: g.H }}>
           <BoardArt g={g} />
           {pieces}
-          {rolled && (
+          {(rolled || !!oppDice) && (
             <View
               style={{
                 position: 'absolute',
@@ -757,7 +802,7 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '700', fontSize: 13 }}>
               {status}
             </Text>
-            {myTurn && !rolled && !animating && pbtn('Zar at', roll, true)}
+            {myTurn && !rolled && !animating && seenKey === turnKey && pbtn('Zar at', roll, true)}
             {myTurn && rolled && !animating && hist.length > 0 && !busy && pbtn(countdown ? 'Geri al (1,5 sn)' : 'Geri al', undo)}
             {solo && (
               <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', opacity: 0.6, fontSize: 10 }}>
