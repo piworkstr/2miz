@@ -1,3 +1,4 @@
+import { useAutoUpdate } from '../lib/autoUpdate';
 import { clearFarmReminders } from '../lib/farm';
 import { Baloo2_500Medium, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { Caveat_500Medium, Caveat_700Bold, useFonts } from '@expo-google-fonts/caveat';
@@ -23,6 +24,7 @@ export const unstable_settings = { anchor: 'welcome' };
 function RootNavigator() {
   const session = useSession();
   const theme = useTheme();
+  useAutoUpdate();
   // Eski sürümlerin kurduğu "hasada hazır" hatırlatmalarını açılışta temizle.
   useEffect(() => {
     clearFarmReminders().catch(() => {});
