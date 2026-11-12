@@ -8,6 +8,7 @@ import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DeleteAccount } from '../../components/DeleteAccount';
 import { EndCouple } from '../../components/EndCouple';
 import { PetNames } from '../../components/PetNames';
+import { ProfileEditCard } from '../../components/ProfileEditCard';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
 import { activeMood, MOODS } from '../../lib/avatar';
@@ -63,6 +64,7 @@ export default function Profile() {
       <Title>{t.copy.tabs.us}</Title>
 
       <StoryCard couple={couple} myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
+      <ProfileEditCard />
       <CoupleInfoCard />
       <Card style={{ gap: 8, zIndex: 5 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
