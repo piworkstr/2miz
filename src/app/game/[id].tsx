@@ -1,14 +1,25 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native';
 import { Blocks } from '../../components/games/Blocks';
 import { Tavla } from '../../components/games/Tavla';
 import { KnowMe } from '../../components/games/KnowMe';
 import { Memory } from '../../components/games/Memory';
 import { ThisThat } from '../../components/games/ThisThat';
 import { Button, Card, Loading, Muted, Screen } from '../../components/ui';
-import { acceptInvite, cancelInvite, GAMES, gameOver, isExpired, partnerJoined, useGame, type Game, type GameProps } from '../../lib/games';
+import {
+  abandonGame,
+  acceptInvite,
+  cancelInvite,
+  GAMES,
+  gameOver,
+  isExpired,
+  partnerJoined,
+  useGame,
+  type Game,
+  type GameProps,
+} from '../../lib/games';
 import { useSession } from '../../lib/session';
 import { useTheme } from '../../lib/useTheme';
 
@@ -17,6 +28,7 @@ export default function GameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const game = useGame(couple?.id, id);
+  const [asking, setAsking] = useState(false);
 
   // Oyunu açmak katılmak demektir: partnerin başlattığı oyuna girince sıra bana da gelmeye başlar.
   useEffect(() => {
@@ -27,9 +39,11 @@ export default function GameScreen() {
   if (game === undefined || !user || !couple || !partnerId) return <Loading />;
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // Süren oyundan çıkarken sorulur: sonlandır (yenisi başlatılabilir) ya da sonra devam et.
+  const exit = () => (game && game.status === 'playing' && !gameOver(game) ? setAsking(true) : close());
   const header = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Pressable onPress={close} hitSlop={12}>
+      <Pressable onPress={exit} hitSlop={12}>
         <Ionicons name="close" size={28} color={t.colors.text} />
       </Pressable>
       <Text
@@ -67,6 +81,7 @@ export default function GameScreen() {
     partnerId,
     partnerName,
     myName: profile?.name ?? 'Sen',
+    onExit: exit,
   };
 
   // Blok sürüklemeyle oynanır: kaydırma yok (ekran yukarı kaymasın); kendi kapat düğmesi var.
@@ -102,6 +117,43 @@ export default function GameScreen() {
       {game.type === 'memory' && <Memory {...props} />}
       {game.type === 'blocks' && <Blocks {...props} />}
       {game.type === 'tavla' && <Tavla {...props} />}
+      <Modal transparent animationType="fade" visible={asking} onRequestClose={() => setAsking(false)}>
+        <Pressable
+          onPress={() => setAsking(false)}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end', padding: 16, paddingBottom: 34 }}
+        >
+          <Pressable style={{ backgroundColor: t.colors.card, borderRadius: Math.max(t.radius.card, 14), padding: 18, gap: 10 }}>
+            <Text
+              maxFontSizeMultiplier={1.25}
+              style={{ color: t.colors.text, fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button, textAlign: 'center' }}
+            >
+              Oyundan çıkıyorsun
+            </Text>
+            <Muted style={{ textAlign: 'center' }}>Oyun sonlandırılsın mı? Sonlandırırsan yeni bir oyun başlatabilirsin.</Muted>
+            <Button
+              label="Sonra devam et"
+              onPress={() => {
+                setAsking(false);
+                close();
+              }}
+            />
+            <Button
+              label="Oyunu sonlandır"
+              variant="secondary"
+              onPress={async () => {
+                setAsking(false);
+                await abandonGame(couple.id, game.id).catch(() => {});
+                close();
+              }}
+            />
+            <Pressable onPress={() => setAsking(false)} style={{ alignItems: 'center', padding: 6 }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
+                Oyuna dön
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -134,7 +186,11 @@ function Waiting({ game, coupleId, partnerName, onClose }: { game: Game; coupleI
         </>
       ) : expired ? (
         <>
-          <Muted style={{ textAlign: 'center' }}>Davetin süresi doldu. Belki daha sonra?</Muted>
+          <Muted style={{ textAlign: 'center' }}>
+            {game.status === 'cancelled'
+              ? 'Bu oyun sonlandırıldı. Ana ekrandan yenisini başlatabilirsiniz.'
+              : 'Davetin süresi doldu. Belki daha sonra?'}
+          </Muted>
           <Button style={{ alignSelf: 'stretch' }} label="Tamam" onPress={onClose} />
         </>
       ) : (

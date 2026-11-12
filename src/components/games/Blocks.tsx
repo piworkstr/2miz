@@ -78,7 +78,7 @@ function PieceView({ p, cell, gap = 2, ghost }: { p: NonNullable<Piece>; cell: n
   );
 }
 
-export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: GameProps) {
+export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, onExit }: GameProps) {
   const { couple, profile, partnerProfile } = useSession();
   const b = game.blocks!;
   const myTurn = b.turn === uid && !b.over;
@@ -236,7 +236,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName }: 
       onLayout={(e) => setW(Math.min(e.nativeEvent.layout.width - 32, 420))}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
+        <Pressable onPress={() => (onExit ? onExit() : router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
           <Ionicons name="close" size={26} color="#fff" />
         </Pressable>
         <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>

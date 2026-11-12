@@ -82,6 +82,7 @@ export type GameProps = {
   partnerId: string;
   partnerName: string;
   myName: string;
+  onExit?: () => void; // çıkış düğmesi: "oyunu sonlandır / sonra devam et" sorusunu açar
 };
 
 function gamesCol(coupleId: string) {
