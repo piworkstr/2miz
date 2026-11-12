@@ -80,7 +80,7 @@ Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Termin
   Derleme 10–20 dakika sürer; TestFlight'a düşünce test grubundaki telefonlara bildirim gider.
 - Hangisinin gerektiğini Claude her yayında söyler ("OTA yeter" / "derleme gerekir").
 
-### 6b. OTA'yı otomatiğe bağlama (bir kez, Terminal sonra hiç gerekmez)
+### 6b. OTA'yı otomatiğe bağlama (bir kez, Terminal sonra hiç gerekmez) — 12 Kasım 2026'da yapıldı
 
 `.eas/workflows/ota.yml` main'e her push'ta `eas update`'i EAS sunucusunda çalıştırır. Açmak için ofiste, bir kez:
 
