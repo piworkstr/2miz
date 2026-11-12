@@ -189,6 +189,11 @@ export async function acceptInvite(coupleId: string, id: string, uid?: string) {
   });
 }
 
+// Süren oyunu bırak (puan yok); ana ekranda yeni oyun başlatılabilir.
+export async function abandonGame(coupleId: string, id: string) {
+  await updateDoc(doc(gamesCol(coupleId), id), { status: 'cancelled' });
+}
+
 export async function cancelInvite(coupleId: string, id: string) {
   await updateDoc(doc(gamesCol(coupleId), id), { status: 'cancelled' });
 }

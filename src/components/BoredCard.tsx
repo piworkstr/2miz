@@ -3,7 +3,17 @@ import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { notifyPartner } from '../lib/push';
-import { acceptInvite, GAMES, partnerJoined, sendInvite, turnOf, useActiveTurnGame, useMyOpenInvite, type GameType } from '../lib/games';
+import {
+  abandonGame,
+  acceptInvite,
+  GAMES,
+  partnerJoined,
+  sendInvite,
+  turnOf,
+  useActiveTurnGame,
+  useMyOpenInvite,
+  type GameType,
+} from '../lib/games';
 import { countGame, FREE, gamesToday, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -51,7 +61,7 @@ export function BoredCard() {
     }
   }
 
-  if (active && user) {
+  if (active && user && !choosing) {
     const mine = turnOf(active) === user.uid;
     const name = GAMES[active.type].name;
     const solo = !partnerJoined(active);
@@ -79,6 +89,17 @@ export function BoredCard() {
             router.push({ pathname: '/game/[id]', params: { id: active.id } });
           }}
         />
+        <Pressable
+          onPress={async () => {
+            await abandonGame(couple.id, active.id).catch(() => {});
+            setChoosing(true);
+          }}
+          style={{ alignItems: 'center', padding: 4 }}
+        >
+          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 13 }}>
+            Bu oyunu bırak, yenisini başlat
+          </Text>
+        </Pressable>
       </Card>
     );
   }
