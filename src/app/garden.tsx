@@ -1218,6 +1218,7 @@ export default function GardenScreen() {
                 setSel(null);
               }}
               onOrders={() => setShowOrders(true)}
+              onDepot={() => setSel(farm.tiles.findIndex((x) => x.k === 'fixed' && x.item === 'barn'))}
               onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
               onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
               ready={ready.length}
@@ -1281,6 +1282,7 @@ type SheetProps = {
   onShop: () => void;
   onPlace: (pl: Placing) => void;
   onOrders: () => void;
+  onDepot: () => void;
   onDeliver: (orderId: string) => void;
   onNote: (text: string) => void;
   ready: number;
@@ -1650,6 +1652,7 @@ function Sheet(p: SheetProps) {
             ) : (
               <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
+          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           <Round icon="book" label="Günlük" onPress={p.onLog} />
           <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
         </ScrollView>
@@ -1779,6 +1782,7 @@ function Sheet(p: SheetProps) {
         <Head art="soil" title="Boş tarla" onClose={p.onClose} />
         <Note>Tarlaya tohum ekilir. Hayvan, ağaç ve süs çayıra (çimene) konur.</Note>
         <Items list={list} level={level} coins={farm.coins} onPick={(a) => p.onAct(a, p.plantAll)} />
+        <Btn kind="soft" label="Tarlayı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: i })} />
         {empties > 1 && (
           <Pressable onPress={() => p.setPlantAll(!p.plantAll)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name={p.plantAll ? 'checkbox' : 'square-outline'} size={20} color={GREEN} />
@@ -1823,6 +1827,7 @@ function Sheet(p: SheetProps) {
             </Note>
             {!mine && !t.watered && <Btn kind="accent" label="Sula · iki kat hızlı büyür" onPress={() => p.onAct({ a: 'water', i })} />}
             {mine && !t.watered && <Note>{p.partnerName} sularsa kalan süre yarıya iner ve hasat ortak sayılır.</Note>}
+            <Btn kind="soft" label="Tarlayı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: i })} />
           </>
         )}
       </>

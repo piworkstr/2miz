@@ -383,7 +383,7 @@ export type Action =
   | { a: 'decor'; i: number; item: DecorId }
   | { a: 'unlock'; i: number }
   | { a: 'remove'; i: number }
-  // Yerini değiştir: from karesindeki ağaç/bina/süs/hayvan i karesine (boş çimen) taşınır; süreler korunur.
+  // Yerini değiştir: from karesindeki ağaç/bina/süs/hayvan/tarla i karesine (boş çimen) taşınır; süreler korunur.
   | { a: 'move'; i: number; from: number }
   // Hasat günü: iki kişilik sahne canlıyken bütün hazır büyük ürünler toplanır.
   | { a: 'harvestDay'; i: number; scene: string }
@@ -540,20 +540,24 @@ export function applyAction(
     }
     case 'move': {
       const src = f.tiles[act.from];
-      if (!src || (src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building')) return 'Taşınacak bir şey yok.';
+      const field = !!src && (src.k === 'soil' || src.k === 'crop'); // tarla (boş ya da ekili) da taşınır; ekinin süresi korunur
+      if (!src || (!field && src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building'))
+        return 'Taşınacak bir şey yok.';
       if (act.from === NOTE_TREE) return 'Not Ağacı yerinden oynamaz.';
       if (act.i === act.from) return 'Zaten orada.';
       if (!emptyOk(t)) return 'Boş bir çimene taşıyabilirsin.';
       f.tiles[act.i] = src;
       f.tiles[act.from] = { k: 'grass' };
       const what =
-        src.k === 'animal'
-          ? ANIMALS[src.item].name
-          : src.k === 'tree'
-            ? TREES[src.item].name
-            : src.k === 'building'
-              ? BUILDINGS[src.item].name
-              : DECOR[src.item].name;
+        src.k === 'soil' || src.k === 'crop'
+          ? 'Tarlayı'
+          : src.k === 'animal'
+            ? ANIMALS[src.item].name
+            : src.k === 'tree'
+              ? TREES[src.item].name
+              : src.k === 'building'
+                ? BUILDINGS[src.item].name
+                : DECOR[src.item].name;
       text = `${name} ${what.toLocaleLowerCase('tr-TR')} taşıdı`;
       break;
     }
