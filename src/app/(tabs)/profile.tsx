@@ -377,8 +377,8 @@ function AboutUs({
       {row('heart-outline', 'Sevgi dili', [lang(me), lang(partner)])}
       {row('gift-outline', 'Doğum günü', [bday(me), bday(partner)])}
       {row('sparkles-outline', 'Sevdikleri', [
-        me?.interests?.slice(0, 4).join(', ') || '–',
-        partner?.interests?.slice(0, 4).join(', ') || '–',
+        me?.interests?.join(', ') || 'Henüz eklemedin · üstteki “Düzenle”den ekle',
+        partner?.interests?.join(', ') || 'Henüz eklemedi',
       ])}
       {!!common.length && (
         <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>

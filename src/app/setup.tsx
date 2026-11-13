@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Button, ErrorText, Muted, Screen, Title } from '../components/ui';
 import { db } from '../lib/firebase';
+import { INTERESTS } from '../lib/interests';
 import { useSession, type Profile } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
-
-const INTERESTS = ['Müzik', 'Yemek', 'Doğa', 'Film ve dizi', 'Spor', 'Oyun', 'Seyahat', 'Sanat', 'Kitap', 'Kahve', 'Dans', 'Hayvanlar'];
 
 const TIMES: { id: NonNullable<Profile['notifyTime']>; label: string; hint: string }[] = [
   { id: 'sabah', label: 'Sabah', hint: '09:00' },

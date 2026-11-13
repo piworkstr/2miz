@@ -88,8 +88,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [couple, setCouple] = useState<Couple | null>(null);
-  const [coupleReady, setCoupleReady] = useState(false);
-  const [profileReady, setProfileReady] = useState(false);
+  // Verinin hangi kullanıcı için yüklendiği tutulur: oturum açılışta geri gelirken profil ve çift henüz
+  // gelmemişken "hazır" sayılırsa bir an için tanışma/eşleşme ekranı görünüyordu.
+  const [coupleFor, setCoupleFor] = useState<string | null>(null);
+  const [profileFor, setProfileFor] = useState<string | null>(null);
 
   useEffect(
     () =>
@@ -106,20 +108,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setProfile(null);
       setCouple(null);
-      setCoupleReady(true);
-      setProfileReady(true);
+      setCoupleFor(null);
+      setProfileFor(null);
       return;
     }
-    setCoupleReady(false);
-    setProfileReady(false);
+    const uid = user.uid;
 
     const unsubProfile = onSnapshot(
       doc(db, 'users', user.uid),
       (snap) => {
         setProfile(snap.exists() ? (snap.data() as Profile) : null);
-        setProfileReady(true);
+        setProfileFor(uid);
       },
-      () => setProfileReady(true),
+      () => setProfileFor(uid),
     );
 
     // Kullanıcının üyesi olduğu çift belgesini dinler. Partner davet kodunu
@@ -130,9 +131,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       (snap) => {
         const d = snap.docs[0];
         setCouple(d ? ({ id: d.id, ...d.data() } as Couple) : null);
-        setCoupleReady(true);
+        setCoupleFor(uid);
       },
-      () => setCoupleReady(true),
+      () => setCoupleFor(uid),
     );
 
     return () => {
@@ -160,7 +161,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider
-      value={{ loading: !authReady || !coupleReady || !profileReady, user, profile, couple, partnerId, partnerName, partnerProfile }}
+      value={{
+        loading: !authReady || (!!user && (coupleFor !== user.uid || profileFor !== user.uid)),
+        user,
+        profile,
+        couple,
+        partnerId,
+        partnerName,
+        partnerProfile,
+      }}
     >
       {children}
     </SessionContext.Provider>

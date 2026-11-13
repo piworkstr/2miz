@@ -7,11 +7,12 @@ import { Pressable, Text, View } from 'react-native';
 import { ageFrom, DateInput, toDateKey, type DateParts } from './DateInput';
 import { Avatar } from './Avatar';
 import { auth, db } from '../lib/firebase';
+import { INTERESTS } from '../lib/interests';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, ErrorText, Input, Muted, T } from './ui';
 
-// Profil düzenleme: ad, doğum tarihi, avatar. Ad hem kullanıcı belgesine hem çiftteki isim haritasına yazılır.
+// Profil düzenleme: ad, doğum tarihi, telefon, sevdiklerin, avatar. Ad hem kullanıcı belgesine hem çiftteki isim haritasına yazılır.
 function partsOf(key?: string): DateParts {
   const m = key?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? { d: m[3], m: m[2], y: m[1] } : { d: '', m: '', y: '' };
@@ -24,6 +25,7 @@ export function ProfileEditCard() {
   const [name, setName] = useState('');
   const [birth, setBirth] = useState<DateParts>({ d: '', m: '', y: '' });
   const [phone, setPhone] = useState('');
+  const [interests, setInterests] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   if (!user || !profile) return null;
@@ -32,6 +34,7 @@ export function ProfileEditCard() {
     setName(profile.name ?? '');
     setBirth(partsOf(profile.birthDate));
     setPhone(profile.phone ?? '');
+    setInterests(profile.interests ?? []);
     setError('');
     setOpen(true);
   };
@@ -46,7 +49,12 @@ export function ProfileEditCard() {
     setBusy(true);
     setError('');
     try {
-      await updateDoc(doc(db, 'users', user.uid), { name: n, birthDate: key, phone: phone.replace(/[^0-9+]/g, '').slice(0, 16) });
+      await updateDoc(doc(db, 'users', user.uid), {
+        name: n,
+        birthDate: key,
+        phone: phone.replace(/[^0-9+]/g, '').slice(0, 16),
+        interests,
+      });
       if (couple) await updateDoc(doc(db, 'couples', couple.id), { [`names.${user.uid}`]: n }).catch(() => {});
       if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: n }).catch(() => {});
       setOpen(false);
@@ -87,6 +95,30 @@ export function ProfileEditCard() {
           <DateInput value={birth} onChange={setBirth} />
           <Muted style={{ fontSize: 12 }}>Telefon numaran (isteğe bağlı · yalnızca partnerin görür, oyunda “Ara” için)</Muted>
           <Input value={phone} onChangeText={setPhone} maxLength={18} placeholder="+90 5xx xxx xx xx" keyboardType="phone-pad" />
+          <Muted style={{ fontSize: 12 }}>Sevdiklerin (partnerin “Birbirinizi tanıyın” bölümünde görür)</Muted>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {INTERESTS.map((i) => {
+              const on = interests.includes(i);
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setInterests((cur) => (cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]))}
+                  style={{
+                    paddingVertical: 7,
+                    paddingHorizontal: 12,
+                    borderRadius: 18,
+                    borderWidth: 1.5,
+                    borderColor: on ? t.colors.primary : t.colors.border,
+                    backgroundColor: on ? t.colors.primarySoft : t.colors.card,
+                  }}
+                >
+                  <Text maxFontSizeMultiplier={1.25} style={{ color: on ? t.colors.primary : t.colors.text, fontSize: 14 }}>
+                    {i}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button style={{ flex: 1 }} label="Vazgeç" variant="secondary" onPress={() => setOpen(false)} />
             <Button style={{ flex: 1 }} label="Kaydet" onPress={save} busy={busy} />
