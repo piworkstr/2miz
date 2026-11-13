@@ -80,6 +80,16 @@ Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Termin
   Derleme 10–20 dakika sürer; TestFlight'a düşünce test grubundaki telefonlara bildirim gider.
 - Hangisinin gerektiğini Claude her yayında söyler ("OTA yeter" / "derleme gerekir").
 
+### 6b-2. OTA GitHub Actions'ta (13 Kasım 2026'dan itibaren geçerli yol)
+
+Expo'nun ücretsiz planı ayda 60 dakika otomatik yayın veriyor; dolunca yayın durur. Bu yüzden otomatik yayın
+`.github/workflows/ota.yml` ile GitHub'ın makinesinde çalışır (main'e her push'ta `eas update`). Bir kez gerekli:
+
+1. https://expo.dev/accounts/tanerbentesens-team/settings/access-tokens → **Create token** (ad: `github-ota`) → değeri kopyala.
+2. https://github.com/piworkstr/2miz/settings/secrets/actions → **New repository secret** → Name: `EXPO_TOKEN`, Secret: kopyalanan değer.
+
+Sonuç: GitHub → depo → **Actions** sekmesi. `.eas/workflows/ota.yml` artık yalnızca elle çalışır.
+
 ### 6b. OTA'yı otomatiğe bağlama (bir kez, Terminal sonra hiç gerekmez) — 12 Kasım 2026'da yapıldı
 
 `.eas/workflows/ota.yml` main'e her push'ta `eas update`'i EAS sunucusunda çalıştırır. Açmak için ofiste, bir kez:

@@ -3,9 +3,9 @@
 # (bkz. KURULUM.md §6b).
 name: OTA güncelleme (production)
 
+# Otomatik yayın GitHub Actions'a taşındı (.github/workflows/ota.yml); burası yalnızca elle çalıştırılır.
 on:
-  push:
-    branches: ['main']
+  workflow_dispatch: {}
 
 jobs:
   update_production:

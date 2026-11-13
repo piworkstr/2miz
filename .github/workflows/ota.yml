@@ -1,0 +1,42 @@
+# main'e her push'ta OTA güncellemesi GitHub'ın makinesinde yayınlanır (Expo'nun ücretsiz 60 dk/ay sınırına takılmaz).
+# Bir kez gerekli: depo ayarlarında EXPO_TOKEN gizli değeri (bkz. KURULUM.md §6b).
+# EXPO_PUBLIC_FIREBASE_* değişkenleri Expo'daki "production" ortamından alınır; burada tutulmaz.
+name: OTA güncelleme (production)
+
+on:
+  push:
+    branches: ['main']
+    paths-ignore:
+      - '**.md'
+      - 'baski/**'
+      - '.eas/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ota-production
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: eas update → production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: EXPO_TOKEN var mı?
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "::error::EXPO_TOKEN gizli değeri yok. Depo → Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: Yayınla
+        run: eas update --branch production --environment production --platform all --non-interactive --message "$(git log -1 --pretty=%s)"
