@@ -59,7 +59,7 @@ export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) =
 
 // ---------- Mutfak: tarifler ----------
 // Depodaki ürünlerden yapılır, anında hazır olur. Ham hâlinden yaklaşık bir buçuk kat değerlidir;
-// hediye sepetleri de bunlardan hazırlanır. Görseli yok, emojiyle gösterilir.
+// hediye sepetleri de bunlardan hazırlanır.
 export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut';
 export const RECIPES: Record<
   RecipeId,
@@ -80,11 +80,27 @@ export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.ent
 export type BasketId = 'kahvalti' | 'piknik' | 'tatli';
 export const BASKETS: Record<
   BasketId,
-  { name: string; emoji: string; needs: Record<string, number>; coins: number; xp: number; points: number }
+  { name: string; emoji: string; art: string; needs: Record<string, number>; coins: number; xp: number; points: number }
 > = {
-  kahvalti: { name: 'Kahvaltı sepeti', emoji: '🧺', needs: { ekmek: 1, egg: 2, domates: 1 }, coins: 150, xp: 20, points: 10 },
-  piknik: { name: 'Piknik sepeti', emoji: '🥪', needs: { ekmek: 1, peynir: 1, havuc: 2 }, coins: 320, xp: 30, points: 15 },
-  tatli: { name: 'Tatlı sepeti', emoji: '🎁', needs: { kek: 1, recel: 1 }, coins: 700, xp: 45, points: 25 },
+  kahvalti: {
+    name: 'Kahvaltı sepeti',
+    emoji: '🧺',
+    art: 'sepet_dolu',
+    needs: { ekmek: 1, egg: 2, domates: 1 },
+    coins: 150,
+    xp: 20,
+    points: 10,
+  },
+  piknik: {
+    name: 'Piknik sepeti',
+    emoji: '🥪',
+    art: 'sepet_dolu',
+    needs: { ekmek: 1, peynir: 1, havuc: 2 },
+    coins: 320,
+    xp: 30,
+    points: 15,
+  },
+  tatli: { name: 'Tatlı sepeti', emoji: '🎁', art: 'sepet_tatli', needs: { kek: 1, recel: 1 }, coins: 700, xp: 45, points: 25 },
 };
 export type Gift = { id: string; from: string; kind: BasketId; at: number };
 export const hasAll = (f: Farm, needs: Record<string, number>) => Object.entries(needs).every(([k, n]) => (f.stock[k] ?? 0) >= n);

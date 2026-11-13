@@ -155,7 +155,6 @@ type Placing =
   | { a: 'tree'; item: TreeId }
   | { a: 'decor'; item: DecorId }
   | { a: 'move'; from: number }; // yerleştirilmiş bir şeyi taşı
-type DepoTab = 'depo' | 'mutfak' | 'sepet';
 type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number };
 
 function sprites(f: Farm, now: number): Spr[] {
@@ -188,6 +187,7 @@ function sprites(f: Farm, now: number): Spr[] {
       });
     }
     if (t.k === 'decor') out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
+    if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
     if (t.k === 'fixed') {
       const [ar, ac] = FIXED_ANCHOR[t.item];
       if (r === ar && c === ac) {
@@ -383,7 +383,7 @@ function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; 
           <Text
             maxFontSizeMultiplier={1.0}
             style={{
-              backgroundColor: label === 'Yemle' ? '#B4521E' : '#2E7D4F',
+              backgroundColor: label === 'Yemle' ? '#B4521E' : label === 'Aç' ? '#E8516A' : '#2E7D4F',
               color: '#fff',
               fontWeight: '800',
               fontSize: 10,
@@ -501,7 +501,6 @@ export default function GardenScreen() {
   const [plantAll, setPlantAll] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
-  const [depoTab, setDepoTab] = useState<DepoTab>('depo');
   const [showShop, setShowShop] = useState(false);
   const [placing, setPlacing] = useState<Placing | null>(null);
   const placingRef = useRef<Placing | null>(null);
@@ -854,6 +853,39 @@ export default function GardenScreen() {
       });
     }
   }
+  {
+    // Ev: mutfak. Yapılabilecek bir tarif varsa rozet çıkar.
+    const lvNow = levelOf(farm.xp).level;
+    const can = (Object.keys(RECIPES) as RecipeId[]).filter((id) => RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs));
+    const [hr, hc] = FIXED_ANCHOR.house;
+    const h = center(hr, hc);
+    const hb = center(hr - 1, hc - 1);
+    if (can.length)
+      badges.push({
+        key: 'mutfak',
+        i: hr * N + hc,
+        x: (h.x + hb.x) / 2,
+        y: h.y - TW * 1.45,
+        art: ART[can[0]] ? can[0] : 'bugday',
+        z: zOf(hr, hc) + 420,
+        label: 'Mutfak',
+      });
+    // Sepet tezgâhı: gelen sepet varsa "Aç", yoksa hazırlanabilecek sepet varsa "Sepet".
+    const [gr, gc] = rc(GIFT_TILE);
+    const gp = center(gr, gc);
+    const incoming = (farm.gifts ?? []).some((x) => x.from !== uid);
+    const canGift = !giftWait(farm, uid, now) && (Object.keys(BASKETS) as BasketId[]).some((id) => hasAll(farm, BASKETS[id].needs));
+    if (incoming || canGift)
+      badges.push({
+        key: 'sepetb',
+        i: GIFT_TILE,
+        x: gp.x,
+        y: gp.y - TW * 0.95,
+        art: ART.sepet ? 'sepet' : 'coin',
+        z: zOf(gr, gc) + 420,
+        label: incoming ? 'Aç' : 'Sepet',
+      });
+  }
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
     const { x, y } = center(r, c);
@@ -894,11 +926,7 @@ export default function GardenScreen() {
     }
     if (tl.k === 'animal' && animalReady(tl, now)) return () => work({ a: 'collect', i });
     if (tl.k === 'tree' && treeReady(tl, now)) return () => work({ a: 'pick', i });
-    if (tl.k === 'building') {
-      if (tl.res.some((r) => residentReady(r, now))) return () => work({ a: 'gather', i });
-      if (tl.res.some((r) => needsFeed(r.id) && r.fed === null)) return () => work({ a: 'feed', i });
-      return null;
-    }
+    // Binalar (kümes, ağıl, kovan): dokununca içindeki hayvanlar görünür; yemleme ve toplama oradan yapılır.
     return null;
   };
   liftableRef.current = (i) => {
@@ -927,13 +955,17 @@ export default function GardenScreen() {
   quickRef.current = (wx, wy) => {
     // Önce rozetler: rozet karenin üstünde durduğu için aksi hâlde arkadaki kare seçilirdi.
     const hit = badges.find((b) => Math.hypot(b.x - wx, b.y - wy) < TW * 0.45);
-    if (hit?.key === 'depo') {
+    if (hit?.key === 'depo' || hit?.key === 'mutfak' || hit?.key === 'sepetb') {
       setSel(hit.i);
       return true;
     }
     const obj = objectAtRef.current(wx, wy);
     const i = hit ? hit.i : obj >= 0 ? obj : tileAt(wx, wy);
     if (i < 0) return false;
+    if (i === GIFT_TILE) {
+      setSel(GIFT_TILE);
+      return true;
+    }
     const q = quickFor(i);
     if (!q) return false;
     q();
@@ -1256,12 +1288,7 @@ export default function GardenScreen() {
                 setSel(null);
               }}
               onOrders={() => setShowOrders(true)}
-              depoTab={depoTab}
-              setDepoTab={setDepoTab}
-              onDepot={(tab) => {
-                setDepoTab(tab);
-                setSel(farm.tiles.findIndex((x) => x.k === 'fixed' && x.item === 'barn'));
-              }}
+              onDepot={() => setSel(BARN_TILE)}
               onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
               onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
               ready={ready.length}
@@ -1325,9 +1352,7 @@ type SheetProps = {
   onShop: () => void;
   onPlace: (pl: Placing) => void;
   onOrders: () => void;
-  depoTab: DepoTab;
-  setDepoTab: (t: DepoTab) => void;
-  onDepot: (tab: DepoTab) => void;
+  onDepot: () => void;
   onDeliver: (orderId: string) => void;
   onNote: (text: string) => void;
   ready: number;
@@ -1601,6 +1626,8 @@ function ago(ms: number) {
 }
 
 const BARN_TILE = FIXED_ANCHOR.barn[0] * N + FIXED_ANCHOR.barn[1];
+// Hediye sepeti tezgâhı: ev ile ahır arasındaki yol karesinde durur; dokununca sepet hazırlanır / gelen sepet açılır.
+const GIFT_TILE = (1 + OFF) * N + 3 + OFF;
 
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
 function StockIcon({ k, w, h }: { k: string; w: number; h: number }) {
@@ -1631,6 +1658,20 @@ function Sheet(p: SheetProps) {
     );
   if (p.showOrders)
     return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
+  if (sel === GIFT_TILE)
+    return (
+      <>
+        <Head art="sepet" title="Hediye sepeti" onClose={p.onClose} />
+        <Baskets
+          farm={farm}
+          now={now}
+          uid={p.uid}
+          partnerName={p.partnerName}
+          onGift={(basket) => p.onAct({ a: 'gift', i: GIFT_TILE, basket })}
+          onOpen={(gift) => p.onAct({ a: 'openGift', i: GIFT_TILE, gift })}
+        />
+      </>
+    );
   if (sel === NOTE_TREE)
     return <NoteTree farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onNote={p.onNote} />;
 
@@ -1675,7 +1716,7 @@ function Sheet(p: SheetProps) {
           : p.bank > 0
             ? `Günlük görevden ${p.bank} altın geldi`
             : hungryAll
-              ? `${hungryAll} hayvan aç · binaya dokunup yemle, yemlenince ürün verir`
+              ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
               : '';
     return (
       <>
@@ -1718,10 +1759,7 @@ function Sheet(p: SheetProps) {
             ) : (
               <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
-          {gift && <Round icon="gift" label="Sepeti aç" accent onPress={() => p.onAct({ a: 'openGift', i: BARN_TILE, gift: gift.id })} />}
-          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={() => p.onDepot('depo')} />
-          <Round icon="restaurant" label="Mutfak" onPress={() => p.onDepot('mutfak')} />
-          <Round icon="basket" label="Sepet" onPress={() => p.onDepot('sepet')} />
+          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           <Round icon="book" label="Günlük" onPress={p.onLog} />
           <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
         </ScrollView>
@@ -1783,44 +1821,9 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {(
-            [
-              ['depo', 'Depo'],
-              ['mutfak', 'Mutfak'],
-              ['sepet', 'Hediye sepeti'],
-            ] as [DepoTab, string][]
-          ).map(([id, label]) => (
-            <Pressable
-              key={id}
-              onPress={() => p.setDepoTab(id)}
-              style={{
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                borderRadius: 14,
-                backgroundColor: p.depoTab === id ? GREEN : '#F1EBE2',
-              }}
-            >
-              <Text maxFontSizeMultiplier={1.0} style={{ color: p.depoTab === id ? '#fff' : INK, fontWeight: '800', fontSize: 12 }}>
-                {label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        {p.depoTab === 'mutfak' ? (
-          <Kitchen farm={farm} level={level} onCook={(recipe) => p.onAct({ a: 'cook', i, recipe })} />
-        ) : p.depoTab === 'sepet' ? (
-          <Baskets
-            farm={farm}
-            now={now}
-            uid={p.uid}
-            partnerName={p.partnerName}
-            onGift={(basket) => p.onAct({ a: 'gift', i, basket })}
-            onOpen={(gift) => p.onAct({ a: 'openGift', i, gift })}
-          />
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <Note>
-            Depo boş. Topladığınız ürünler burada birikir: satınca altın olur, siparişlere verilir, Mutfak’ta tarife, Hediye sepeti’nde
+            Depo boş. Topladığınız ürünler burada birikir: satınca altın olur, siparişlere verilir, evdeki mutfakta tarife, sepet tezgâhında
             partnerine armağana dönüşür.
           </Note>
         ) : (
@@ -1869,8 +1872,8 @@ function Sheet(p: SheetProps) {
   if (t.k === 'fixed')
     return (
       <>
-        <Head art={t.item} title="Eviniz" onClose={p.onClose} />
-        <Note>Çiftlikteki eviniz.</Note>
+        <Head art={t.item} title="Eviniz · Mutfak" onClose={p.onClose} />
+        <Kitchen farm={farm} level={level} onCook={(recipe) => p.onAct({ a: 'cook', i, recipe })} />
       </>
     );
   if (t.k === 'soil') {
@@ -2323,9 +2326,7 @@ function Baskets({
     <>
       {incoming.map((g) => (
         <View key={g.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 26 }}>
-            {BASKETS[g.kind].emoji}
-          </Text>
+          <StockIcon k={BASKETS[g.kind].art} w={36} h={34} />
           <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
             {partnerName} sana {BASKETS[g.kind].name.toLocaleLowerCase('tr-TR')} gönderdi
           </Text>
@@ -2345,9 +2346,7 @@ function Baskets({
           const ok = !wait && hasAll(farm, b.needs);
           return (
             <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 26, width: 34, textAlign: 'center' }}>
-                {b.emoji}
-              </Text>
+              <StockIcon k={b.art} w={36} h={34} />
               <View style={{ flex: 1 }}>
                 <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
                   {b.name} · +{b.coins} altın, +{b.points} puan

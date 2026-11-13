@@ -2,6 +2,16 @@ import type { ImageSourcePropType } from 'react-native';
 
 // Çiftlik çizimleri (ElevenLabs'te 2miz için üretildi). h: yükseklik / genişlik oranı.
 export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
+  // Mutfak ürünleri ve hediye sepeti
+  ekmek: { src: require('../../assets/farm/ekmek.webp'), h: 0.82 },
+  omlet: { src: require('../../assets/farm/omlet.webp'), h: 0.57 },
+  peynir: { src: require('../../assets/farm/peynir.webp'), h: 0.9 },
+  kek: { src: require('../../assets/farm/kek.webp'), h: 1.05 },
+  recel: { src: require('../../assets/farm/recel.webp'), h: 0.98 },
+  ballisut: { src: require('../../assets/farm/ballisut.webp'), h: 1.18 },
+  sepet: { src: require('../../assets/farm/sepet.webp'), h: 1.01 },
+  sepet_dolu: { src: require('../../assets/farm/sepet_dolu.webp'), h: 0.94 },
+  sepet_tatli: { src: require('../../assets/farm/sepet_tatli.webp'), h: 0.97 },
   ari: { src: require('../../assets/farm/ari.webp'), h: 1.05 },
   aycicegi: { src: require('../../assets/farm/aycicegi.webp'), h: 0.91 },
   barn: { src: require('../../assets/farm/barn.webp'), h: 1.03 },
