@@ -29,25 +29,34 @@ export function GardenCard() {
   const { ready, canWater, big } = farmSummary(farm, user.uid, now);
   const bank = couple.dreamBank ?? 0;
   const call = openFarm && openFarm.by !== user.uid ? openFarm : null;
-  const line = call
+  const gift = (farm.gifts ?? []).find((g) => g.from !== user.uid);
+  const line = gift
     ? l(
-        `${partnerName} seni ${call.kind === 'market' ? 'pazara' : 'hasada'} çağırıyor 💛`,
-        `${partnerName} is calling you to ${call.kind === 'market' ? 'the market' : 'harvest'} 💛`,
+        `${partnerName} sana bir hediye sepeti gönderdi 🎁 · çiftlikte aç`,
+        `${partnerName} sent you a gift basket 🎁 · open it on the farm`,
       )
-    : big
+    : call
       ? l(
-          `${big} büyük ürün hazır · hasat günü için ${partnerName}’ı çağır 🌾`,
-          `${big} big crops ready · call ${partnerName} for harvest day 🌾`,
+          `${partnerName} seni ${call.kind === 'market' ? 'pazara' : 'hasada'} çağırıyor 💛`,
+          `${partnerName} is calling you to ${call.kind === 'market' ? 'the market' : 'harvest'} 💛`,
         )
-      : bank
-        ? l(`Günlük görevden ${bank} altın kumbarada`, `${bank} gold in the piggy bank from daily tasks`)
-        : ready
-          ? l(`${ready} ürün toplanmaya hazır`, `${ready} crops ready to pick`)
-          : canWater
-            ? l(`${partnerName}’in ${canWater} ürünü susuz 💧`, `${partnerName}’s ${canWater} crops need water 💧`)
-            : stockCount(farm)
-              ? l(`Depoda ${stockCount(farm)} ürün · pazar hafta sonu`, `${stockCount(farm)} items in the barn · market is at the weekend`)
-              : l('Bir şey ekin; birbirinizin ektiğini sulayın.', "Plant something; water each other's crops.");
+      : big
+        ? l(
+            `${big} büyük ürün hazır · hasat günü için ${partnerName}’ı çağır 🌾`,
+            `${big} big crops ready · call ${partnerName} for harvest day 🌾`,
+          )
+        : bank
+          ? l(`Günlük görevden ${bank} altın kumbarada`, `${bank} gold in the piggy bank from daily tasks`)
+          : ready
+            ? l(`${ready} ürün toplanmaya hazır`, `${ready} crops ready to pick`)
+            : canWater
+              ? l(`${partnerName}’in ${canWater} ürünü susuz 💧`, `${partnerName}’s ${canWater} crops need water 💧`)
+              : stockCount(farm)
+                ? l(
+                    `Depoda ${stockCount(farm)} ürün · pazar hafta sonu`,
+                    `${stockCount(farm)} items in the barn · market is at the weekend`,
+                  )
+                : l('Bir şey ekin; birbirinizin ektiğini sulayın.', "Plant something; water each other's crops.");
   const hot = !!(call || big || bank || ready || canWater);
 
   return (

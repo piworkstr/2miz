@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { doc, runTransaction } from 'firebase/firestore';
+import { doc, increment, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
 import { dayKey } from './date';
 import type { Couple } from './session';
@@ -56,6 +56,48 @@ export const ANIMALS: Record<
 };
 export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
 export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
+
+// ---------- Mutfak: tarifler ----------
+// Depodaki ürünlerden yapılır, anında hazır olur. Ham hâlinden yaklaşık bir buçuk kat değerlidir;
+// hediye sepetleri de bunlardan hazırlanır. Görseli yok, emojiyle gösterilir.
+export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut';
+export const RECIPES: Record<
+  RecipeId,
+  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number }
+> = {
+  ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugday: 3 }, sell: 30, xp: 4, lvl: 1 },
+  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2 },
+  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 3 },
+  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4 },
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4 },
+  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5 },
+};
+export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.emoji]));
+
+// ---------- Hediye sepeti ----------
+// Depodan hazırlanır, partnere gönderilir; partner açınca çiftlik altın ve tecrübe, çift puan kazanır, ortak hasat sayılır.
+// Kişi başı günde bir sepet; partner açmadan yenisi gönderilmez.
+export type BasketId = 'kahvalti' | 'piknik' | 'tatli';
+export const BASKETS: Record<
+  BasketId,
+  { name: string; emoji: string; needs: Record<string, number>; coins: number; xp: number; points: number }
+> = {
+  kahvalti: { name: 'Kahvaltı sepeti', emoji: '🧺', needs: { ekmek: 1, egg: 2, domates: 1 }, coins: 150, xp: 20, points: 10 },
+  piknik: { name: 'Piknik sepeti', emoji: '🥪', needs: { ekmek: 1, peynir: 1, havuc: 2 }, coins: 320, xp: 30, points: 15 },
+  tatli: { name: 'Tatlı sepeti', emoji: '🎁', needs: { kek: 1, recel: 1 }, coins: 700, xp: 45, points: 25 },
+};
+export type Gift = { id: string; from: string; kind: BasketId; at: number };
+export const hasAll = (f: Farm, needs: Record<string, number>) => Object.entries(needs).every(([k, n]) => (f.stock[k] ?? 0) >= n);
+export const needsText = (needs: Record<string, number>) =>
+  Object.entries(needs)
+    .map(([k, n]) => `${n} ${(PRODUCT_NAME[k] ?? k).toLocaleLowerCase('tr-TR')}`)
+    .join(', ');
+const DAY = 24 * 60 * MIN;
+export const giftWait = (f: Farm, uid: string, now: number) => {
+  const pending = (f.gifts ?? []).some((g) => g.from === uid);
+  const last = f.giftAt?.[uid] ?? 0;
+  return pending ? 'pending' : now - last < DAY ? 'day' : null;
+};
 
 // Hayvan binaları: hayvanlar çimene bırakılmaz, binada yaşar. Her binaya 3 hayvan sığar.
 // Tavuk/koyun/inek yemlenince üretime başlar (yem: depodan 1 buğday, yoksa 5 altın); arılar yemsiz kendi döngüsünde.
@@ -150,6 +192,8 @@ export type Farm = {
   harvests: number;
   orders: Order[];
   notes: FarmNote[];
+  gifts?: Gift[]; // açılmayı bekleyen hediye sepetleri
+  giftAt?: Record<string, number>; // kişi başı son sepet gönderme zamanı
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -273,11 +317,13 @@ const PRICE: Record<string, number> = {
   ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.sell])),
   ...Object.fromEntries(Object.entries(PRODUCTS).map(([k, v]) => [k, v.sell])),
   ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.sell])),
+  ...Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.sell])),
 };
 export const PRODUCT_NAME: Record<string, string> = {
   ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.name])),
   ...Object.fromEntries(Object.entries(PRODUCTS).map(([k, v]) => [k, v.name])),
   ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.fruit])),
+  ...Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.name])),
 };
 export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
 export const stockValue = (f: Farm, bonus = 1) =>
@@ -295,6 +341,9 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
     if (t.k === 'building') for (const r of t.res) for (const k of ANIMALS[r.id].products) if (!pool.includes(k)) pool.push(k);
     if (t.k === 'tree' && !pool.includes(t.item)) pool.push(t.item);
   }
+  // Malzemesinin hepsi üretilebilen tarifler de sipariş edilebilir (mutfağa iş çıkar).
+  const raw = [...pool];
+  for (const [k, r] of Object.entries(RECIPES)) if (r.lvl <= lv && Object.keys(r.needs).every((x) => raw.includes(x))) pool.push(k);
   const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
   const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
   const items: Record<string, number> = {};
@@ -391,10 +440,15 @@ export type Action =
   | { a: 'sell'; i: number; scene?: string }
   // Siparişe depodan teslim (kısmi olabilir); tamamlanınca ödül, ikisi de katkı yaptıysa ortak hasat.
   | { a: 'deliver'; i: number; order: string }
+  // Mutfak: depodaki ürünlerden tarif yap.
+  | { a: 'cook'; i: number; recipe: RecipeId }
+  // Hediye sepeti hazırla ve partnere gönder / gelen sepeti aç.
+  | { a: 'gift'; i: number; basket: BasketId }
+  | { a: 'openGift'; i: number; gift: string }
   // Not Ağacı'na not.
   | { a: 'note'; i: number; text: string };
 
-export type Result = { farm: Farm; text: string; gained: number; ready?: number };
+export type Result = { farm: Farm; text: string; gained: number; ready?: number; points?: number };
 
 // Hayvan, ağaç ve süs yalnız çayıra (çimene) konur; tarla ekin içindir.
 const emptyOk = (t: Tile) => t.k === 'grass';
@@ -417,7 +471,16 @@ export function applyAction(
     stock: { ...f0.stock },
     orders: f0.orders.map((o) => ({ ...o, given: { ...o.given }, by: [...o.by] })),
     notes: [...f0.notes],
+    gifts: [...(f0.gifts ?? [])],
+    giftAt: { ...(f0.giftAt ?? {}) },
   };
+  const take = (needs: Record<string, number>) => {
+    for (const [k, n] of Object.entries(needs)) {
+      f.stock[k] = (f.stock[k] ?? 0) - n;
+      if (f.stock[k] <= 0) delete f.stock[k];
+    }
+  };
+  let points: number | undefined;
   const put = (k: string, n = 1) => (f.stock[k] = (f.stock[k] ?? 0) + n);
   fillOrders(f, now);
   const t = f.tiles[act.i];
@@ -707,6 +770,44 @@ export function applyAction(
       }
       break;
     }
+    case 'cook': {
+      const r = RECIPES[act.recipe];
+      if (!r) return 'Böyle bir tarif yok.';
+      if (lv < r.lvl) return `${r.name} ${r.lvl}. seviyede açılır.`;
+      if (!hasAll(f, r.needs)) return `${r.name} için depoda ${needsText(r.needs)} gerek.`;
+      take(r.needs);
+      put(act.recipe);
+      f.xp += r.xp;
+      text = `${name} ${r.name.toLocaleLowerCase('tr-TR')} yaptı ${r.emoji}`;
+      break;
+    }
+    case 'gift': {
+      const b = BASKETS[act.basket];
+      if (!b) return 'Böyle bir sepet yok.';
+      const wait = giftWait(f, uid, now);
+      if (wait === 'pending') return 'Gönderdiğin sepet henüz açılmadı.';
+      if (wait === 'day') return 'Günde bir sepet gönderebilirsin.';
+      if (!hasAll(f, b.needs)) return `${b.name} için depoda ${needsText(b.needs)} gerek.`;
+      take(b.needs);
+      f.gifts = [...(f.gifts ?? []), { id: `${now}-${uid.slice(0, 4)}`, from: uid, kind: act.basket, at: now }];
+      f.giftAt = { ...(f.giftAt ?? {}), [uid]: now };
+      text = `${name} ${b.name.toLocaleLowerCase('tr-TR')} hazırlayıp gönderdi ${b.emoji}`;
+      break;
+    }
+    case 'openGift': {
+      const g = (f.gifts ?? []).find((x) => x.id === act.gift);
+      if (!g) return 'Bu sepet artık yok.';
+      if (g.from === uid) return 'Kendi gönderdiğin sepeti partnerin açar.';
+      const b = BASKETS[g.kind];
+      f.gifts = (f.gifts ?? []).filter((x) => x.id !== g.id);
+      f.coins += b.coins;
+      f.xp += b.xp;
+      f.harvests += 1;
+      gained = b.coins;
+      points = b.points;
+      text = `${name} ${b.name.toLocaleLowerCase('tr-TR')}ni açtı: +${b.coins} altın, +${b.points} puan · ortak hasat 💛`;
+      break;
+    }
     case 'note': {
       if (act.i !== NOTE_TREE) return 'Notlar yalnız Not Ağacı’na asılır.';
       const txt = act.text.trim().slice(0, NOTE_MAX);
@@ -719,7 +820,7 @@ export function applyAction(
   }
   f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
-  return { farm: f, text, gained, ready };
+  return { farm: f, text, gained, ready, points };
 }
 
 // Firestore tanımsız alan kabul etmez.
@@ -747,7 +848,7 @@ export async function farmAction(coupleId: string, uid: string, name: string, pa
       Date.now(),
       live,
     );
-    if (typeof r !== 'string') tx.update(ref, farmWrite(r.farm));
+    if (typeof r !== 'string') tx.update(ref, { ...farmWrite(r.farm), ...(r.points ? { points: increment(r.points) } : {}) });
     return r;
   });
   return res;
