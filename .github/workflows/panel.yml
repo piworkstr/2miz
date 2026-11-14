@@ -1,0 +1,44 @@
+name: Yönetim paneli (Firebase Hosting)
+
+# Panel ya da paylaştığı ortak kod değişince paneli derler ve yayınlar.
+# Gerekli gizli anahtar: FIREBASE_SERVICE_ACCOUNT (Firebase hizmet hesabı JSON'unun tamamı). Kurulum: KURULUM.md §6c.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'panel/**'
+      - 'src/lib/**'
+      - 'assets/avatar/**'
+      - 'firebase.json'
+      - '.github/workflows/panel.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: panel
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Gizli anahtar var mı
+        env:
+          KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT gizli anahtarı eklenmemiş (KURULUM.md §6c)."
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run panel:build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: usdaily-bece0
+          channelId: live

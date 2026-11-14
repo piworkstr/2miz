@@ -44,7 +44,8 @@ export default function PlusScreen() {
   const head = HEADLINES[from && from in HEADLINES ? from : 'card'];
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
-  const payer = plus.by === user?.uid ? 'Senin' : `${partnerName}’in`;
+  // by 'hediye': 2miz'in yönetim panelinden verdiği ücretsiz Plus
+  const payer = plus.by === 'hediye' ? '2miz’in hediyesi' : plus.by === user?.uid ? 'Senin' : `${partnerName}’in`;
   const until = plus.until ? trDate(new Date(plus.until), { year: true }) : '';
 
   return (

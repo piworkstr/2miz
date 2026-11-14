@@ -1,6 +1,7 @@
-import { addDoc, collection, collectionGroup, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, collectionGroup, deleteField, doc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import type { AlbumOptions, AlbumSize } from './albumLayout';
+import type { AlbumOptions, AlbumRange, AlbumSize } from './albumLayout';
+import type { AvatarData } from './avatarArt';
 import { db } from './firebase';
 
 // Baskı albüm siparişi. Fiyatları kurucu çift uygulamadan belirler (config/album); sipariş anındaki tutar siparişe yazılır.
@@ -53,7 +54,12 @@ export type Order = {
   price?: Price;
   ship?: Ship;
   tracking?: string;
+  theme?: AlbumOptions['theme'];
+  range?: AlbumRange;
+  exclude?: string[];
+  people?: OrderPerson[]; // [sipariş veren, partner]; baskı önizlemesi için ad ve avatar
 };
+export type OrderPerson = { uid: string; name: string; avatar?: AvatarData };
 
 export const tl = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} TL`;
 
@@ -86,16 +92,20 @@ export async function saveAlbumConfig(cfg: AlbumConfig) {
 export async function createOrder(
   coupleId: string,
   uid: string,
-  names: string,
+  people: OrderPerson[],
   opts: AlbumOptions,
   pageCount: number,
   price: Price,
   ship: Ship,
 ) {
-  await addDoc(collection(db, 'couples', coupleId, 'albumOrders'), {
+  const ref = doc(collection(db, 'couples', coupleId, 'albumOrders'));
+  const batch = writeBatch(db);
+  batch.set(ref, {
     coupleId,
     by: uid,
-    names,
+    names: people.map((p) => p.name).join(' ve '),
+    // undefined alan Firestore'a yazılamaz; avatarı olmayan kişide alan hiç yer almaz
+    people: people.map((p) => (p.avatar ? { uid: p.uid, name: p.name, avatar: p.avatar } : { uid: p.uid, name: p.name })),
     size: opts.size,
     theme: opts.theme,
     range: opts.range,
@@ -106,6 +116,9 @@ export async function createOrder(
     status: 'odeme',
     createdAtMs: Date.now(),
   });
+  // Baskı işareti: bu alan doluyken yönetim paneli yalnızca bu çiftin albüm fotoğraflarını görebilir (kural böyle).
+  batch.update(doc(db, 'couples', coupleId), { printOrder: ref.id });
+  await batch.commit();
 }
 
 const sorted = (list: Order[]) => list.sort((a, b) => b.createdAtMs - a.createdAtMs);
@@ -152,4 +165,7 @@ export async function setOrderStatus(o: Order, status: OrderStatus, tracking?: s
     statusAtMs: Date.now(),
     ...(tracking !== undefined ? { tracking } : {}),
   });
+  // Sipariş kapanınca baskı işareti kalkar; yönetim artık bu çiftin fotoğraflarını göremez.
+  if (status === 'teslim' || status === 'iptal')
+    await updateDoc(doc(db, 'couples', o.coupleId), { printOrder: deleteField() }).catch(() => {});
 }

@@ -10,6 +10,10 @@ on:
       - '**.md'
       - 'baski/**'
       - '.eas/**'
+      - 'panel/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/panel.yml'
   workflow_dispatch:
 
 concurrency:

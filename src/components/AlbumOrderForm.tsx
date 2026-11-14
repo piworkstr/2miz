@@ -20,7 +20,7 @@ export function AlbumOrderForm(props: {
 }) {
   const { visible, onClose, opts, pageCount, price } = props;
   const t = useTheme();
-  const { user, couple, profile, partnerName } = useSession();
+  const { user, couple, profile, partnerName, partnerId, partnerProfile } = useSession();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState(profile?.phone ?? '');
   const [address, setAddress] = useState('');
@@ -37,7 +37,11 @@ export function AlbumOrderForm(props: {
     setBusy(true);
     setError('');
     try {
-      await createOrder(couple.id, user.uid, `${profile?.name ?? ''} ve ${partnerName}`, opts, pageCount, price, {
+      const people = [
+        { uid: user.uid, name: profile?.name ?? '', avatar: profile?.avatar },
+        { uid: partnerId ?? '', name: partnerName, avatar: partnerProfile?.avatar },
+      ];
+      await createOrder(couple.id, user.uid, people, opts, pageCount, price, {
         name: name.trim(),
         phone: phone.trim(),
         address: address.trim(),

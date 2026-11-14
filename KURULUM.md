@@ -80,6 +80,17 @@ Derleme ve mağaza gönderimi EAS'te (bulutta) yapılır; komutlar Mac'te Termin
   Derleme 10–20 dakika sürer; TestFlight'a düşünce test grubundaki telefonlara bildirim gider.
 - Hangisinin gerektiğini Claude her yayında söyler ("OTA yeter" / "derleme gerekir").
 
+### 6c. Yönetim paneli (web) — 14 Kasım 2026
+
+Yöneticiler uygulamadan değil, ayrı bir web panelinden çalışır: https://usdaily-bece0.web.app
+Kod `panel/` klasöründedir ve uygulamayla aynı ortak kodu (`src/lib`) kullanır. `main`'e her push'ta GitHub Actions paneli derleyip Firebase Hosting'e yayınlar (`.github/workflows/panel.yml`).
+
+Bir kez gerekli: GitHub deposunda **Settings → Secrets and variables → Actions → New repository secret**, adı `FIREBASE_SERVICE_ACCOUNT`, değeri Firebase hizmet hesabı JSON dosyasının tamamı (Mac'teki `baski/serviceAccount.json` ile aynı dosya). Bu dosya asla sohbete ya da depoya yapıştırılmaz.
+
+- Giriş: uygulamadaki yönetici hesabının e-postası ve şifresi. Kurucu çiftin iki hesabı her zaman yöneticidir; başkaları panelde **Yöneticiler**'den e-postayla eklenir ve ilk girişte e-postasını doğrular.
+- Panel çiftlerin mesajlarını ve fotoğraflarını göstermez. Tek istisna: açık bir albüm siparişi olan çiftin albüme giren fotoğrafları, baskı önizlemesi için (Firestore kuralı `printOpen`).
+- Yerelde derleme: `npm run panel:build` (çıktı `panel/dist`).
+
 ### 6b-2. OTA GitHub Actions'ta (13 Kasım 2026'dan itibaren geçerli yol)
 
 Expo'nun ücretsiz planı ayda 60 dakika otomatik yayın veriyor; dolunca yayın durur. Bu yüzden otomatik yayın

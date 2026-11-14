@@ -96,7 +96,8 @@ const db = getFirestore();
   const plan = buildAlbum(input, { size: order.size, theme: order.theme, range: order.range, exclude: order.exclude ?? [] });
   const out = path.join(__dirname, 'cikti', `${coupleId}-${orderSnap.id}`);
   await renderAlbum(plan, input, order.size, out);
-  await orderSnap.ref.update({ status: 'hazirlandi', pages: plan.pages.length, preparedAtMs: Date.now() });
+  // Sipariş durumunu yönetim paneli ilerletir; burada yalnızca dosyanın hazırlandığı not edilir.
+  await orderSnap.ref.update({ pages: plan.pages.length, preparedAtMs: Date.now() });
   console.log(`Hazır: ${out} (${plan.pages.length} sayfa)`);
 })().catch((e) => {
   console.error(e.message ?? e);

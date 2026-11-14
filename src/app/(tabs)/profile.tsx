@@ -161,7 +161,7 @@ function PlusCard() {
   const plus = usePlus();
   const until = plus.until ? trDate(new Date(plus.until)) : '';
   const line = plus.paid
-    ? `${plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
+    ? `${plus.by === 'hediye' ? '2miz' : plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
     : plus.beta
       ? 'Beta boyunca her şey açık'
       : 'Sınırsız çark, oyun ve seyahat albümü';

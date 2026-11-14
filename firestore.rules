@@ -26,31 +26,46 @@ service cloud.firestore {
     // Şikayetler: kullanıcı yazabilir ama okuyamaz; ekip Firebase konsolundan inceler.
     match /reports/{reportId} {
       allow create: if signedIn() && request.resource.data.reporter == request.auth.uid;
+      allow read: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
     // Hata ve öneri bildirimleri (deneme kullanıcıları): herkes yazar; yalnızca kurucu çift okur ve "yapıldı" işaretler.
     function isFounder() {
       return signedIn() && request.auth.uid in get(/databases/$(database)/documents/couples/sskwX1vA0gMelkMEOodhISdZSVq1_vWx2gYuoPuWrDuUCAHXIHrz62et1).data.members;
     }
+    // Yönetici: kurucu çift ya da yönetim panelinden eklenmiş, e-postası doğrulanmış hesap (admins/{e-posta}).
+    function isAdmin() {
+      return isFounder() || (signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+    }
+    match /admins/{email} {
+      allow read, write: if isAdmin();
+    }
+    // Baskı işareti: çiftin açık bir albüm siparişi varken yönetim yalnızca albüme giren fotoğrafları görebilir.
+    function printOpen(coupleId) {
+      return isAdmin() && get(/databases/$(database)/documents/couples/$(coupleId)).data.get('printOrder', '') != '';
+    }
     match /feedback/{feedbackId} {
       allow create: if signedIn() && request.resource.data.by == request.auth.uid;
-      allow read: if isFounder();
-      allow update: if isFounder() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow read: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
-    // Avantajlar: anlaşmalı mekanlar. Herkes okur; yalnızca kurucu çift ekler ve değiştirir.
+    // Avantajlar: anlaşmalı mekanlar. Herkes okur; yalnızca yöneticiler ekler ve değiştirir.
     match /partners/{partnerId} {
       allow read: if signedIn();
-      allow write: if isFounder();
+      allow write: if isAdmin();
       // Mekana gelen çiftler (çift başına tek belge): çift kendi belgesini yazar, sayıları kurucu çift görür.
       match /visits/{coupleId} {
         allow create, update: if isMember(coupleId);
-        allow read: if isFounder();
+        allow read: if isAdmin();
       }
     }
     // Mekanın kasa anahtarı: uygulama okuyamaz; damga kuralı kodu bununla doğrular.
     match /partnerSecrets/{partnerId} {
-      allow read, write: if isFounder();
+      allow read, write: if isAdmin();
     }
     // Türkiye saatiyle bugün, sıfır dolgusuz ("2026-11-14"); uygulamadaki istDay() ile aynı.
     function istDay() {
@@ -69,16 +84,20 @@ service cloud.firestore {
     // Ayarlar (albüm fiyatları): herkes okur, yalnızca kurucu çift değiştirir.
     match /config/{docId} {
       allow read: if signedIn();
-      allow write: if isFounder();
+      allow write: if isAdmin();
     }
     // Yönetim ekranı bütün çiftlerin siparişlerini tek sorguda listeler.
     match /{path=**}/albumOrders/{orderId} {
-      allow read: if isFounder();
+      allow read: if isAdmin();
     }
 
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
+      // Yönetim paneli çiftleri listeler (ad, tarih, Plus); mesaj ve fotoğraflar bu izne dahil değildir.
+      allow read: if isAdmin();
+      // Yönetim yalnızca Plus hediyesini ve baskı işaretini değiştirebilir.
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plus', 'printOrder']);
       // plus alanını yalnızca ödeme sunucusu (yönetici anahtarı) yazar; uygulama kendine Plus veremez.
       allow create: if signedIn()
         && request.resource.data.members.size() == 2
@@ -101,7 +120,7 @@ service cloud.firestore {
 
       // Selfieler: sadece çiftin üyeleri görebilir; herkes yalnızca kendi fotoğrafını yazar.
       match /photos/{photoId} {
-        allow read: if isMember(coupleId);
+        allow read: if isMember(coupleId) || printOpen(coupleId);
         allow create, update: if isMember(coupleId)
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.data.size() < 900000;
@@ -147,11 +166,11 @@ service cloud.firestore {
 
       // Albüm baskı talepleri: üyeler oluşturur ve görür; durumu yalnızca UsDaily (Baskı Merkezi) değiştirir.
       match /albumOrders/{orderId} {
-        allow read: if isMember(coupleId) || isFounder();
+        allow read: if isMember(coupleId) || isAdmin();
         // Uygulama siparişi "ödendi" olarak açamaz; durumu yalnızca kurucu çift ilerletir.
         allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid
           && request.resource.data.status in ['talep', 'odeme'];
-        allow update: if isFounder()
+        allow update: if isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusAtMs', 'tracking']);
       }
 
@@ -183,8 +202,10 @@ service cloud.firestore {
       // Seyahat albümleri: iki üye de seyahat açar, fotoğraf ekler, not yazar ve silebilir.
       match /trips/{tripId} {
         allow read, write: if isMember(coupleId);
+        allow read: if printOpen(coupleId);
       }
       match /tripPhotos/{photoId} {
+        allow read: if printOpen(coupleId);
         allow read, delete: if isMember(coupleId);
         allow create: if isMember(coupleId) && request.resource.data.uid == request.auth.uid
           && request.resource.data.data.size() < 900000;
