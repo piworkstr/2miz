@@ -7,7 +7,6 @@ import { prettyDate } from '../../lib/date';
 import { DeleteRequest } from '../../components/DeleteRequest';
 import { removeFromAlbum } from '../../lib/chat';
 import { useMyOrders } from '../../lib/orders';
-import { isFounder } from '../../lib/perks';
 import { usePhotos, type Photo } from '../../lib/photos';
 import { FREE, openPlus, usePlus } from '../../lib/plus';
 import { useTrips, type Trip } from '../../lib/trips';
@@ -254,14 +253,13 @@ function taskTitle(page: Extract<Page, { kind: 'task' }>): string {
   return taskById((a ?? b)!).title;
 }
 
-// Siparişi olan çift (ve bütün siparişleri yöneten kurucu çift) için Siparişler bağlantısı.
+// Siparişi olan çift için Siparişler bağlantısı.
 function OrdersLink() {
   const t = useTheme();
   const { couple } = useSession();
   const orders = useMyOrders(couple?.id);
-  const founder = isFounder(couple);
   const open = (orders ?? []).filter((o) => o.status !== 'teslim' && o.status !== 'iptal' && o.status !== 'talep').length;
-  if (!founder && !(orders ?? []).length) return null;
+  if (!(orders ?? []).length) return null;
   return (
     <Pressable
       onPress={() => router.push('/orders')}
@@ -269,7 +267,7 @@ function OrdersLink() {
     >
       <Ionicons name="cube-outline" size={16} color={t.colors.primary} />
       <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-        {founder ? 'Siparişleri yönet' : open ? `Siparişiniz yolda · durumu gör` : 'Siparişlerim'}
+        {open ? 'Siparişiniz yolda · durumu gör' : 'Siparişlerim'}
       </Text>
     </Pressable>
   );

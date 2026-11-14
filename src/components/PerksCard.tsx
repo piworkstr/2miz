@@ -1,20 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { cardOf, isFounder, usePartners, usePerks } from '../lib/perks';
+import { cardOf, usePartners, usePerks } from '../lib/perks';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted, T } from './ui';
 
-// Ana ekranda Avantajlar: anlaşmalı mekan varsa görünür (kurucu çift mekan eklemek için hep görür).
+// Ana ekranda Avantajlar: anlaşmalı mekan varsa görünür. Mekanlar web panelinden yönetilir.
 export function PerksCard() {
   const t = useTheme();
   const { couple } = useSession();
   const partners = usePartners();
   const perks = usePerks(couple?.id);
   const active = (partners ?? []).filter((p) => p.active);
-  const founder = isFounder(couple);
-  if (!couple || (!active.length && !founder)) return null;
+  if (!couple || !active.length) return null;
 
   // En yakın ödül: hazır olan ya da en az damgası kalan kart.
   const cards = active
@@ -27,9 +26,7 @@ export function PerksCard() {
     ? top.c.reward
       ? `${top.p.name}: ödülünüz hazır 🎁`
       : `${top.p.name}: ${top.c.goal - top.c.filled} damga kaldı`
-    : active.length
-      ? `${active.length} mekanda ikinize özel hediye ve indirim`
-      : 'Henüz mekan yok · eklemek için dokun';
+    : `${active.length} mekanda ikinize özel hediye ve indirim`;
 
   return (
     <Pressable onPress={() => router.push('/perks')} style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>

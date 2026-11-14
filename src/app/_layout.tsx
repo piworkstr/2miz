@@ -77,7 +77,6 @@ function RootNavigator() {
           <Stack.Screen name="trip/[id]" />
           <Stack.Screen name="perks/index" />
           <Stack.Screen name="perks/[id]" />
-          <Stack.Screen name="perks/admin" />
           <Stack.Screen name="perks/scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="camera" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         </Stack.Protected>

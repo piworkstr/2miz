@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Card, Loading, Muted, Screen, T, Title } from '../../components/ui';
-import { cardOf, CATS, codeOf, isFounder, usePartners, usePerks, type Partner, type Perk } from '../../lib/perks';
+import { cardOf, CATS, codeOf, usePartners, usePerks, type Partner, type Perk } from '../../lib/perks';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
@@ -37,18 +37,6 @@ export default function Perks() {
       {active.map((p) => (
         <Row key={p.id} p={p} perks={perks} forMe={mine(p)} />
       ))}
-
-      {isFounder(couple) && (
-        <Pressable
-          onPress={() => router.push('/perks/admin')}
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 }}
-        >
-          <Ionicons name="settings-outline" size={16} color={t.colors.primary} />
-          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-            {tx(t, 'Mekanları yönet')}
-          </Text>
-        </Pressable>
-      )}
     </Screen>
   );
 }

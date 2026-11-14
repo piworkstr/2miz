@@ -1,10 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import { addDoc, collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
-import { DEMO_COUPLE } from '../lib/demoPersona';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
@@ -18,19 +17,6 @@ const KINDS: { id: Kind; label: string; icon: keyof typeof Ionicons.glyphMap }[]
   { id: 'eksik', label: 'Eksik', icon: 'remove-circle-outline' },
   { id: 'oneri', label: 'Öneri', icon: 'bulb-outline' },
 ];
-
-type Feedback = {
-  id: string;
-  by: string;
-  name: string;
-  coupleId: string | null;
-  kind: Kind;
-  text: string;
-  device: string;
-  version: string;
-  status: 'yeni' | 'yapildi';
-  createdAt?: { toMillis(): number } | null;
-};
 
 export function FeedbackCard() {
   const t = useTheme();
@@ -119,78 +105,6 @@ export function FeedbackCard() {
           </>
         )}
       </Card>
-      {couple?.id === DEMO_COUPLE && <FeedbackInbox />}
     </>
-  );
-}
-
-// Kurucu çift: gelen bildirimler, yeniler üstte.
-function FeedbackInbox() {
-  const t = useTheme();
-  const [items, setItems] = useState<Feedback[]>([]);
-  const [showDone, setShowDone] = useState(false);
-  useEffect(
-    () =>
-      onSnapshot(
-        query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(300)),
-        (snap) => setItems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Feedback, 'id'>) }))),
-        () => setItems([]),
-      ),
-    [],
-  );
-  const events = items.filter((f) => f.kind === 'olay');
-  const real = items.filter((f) => f.kind !== 'olay');
-  const list = real.filter((f) => showDone || f.status !== 'yapildi');
-  const fresh = real.filter((f) => f.status !== 'yapildi').length;
-  const calls = events.filter((e) => e.text.startsWith('arama:'));
-  const called = calls.filter((e) => e.text.endsWith(':arandi'));
-  const when = (f: Feedback) => {
-    const ms = f.createdAt?.toMillis?.();
-    if (!ms) return '';
-    const d = new Date(ms);
-    return `${d.getDate()}.${d.getMonth() + 1} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  };
-  return (
-    <Card style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <T style={{ flex: 1, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>Gelen bildirimler · {fresh}</T>
-        <Pressable onPress={() => setShowDone((s) => !s)} hitSlop={8}>
-          <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '700' }}>
-            {showDone ? 'Yapılanları gizle' : 'Yapılanları göster'}
-          </Text>
-        </Pressable>
-      </View>
-      <Muted style={{ fontSize: 12 }}>
-        📞 Ara düğmesi: {calls.length} dokunuş · {called.length} arama · {new Set(calls.map((e) => e.by)).size} kişi ·{' '}
-        {new Set(calls.map((e) => e.coupleId)).size} çift
-      </Muted>
-      {list.length === 0 && <Muted style={{ fontSize: 12 }}>Yeni bildirim yok.</Muted>}
-      {list.map((f) => (
-        <View
-          key={f.id}
-          style={{ borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: 8, gap: 4, opacity: f.status === 'yapildi' ? 0.55 : 1 }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Ionicons
-              name={KINDS.find((k) => k.id === f.kind)?.icon ?? 'chatbox-outline'}
-              size={14}
-              color={f.kind === 'hata' ? '#D65849' : t.colors.primary}
-            />
-            <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 12, color: t.colors.muted }}>
-              {f.name || 'Kullanıcı'} · {when(f)} · {f.device} · v{f.version}
-            </Text>
-            <Pressable
-              onPress={() => updateDoc(doc(db, 'feedback', f.id), { status: f.status === 'yapildi' ? 'yeni' : 'yapildi' }).catch(() => {})}
-              hitSlop={8}
-            >
-              <Ionicons name={f.status === 'yapildi' ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={t.colors.primary} />
-            </Pressable>
-          </View>
-          <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 14 }}>
-            {f.text}
-          </Text>
-        </View>
-      ))}
-    </Card>
   );
 }
