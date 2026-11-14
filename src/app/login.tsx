@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -44,6 +44,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
   // Daha önce giriş yapılmış e-posta hazır gelir; yalnızca şifre yazılır.
   useEffect(() => {
     AsyncStorage.getItem(LAST_EMAIL_KEY)
@@ -85,6 +86,19 @@ export default function Login() {
     }
   }
 
+  // Şifre yenileme: girilen e-postaya Firebase'in yenileme bağlantısı gider.
+  async function resetPassword() {
+    setError('');
+    if (!email.trim())
+      return setError(l('Önce e-posta adresini yaz, bağlantıyı oraya gönderelim.', 'Enter your email first; we will send the link there.'));
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setResetSent(true);
+    } catch (e) {
+      setError(friendlyError((e as { code?: string }).code ?? '', l));
+    }
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
@@ -118,6 +132,21 @@ export default function Login() {
         <ErrorText>{error}</ErrorText>
 
         <Button label={mode === 'signup' ? l('Hesap oluştur', 'Create account') : l('Giriş yap', 'Sign in')} onPress={submit} busy={busy} />
+        {mode === 'signin' &&
+          (resetSent ? (
+            <Muted style={{ textAlign: 'center' }}>
+              {l(
+                'Şifre yenileme bağlantısını e-postana gönderdik. Gelen kutunda yoksa gereksiz (spam) klasörüne bak.',
+                'We sent a password reset link to your email. If it is not in your inbox, check spam.',
+              )}
+            </Muted>
+          ) : (
+            <Pressable onPress={resetPassword} style={{ alignItems: 'center', padding: 4 }}>
+              <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 14 }}>
+                {l('Şifremi unuttum', 'Forgot my password')}
+              </Text>
+            </Pressable>
+          ))}
         <Pressable
           onPress={() =>
             mode === 'signin' && !loveLanguage ? router.replace('/welcome') : setMode(mode === 'signup' ? 'signin' : 'signup')
