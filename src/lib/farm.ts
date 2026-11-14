@@ -886,6 +886,30 @@ export async function farmAction(coupleId: string, uid: string, name: string, pa
   return res;
 }
 
+// Sıradaki işleri tek seferde uygular (animasyonsuz). Ekran kapanırken ya da uygulama arka plana geçerken kullanılır:
+// telefon uygulamayı durdurmadan önce bekleyen ekme, sulama, toplama işleri tek yazmayla kaydedilir.
+// İki kişilik sahne isteyen işler (hasat günü, pazar satışı) burada sahnesiz sayılır ve kendi kuralına göre reddedilebilir.
+export async function farmFlush(coupleId: string, uid: string, name: string, partnerName: string, acts: Action[]): Promise<number> {
+  if (!acts.length) return 0;
+  const ref = doc(db, 'couples', coupleId);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return 0;
+    let farm = farmOf(snap.data() as Couple);
+    let points = 0;
+    let done = 0;
+    for (const act of acts) {
+      const r = applyAction(farm, act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, Date.now(), null);
+      if (typeof r === 'string') continue;
+      farm = r.farm;
+      points += r.points ?? 0;
+      done++;
+    }
+    if (done) tx.update(ref, { ...farmWrite(farm), ...(points ? { points: increment(points) } : {}) });
+    return done;
+  });
+}
+
 // Hasat hatırlatması yok (istenmedi). Eski sürümlerin telefonda kurduğu bekleyen hatırlatmalar da iptal edilir.
 export async function clearFarmReminders() {
   const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);

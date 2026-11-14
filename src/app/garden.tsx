@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Animated, AppState, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
@@ -22,6 +22,7 @@ import {
   DECOR,
   collectDreamBank,
   farmAction,
+  farmFlush,
   farmOf,
   FIXED_ANCHOR,
   isWeekend,
@@ -749,6 +750,27 @@ export default function GardenScreen() {
     });
   const queue = useRef<Action[]>([]);
   const busy = useRef(false);
+  // Yürünüp henüz kaydedilmemiş iş (ekran kapanırsa sıradakilerle birlikte topluca kaydedilir).
+  const current = useRef<Action | null>(null);
+  // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
+  // Bekleyen işler o anda animasyonsuz, tek yazmayla kaydedilir. Geri dönünce yarıda kalmış yürüyüş serbest bırakılır.
+  const flushCtx = useRef({ coupleId: couple?.id, uid, myName, partnerName });
+  flushCtx.current = { coupleId: couple?.id, uid, myName, partnerName };
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        arrived.current?.();
+        arrived.current = null;
+        return;
+      }
+      const pending = [...(current.current ? [current.current] : []), ...queue.current];
+      current.current = null;
+      queue.current = [];
+      const c = flushCtx.current;
+      if (pending.length && c.coupleId) farmFlush(c.coupleId, c.uid, c.myName, c.partnerName, pending).catch(() => {});
+    });
+    return () => sub.remove();
+  }, []);
   const flash = (text: string) => {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
@@ -778,11 +800,15 @@ export default function GardenScreen() {
     let together = false;
     while (queue.current.length) {
       const job = queue.current.shift()!;
+      current.current = job;
       await walkTo(job.i);
       const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
       setTool(tl);
       await sleep(tl ? (queue.current.length ? 400 : 800) : 250);
       setTool(null);
+      // Bu iş ekran kapanırken topluca kaydedildiyse yeniden gönderme.
+      if (current.current !== job) continue;
+      current.current = null;
       const before = farmOf(couple).tiles[job.i];
       try {
         const r = await farmAction(couple.id, uid, myName, partnerName, job);
