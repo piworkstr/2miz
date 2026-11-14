@@ -28,7 +28,23 @@ export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' 
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
-export type DecorId = 'cicek' | 'cit' | 'duvar' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
+export type DecorId =
+  | 'posta'
+  | 'lamba'
+  | 'kopru'
+  | 'golet'
+  | 'salincak'
+  | 'cardak'
+  | 'sera'
+  | 'degirmen'
+  | 'cicek'
+  | 'cit'
+  | 'duvar'
+  | 'saman'
+  | 'agac'
+  | 'bank'
+  | 'kuyu'
+  | 'cesme';
 
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
   bugday: { name: 'Buğday', cost: 2, mins: 30, sell: 6, xp: 2, lvl: 1 },
@@ -159,7 +175,7 @@ export const TREES: Record<
 
 export const DECOR: Record<
   DecorId,
-  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar' }
+  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar'; perk?: string }
 > = {
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
@@ -170,6 +186,15 @@ export const DECOR: Record<
   bank: { name: 'Bank', sp: 'bench', cost: 60, xp: 3, lvl: 2, w: 0.85 },
   kuyu: { name: 'Kuyu', sp: 'well', cost: 120, xp: 5, lvl: 3, w: 0.78 },
   cesme: { name: 'Çeşme', sp: 'fountain', cost: 250, xp: 10, lvl: 5, w: 1.05 },
+  posta: { name: 'Posta kutusu', sp: 'posta', cost: 50, xp: 2, lvl: 1, w: 0.55 },
+  lamba: { name: 'Sokak lambası', sp: 'lamba', cost: 70, xp: 3, lvl: 2, w: 0.7 },
+  kopru: { name: 'Köprü', sp: 'kopru', cost: 90, xp: 4, lvl: 2, w: 1.15 },
+  golet: { name: 'Gölet', sp: 'golet', cost: 150, xp: 6, lvl: 3, w: 1.3 },
+  salincak: { name: 'Salıncak', sp: 'salincak', cost: 180, xp: 7, lvl: 4, w: 1.15 },
+  cardak: { name: 'Çardak', sp: 'cardak', cost: 400, xp: 14, lvl: 6, w: 1.4 },
+  // İşe yarayan yapılar: sera çevresindeki (2 kare) ekinleri hızlandırır; değirmen varken ekmek ve kek çift çıkar.
+  sera: { name: 'Sera', sp: 'sera', cost: 500, xp: 16, lvl: 4, w: 1.3, perk: 'Yakın ekin %25 hızlı' },
+  degirmen: { name: 'Değirmen', sp: 'degirmen', cost: 600, xp: 18, lvl: 5, w: 1.2, perk: 'Ekmek ve kek çift çıkar' },
 };
 
 export type Tile =
@@ -504,6 +529,20 @@ export type Result = { farm: Farm; text: string; gained: number; ready?: number;
 
 // Hayvan, ağaç ve süs yalnız çayıra (çimene) konur; tarla ekin içindir.
 const emptyOk = (t: Tile) => t.k === 'grass';
+// Sera: çevresindeki SERA_RANGE kare içindeki tarlalara ekilen ekin daha çabuk büyür.
+export const SERA_RANGE = 2;
+export const SERA_FACTOR = 0.75;
+export const MILL_RECIPES: string[] = ['ekmek', 'kek'];
+export function nearDecor(f: Farm, i: number, item: DecorId, range: number): boolean {
+  const r0 = Math.floor(i / N);
+  const c0 = i % N;
+  for (let r = Math.max(0, r0 - range); r <= Math.min(N - 1, r0 + range); r++)
+    for (let c = Math.max(0, c0 - range); c <= Math.min(N - 1, c0 + range); c++) {
+      const t = f.tiles[r * N + c];
+      if (t?.k === 'decor' && t.item === item) return true;
+    }
+  return false;
+}
 
 // Saf kural fonksiyonu: hata mesajı ya da yeni çiftlik döner.
 export function applyAction(
@@ -550,9 +589,10 @@ export function applyAction(
       if (f.coins < c.cost) return 'Yeterli altının yok.';
       f.coins -= c.cost;
       const season = seasonOf(now);
-      ready = now + Math.round(c.mins * MIN * growFactor(season));
+      const sera = nearDecor(f, act.i, 'sera', SERA_RANGE);
+      ready = now + Math.round(c.mins * MIN * growFactor(season) * (sera ? SERA_FACTOR : 1));
       f.tiles[act.i] = { k: 'crop', crop: act.crop, by: uid, at: now, ready };
-      text = `${name} ${c.name.toLowerCase()} ekti${season === 'kis' ? ' (kışın yavaş büyür)' : ''}`;
+      text = `${name} ${c.name.toLowerCase()} ekti${sera ? ' (sera yanında hızlı büyür)' : season === 'kis' ? ' (kışın yavaş büyür)' : ''}`;
       break;
     }
     case 'water': {
@@ -849,7 +889,8 @@ export function applyAction(
       if (lv < r.lvl) return `${r.name} ${r.lvl}. seviyede açılır.`;
       if (!hasAll(f, r.needs)) return `${r.name} için depoda ${needsText(r.needs)} gerek.`;
       take(r.needs);
-      put(act.recipe);
+      // Değirmen unu bollaştırır: ekmek ve kek çift çıkar.
+      put(act.recipe, MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1);
       f.xp += r.xp;
       text = `${name} ${r.name.toLocaleLowerCase('tr-TR')} yaptı ${r.emoji}`;
       break;

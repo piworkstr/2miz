@@ -2272,7 +2272,13 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art={d.wall === 'duvar' ? undefined : d.sp} title={d.name} onClose={p.onClose} />
-        <Note>Bahçenizi güzelleştiriyor.</Note>
+        <Note>
+          {t.item === 'sera'
+            ? 'Çevresindeki 2 kare içindeki tarlalara ekilen ekin %25 daha çabuk büyür (yeni ekilenlerde geçerli).'
+            : t.item === 'degirmen'
+              ? 'Değirmen çiftlikteyken mutfakta ekmek ve kek çift çıkar.'
+              : 'Bahçenizi güzelleştiriyor.'}
+        </Note>
         <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
@@ -2447,7 +2453,7 @@ function ShopPanel({
                 name: DECOR[id].name,
                 cost: DECOR[id].cost,
                 lvl: DECOR[id].lvl,
-                sub: `+${DECOR[id].xp} tecrübe`,
+                sub: DECOR[id].perk ?? `+${DECOR[id].xp} tecrübe`,
                 a: { a: 'decor', i: -1, item: id },
               }));
   const pick = (a: Action) => {
