@@ -17,6 +17,7 @@ import { MoodSheet } from '../MoodSheet';
 
 // Ana ekranın üstü: oyun değil, ikiniz. Günün saatine göre gökyüzü, ikinizin avatarı, ruh halleriniz, aranızda bağ kalbi.
 export const HERO_H = 300;
+export const HERO_COMPACT_H = 150;
 
 type Sky = { colors: [string, string, string]; ink: string; sub: string; hills: [string, string]; sun: string; night: boolean };
 export function skyFor(h: number): Sky {
@@ -113,12 +114,14 @@ export function SkyHero({
   streak,
   points,
   pointsLabel,
+  compact = false,
 }: {
   greeting: string;
   line: string;
   streak: number;
   points: number;
   pointsLabel: string;
+  compact?: boolean; // çift şeridi açıkken avatarlar altta durur; gök bölümü kısalır
 }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -130,7 +133,7 @@ export function SkyHero({
   const bond = bondOf(couple, user?.uid, partnerId);
   const myMood = activeMood(profile?.mood);
   const theirMood = activeMood(partnerProfile?.mood);
-  const H = HERO_H + insets.top;
+  const H = (compact ? HERO_COMPACT_H : HERO_H) + insets.top;
   const W = 390;
 
   return (
@@ -154,7 +157,9 @@ export function SkyHero({
         <Ellipse cx={W * 0.18} cy={H + 50} rx={W * 0.7} ry={130} fill={sky.hills[1]} opacity={0.55} />
       </Svg>
       {/* zemin camı: avatarların durduğu bant */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 34, backgroundColor: 'rgba(255,255,255,0.35)' }} />
+      {!compact && (
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 34, backgroundColor: 'rgba(255,255,255,0.35)' }} />
+      )}
 
       <View style={{ position: 'absolute', left: 20, right: 16, top: insets.top + 8, flexDirection: 'row', alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}>
@@ -192,39 +197,41 @@ export function SkyHero({
       </View>
 
       {/* ikiniz */}
-      <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 30,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'flex-end',
-          gap: 22,
-        }}
-      >
-        <Pressable onPress={() => setMoodOpen(true)} style={{ alignItems: 'center', gap: 6 }}>
-          <Bubble onPress={() => setMoodOpen(true)}>
-            {myMood ? `${MOODS[myMood].emoji} ${moodLabel(myMood, lang)}` : l('Nasılsın? +', 'How are you? +')}
-          </Bubble>
-          <Bust p={profile} name={profile?.name ?? ''} size={118} />
-        </Pressable>
-        <View style={{ alignItems: 'center', gap: 4, marginBottom: 46 }}>
-          <Glass radius={30} style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
-            <BondHeart box={56} max={40} showLabel={false} />
-          </Glass>
-          <Glass radius={999} strong style={{ paddingHorizontal: 9, paddingVertical: 3 }}>
-            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '700', color: '#2B1D22' }}>
-              {bondLabel(bond.level, lang)}
-            </Text>
-          </Glass>
+      {!compact && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 30,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: 22,
+          }}
+        >
+          <Pressable onPress={() => setMoodOpen(true)} style={{ alignItems: 'center', gap: 6 }}>
+            <Bubble onPress={() => setMoodOpen(true)}>
+              {myMood ? `${MOODS[myMood].emoji} ${moodLabel(myMood, lang)}` : l('Nasılsın? +', 'How are you? +')}
+            </Bubble>
+            <Bust p={profile} name={profile?.name ?? ''} size={118} />
+          </Pressable>
+          <View style={{ alignItems: 'center', gap: 4, marginBottom: 46 }}>
+            <Glass radius={30} style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
+              <BondHeart box={56} max={40} showLabel={false} />
+            </Glass>
+            <Glass radius={999} strong style={{ paddingHorizontal: 9, paddingVertical: 3 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '700', color: '#2B1D22' }}>
+                {bondLabel(bond.level, lang)}
+              </Text>
+            </Glass>
+          </View>
+          <View style={{ alignItems: 'center', gap: 6 }}>
+            <Bubble>{theirMood ? `${MOODS[theirMood].emoji} ${moodLabel(theirMood, lang)}` : partnerName}</Bubble>
+            <Bust p={partnerProfile} name={partnerName} size={118} />
+          </View>
         </View>
-        <View style={{ alignItems: 'center', gap: 6 }}>
-          <Bubble>{theirMood ? `${MOODS[theirMood].emoji} ${moodLabel(theirMood, lang)}` : partnerName}</Bubble>
-          <Bust p={partnerProfile} name={partnerName} size={118} />
-        </View>
-      </View>
+      )}
       <MoodSheet open={moodOpen} onClose={() => setMoodOpen(false)} />
     </View>
   );

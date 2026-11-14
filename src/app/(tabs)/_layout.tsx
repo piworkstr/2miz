@@ -4,6 +4,7 @@ import { Tabs, type BottomTabBarProps } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CoupleDock, DOCK_GAP, DOCK_H, dockOn } from '../../components/CoupleDock';
 import { Glass, hexA } from '../../components/Glass';
 import { InviteModal } from '../../components/InviteModal';
 import { useUnreadCount } from '../../lib/chat';
@@ -31,8 +32,12 @@ function GlassTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBa
   const insets = useSafeAreaInsets();
   const unread = useUnreadCount();
   const icons = ICONS[t.id];
+  const { couple } = useSession();
+  // Çift şeridi sohbet sekmesinde gizlenir: yazı alanına yer kalsın.
+  const dock = dockOn(couple) && state.routes[state.index]?.name !== 'chat';
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 8 }}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 8, gap: DOCK_GAP }}>
+      {dock && <CoupleDock />}
       <Glass
         radius={TAB_BAR_H / 2}
         intensity={60}
@@ -101,8 +106,10 @@ function GlassTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBa
 export default function TabsLayout() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const { user } = useSession();
+  const { user, couple } = useSession();
   usePushSetup(user?.uid);
+  const pad = TAB_BAR_H + insets.bottom + 8;
+  const dockPad = dockOn(couple) ? DOCK_H + DOCK_GAP : 0;
   const label = (s: string) => tx(t, s);
 
   return (
@@ -113,11 +120,14 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           // İçerik yüzen çubuğun altında kalmasın.
-          sceneStyle: { backgroundColor: t.colors.bg, paddingBottom: TAB_BAR_H + insets.bottom + 8 },
+          sceneStyle: { backgroundColor: t.colors.bg, paddingBottom: pad + dockPad },
         }}
       >
         <Tabs.Screen name="index" options={{ title: label(t.copy.tabs.today) }} />
-        <Tabs.Screen name="chat" options={{ title: label(t.copy.tabs.chat) }} />
+        <Tabs.Screen
+          name="chat"
+          options={{ title: label(t.copy.tabs.chat), sceneStyle: { backgroundColor: t.colors.bg, paddingBottom: pad } }}
+        />
         <Tabs.Screen name="album" options={{ title: label(t.copy.tabs.album) }} />
         <Tabs.Screen name="coupons" options={{ title: label(t.copy.tabs.coupons) }} />
         <Tabs.Screen name="profile" options={{ title: label(t.copy.tabs.us) }} />

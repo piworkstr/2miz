@@ -6,6 +6,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Avatar } from '../../components/Avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
+import { dockOn } from '../../components/CoupleDock';
 import { PerksCard } from '../../components/PerksCard';
 import { GardenCard } from '../../components/GardenCard';
 import { SkyHero } from '../../components/home/SkyHero';
@@ -108,6 +109,7 @@ export default function Today() {
         streak={streakAlive ? couple.streak : 0}
         points={couple.points}
         pointsLabel={t.copy.points}
+        compact={dockOn(couple)}
       />
 
       {/* kısayollar: gök bölümünün alt kenarına oturur */}
