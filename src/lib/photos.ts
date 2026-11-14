@@ -1,5 +1,5 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
 
@@ -75,6 +75,11 @@ export async function saveTaskPhoto(coupleId: string, day: string, uid: string, 
     data,
     createdAt: serverTimestamp(),
   });
+}
+
+// Kendi fotoğrafının altındaki notu sonradan ekle ya da değiştir.
+export async function updatePhotoNote(coupleId: string, photoId: string, note: string) {
+  await updateDoc(doc(photosCol(coupleId), photoId), { note: note.trim().slice(0, 60) });
 }
 
 export async function saveDatePhoto(coupleId: string, day: string, uid: string, note: string, data: string) {

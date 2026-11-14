@@ -12,10 +12,11 @@ type Props = {
   tilt?: number;
   aspect?: number;
   style?: ViewStyle;
+  noteHint?: string; // not boşken soluk yazılan ipucu (ör. kendi fotoğrafında "basılı tut, not ekle")
   empty?: string; // fotoğraf yokken çerçevede yazan el yazısı (varsayılan: henüz yok)
 };
 
-export function Polaroid({ photo, name, tilt = 0, aspect = 1, style, empty }: Props) {
+export function Polaroid({ photo, name, tilt = 0, aspect = 1, style, empty, noteHint }: Props) {
   return (
     <View
       style={[
@@ -46,10 +47,17 @@ export function Polaroid({ photo, name, tilt = 0, aspect = 1, style, empty }: Pr
       )}
       <Text
         maxFontSizeMultiplier={1.25}
-        style={{ fontFamily: HAND, fontSize: 21, lineHeight: 23, color: INK, textAlign: 'center', marginTop: 8 }}
+        style={{
+          fontFamily: HAND,
+          fontSize: photo && !photo.note && noteHint ? 16 : 21,
+          lineHeight: 23,
+          color: photo && !photo.note && noteHint ? '#B9A9A3' : INK,
+          textAlign: 'center',
+          marginTop: 8,
+        }}
         numberOfLines={3}
       >
-        {photo?.note || ' '}
+        {photo?.note || (photo && noteHint) || ' '}
       </Text>
       <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, color: '#9C8C87', textAlign: 'center', marginTop: 2 }}>
         {name}

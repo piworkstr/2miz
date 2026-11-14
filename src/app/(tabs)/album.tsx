@@ -3,8 +3,9 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { handFont, inkColor, Polaroid } from '../../components/Polaroid';
 import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
-import { prettyDate } from '../../lib/date';
-import { AddTaskPhoto } from '../../components/AddTaskPhoto';
+import { dayKey, prettyDate } from '../../lib/date';
+import { AddTaskPhoto, EditPhotoNote, MissingPhotoDays } from '../../components/AddTaskPhoto';
+import { useDays } from '../../lib/archive';
 import { DeleteRequest } from '../../components/DeleteRequest';
 import { removeFromAlbum } from '../../lib/chat';
 import { useMyOrders } from '../../lib/orders';
@@ -42,6 +43,10 @@ export default function Album() {
   const [removing, setRemoving] = useState<string | null>(null);
   // Geçmiş bir günde kendi fotoğrafını eklememiş kişi, boş polaroidine basılı tutarak sonradan ekler.
   const [adding, setAdding] = useState<{ day: string; taskId: string } | null>(null);
+  const [editing, setEditing] = useState<Photo | null>(null);
+  // Fotoğrafsız günler listesi yalnızca açılınca yüklenir.
+  const [showMissing, setShowMissing] = useState(false);
+  const days = useDays(showMissing ? couple?.id : undefined, 60);
 
   // Fotoğrafları günlere göre sayfalara ayırır: date selfiesi kendi sayfası, görev selfieleri yan yana.
   const pages = useMemo<Page[]>(() => {
@@ -147,6 +152,25 @@ export default function Album() {
         <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimary} />
       </Pressable>
       <OrdersLink />
+      <Pressable
+        onPress={() => setShowMissing((v) => !v)}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 2 }}
+      >
+        <Ionicons name={showMissing ? 'chevron-up' : 'camera-outline'} size={16} color={t.colors.primary} />
+        <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+          {showMissing ? 'Fotoğrafsız günleri gizle' : 'Geçmiş günlere fotoğraf ekle'}
+        </Text>
+      </Pressable>
+      {showMissing && couple && user && (
+        <MissingPhotoDays
+          coupleId={couple.id}
+          uid={user.uid}
+          days={days}
+          havePhoto={new Set((photos ?? []).filter((p) => p.kind === 'task' && p.uid === user.uid).map((p) => p.day))}
+          today={dayKey()}
+          onPick={(day, taskId) => setAdding({ day, taskId })}
+        />
+      )}
 
       {(filter === 'all' || filter === 'trips') && (
         <Pressable
@@ -228,7 +252,14 @@ export default function Album() {
               <>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   {page.mine ? (
-                    <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
+                    <Pressable
+                      style={{ flex: 1 }}
+                      delayLongPress={350}
+                      onLongPress={() => setEditing(page.mine!)}
+                      accessibilityLabel="Notu düzenlemek için basılı tut"
+                    >
+                      <Polaroid photo={page.mine} name={myName} tilt={-3} noteHint="basılı tut, not ekle" />
+                    </Pressable>
                   ) : (
                     <Pressable
                       style={{ flex: 1 }}
@@ -255,6 +286,7 @@ export default function Album() {
           </Pressable>
         ),
       )}
+      {editing && couple && <EditPhotoNote photo={editing} coupleId={couple.id} name={myName} onClose={() => setEditing(null)} />}
       {adding && couple && user && (
         <AddTaskPhoto
           open

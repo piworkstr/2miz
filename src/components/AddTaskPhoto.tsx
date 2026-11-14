@@ -1,13 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { DayDoc } from '../lib/daily';
 import { prettyDate } from '../lib/date';
 import { db } from '../lib/firebase';
-import { saveTaskPhoto, shrink } from '../lib/photos';
+import { saveTaskPhoto, shrink, updatePhotoNote, type Photo } from '../lib/photos';
 import { taskById } from '../lib/tasks';
 import { useTheme } from '../lib/useTheme';
 import { Polaroid } from './Polaroid';
@@ -113,5 +113,99 @@ export function AddTaskPhoto(props: {
         </ScrollView>
       </SafeAreaView>
     </Modal>
+  );
+}
+
+// Kendi fotoğrafının notunu sonradan ekle ya da değiştir: albümde kendi polaroidine basılı tutunca açılır.
+export function EditPhotoNote({ photo, coupleId, name, onClose }: { photo: Photo; coupleId: string; name: string; onClose: () => void }) {
+  const t = useTheme();
+  const [note, setNote] = useState(photo.note ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function save() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await updatePhotoNote(coupleId, photo.id, note);
+      onClose();
+    } catch {
+      setError('Kaydedilemedi; bağlantıyı kontrol edip tekrar dene.');
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+          <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Kapat" style={{ alignSelf: 'flex-end' }}>
+            <Ionicons name="close" size={28} color={t.colors.text} />
+          </Pressable>
+          <Title>{photo.note ? 'Notu düzenle' : 'Not ekle'}</Title>
+          <Muted>{`${prettyDate(photo.day)} · fotoğrafın altında el yazısıyla görünür; albümde ve baskıda da çıkar.`}</Muted>
+          <Polaroid
+            photo={{ data: photo.data, note: note.trim() }}
+            name={name}
+            aspect={3 / 4}
+            tilt={-2}
+            style={{ alignSelf: 'center', width: '70%', marginVertical: 8 }}
+          />
+          <Input value={note} onChangeText={setNote} placeholder="Altına bir not" maxLength={60} autoFocus />
+          <ErrorText>{error}</ErrorText>
+          <Button label="Kaydet" onPress={save} busy={busy} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// Fotoğraf eklenmemiş geçmiş görev günleri: albümde hiç görünmeyen günlere sonradan fotoğraf eklemek için.
+export function MissingPhotoDays(props: {
+  coupleId: string;
+  uid: string;
+  days: { key: string; day: DayDoc }[] | null;
+  havePhoto: Set<string>; // fotoğrafım olan günler
+  today: string;
+  onPick: (day: string, taskId: string) => void;
+}) {
+  const t = useTheme();
+  if (props.days === null) return <Muted>Günler yükleniyor…</Muted>;
+  // Görevi en az birinizin tamamladığı, bugünden önceki ve fotoğrafını eklemediğin günler.
+  const missing = props.days.filter(
+    (d) => d.key < props.today && !props.havePhoto.has(d.key) && Object.keys(d.day.completions ?? {}).length > 0,
+  );
+  if (!missing.length) return <Muted>Fotoğrafsız kalan bir görev günün yok.</Muted>;
+  return (
+    <View style={{ gap: 8 }}>
+      <Muted>Bu günlerde görev yapılmış ama fotoğrafın yok. Eklediğin gün albümde bir sayfa olur.</Muted>
+      {missing.map((d) => {
+        const taskId = d.day.separate?.[props.uid] ?? d.day.sharedTaskId;
+        return (
+          <Pressable
+            key={d.key}
+            onPress={() => props.onPick(d.key, taskId)}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: t.colors.card,
+              borderWidth: 1,
+              borderColor: t.colors.border,
+              borderRadius: 14,
+              padding: 12,
+              opacity: pressed ? 0.8 : 1,
+            })}
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Muted style={{ fontSize: 12 }}>{prettyDate(d.key)}</Muted>
+              <Text maxFontSizeMultiplier={1.25} numberOfLines={2} style={{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}>
+                {taskById(taskId).title}
+              </Text>
+            </View>
+            <Ionicons name="add-circle" size={26} color={t.colors.primary} />
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
