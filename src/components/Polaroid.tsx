@@ -7,14 +7,15 @@ const INK = '#2B1D22';
 const HAND = 'Caveat_500Medium';
 
 type Props = {
-  photo?: Photo;
+  photo?: Pick<Photo, 'data'> & Partial<Pick<Photo, 'note'>>;
   name: string;
   tilt?: number;
   aspect?: number;
   style?: ViewStyle;
+  empty?: string; // fotoğraf yokken çerçevede yazan el yazısı (varsayılan: henüz yok)
 };
 
-export function Polaroid({ photo, name, tilt = 0, aspect = 1, style }: Props) {
+export function Polaroid({ photo, name, tilt = 0, aspect = 1, style, empty }: Props) {
   return (
     <View
       style={[
@@ -38,8 +39,8 @@ export function Polaroid({ photo, name, tilt = 0, aspect = 1, style }: Props) {
         <Image source={{ uri: photoUri(photo) }} style={{ width: '100%', aspectRatio: aspect, backgroundColor: '#eee' }} />
       ) : (
         <View style={{ width: '100%', aspectRatio: aspect, backgroundColor: '#F3ECE8', alignItems: 'center', justifyContent: 'center' }}>
-          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: HAND, fontSize: 20, color: '#B9A9A3' }}>
-            henüz yok
+          <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: HAND, fontSize: 20, color: '#B9A9A3', textAlign: 'center' }}>
+            {empty ?? 'henüz yok'}
           </Text>
         </View>
       )}

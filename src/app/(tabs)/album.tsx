@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { handFont, inkColor, Polaroid } from '../../components/Polaroid';
 import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
+import { AddTaskPhoto } from '../../components/AddTaskPhoto';
 import { DeleteRequest } from '../../components/DeleteRequest';
 import { removeFromAlbum } from '../../lib/chat';
 import { useMyOrders } from '../../lib/orders';
@@ -39,6 +40,8 @@ export default function Album() {
   const plus = usePlus();
   const [filter, setFilter] = useState<Filter>('all');
   const [removing, setRemoving] = useState<string | null>(null);
+  // Geçmiş bir günde kendi fotoğrafını eklememiş kişi, boş polaroidine basılı tutarak sonradan ekler.
+  const [adding, setAdding] = useState<{ day: string; taskId: string } | null>(null);
 
   // Fotoğrafları günlere göre sayfalara ayırır: date selfiesi kendi sayfası, görev selfieleri yan yana.
   const pages = useMemo<Page[]>(() => {
@@ -224,7 +227,18 @@ export default function Album() {
             ) : (
               <>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
+                  {page.mine ? (
+                    <Polaroid style={{ flex: 1 }} photo={page.mine} name={myName} tilt={-3} />
+                  ) : (
+                    <Pressable
+                      style={{ flex: 1 }}
+                      delayLongPress={350}
+                      onLongPress={() => setAdding({ day: page.day, taskId: (page.theirs?.taskId ?? '') as string })}
+                      accessibilityLabel="Fotoğrafını eklemek için basılı tut"
+                    >
+                      <Polaroid photo={undefined} name={myName} tilt={-3} empty={'basılı tut,\nfotoğrafını ekle'} />
+                    </Pressable>
+                  )}
                   <Polaroid style={{ flex: 1, marginTop: 12 }} photo={page.theirs} name={partnerName} tilt={2.5} />
                 </View>
                 <Text
@@ -240,6 +254,17 @@ export default function Album() {
             </Text>
           </Pressable>
         ),
+      )}
+      {adding && couple && user && (
+        <AddTaskPhoto
+          open
+          onClose={() => setAdding(null)}
+          coupleId={couple.id}
+          uid={user.uid}
+          name={myName}
+          day={adding.day}
+          fallbackTaskId={adding.taskId}
+        />
       )}
     </Screen>
   );
