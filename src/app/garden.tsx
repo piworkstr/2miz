@@ -137,7 +137,7 @@ const BOUNDS = {
   y0: center(OFF, OFF).y - TH / 2 - TW * 1.7,
   y1: center(OFF + INNER - 1, OFF + INNER - 1).y + TH / 2 + TW * 0.4,
 };
-// Bütün arazi (14x14): sürükleme buraya kadar
+// Bütün arazi (22x22): sürükleme buraya kadar
 const FULL = {
   x0: center(N - 1, 0).x - TW / 2,
   x1: center(0, N - 1).x + TW / 2,
@@ -257,7 +257,7 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
         </Pattern>
       </Defs>
       {/* Tabakanın altına yumuşak gölge: manzaraya oturur */}
-      <Ellipse cx={B.x} cy={btm + D - 2} rx={TW * 5.6} ry={TW * 1.1} fill="rgba(40,60,20,0.18)" />
+      <Ellipse cx={B.x} cy={btm + D - 2} rx={TW * N * 0.4} ry={TW * N * 0.08} fill="rgba(40,60,20,0.18)" />
       <Polygon points={`${lx},${L.y} ${B.x},${btm} ${B.x},${btm + D} ${lx},${L.y + D}`} fill="#8B5E34" />
       <Polygon points={`${B.x},${btm} ${rx},${R.y} ${rx},${R.y + D} ${B.x},${btm + D}`} fill="#6E4625" />
       {f.tiles.map((t, i) => {
@@ -617,6 +617,8 @@ export default function GardenScreen() {
   // İki parmakla yakınlaştırma (fotoğraf gibi): parmakların ortasındaki nokta yerinde kalır.
   const pinch = useRef<{ d0: number; z0: number; wx: number; wy: number } | null>(null);
   const MAX_ZOOM = 4;
+  // 1 = iç çiftlik ekrana sığar; daha küçüğü uzaklaşır ve bütün araziyi (22x22) gösterir.
+  const MIN_ZOOM = INNER / N;
   // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
   const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
   const kissRef = useRef<(wx: number, wy: number) => boolean>(() => false);
@@ -674,10 +676,10 @@ export default function GardenScreen() {
               pinch.current = { d0: d, z0: c.zoom, wx: (mx - c.tx) / c.s, wy: (my - c.ty) / c.s };
               return;
             }
-            const z = Math.min(MAX_ZOOM, Math.max(1, (pinch.current.z0 * d) / pinch.current.d0));
+            const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, (pinch.current.z0 * d) / pinch.current.d0));
             const s2 = c.fit * z;
             setZoom(z);
-            if (z <= 1 && Math.abs(c.pan.x) + Math.abs(c.pan.y) < 1) setPan({ x: 0, y: 0 });
+            if (z === 1 && Math.abs(c.pan.x) + Math.abs(c.pan.y) < 1) setPan({ x: 0, y: 0 });
             else setPan({ x: mx - c.ox - (pinch.current.wx - c.cx) * s2, y: my - c.oy - (pinch.current.wy - c.cy) * s2 });
             return;
           }
@@ -1274,9 +1276,9 @@ export default function GardenScreen() {
           {season === 'kis' ? ' · ürünler yavaş' : ''} · {farm.harvests} ortak hasat
         </Text>
       </View>
-      {zoom > 1 && (
+      {zoom !== 1 && (
         <Pressable
-          accessibilityLabel="Bütün çiftliği göster"
+          accessibilityLabel="Çiftliğe dön"
           onPress={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });

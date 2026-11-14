@@ -2,6 +2,7 @@ import { addDoc, collection, doc, getDoc, limit, onSnapshot, orderBy, query, run
 import { useEffect, useState } from 'react';
 import { dayKey } from './date';
 import { pickQuestion } from './dreamQuestions';
+import { farmOf, farmWrite } from './farm';
 import { db } from './firebase';
 import type { Couple } from './session';
 
@@ -71,7 +72,10 @@ export async function joinScene(coupleId: string, sceneId: string, uid: string, 
     const couple = c.data() as Couple & { sceneCount?: number };
     tx.update(ref, { status: 'live', joinedBy: uid, joinedAt: Date.now(), reward: reward.coins ?? 0 });
     const upd: Record<string, unknown> = { sceneCount: (couple.sceneCount ?? 0) + 1 };
-    if (reward.coins && couple.farm) upd['farm.coins'] = (couple.farm.coins ?? 0) + reward.coins;
+    if (reward.coins && (couple.farm || couple.farm4)) {
+      const f = farmOf(couple);
+      Object.assign(upd, farmWrite({ ...f, coins: f.coins + reward.coins }));
+    }
     if (reward.huzur) upd['home.huzur'] = ((couple.home as { huzur?: number } | undefined)?.huzur ?? 0) + reward.huzur;
     tx.update(coupleRef(coupleId), upd);
     return true;

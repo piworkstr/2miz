@@ -14,7 +14,7 @@ import type { Couple } from './session';
 // Mevsim gerçek takvimi izler: kışın ürün yavaş büyür.
 // Arazi 10x10; kapalı parseller parayla değil ortak hasat sayısıyla açılır (her 10 ortak hasatta bir parsel).
 
-export const N = 14; // arazi 14x14; ortadaki 10x10 başlangıç çiftliği, çevresindeki iki sıra parayla alınan arazi
+export const N = 22; // arazi 22x22; ortadaki 10x10 başlangıç çiftliği, çevresindeki altı sıra parayla alınan arazi (v3'te 14x14'tü)
 export const INNER = 10;
 export const OFF = (N - INNER) / 2;
 export const MIN = 60_000;
@@ -198,7 +198,7 @@ export const ORDER_REFILL = 20 * MIN;
 // pos: herkesin en son çalıştığı kare; partnerin avatarı orada durur.
 // stock: depo (ürün adı → adet); harvests: ortak hasat sayısı (arazi bununla açılır).
 export type Farm = {
-  v: 2 | 3;
+  v: 2 | 3 | 4; // 2: 10x10, 3: 14x14, 4: 22x22
   coins: number;
   xp: number;
   bought: number; // ortak hasatla açılan iç parseller
@@ -246,38 +246,44 @@ export function newFarm(): Farm {
       if (ch === 'F') t = { k: 'decor', item: 'cesme' };
       tiles.push(t);
     }
-  return { v: 3, coins: 100, xp: 0, bought: 0, outer: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
+  return { v: 4, coins: 100, xp: 0, bought: 0, outer: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
 }
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
+  const fill = (f: Farm): Farm => ({
+    ...f,
+    pos: f.pos ?? {},
+    stock: f.stock ?? {},
+    harvests: f.harvests ?? 0,
+    orders: f.orders ?? [],
+    notes: f.notes ?? [],
+  });
+  // v4 (22x22) ayrı bir alanda durur: farm4. Eski sürümdeki bir telefon bu alanı tanımaz ve dokunmaz; kendi v3 kaydına
+  // (farm, farmKeep) yazmaya devam eder. Böylece iki telefon farklı sürümdeyken büyük çiftliğin üstüne yazılamaz.
+  const f4 = couple?.farm4 as Farm | undefined;
+  if (f4?.v === 4 && Array.isArray(f4.tiles) && f4.tiles.length === N * N) return fill(f4);
+  // İlk açılış: eski kayıttan (v3 14x14 ya da v2 10x10) büyütülür; ilk işlemde farm4 olarak kaydedilir.
   let f = couple?.farm as Farm | undefined;
-  // Güvenlik ağı: eski sürümdeki bir telefon v3 çiftliği tanımayıp üstüne boş v2 çiftlik yazarsa, yeni kodun her
-  // kayıtta tuttuğu v3 yedeği (farmKeep) geçerli sayılır. Eski sürümün o aradaki birkaç işlemi kaybolur, çiftlik kalır.
   const keep = couple?.farmKeep as Farm | undefined;
   if (keep?.v === 3 && (!f || f.v !== 3)) f = keep;
   if (!f || (f.v !== 2 && f.v !== 3)) return newFarm();
-  const g: Farm = { ...f, pos: f.pos ?? {}, stock: f.stock ?? {}, harvests: f.harvests ?? 0, orders: f.orders ?? [], notes: f.notes ?? [] };
-  return g.v === 3 ? g : migrate10to14(g);
+  return grow(fill(f), f.v === 3 ? 14 : 10);
 }
+export const farmWrite = (farm: Farm) => ({ farm4: clean({ ...farm, v: 4 as const }) });
 
-// Çiftlik yazarken yedeğiyle birlikte yazılır (bkz. farmOf).
-export const farmWrite = (farm: Farm) => {
-  const c = clean(farm);
-  return { farm: c, farmKeep: c };
-};
-
-// v2 (10x10) kayıt → v3 (14x14): eski kareler ortaya taşınır, dış halka satılık olur. İlk işlemde kaydedilir.
-function migrate10to14(f: Farm): Farm {
-  const old = INNER;
+// Eski kare düzenini (old x old) yeni arazinin ortasına taşır; çevresi satılık arazi olur. Kare numaraları ve
+// avatarların yerleri yeni düzene çevrilir. Ortadaki 10x10 hep aynı yerde kalır (iki düzende de ortalanmış).
+function grow(f: Farm, old: number): Farm {
+  const off = (N - old) / 2;
   const tiles: Tile[] = Array.from({ length: N * N }, () => ({ k: 'locked' }) as Tile);
-  const map = (i: number) => (Math.floor(i / old) + OFF) * N + (i % old) + OFF;
+  const map = (i: number) => (Math.floor(i / old) + off) * N + (i % old) + off;
   f.tiles.forEach((t, i) => {
     if (i < old * old) tiles[map(i)] = t;
   });
   const pos: Record<string, number> = {};
-  for (const [k, v] of Object.entries(f.pos)) pos[k] = v < old * old ? map(v) : v;
-  return { ...f, v: 3, outer: f.outer ?? 0, tiles, pos };
+  for (const [k, v] of Object.entries(f.pos)) pos[k] = v >= 0 && v < old * old ? map(v) : (N * N) >> 1;
+  return { ...f, v: 4, outer: f.outer ?? 0, tiles, pos };
 }
 
 export const isOuter = (i: number) => {
