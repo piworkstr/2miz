@@ -52,7 +52,33 @@ function stoneArm(dx: number, dy: number): Shape[] {
   ];
 }
 
-export function wallShapes(kind: WallKind, mask: number): Shape[] {
+// Dipteki çiçek öbeği: yaprak, sap ve üç çiçek. h: sap boyu (arkadakiler duvarın üstünden görünsün diye uzun).
+const COLORS = ['#FF8FB1', '#FFD45C', '#FFFFFF', '#C59BFF'];
+function flower(x: number, y: number, h: number, k: number): Shape[] {
+  const c = (n: number) => COLORS[(k + n) % COLORS.length];
+  const dot = (px: number, py: number, r: number, fill: string): Shape => ({
+    d: `M${px - r},${py} a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 ${-r * 2},0`,
+    fill,
+    stroke: 'rgba(120,70,60,0.35)',
+    sw: 0.5,
+  });
+  return [
+    { d: `M${x - 6},${y} a6,3 0 1,0 12,0 a6,3 0 1,0 -12,0`, fill: '#5FA84A' },
+    {
+      d: `M${x - 3},${y} L${x - 4},${y - h + 1} M${x + 3},${y} L${x + 4},${y - h} M${x},${y} L${x},${y - h - 3}`,
+      stroke: '#4C9440',
+      sw: 1.2,
+    },
+    dot(x - 4, y - h + 1, 2.7, c(0)),
+    dot(x + 4, y - h, 2.7, c(1)),
+    dot(x, y - h - 3, 2.9, c(2)),
+    dot(x - 4, y - h + 1, 0.9, '#F2A33A'),
+    dot(x + 4, y - h, 0.9, '#F2A33A'),
+    dot(x, y - h - 3, 0.9, '#F2A33A'),
+  ];
+}
+
+export function wallShapes(kind: WallKind, mask: number, flowers = false): Shape[] {
   const { cx, cy } = WALL_BOX;
   const m = mask || 10; // tek başına: düz bir parça
   const arms = DIRS.filter(([b]) => m & b);
@@ -60,6 +86,14 @@ export function wallShapes(kind: WallKind, mask: number): Shape[] {
   const front = arms.filter(([, , dy]) => dy > 0);
   const arm = kind === 'cit' ? fenceArm : stoneArm;
   const out: Shape[] = [{ d: `M${cx - 15},${cy + 1} a15,6 0 1,0 30,0 a15,6 0 1,0 -30,0`, fill: 'rgba(40,60,30,0.16)' }];
+  // Çiçekli tür: her kolun iki yanında, karenin boş kalan yarısında çiçek öbekleri.
+  const beds = flowers
+    ? arms.map(([b, dx, dy]) => {
+        const px = dx > 0 === dy > 0 ? -12 : 12;
+        return { b, x: cx + dx * 0.6, y: cy + dy * 0.6, px, py: 6 };
+      })
+    : [];
+  beds.forEach((q) => out.push(...flower(q.x - q.px, q.y - q.py, kind === 'cit' ? 12 : 21, q.b)));
   back.forEach(([, dx, dy]) => out.push(...arm(dx, dy)));
   if (kind === 'cit') {
     front.forEach(([, dx, dy]) => out.push(...arm(dx, dy)));
@@ -87,5 +121,6 @@ export function wallShapes(kind: WallKind, mask: number): Shape[] {
     out.push({ d: `M${cx},${cy + 3.5} L${cx},${cy - 16.5}`, stroke: '#7E786F', sw: 0.8 });
     front.forEach(([, dx, dy]) => out.push(...arm(dx, dy)));
   }
+  beds.forEach((q) => out.push(...flower(q.x + q.px, q.y + q.py, 7, q.b + 1)));
   return out;
 }

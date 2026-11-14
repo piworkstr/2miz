@@ -21,6 +21,8 @@ export const MIN = 60_000;
 export const TILL = 10;
 // Patika taşı: bir kare çimene yol döşemenin bedeli.
 export const PAVE = 5;
+// Çit ya da duvarın dibine çiçek ekmenin bedeli (kare başına).
+export const BLOOM = 10;
 export const HARVESTS_PER_PARCEL = 10;
 export const MARKET_BONUS = 1.5;
 
@@ -40,6 +42,8 @@ export type DecorId =
   | 'cicek'
   | 'cit'
   | 'duvar'
+  | 'citc'
+  | 'duvarc'
   | 'saman'
   | 'agac'
   | 'bank'
@@ -175,12 +179,15 @@ export const TREES: Record<
 
 export const DECOR: Record<
   DecorId,
-  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar'; perk?: string }
+  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar'; perk?: string; flowers?: boolean }
 > = {
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
   cit: { name: 'Çit', sp: 'fence', cost: 20, xp: 1, lvl: 1, w: 0.92, wall: 'cit' },
   duvar: { name: 'Taş duvar', sp: 'fence', cost: 25, xp: 1, lvl: 1, w: 0.92, wall: 'duvar' },
+  // Çiçekli türler: dipteki boş yarım kareye çiçek; düz olanla birleşir, duvara dokunup da çevrilebilir.
+  citc: { name: 'Çiçekli çit', sp: 'fence', cost: 30, xp: 2, lvl: 1, w: 0.92, wall: 'cit', flowers: true },
+  duvarc: { name: 'Çiçekli duvar', sp: 'fence', cost: 35, xp: 2, lvl: 1, w: 0.92, wall: 'duvar', flowers: true },
   saman: { name: 'Saman', sp: 'hay', cost: 30, xp: 1, lvl: 1, w: 0.85 },
   agac: { name: 'Ağaç', sp: 'tree', cost: 40, xp: 2, lvl: 1, w: 1.25 },
   bank: { name: 'Bank', sp: 'bench', cost: 60, xp: 3, lvl: 2, w: 0.85 },
@@ -495,6 +502,7 @@ export type Action =
   | { a: 'collect'; i: number }
   | { a: 'till'; i: number }
   | { a: 'pave'; i: number } // çimene patika taşı döşe
+  | { a: 'bloom'; i: number; all?: boolean } // çit/duvarın dibine çiçek ek ya da çiçekleri kaldır
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'tree'; i: number; item: TreeId }
   | { a: 'pick'; i: number } // meyve topla
@@ -634,6 +642,21 @@ export function applyAction(
       f.xp += 1;
       f.tiles[act.i] = { k: 'soil' };
       text = `${name} yeni tarla sürdü`;
+      break;
+    }
+    case 'bloom': {
+      if (t.k !== 'decor' || !DECOR[t.item].wall) return 'Çiçek çit ya da duvarın dibine ekilir.';
+      const from = t.item;
+      const d = DECOR[from];
+      const other = (Object.keys(DECOR) as DecorId[]).find((id) => DECOR[id].wall === d.wall && !!DECOR[id].flowers !== !!d.flowers)!;
+      // all: çiftlikteki aynı türden bütün parçalar birlikte çevrilir.
+      const ids = act.all ? f.tiles.flatMap((x, j) => (x.k === 'decor' && x.item === from ? [j] : [])) : [act.i];
+      if (!d.flowers) {
+        if (f.coins < BLOOM * ids.length) return `Yeterli altının yok (${BLOOM * ids.length} gerek).`;
+        f.coins -= BLOOM * ids.length;
+      }
+      ids.forEach((j) => (f.tiles[j] = { ...(f.tiles[j] as Extract<Tile, { k: 'decor' }>), item: other }));
+      text = d.flowers ? `${name} çiçekleri kaldırdı` : `${name} ${d.name.toLocaleLowerCase('tr-TR')} dibine çiçek ekti 🌸`;
       break;
     }
     case 'pave': {

@@ -71,6 +71,7 @@ import {
   stockValue,
   TILL,
   PAVE,
+  BLOOM,
   timeLeft,
   treeReady,
   treeReadyAt,
@@ -165,7 +166,16 @@ type Placing =
   | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
   | { a: 'pave' } // patika döşe: kapatılana kadar her dokunuş bir kare döşer
   | { a: 'moveBarn' }; // depoyu (2x2) taşı
-type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number; wall?: { kind: WallKind; mask: number } };
+type Spr = {
+  key: string;
+  art: string;
+  x: number;
+  y: number;
+  w: number;
+  z: number;
+  o?: number;
+  wall?: { kind: WallKind; mask: number; flowers?: boolean };
+};
 
 function sprites(f: Farm, now: number): Spr[] {
   const barnAt = barnTile(f);
@@ -206,10 +216,10 @@ function sprites(f: Farm, now: number): Spr[] {
         const same = (rr: number, cc: number) => {
           if (rr < 0 || cc < 0 || rr >= N || cc >= N) return false;
           const q = f.tiles[rr * N + cc];
-          return q?.k === 'decor' && q.item === t.item;
+          return q?.k === 'decor' && DECOR[q.item].wall === wall; // çiçekli ve düz olan da birleşir
         };
         const mask = (same(r - 1, c) ? 1 : 0) | (same(r, c + 1) ? 2 : 0) | (same(r + 1, c) ? 4 : 0) | (same(r, c - 1) ? 8 : 0);
-        out.push({ key: `s${i}`, art: 'fence', x, y, z: zOf(r, c) + 6, w: TW, wall: { kind: wall, mask } });
+        out.push({ key: `s${i}`, art: 'fence', x, y, z: zOf(r, c) + 6, w: TW, wall: { kind: wall, mask, flowers: DECOR[t.item].flowers } });
       } else out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
     }
     if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
@@ -253,7 +263,7 @@ function SpriteImg({ s }: { s: Spr }) {
         pointerEvents="none"
         style={{ position: 'absolute', left: s.x - WALL_BOX.cx, top: s.y - WALL_BOX.cy, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
       >
-        <Wall kind={s.wall.kind} mask={s.wall.mask} />
+        <Wall kind={s.wall.kind} mask={s.wall.mask} flowers={s.wall.flowers} />
       </View>
     );
   if (!a) return null;
@@ -1821,7 +1831,17 @@ function Note({ children }: { children: ReactNode }) {
   );
 }
 
-type Item = { id: string; wall?: WallKind; art: string; name: string; cost: number; lvl: number; sub: string; a: Action };
+type Item = {
+  id: string;
+  wall?: WallKind;
+  flowers?: boolean;
+  art: string;
+  name: string;
+  cost: number;
+  lvl: number;
+  sub: string;
+  a: Action;
+};
 function Items({ list, level, coins, onPick }: { list: Item[]; level: number; coins: number; onPick: (a: Action) => void }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -1845,7 +1865,7 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
           >
             {it.wall ? (
               <View style={{ height: 44, justifyContent: 'center' }}>
-                <Wall kind={it.wall} mask={0} scale={0.62} />
+                <Wall kind={it.wall} mask={0} scale={0.62} flowers={it.flowers} />
               </View>
             ) : (
               <Image source={ART[it.art].src} style={{ width: 54, height: 44 }} resizeMode="contain" />
@@ -2271,7 +2291,7 @@ function Sheet(p: SheetProps) {
     const d = DECOR[t.item];
     return (
       <>
-        <Head art={d.wall === 'duvar' ? undefined : d.sp} title={d.name} onClose={p.onClose} />
+        <Head art={d.wall ? undefined : d.sp} title={d.name} onClose={p.onClose} />
         <Note>
           {t.item === 'sera'
             ? 'Çevresindeki 2 kare içindeki tarlalara ekilen ekin %25 daha çabuk büyür (yeni ekilenlerde geçerli).'
@@ -2279,6 +2299,27 @@ function Sheet(p: SheetProps) {
               ? 'Değirmen çiftlikteyken mutfakta ekmek ve kek çift çıkar.'
               : 'Bahçenizi güzelleştiriyor.'}
         </Note>
+        {d.wall &&
+          (() => {
+            const n = farm.tiles.filter((x) => x.k === 'decor' && x.item === t.item).length;
+            return (
+              <>
+                <Btn
+                  label={d.flowers ? 'Çiçekleri kaldır' : `Dibine çiçek ek · ${BLOOM} altın`}
+                  onPress={() => p.onAct({ a: 'bloom', i })}
+                  disabled={!d.flowers && farm.coins < BLOOM}
+                />
+                {n > 1 && (
+                  <Btn
+                    kind="soft"
+                    label={d.flowers ? `Hepsinin çiçeğini kaldır (${n} parça)` : `Hepsine çiçek ek · ${n} parça, ${n * BLOOM} altın`}
+                    onPress={() => p.onAct({ a: 'bloom', i, all: true })}
+                    disabled={!d.flowers && farm.coins < n * BLOOM}
+                  />
+                )}
+              </>
+            );
+          })()}
         <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
@@ -2449,6 +2490,7 @@ function ShopPanel({
             : (Object.keys(DECOR) as DecorId[]).map((id) => ({
                 id,
                 wall: DECOR[id].wall,
+                flowers: DECOR[id].flowers,
                 art: DECOR[id].sp,
                 name: DECOR[id].name,
                 cost: DECOR[id].cost,
