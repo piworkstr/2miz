@@ -24,7 +24,9 @@ import {
   farmAction,
   farmFlush,
   farmOf,
+  barnTile,
   FIXED_ANCHOR,
+  pileTile,
   isWeekend,
   levelOf,
   MARKET_BONUS,
@@ -98,7 +100,6 @@ export const FARM_SCENES: Record<string, SceneMeta> = {
   market: { title: 'Pazar', verb: 'pazarda tezgâh kurmak', reward: { coins: 10 } },
 };
 // Ahırın önündeki kare: depo işlerinde (satış, teslim) avatar buraya yürür.
-const PILE_TILE = (2 + OFF) * N + 4 + OFF; // ahırın önü (iç çiftlikte (2,4))
 
 const TW = 64;
 const TH = TW / 2;
@@ -158,10 +159,12 @@ type Placing =
   | { a: 'build'; item: BuildingId }
   | { a: 'tree'; item: TreeId }
   | { a: 'decor'; item: DecorId }
-  | { a: 'move'; from: number }; // yerleştirilmiş bir şeyi taşı
+  | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
+  | { a: 'moveBarn' }; // depoyu (2x2) taşı
 type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number };
 
 function sprites(f: Farm, now: number): Spr[] {
+  const barnAt = barnTile(f);
   const out: Spr[] = [];
   f.tiles.forEach((t, i) => {
     const [r, c] = rc(i);
@@ -195,7 +198,7 @@ function sprites(f: Farm, now: number): Spr[] {
     if (t.k === 'decor') out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
     if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
     if (t.k === 'fixed') {
-      const [ar, ac] = FIXED_ANCHOR[t.item];
+      const [ar, ac] = t.item === 'barn' ? rc(barnAt) : FIXED_ANCHOR.house;
       if (r === ar && c === ac) {
         const a = center(ar, ac);
         const back = center(ar - 1, ac - 1);
@@ -540,6 +543,8 @@ export default function GardenScreen() {
   const scene = useOpenScene(couple?.id, 'farm');
 
   const farm = farmOf(couple);
+  const BARN_TILE = barnTile(farm); // depo taşınabilir: yeri kayıttan gelir
+  const PILE_TILE = pileTile(farm); // deponun önü
   const uid = user?.uid ?? '';
   const myName = profile?.name ?? 'Ben';
   const [myTile, setMyTile] = useState<number>(() => farm.pos[uid] ?? (2 + OFF) * N + 2 + OFF);
@@ -889,7 +894,15 @@ export default function GardenScreen() {
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
-  const farmView = lift ? { ...farm, tiles: farm.tiles.map((t, j) => (j === lift.from ? ({ k: 'grass' } as Tile) : t)) } : farm;
+  const liftBarn = !!lift && farm.tiles[lift.from]?.k === 'fixed';
+  const farmView = lift
+    ? {
+        ...farm,
+        tiles: farm.tiles.map((t, j) =>
+          j === lift.from || (liftBarn && t.k === 'fixed' && t.item === 'barn') ? ({ k: 'grass' } as Tile) : t,
+        ),
+      }
+    : farm;
   const sprs = [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z);
   objectAtRef.current = (wx, wy) => {
     let best = -1;
@@ -899,7 +912,9 @@ export default function GardenScreen() {
       if (!m) continue;
       const i = Number(m[1]);
       const k = farm.tiles[i]?.k;
-      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal') continue;
+      const tl = farm.tiles[i];
+      const barn = tl?.k === 'fixed' && tl.item === 'barn';
+      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && !barn) continue;
       const a = ART[sp.art];
       if (!a) continue;
       const h = sp.w * a.h;
@@ -928,7 +943,7 @@ export default function GardenScreen() {
     const n = stockCount(farm);
     const top = Object.entries(farm.stock).sort((a, b) => b[1] - a[1])[0];
     if (n > 0 && top) {
-      const [ar, ac] = FIXED_ANCHOR.barn;
+      const [ar, ac] = rc(BARN_TILE);
       const a = center(ar, ac);
       const back = center(ar - 1, ac - 1);
       const barnTile = ar * N + ac;
@@ -1021,7 +1036,18 @@ export default function GardenScreen() {
   };
   liftableRef.current = (i) => {
     const tl = farm.tiles[i];
-    return !!tl && i !== NOTE_TREE && (tl.k === 'tree' || tl.k === 'building' || tl.k === 'decor' || tl.k === 'animal');
+    // Tarla (boş ya da ekili) ve depo da basılı tutup sürüklenerek taşınır.
+    return (
+      !!tl &&
+      i !== NOTE_TREE &&
+      (tl.k === 'tree' ||
+        tl.k === 'building' ||
+        tl.k === 'decor' ||
+        tl.k === 'animal' ||
+        tl.k === 'soil' ||
+        tl.k === 'crop' ||
+        (tl.k === 'fixed' && tl.item === 'barn'))
+    );
   };
   liftDropRef.current = (from, to) => {
     if (to < 0 || to === from) return;
@@ -1030,7 +1056,8 @@ export default function GardenScreen() {
       return;
     }
     setSel(null);
-    work({ a: 'move', i: to, from });
+    const src = farm.tiles[from];
+    work(src?.k === 'fixed' && src.item === 'barn' ? { a: 'moveBarn', i: to } : { a: 'move', i: to, from });
   };
   placeRef.current = (i: number) => {
     const pl = placingRef.current;
@@ -1260,7 +1287,9 @@ export default function GardenScreen() {
                 ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun`
                 : placing.a === 'move'
                   ? 'Taşı: boş bir çimene dokun'
-                  : 'Boş bir çimene dokun'}
+                  : placing.a === 'moveBarn'
+                    ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
+                    : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
           </Pressable>
@@ -1769,7 +1798,6 @@ function ago(ms: number) {
   return h < 24 ? `${h} sa` : `${Math.floor(h / 24)} gün`;
 }
 
-const BARN_TILE = FIXED_ANCHOR.barn[0] * N + FIXED_ANCHOR.barn[1];
 // Hediye sepeti tezgâhı: ev ile ahır arasındaki yol karesinde durur; dokununca sepet hazırlanır / gelen sepet açılır.
 const GIFT_TILE = (1 + OFF) * N + 3 + OFF;
 
@@ -2010,6 +2038,7 @@ function Sheet(p: SheetProps) {
             </View>
           </>
         )}
+        <Btn kind="soft" label="Depoyu taşı · sonra 2×2 boş çimene dokun" onPress={() => p.onPlace({ a: 'moveBarn' })} />
       </>
     );
   }
@@ -2037,6 +2066,7 @@ function Sheet(p: SheetProps) {
         <Note>Tarlaya tohum ekilir. Hayvan, ağaç ve süs çayıra (çimene) konur.</Note>
         <Items list={list} level={level} coins={farm.coins} onPick={(a) => p.onAct(a, p.plantAll)} />
         <Btn kind="soft" label="Tarlayı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: i })} />
+        <Btn kind="soft" label="Çimene çevir" onPress={() => p.onAct({ a: 'remove', i })} />
         {empties > 1 && (
           <Pressable onPress={() => p.setPlantAll(!p.plantAll)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name={p.plantAll ? 'checkbox' : 'square-outline'} size={20} color={GREEN} />
@@ -2082,6 +2112,7 @@ function Sheet(p: SheetProps) {
             {!mine && !t.watered && <Btn kind="accent" label="Sula · iki kat hızlı büyür" onPress={() => p.onAct({ a: 'water', i })} />}
             {mine && !t.watered && <Note>{p.partnerName} sularsa kalan süre yarıya iner ve hasat ortak sayılır.</Note>}
             <Btn kind="soft" label="Tarlayı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: i })} />
+            <Btn kind="soft" label="Ekini sök, çimene çevir (ekin kaybolur)" onPress={() => p.onAct({ a: 'remove', i })} />
           </>
         )}
       </>

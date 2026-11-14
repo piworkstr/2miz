@@ -229,6 +229,21 @@ const MAP = [
   'LLLpLLLLLL',
 ];
 export const FIXED_ANCHOR = { house: [1 + OFF, 1 + OFF], barn: [1 + OFF, 5 + OFF] } as const;
+// Depo taşınabilir: ön köşesi (2x2'nin sağ alt karesi) kayıttan bulunur; çizim, rozet ve "Depo" düğmesi buna bakar.
+export function barnTile(f: Farm): number {
+  let at = -1;
+  f.tiles.forEach((t, i) => {
+    if (t.k === 'fixed' && t.item === 'barn') at = i; // en büyük numara = sağ alt kare
+  });
+  return at >= 0 ? at : FIXED_ANCHOR.barn[0] * N + FIXED_ANCHOR.barn[1];
+}
+// Deponun önü: satış ve sipariş tesliminde avatarın durduğu kare (deponun sol alt çaprazı; arazi dışına taşarsa deponun kendisi).
+export function pileTile(f: Farm): number {
+  const b = barnTile(f);
+  const r = Math.floor(b / N);
+  const c = b % N;
+  return r + 1 < N && c >= 1 ? (r + 1) * N + c - 1 : b;
+}
 
 export function newFarm(): Farm {
   const tiles: Tile[] = [];
@@ -472,6 +487,8 @@ export type Action =
   | { a: 'openGift'; i: number; gift: string }
   // Not Ağacı'na not.
   | { a: 'note'; i: number; text: string }
+  // Depoyu (2x2) taşı: i, yeni yerin ön köşesi (sağ alt kare); dört karenin de boş çimen olması gerekir.
+  | { a: 'moveBarn'; i: number }
   // Öpücük: i, partnerin yanındaki kare; avatar oraya yürür ve iki ekranda da kalpler uçar.
   | { a: 'kiss'; i: number };
 
@@ -611,6 +628,12 @@ export function applyAction(
       break;
     }
     case 'remove': {
+      // Tarla (boş ya da ekili) yeniden çimene çevrilir; ekiliyse ekin gider, para dönmez.
+      if (t.k === 'soil' || t.k === 'crop') {
+        f.tiles[act.i] = { k: 'grass' };
+        text = `${name} bir tarlayı çimene çevirdi`;
+        break;
+      }
       if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree' && t.k !== 'building') return 'Kaldırılacak bir şey yok.';
       if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
       if (t.k === 'building' && t.res.length) return 'İçinde hayvan varken bina kaldırılmaz.';
@@ -833,6 +856,19 @@ export function applyAction(
       gained = b.coins;
       points = b.points;
       text = `${name} ${b.name.toLocaleLowerCase('tr-TR')}ni açtı: +${b.coins} altın, +${b.points} puan · ortak hasat 💛`;
+      break;
+    }
+    case 'moveBarn': {
+      const r0 = Math.floor(act.i / N);
+      const c0 = act.i % N;
+      const isBarn = (x: Tile | undefined) => !!x && x.k === 'fixed' && x.item === 'barn';
+      const cells = [act.i, act.i - 1, act.i - N, act.i - N - 1];
+      if (r0 < 1 || c0 < 1 || !cells.every((j) => f.tiles[j]?.k === 'grass' || isBarn(f.tiles[j])))
+        return 'Depo için yan yana 2×2 boş çimen gerekir.';
+      if (act.i === barnTile(f)) return 'Depo zaten orada.';
+      f.tiles = f.tiles.map((x) => (isBarn(x) ? ({ k: 'grass' } as Tile) : x));
+      for (const j of cells) f.tiles[j] = { k: 'fixed', item: 'barn' };
+      text = `${name} depoyu taşıdı`;
       break;
     }
     case 'kiss': {
