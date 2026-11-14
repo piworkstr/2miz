@@ -68,6 +68,7 @@ import {
   stockCount,
   stockValue,
   TILL,
+  PAVE,
   timeLeft,
   treeReady,
   treeReadyAt,
@@ -160,6 +161,7 @@ type Placing =
   | { a: 'tree'; item: TreeId }
   | { a: 'decor'; item: DecorId }
   | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
+  | { a: 'pave' } // patika döşe: kapatılana kadar her dokunuş bir kare döşer
   | { a: 'moveBarn' }; // depoyu (2x2) taşı
 type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number };
 
@@ -746,12 +748,28 @@ export default function GardenScreen() {
 
   // Avatarın yürüyüşü bitince sıradaki iş yapılır.
   const arrived = useRef<(() => void) | null>(null);
+  // İki kişilik sahnede avatar sahne karesinde durur; ekrandaki yeri değişmeyecekse yürüyüş beklenmez.
+  const sceneTileRef = useRef<number | null>(null);
   const walkTo = (i: number) =>
     new Promise<void>((res) => {
+      // Yarıda kalan önceki yürüyüşü bekleyen varsa serbest bırak (asılı kalmasın).
+      arrived.current?.();
+      arrived.current = null;
       if (i === myTileRef.current) return res();
-      arrived.current = res;
       myTileRef.current = i;
       setMyTile(i);
+      if (sceneTileRef.current !== null) return res();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        if (arrived.current === finish) arrived.current = null;
+        res();
+      };
+      // Güvenlik: "vardım" haberi herhangi bir nedenle gelmezse iş sırası kilitlenmesin.
+      const timer = setTimeout(finish, 7000);
+      arrived.current = finish;
     });
   const queue = useRef<Action[]>([]);
   const busy = useRef(false);
@@ -768,6 +786,8 @@ export default function GardenScreen() {
         arrived.current = null;
         return;
       }
+      // iOS'ta bildirim paneli, izin penceresi gibi geçici durumlar 'inactive' gelir; işler yalnız gerçekten arka plana geçince kaydedilir.
+      if (state !== 'background') return;
       const pending = [...(current.current ? [current.current] : []), ...queue.current];
       current.current = null;
       queue.current = [];
@@ -803,66 +823,75 @@ export default function GardenScreen() {
     // Kalp için: bu partide tek başına mı iş yapıldı, yoksa birlikte bir şey mi?
     let solo = false;
     let together = false;
-    while (queue.current.length) {
-      const job = queue.current.shift()!;
-      current.current = job;
-      await walkTo(job.i);
-      const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
-      setTool(tl);
-      await sleep(tl ? (queue.current.length ? 400 : 800) : 250);
-      setTool(null);
-      // Bu iş ekran kapanırken topluca kaydedildiyse yeniden gönderme.
-      if (current.current !== job) continue;
-      current.current = null;
-      const before = farmOf(couple).tiles[job.i];
-      try {
-        const r = await farmAction(couple.id, uid, myName, partnerName, job);
-        if (typeof r === 'string') flash(r);
-        else {
-          const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
-          if (job.a === 'kiss') hearts(partnerTileRef.current);
-          if (
-            helped ||
-            ('scene' in job && job.scene) ||
-            job.a === 'harvestDay' ||
-            (job.a === 'deliver' && r.gained) ||
-            job.a === 'note' ||
-            job.a === 'kiss'
-          )
-            together = true;
-          else solo = true;
-          if (r.gained) {
-            const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
-            const id = Date.now() + Math.random();
-            setFloats((f) => [
-              ...f,
-              {
-                id,
-                x,
-                y: y - TW * 0.6,
-                text: job.a === 'sell' ? `+${r.gained} altın` : job.a === 'harvestDay' ? `${r.gained} ürün 🌾` : `+${r.gained}`,
-              },
-            ]);
-            setTimeout(() => setFloats((f) => f.filter((q) => q.id !== id)), 1300);
+    try {
+      while (queue.current.length) {
+        const job = queue.current.shift()!;
+        current.current = job;
+        await walkTo(job.i);
+        const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
+        setTool(tl);
+        await sleep(tl ? (queue.current.length ? 400 : 800) : 250);
+        setTool(null);
+        // Bu iş ekran kapanırken topluca kaydedildiyse yeniden gönderme.
+        if (current.current !== job) continue;
+        current.current = null;
+        const before = farmOf(couple).tiles[job.i];
+        try {
+          // Bağlantı takılırsa sıra sonsuza dek beklemesin.
+          const r = await Promise.race([
+            farmAction(couple.id, uid, myName, partnerName, job),
+            sleep(12000).then(() => 'Bağlantı yavaş, tekrar dene' as const),
+          ]);
+          if (typeof r === 'string') flash(r);
+          else {
+            const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
+            if (job.a === 'kiss') hearts(partnerTileRef.current);
+            if (
+              helped ||
+              ('scene' in job && job.scene) ||
+              job.a === 'harvestDay' ||
+              (job.a === 'deliver' && r.gained) ||
+              job.a === 'note' ||
+              job.a === 'kiss'
+            )
+              together = true;
+            else solo = true;
+            if (r.gained) {
+              const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
+              const id = Date.now() + Math.random();
+              setFloats((f) => [
+                ...f,
+                {
+                  id,
+                  x,
+                  y: y - TW * 0.6,
+                  text: job.a === 'sell' ? `+${r.gained} altın` : job.a === 'harvestDay' ? `${r.gained} ürün 🌾` : `+${r.gained}`,
+                },
+              ]);
+              setTimeout(() => setFloats((f) => f.filter((q) => q.id !== id)), 1300);
+            }
+            if (job.a === 'plant') {
+            }
+            if (job.a === 'note') void 0; // Not Ağacı: bildirim yok, çiftlik açılınca kartta görünür
+            if (job.a === 'water' && before.k === 'crop' && before.by !== uid) {
+              // Bildirim döngü sonunda tek seferde gider (10 tarla → 10 bildirim olmasın)
+            }
           }
-          if (job.a === 'plant') {
-          }
-          if (job.a === 'note') void 0; // Not Ağacı: bildirim yok, çiftlik açılınca kartta görünür
-          if (job.a === 'water' && before.k === 'crop' && before.by !== uid) {
-            // Bildirim döngü sonunda tek seferde gider (10 tarla → 10 bildirim olmasın)
-          }
+        } catch {
+          flash('Olmadı, tekrar dene');
         }
-      } catch {
-        flash('Olmadı, tekrar dene');
       }
+      // İş bitti: tarlanın içinde dikilme, yanındaki yola çekil.
+      const rest = restNear(farmOf(couple), myTileRef.current);
+      if (rest !== myTileRef.current) void walkTo(rest);
+      if (together) logActivityCapped(couple.id, uid, 'farmTogether');
+      else if (solo) logActivityCapped(couple.id, uid, 'farm');
+      // Çiftlik işleri için bildirim gitmez; partner çiftliği açınca "sen yokken" kartında görür.
+    } finally {
+      // Ne olursa olsun sıra yeniden açılır; aksi hâlde sonraki hiçbir komut çalışmaz.
+      current.current = null;
+      busy.current = false;
     }
-    // İş bitti: tarlanın içinde dikilme, yanındaki yola çekil.
-    const rest = restNear(farmOf(couple), myTileRef.current);
-    if (rest !== myTileRef.current) void walkTo(rest);
-    if (together) logActivityCapped(couple.id, uid, 'farmTogether');
-    else if (solo) logActivityCapped(couple.id, uid, 'farm');
-    // Çiftlik işleri için bildirim gitmez; partner çiftliği açınca "sen yokken" kartında görür.
-    busy.current = false;
   }
 
   if (!user || !couple || !partnerId) return null;
@@ -1046,6 +1075,7 @@ export default function GardenScreen() {
         tl.k === 'animal' ||
         tl.k === 'soil' ||
         tl.k === 'crop' ||
+        tl.k === 'path' ||
         (tl.k === 'fixed' && tl.item === 'barn'))
     );
   };
@@ -1064,6 +1094,12 @@ export default function GardenScreen() {
     if (!pl) return;
     if (pl.a === 'move' && farm.tiles[i]?.k !== 'grass' && i !== pl.from) {
       flash('Boş bir çimene dokun'); // taşıma sürsün, yanlış dokunuş iptal etmesin
+      return;
+    }
+    if (pl.a === 'pave') {
+      // Patika kare kare döşenir; mod üstteki etikete basılana kadar açık kalır.
+      if (farm.tiles[i]?.k !== 'grass') flash('Patika boş çimene döşenir');
+      else work({ a: 'pave', i });
       return;
     }
     work({ ...pl, i } as Action);
@@ -1088,6 +1124,7 @@ export default function GardenScreen() {
     q();
     return true;
   };
+  sceneTileRef.current = sceneTile;
   const meAt = stand(sceneTile ?? myTile, -1);
   const pAt = stand(sceneTile ?? partnerTile, 1);
   // Öpücük balonu: ikiniz ayrı yerlerdeyken aranızda çıkar. Dokunan, partnerin yanındaki boş kareye yürür ve öper.
@@ -1285,11 +1322,13 @@ export default function GardenScreen() {
             <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
               {placing.a === 'plant'
                 ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun`
-                : placing.a === 'move'
-                  ? 'Taşı: boş bir çimene dokun'
-                  : placing.a === 'moveBarn'
-                    ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
-                    : 'Boş bir çimene dokun'}
+                : placing.a === 'pave'
+                  ? `Patika: çimenlere dokun (kare ${PAVE} altın) · bitince buraya bas`
+                  : placing.a === 'move'
+                    ? 'Taşı: boş bir çimene dokun'
+                    : placing.a === 'moveBarn'
+                      ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
+                      : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
           </Pressable>
@@ -1981,7 +2020,14 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head title="Patika" onClose={p.onClose} />
-        <Note>Yollara bir şey konmaz.</Note>
+        <Note>Basılı tutup sürükleyerek de taşıyabilirsin.</Note>
+        <Btn
+          label={`Patika döşemeye devam et · kare ${PAVE} altın`}
+          onPress={() => p.onPlace({ a: 'pave' })}
+          disabled={farm.coins < PAVE}
+        />
+        <Btn kind="soft" label="Patikayı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: i })} />
+        <Btn kind="soft" label="Kaldır, çimene çevir" onPress={() => p.onAct({ a: 'remove', i })} />
       </>
     );
   if (t.k === 'fixed' && t.item === 'barn') {
@@ -2255,6 +2301,15 @@ function Sheet(p: SheetProps) {
         <Btn flex label={`Tarla sür · ${TILL} altın`} onPress={() => p.onAct({ a: 'till', i })} disabled={farm.coins < TILL} />
         <Btn flex kind="soft" label="Dükkân" onPress={p.onShop} />
       </View>
+      <Btn
+        kind="soft"
+        label={`Patika döşe · kare ${PAVE} altın`}
+        onPress={() => {
+          p.onAct({ a: 'pave', i });
+          p.onPlace({ a: 'pave' });
+        }}
+        disabled={farm.coins < PAVE}
+      />
     </>
   );
 }

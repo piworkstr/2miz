@@ -19,6 +19,8 @@ export const INNER = 10;
 export const OFF = (N - INNER) / 2;
 export const MIN = 60_000;
 export const TILL = 10;
+// Patika taşı: bir kare çimene yol döşemenin bedeli.
+export const PAVE = 5;
 export const HARVESTS_PER_PARCEL = 10;
 export const MARKET_BONUS = 1.5;
 
@@ -462,6 +464,7 @@ export type Action =
   | { a: 'harvest'; i: number }
   | { a: 'collect'; i: number }
   | { a: 'till'; i: number }
+  | { a: 'pave'; i: number } // çimene patika taşı döşe
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'tree'; i: number; item: TreeId }
   | { a: 'pick'; i: number } // meyve topla
@@ -588,6 +591,14 @@ export function applyAction(
       text = `${name} yeni tarla sürdü`;
       break;
     }
+    case 'pave': {
+      if (t.k !== 'grass') return 'Patika boş çimene döşenir.';
+      if (f.coins < PAVE) return 'Yeterli altının yok.';
+      f.coins -= PAVE;
+      f.tiles[act.i] = { k: 'path' };
+      text = `${name} patika döşedi`;
+      break;
+    }
     case 'animal': {
       // Eski yol: hayvan artık çimene değil binaya alınır.
       const an = ANIMALS[act.item];
@@ -634,6 +645,11 @@ export function applyAction(
         text = `${name} bir tarlayı çimene çevirdi`;
         break;
       }
+      if (t.k === 'path') {
+        f.tiles[act.i] = { k: 'grass' };
+        text = `${name} bir patikayı kaldırdı`;
+        break;
+      }
       if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree' && t.k !== 'building') return 'Kaldırılacak bir şey yok.';
       if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
       if (t.k === 'building' && t.res.length) return 'İçinde hayvan varken bina kaldırılmaz.';
@@ -654,7 +670,7 @@ export function applyAction(
     case 'move': {
       const src = f.tiles[act.from];
       const field = !!src && (src.k === 'soil' || src.k === 'crop'); // tarla (boş ya da ekili) da taşınır; ekinin süresi korunur
-      if (!src || (!field && src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building'))
+      if (!src || (!field && src.k !== 'path' && src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building'))
         return 'Taşınacak bir şey yok.';
       if (act.from === NOTE_TREE) return 'Not Ağacı yerinden oynamaz.';
       if (act.i === act.from) return 'Zaten orada.';
@@ -664,13 +680,15 @@ export function applyAction(
       const what =
         src.k === 'soil' || src.k === 'crop'
           ? 'Tarlayı'
-          : src.k === 'animal'
-            ? ANIMALS[src.item].name
-            : src.k === 'tree'
-              ? TREES[src.item].name
-              : src.k === 'building'
-                ? BUILDINGS[src.item].name
-                : DECOR[src.item].name;
+          : src.k === 'path'
+            ? 'Patikayı'
+            : src.k === 'animal'
+              ? ANIMALS[src.item].name
+              : src.k === 'tree'
+                ? TREES[src.item].name
+                : src.k === 'building'
+                  ? BUILDINGS[src.item].name
+                  : DECOR[src.item].name;
       text = `${name} ${what.toLocaleLowerCase('tr-TR')} taşıdı`;
       break;
     }
