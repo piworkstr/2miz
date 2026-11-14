@@ -6,16 +6,17 @@ import { useL, useLang } from '../lib/i18n';
 import { isFounder } from '../lib/perks';
 import { useSession, type Couple } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
-import { Avatar } from './Avatar';
 import { BondHeart } from './BondHeart';
 import { daysTogether } from './CoupleInfoCard';
-import { Glass } from './Glass';
+import { Bust } from './home/SkyHero';
 import { MoodSheet } from './MoodSheet';
 
-// Çift şeridi: ikinizin avatarı ekranın altında, sekmelerin hemen üstünde durur (üstteki gök bölümünde değil).
+// İkiniz ekranın altında: avatarlar sekme çubuğunun üstünde ayakta durur (üstteki gök bölümünde değil).
+// Çerçeve ya da şerit yok; omuzlara kadar büyük çizim, yüz ifadesi okunur. Ortada el yazısıyla gün sayısı.
 // DENEME: şimdilik yalnızca kurucu çiftte açık; beğenilirse herkese açılır.
-export const DOCK_H = 56;
-export const DOCK_GAP = 8;
+export const DOCK_H = 104;
+export const DOCK_GAP = 0;
+const BUST = 70;
 export const dockOn = (couple: Couple | null | undefined) => isFounder(couple);
 
 export function CoupleDock() {
@@ -26,39 +27,43 @@ export function CoupleDock() {
   const [moodOpen, setMoodOpen] = useState(false);
   if (!couple) return null;
   const bond = bondOf(couple, user?.uid, partnerId);
+  const myMood = activeMood(profile?.mood);
   const theirMood = activeMood(partnerProfile?.mood);
   const days = couple.startDate ? daysTogether(couple.startDate) : null;
-  const sub = theirMood
-    ? `${partnerName} ${MOODS[theirMood].emoji} ${moodLabel(theirMood, lang).toLocaleLowerCase(lang === 'en' ? 'en' : 'tr')}`
-    : bondLabel(bond.level, lang);
+  const mood = (m: NonNullable<typeof myMood>) => `${MOODS[m].emoji} ${moodLabel(m, lang)}`;
+
+  const tag = (text: string, color: string) => (
+    <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color, fontFamily: t.fonts.body }}>
+      {text}
+    </Text>
+  );
 
   return (
     <>
-      <Glass
-        radius={DOCK_H / 2}
-        intensity={60}
-        style={{ height: DOCK_H, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, gap: 8 }}
-      >
-        <Pressable onPress={() => setMoodOpen(true)} accessibilityLabel={l('Ruh halini seç', 'Set your mood')} hitSlop={6}>
-          <Avatar p={profile} name={profile?.name ?? ''} size={42} />
+      <View pointerEvents="box-none" style={{ height: DOCK_H, flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 4 }}>
+        <Pressable
+          onPress={() => setMoodOpen(true)}
+          accessibilityLabel={l('Ruh halini seç', 'Set your mood')}
+          style={{ alignItems: 'center' }}
+        >
+          {tag(myMood ? mood(myMood) : l('Nasılsın? +', 'How are you? +'), myMood ? t.colors.text : t.colors.primary)}
+          <Bust p={profile} name={profile?.name ?? ''} size={BUST} />
         </Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <View pointerEvents="none" style={{ flex: 1, alignItems: 'center', paddingBottom: 12 }}>
           <BondHeart box={34} max={26} showLabel={false} />
-          <View style={{ flexShrink: 1 }}>
-            <Text
-              maxFontSizeMultiplier={1.0}
-              numberOfLines={1}
-              style={{ fontFamily: t.fonts.note, fontSize: 22, lineHeight: 24, color: t.colors.text }}
-            >
-              {days ? l(`${days}. gün`, `Day ${days}`) : l('Birlikte', 'Together')}
-            </Text>
-            <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 11, color: t.colors.muted, fontFamily: t.fonts.body }}>
-              {sub}
-            </Text>
-          </View>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            numberOfLines={1}
+            style={{ fontFamily: t.fonts.note, fontSize: 24, lineHeight: 26, color: t.colors.text }}
+          >
+            {days ? l(`${days}. gün`, `Day ${days}`) : bondLabel(bond.level, lang)}
+          </Text>
         </View>
-        <Avatar p={partnerProfile} name={partnerName} size={42} />
-      </Glass>
+        <View style={{ alignItems: 'center' }}>
+          {tag(theirMood ? mood(theirMood) : partnerName, t.colors.text)}
+          <Bust p={partnerProfile} name={partnerName} size={BUST} />
+        </View>
+      </View>
       <MoodSheet open={moodOpen} onClose={() => setMoodOpen(false)} />
     </>
   );

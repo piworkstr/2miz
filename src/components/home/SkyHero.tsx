@@ -58,7 +58,7 @@ export function skyFor(h: number): Sky {
   };
 }
 
-function Bust({ p, name, size }: { p: Profile | null; name: string; size: number }) {
+export function Bust({ p, name, size }: { p: Profile | null; name: string; size: number }) {
   const t = useTheme();
   const { lang } = useLang();
   const a = p?.avatar;
