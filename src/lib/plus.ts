@@ -11,7 +11,7 @@ import { useSession, type Couple } from './session';
 export const BETA_ALL_OPEN = true;
 
 export const PRICES = {
-  monthly: { label: 'Aylık', price: '99,99 TL', per: '/ay' },
+  monthly: { label: 'Aylık', price: '79,99 TL', per: '/ay' },
   yearly: { label: 'Yıllık', price: '599,99 TL', per: '/yıl', note: 'Ayda ~50 TL · 7 gün ücretsiz' },
 };
 
