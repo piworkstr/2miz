@@ -28,7 +28,7 @@ export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' 
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
-export type DecorId = 'cicek' | 'cit' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
+export type DecorId = 'cicek' | 'cit' | 'duvar' | 'saman' | 'agac' | 'bank' | 'kuyu' | 'cesme';
 
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
   bugday: { name: 'Buğday', cost: 2, mins: 30, sell: 6, xp: 2, lvl: 1 },
@@ -157,9 +157,14 @@ export const TREES: Record<
   armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 360, mins: 240, yieldN: 3, sell: 60, xp: 12, lvl: 5, w: 1.15 },
 };
 
-export const DECOR: Record<DecorId, { name: string; sp: string; cost: number; xp: number; lvl: number; w: number }> = {
+export const DECOR: Record<
+  DecorId,
+  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar' }
+> = {
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
-  cit: { name: 'Çit', sp: 'fence', cost: 20, xp: 1, lvl: 1, w: 0.92 },
+  // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
+  cit: { name: 'Çit', sp: 'fence', cost: 20, xp: 1, lvl: 1, w: 0.92, wall: 'cit' },
+  duvar: { name: 'Taş duvar', sp: 'fence', cost: 25, xp: 1, lvl: 1, w: 0.92, wall: 'duvar' },
   saman: { name: 'Saman', sp: 'hay', cost: 30, xp: 1, lvl: 1, w: 0.85 },
   agac: { name: 'Ağaç', sp: 'tree', cost: 40, xp: 2, lvl: 1, w: 1.25 },
   bank: { name: 'Bank', sp: 'bench', cost: 60, xp: 3, lvl: 2, w: 0.85 },

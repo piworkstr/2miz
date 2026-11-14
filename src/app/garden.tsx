@@ -1,3 +1,5 @@
+import { Wall } from '../components/world/Wall';
+import { WALL_BOX, type WallKind } from '../lib/wallArt';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -163,7 +165,7 @@ type Placing =
   | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
   | { a: 'pave' } // patika döşe: kapatılana kadar her dokunuş bir kare döşer
   | { a: 'moveBarn' }; // depoyu (2x2) taşı
-type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number };
+type Spr = { key: string; art: string; x: number; y: number; w: number; z: number; o?: number; wall?: { kind: WallKind; mask: number } };
 
 function sprites(f: Farm, now: number): Spr[] {
   const barnAt = barnTile(f);
@@ -197,7 +199,19 @@ function sprites(f: Farm, now: number): Spr[] {
         });
       });
     }
-    if (t.k === 'decor') out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
+    if (t.k === 'decor') {
+      const wall = DECOR[t.item].wall;
+      if (wall) {
+        // Aynı türden komşularla birleşir: 1 arka sağ, 2 ön sağ, 4 ön sol, 8 arka sol.
+        const same = (rr: number, cc: number) => {
+          if (rr < 0 || cc < 0 || rr >= N || cc >= N) return false;
+          const q = f.tiles[rr * N + cc];
+          return q?.k === 'decor' && q.item === t.item;
+        };
+        const mask = (same(r - 1, c) ? 1 : 0) | (same(r, c + 1) ? 2 : 0) | (same(r + 1, c) ? 4 : 0) | (same(r, c - 1) ? 8 : 0);
+        out.push({ key: `s${i}`, art: 'fence', x, y, z: zOf(r, c) + 6, w: TW, wall: { kind: wall, mask } });
+      } else out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
+    }
     if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
     if (t.k === 'fixed') {
       const [ar, ac] = t.item === 'barn' ? rc(barnAt) : FIXED_ANCHOR.house;
@@ -233,6 +247,15 @@ const SCENERY: Spr[] = (() => {
 
 function SpriteImg({ s }: { s: Spr }) {
   const a = ART[s.art];
+  if (s.wall)
+    return (
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', left: s.x - WALL_BOX.cx, top: s.y - WALL_BOX.cy, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
+      >
+        <Wall kind={s.wall.kind} mask={s.wall.mask} />
+      </View>
+    );
   if (!a) return null;
   const h = s.w * a.h;
   return (
@@ -940,6 +963,7 @@ export default function GardenScreen() {
       const m = /^s(\d+)$/.exec(sp.key);
       if (!m) continue;
       const i = Number(m[1]);
+      if (sp.wall) continue; // çit/duvar kendi karesinden seçilir
       const k = farm.tiles[i]?.k;
       const tl = farm.tiles[i];
       const barn = tl?.k === 'fixed' && tl.item === 'barn';
@@ -1100,6 +1124,12 @@ export default function GardenScreen() {
       // Patika kare kare döşenir; mod üstteki etikete basılana kadar açık kalır.
       if (farm.tiles[i]?.k !== 'grass') flash('Patika boş çimene döşenir');
       else work({ a: 'pave', i });
+      return;
+    }
+    if (pl.a === 'decor' && DECOR[pl.item].wall) {
+      // Çit ve duvar art arda dizilir; mod üstteki etikete basılana kadar açık kalır.
+      if (farm.tiles[i]?.k !== 'grass') flash('Boş bir çimene dokun');
+      else work({ ...pl, i });
       return;
     }
     work({ ...pl, i } as Action);
@@ -1322,13 +1352,15 @@ export default function GardenScreen() {
             <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
               {placing.a === 'plant'
                 ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun`
-                : placing.a === 'pave'
-                  ? `Patika: çimenlere dokun (kare ${PAVE} altın) · bitince buraya bas`
-                  : placing.a === 'move'
-                    ? 'Taşı: boş bir çimene dokun'
-                    : placing.a === 'moveBarn'
-                      ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
-                      : 'Boş bir çimene dokun'}
+                : placing.a === 'decor' && DECOR[placing.item].wall
+                  ? `${DECOR[placing.item].name}: çimenlere art arda dokun, yan yana gelenler birleşir · bitince buraya bas`
+                  : placing.a === 'pave'
+                    ? `Patika: çimenlere dokun (kare ${PAVE} altın) · bitince buraya bas`
+                    : placing.a === 'move'
+                      ? 'Taşı: boş bir çimene dokun'
+                      : placing.a === 'moveBarn'
+                        ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
+                        : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
           </Pressable>
@@ -1763,7 +1795,7 @@ function Note({ children }: { children: ReactNode }) {
   );
 }
 
-type Item = { id: string; art: string; name: string; cost: number; lvl: number; sub: string; a: Action };
+type Item = { id: string; wall?: WallKind; art: string; name: string; cost: number; lvl: number; sub: string; a: Action };
 function Items({ list, level, coins, onPick }: { list: Item[]; level: number; coins: number; onPick: (a: Action) => void }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -1785,7 +1817,13 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
               opacity: off ? 0.4 : 1,
             })}
           >
-            <Image source={ART[it.art].src} style={{ width: 54, height: 44 }} resizeMode="contain" />
+            {it.wall ? (
+              <View style={{ height: 44, justifyContent: 'center' }}>
+                <Wall kind={it.wall} mask={0} scale={0.62} />
+              </View>
+            ) : (
+              <Image source={ART[it.art].src} style={{ width: 54, height: 44 }} resizeMode="contain" />
+            )}
             <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
               {it.name}
             </Text>
@@ -2207,7 +2245,7 @@ function Sheet(p: SheetProps) {
     const d = DECOR[t.item];
     return (
       <>
-        <Head art={d.sp} title={d.name} onClose={p.onClose} />
+        <Head art={d.wall === 'duvar' ? undefined : d.sp} title={d.name} onClose={p.onClose} />
         <Note>Bahçenizi güzelleştiriyor.</Note>
         <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
@@ -2378,6 +2416,7 @@ function ShopPanel({
               }))
             : (Object.keys(DECOR) as DecorId[]).map((id) => ({
                 id,
+                wall: DECOR[id].wall,
                 art: DECOR[id].sp,
                 name: DECOR[id].name,
                 cost: DECOR[id].cost,
