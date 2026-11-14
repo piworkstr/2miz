@@ -63,6 +63,7 @@ function RootNavigator() {
           <Stack.Screen name="game/[id]" options={{ gestureEnabled: false }} />
           <Stack.Screen name="archive" />
           <Stack.Screen name="album-builder" />
+          <Stack.Screen name="orders" />
           <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
           {/* Dünya ekranlarında parmakla gezinme var; kenardan kaydırma geri gitmesin. Geri düğmesi ekranda. */}

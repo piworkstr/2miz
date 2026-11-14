@@ -66,6 +66,16 @@ service cloud.firestore {
       return d.day == day && perkId == d.pid + '_s_' + day && d.code == hash[0:6];
     }
 
+    // Ayarlar (albüm fiyatları): herkes okur, yalnızca kurucu çift değiştirir.
+    match /config/{docId} {
+      allow read: if signedIn();
+      allow write: if isFounder();
+    }
+    // Yönetim ekranı bütün çiftlerin siparişlerini tek sorguda listeler.
+    match /{path=**}/albumOrders/{orderId} {
+      allow read: if isFounder();
+    }
+
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
@@ -137,8 +147,12 @@ service cloud.firestore {
 
       // Albüm baskı talepleri: üyeler oluşturur ve görür; durumu yalnızca UsDaily (Baskı Merkezi) değiştirir.
       match /albumOrders/{orderId} {
-        allow read: if isMember(coupleId);
-        allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid;
+        allow read: if isMember(coupleId) || isFounder();
+        // Uygulama siparişi "ödendi" olarak açamaz; durumu yalnızca kurucu çift ilerletir.
+        allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid
+          && request.resource.data.status in ['talep', 'odeme'];
+        allow update: if isFounder()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusAtMs', 'tracking']);
       }
 
       // Avantaj hareketleri (damga, ödül, indirim kodu): yalnızca oluşturulur; silinmez ve değişmez.

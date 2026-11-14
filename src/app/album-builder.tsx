@@ -4,12 +4,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import { AlbumOrderForm } from '../components/AlbumOrderForm';
 import { Button, Muted } from '../components/ui';
 import { loadAlbumInput, saveAlbumRequest } from '../lib/albumData';
 import { albumPreviewHtml } from '../lib/albumHtml';
 import { artAvatarHtmlAsync } from '../lib/avatarHtml';
 import { buildAlbum, PAGE_STEP, type AlbumInput, type AlbumOptions, type AlbumSize } from '../lib/albumLayout';
 import { dayKey } from '../lib/date';
+import { canOrder, priceOf, tl, useAlbumConfig } from '../lib/orders';
+import { usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
 import { useTrips } from '../lib/trips';
 import { useTheme } from '../lib/useTheme';
@@ -45,6 +48,11 @@ export default function AlbumBuilder() {
   const [page, setPage] = useState(0);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState(false);
+  const cfg = useAlbumConfig();
+  const plus = usePlus();
+  // Fiyat girilmiş ve sipariş açıksa sipariş formu; değilse eski baskı talebi.
+  const price = cfg && canOrder(cfg, size) ? priceOf(cfg, size, plus.paid) : null;
 
   const range = useMemo(() => {
     if (period.startsWith('trip:')) return { kind: 'trip' as const, tripId: period.slice(5) };
@@ -233,10 +241,27 @@ export default function AlbumBuilder() {
                 Baskı talebin alındı. Sipariş ve ödeme çok yakında; hazır olunca haber vereceğiz.
               </Text>
             </View>
+          ) : price ? (
+            <Button label={`Sipariş ver · ${tl(price.total)}`} onPress={() => setForm(true)} />
           ) : (
             <Button label="Baskı talebi bırak" onPress={request} busy={busy} />
           )}
         </View>
+      )}
+
+      {plan && price && (
+        <AlbumOrderForm
+          visible={form}
+          onClose={() => setForm(false)}
+          onDone={() => {
+            setForm(false);
+            router.replace('/orders');
+          }}
+          opts={opts}
+          pageCount={plan.pages.length}
+          price={price}
+          plusPct={cfg?.plusPct ?? 0}
+        />
       )}
 
       <Modal visible={!!tapped} transparent animationType="fade" onRequestClose={() => setTapped(null)}>

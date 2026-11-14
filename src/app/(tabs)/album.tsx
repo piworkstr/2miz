@@ -6,6 +6,8 @@ import { Card, Loading, Muted, Screen, Title } from '../../components/ui';
 import { prettyDate } from '../../lib/date';
 import { DeleteRequest } from '../../components/DeleteRequest';
 import { removeFromAlbum } from '../../lib/chat';
+import { useMyOrders } from '../../lib/orders';
+import { isFounder } from '../../lib/perks';
 import { usePhotos, type Photo } from '../../lib/photos';
 import { FREE, openPlus, usePlus } from '../../lib/plus';
 import { useTrips, type Trip } from '../../lib/trips';
@@ -142,6 +144,7 @@ export default function Album() {
         </View>
         <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimary} />
       </Pressable>
+      <OrdersLink />
 
       {(filter === 'all' || filter === 'trips') && (
         <Pressable
@@ -249,4 +252,25 @@ function taskTitle(page: Extract<Page, { kind: 'task' }>): string {
   const b = page.theirs?.taskId;
   if (a && b && a !== b) return `${taskById(a).title} · ${taskById(b).title}`;
   return taskById((a ?? b)!).title;
+}
+
+// Siparişi olan çift (ve bütün siparişleri yöneten kurucu çift) için Siparişler bağlantısı.
+function OrdersLink() {
+  const t = useTheme();
+  const { couple } = useSession();
+  const orders = useMyOrders(couple?.id);
+  const founder = isFounder(couple);
+  const open = (orders ?? []).filter((o) => o.status !== 'teslim' && o.status !== 'iptal' && o.status !== 'talep').length;
+  if (!founder && !(orders ?? []).length) return null;
+  return (
+    <Pressable
+      onPress={() => router.push('/orders')}
+      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 2 }}
+    >
+      <Ionicons name="cube-outline" size={16} color={t.colors.primary} />
+      <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
+        {founder ? 'Siparişleri yönet' : open ? `Siparişiniz yolda · durumu gör` : 'Siparişlerim'}
+      </Text>
+    </Pressable>
+  );
 }
