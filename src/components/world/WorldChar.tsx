@@ -84,15 +84,23 @@ export function WorldChar({
   const [flip, setFlip] = useState(false);
   const arrive = useRef(onArrive);
   arrive.current = onArrive;
+  // Yürürken derinlik: yolun önde kalan ucuna göre çizilir. Aksi hâlde arkaya doğru yürürken hedefin derinliği hemen
+  // uygulanır ve karakter geçtiği tarlaların, ekinlerin altında kalır.
+  const zSettled = useRef(z);
+  const zNow = useRef(z);
+  zNow.current = z;
+  const [zWalk, setZWalk] = useState<number | null>(null);
 
   useEffect(() => {
     const d = Math.hypot(x - cur.current.x, y - cur.current.y);
     if (d < 2) {
+      zSettled.current = zNow.current;
       arrive.current?.();
       return;
     }
     setFlip(x < cur.current.x);
     setWalking(true);
+    setZWalk(Math.max(zSettled.current, zNow.current));
     const anim = Animated.timing(pos, {
       toValue: { x, y },
       duration: Math.max(250, d / WALK_SPEED),
@@ -102,6 +110,8 @@ export function WorldChar({
     anim.start(({ finished }) => {
       cur.current = { x, y };
       setWalking(false);
+      zSettled.current = zNow.current;
+      setZWalk(null);
       if (finished) arrive.current?.();
     });
     return () => anim.stop();
@@ -132,7 +142,7 @@ export function WorldChar({
   return (
     <Animated.View
       pointerEvents="none"
-      style={{ position: 'absolute', left: 0, top: 0, zIndex: z, transform: pos.getTranslateTransform() }}
+      style={{ position: 'absolute', left: 0, top: 0, zIndex: zWalk ?? z, transform: pos.getTranslateTransform() }}
     >
       <View
         style={{

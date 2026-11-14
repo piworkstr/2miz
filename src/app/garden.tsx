@@ -167,7 +167,9 @@ function sprites(f: Farm, now: number): Spr[] {
     const { x, y } = center(r, c);
     const base = { x, y: y + TH / 2 + TW * 0.11, z: zOf(r, c) + 5, w: TW * 1.02 };
     const up = { x, y: y + TH * 0.32, z: zOf(r, c) + 6 };
-    if (t.k === 'soil') out.push({ key: `s${i}`, art: 'soil', ...base });
+    // Sürülmüş toprak yere yapışık bir çizim: hiçbir şeyi örtmemeli, bu yüzden zeminin hemen üstünde (en altta) çizilir;
+    // kendi aralarında arkadan öne sıralı kalsınlar diye küçük bir kesir eklenir.
+    if (t.k === 'soil') out.push({ key: `s${i}`, art: 'soil', ...base, z: 3 + (r + c) / 1000 });
     if (t.k === 'crop') {
       const p = Math.min(1, (now - t.at) / Math.max(1, t.ready - t.at));
       out.push({ key: `s${i}`, art: cropReady(t, now) ? t.crop : p < 0.35 ? 'sprout' : 'young', ...base });
@@ -230,7 +232,7 @@ function SpriteImg({ s }: { s: Spr }) {
   return (
     <Image
       source={a.src}
-      style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: s.z, opacity: s.o ?? 1 }}
+      style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
     />
   );
 }
