@@ -81,8 +81,9 @@ import {
   type TreeId,
 } from '../lib/farm';
 import { logActivityCapped } from '../lib/bond';
-import { openFarmBonus, useFarmBonuses } from '../lib/farm';
-import { bonusText } from '../lib/farmBonus';
+import { FarmBonusGift } from '../components/world/FarmBonusGift';
+import { useFarmBonuses } from '../lib/farm';
+import type { FarmBonus } from '../lib/farmBonus';
 import { ART } from '../lib/farmArt';
 import { finishScene, startScene, useOpenScene, type Scene } from '../lib/scenes';
 import { useSession } from '../lib/session';
@@ -498,7 +499,14 @@ export default function GardenScreen() {
   const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
   // Yönetimden gelen, açılmayı bekleyen hediye paketleri.
   const bonuses = useFarmBonuses(couple?.id);
-  const [opening, setOpening] = useState(false);
+  // Gösterilen paket açılınca listeden düşer; kutlama ekranı kapanana kadar elde tutulur. Kapatılan paket bu girişte yeniden çıkmaz.
+  const [gift, setGift] = useState<FarmBonus | null>(null);
+  const seenGifts = useRef(new Set<string>());
+  useEffect(() => {
+    if (gift) return;
+    const next = bonuses.find((b) => !seenGifts.current.has(b.id));
+    if (next) setGift(next);
+  }, [bonuses, gift]);
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [now, setNow] = useState(Date.now());
   const [sel, setSel] = useState<number | null>(null);
@@ -1201,54 +1209,6 @@ export default function GardenScreen() {
           <Ionicons name="contract-outline" size={20} color={INK} />
         </Pressable>
       )}
-      {bonuses.length > 0 && couple && user && (
-        <Pressable
-          disabled={opening}
-          onPress={async () => {
-            setOpening(true);
-            try {
-              const got = await openFarmBonus(couple.id, user.uid, bonuses[0].id);
-              if (got) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-                setToast(`Hediye açıldı: ${got} 🎁`);
-                setTimeout(() => setToast(''), 3500);
-              }
-            } catch {
-              setToast('Hediye açılamadı; bağlantıyı kontrol edip tekrar dene.');
-              setTimeout(() => setToast(''), 3000);
-            } finally {
-              setOpening(false);
-            }
-          }}
-          style={{ position: 'absolute', top: insets.top + 92, left: 40, right: 40, alignItems: 'center' }}
-        >
-          <View
-            style={{
-              backgroundColor: '#FFF7E0',
-              borderColor: '#E0A43A',
-              borderWidth: 1.5,
-              borderRadius: 18,
-              paddingHorizontal: 14,
-              paddingVertical: 9,
-              alignItems: 'center',
-              gap: 2,
-              opacity: opening ? 0.6 : 1,
-            }}
-          >
-            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 14, color: '#5A3E0A' }}>
-              🎁 2miz’den hediye geldi
-            </Text>
-            {!!bonuses[0].note && (
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={2} style={{ fontSize: 12, color: '#5A3E0A', textAlign: 'center' }}>
-                {bonuses[0].note}
-              </Text>
-            )}
-            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, fontWeight: '700', color: '#8A5A00' }}>
-              {`${bonusText(bonuses[0])} · açmak için dokun`}
-            </Text>
-          </View>
-        </Pressable>
-      )}
       {!!toast && (
         <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 52, left: 56, right: 56, alignItems: 'center' }}>
           <Text
@@ -1385,6 +1345,19 @@ export default function GardenScreen() {
           )}
         </View>
       </View>
+      {/* Yönetimden gelen hediye paketi: her şeyin üstünde, ortada. */}
+      {gift && couple && user && (
+        <FarmBonusGift
+          key={gift.id}
+          bonus={gift}
+          coupleId={couple.id}
+          uid={user.uid}
+          onClose={() => {
+            seenGifts.current.add(gift.id);
+            setGift(null);
+          }}
+        />
+      )}
     </View>
   );
 }
