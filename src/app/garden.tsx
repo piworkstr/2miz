@@ -798,6 +798,9 @@ export default function GardenScreen() {
   const busy = useRef(false);
   // Yürünüp henüz kaydedilmemiş iş (ekran kapanırsa sıradakilerle birlikte topluca kaydedilir).
   const current = useRef<Action | null>(null);
+  // Yürünüp bitirilmiş, topluca kaydedilmeyi bekleyen işler. Art arda verilen işler (hepsini sula, topla, çit diz…)
+  // tek tek değil 10'arlı tek yazmayla kaydedilir: hem hızlı, hem veritabanı kotasını yemez.
+  const batch = useRef<Action[]>([]);
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
   // Bekleyen işler o anda animasyonsuz, tek yazmayla kaydedilir. Geri dönünce yarıda kalmış yürüyüş serbest bırakılır.
   const flushCtx = useRef({ coupleId: couple?.id, uid, myName, partnerName });
@@ -811,7 +814,8 @@ export default function GardenScreen() {
       }
       // iOS'ta bildirim paneli, izin penceresi gibi geçici durumlar 'inactive' gelir; işler yalnız gerçekten arka plana geçince kaydedilir.
       if (state !== 'background') return;
-      const pending = [...(current.current ? [current.current] : []), ...queue.current];
+      const pending = [...batch.current, ...(current.current ? [current.current] : []), ...queue.current];
+      batch.current = [];
       current.current = null;
       queue.current = [];
       const c = flushCtx.current;
@@ -859,6 +863,28 @@ export default function GardenScreen() {
         if (current.current !== job) continue;
         current.current = null;
         const before = farmOf(couple).tiles[job.i];
+        // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
+        const plain =
+          !('scene' in job && job.scene) &&
+          !['kiss', 'deliver', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
+        if (plain && (queue.current.length > 0 || batch.current.length > 0)) {
+          if (job.a === 'water' && before?.k === 'crop' && before.by !== uid) together = true;
+          else solo = true;
+          batch.current.push(job);
+          if (queue.current.length > 0 && batch.current.length < 10) continue;
+        }
+        if (batch.current.length) {
+          const acts = batch.current;
+          batch.current = [];
+          try {
+            const n = await Promise.race([farmFlush(couple.id, uid, myName, partnerName, acts), sleep(12000).then(() => -1)]);
+            if (n === -1) flash('Bağlantı yavaş, tekrar dene');
+            else if (n < acts.length) flash(n ? `${n} iş yapıldı, ${acts.length - n} olmadı` : 'Olmadı');
+          } catch {
+            flash('Olmadı, tekrar dene');
+          }
+          if (acts.includes(job)) continue;
+        }
         try {
           // Bağlantı takılırsa sıra sonsuza dek beklemesin.
           const r = await Promise.race([
