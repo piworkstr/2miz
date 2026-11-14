@@ -1,3 +1,4 @@
+import { logUse } from './usage';
 import {
   collection,
   deleteDoc,
@@ -52,6 +53,7 @@ export async function proposeDate(coupleId: string, key: string, uid: string, in
     selfie: null,
     createdAt: serverTimestamp(),
   });
+  logUse(coupleId, 'date');
 }
 
 export async function confirmDate(coupleId: string, key: string) {

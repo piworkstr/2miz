@@ -3,6 +3,7 @@ import { doc, increment, updateDoc } from 'firebase/firestore';
 import { dayKey } from './date';
 import { db } from './firebase';
 import type { Couple } from './session';
+import { usageFields, type Feature } from './usage';
 
 // "Kalp" ve iletişim serisi (Snapchat'teki alev gibi).
 // Her etkileşim çift belgesine günlük bir sayaç olarak yazılır: activity.YYYY-MM-DD.uid
@@ -22,9 +23,27 @@ export const WEIGHT = {
   farmTogether: 3,
 };
 export type ActivityKind = keyof typeof WEIGHT;
+// Her etkileşim türünün istatistikte sayıldığı bölüm.
+const FEATURE_OF: Record<ActivityKind, Feature> = {
+  message: 'sohbet',
+  voice: 'sohbet',
+  photo: 'sohbet',
+  task: 'gorev',
+  game: 'oyun',
+  bonus: 'cark',
+  album: 'album',
+  trip: 'seyahat',
+  coupon: 'kupon',
+  farm: 'ciftlik',
+  farmTogether: 'ciftlik',
+};
 
-export async function logActivity(coupleId: string, uid: string, kind: ActivityKind, times = 1) {
-  await updateDoc(doc(db, 'couples', coupleId), { [`activity.${dayKey()}.${uid}`]: increment(WEIGHT[kind] * times) }).catch(() => {});
+// features: varsayılan bölüm yerine (ya da yanında) sayılacak bölümler; ör. oyunda oyunun türü.
+export async function logActivity(coupleId: string, uid: string, kind: ActivityKind, times = 1, features?: Feature[]) {
+  await updateDoc(doc(db, 'couples', coupleId), {
+    [`activity.${dayKey()}.${uid}`]: increment(WEIGHT[kind] * times),
+    ...usageFields(features ?? [FEATURE_OF[kind]]),
+  }).catch(() => {});
   // Bugün bir şey yaptın: akşamki "serin bitmek üzere" hatırlatmasına gerek kalmadı.
   Notifications.cancelScheduledNotificationAsync(RISK_ID).catch(() => {});
 }

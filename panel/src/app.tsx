@@ -16,10 +16,13 @@ import { Admins, Couples, FeedbackList, Prices, Reports, type Feedback, type Rep
 import { Orders } from './orders';
 import { Overview } from './overview';
 import { Partners } from './partners';
+import { Revenue, Stats } from './stats';
 
-type Tab = 'genel' | 'siparis' | 'mekan' | 'cift' | 'bildirim' | 'sikayet' | 'fiyat' | 'yonetici';
+type Tab = 'genel' | 'gelir' | 'istatistik' | 'siparis' | 'mekan' | 'cift' | 'bildirim' | 'sikayet' | 'fiyat' | 'yonetici';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'genel', label: 'Genel bakış' },
+  { id: 'gelir', label: 'Gelir' },
+  { id: 'istatistik', label: 'İstatistik' },
   { id: 'siparis', label: 'Siparişler' },
   { id: 'mekan', label: 'Mekanlar' },
   { id: 'cift', label: 'Çiftler ve Plus' },
@@ -176,6 +179,8 @@ function Panel({ user }: { user: User }) {
         {tab === 'genel' && (
           <Overview orders={orders} partners={partners} feedback={feedback} reports={reports} go={(t) => setTab(t as Tab)} />
         )}
+        {tab === 'gelir' && <Revenue orders={orders} />}
+        {tab === 'istatistik' && <Stats />}
         {tab === 'siparis' && <Orders orders={orders} />}
         {tab === 'mekan' && <Partners partners={partners} />}
         {tab === 'cift' && <Couples />}

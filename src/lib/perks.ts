@@ -4,6 +4,7 @@ import { useEffect, useState, type ComponentProps } from 'react';
 import { DEMO_COUPLE } from './demoPersona';
 import { db } from './firebase';
 import type { Couple } from './session';
+import { usageFields } from './usage';
 
 // Avantajlar: anlaşmalı mekanlarda çiftlere özel damga kartı ve indirim kodu.
 // Amaç önce kullanıcı getirmek: mekandaki kart çifti uygulamaya çeker, kart ancak iki kişi eşleşince açılır.
@@ -243,6 +244,7 @@ export async function addStamp(couple: Couple, uid: string, pid: string, code: s
     code: code.toLowerCase(),
   });
   batch.set(visitRef(pid, couple.id), visitData(couple, !perks.some((x) => x.pid === pid), now), { merge: true });
+  batch.update(doc(db, 'couples', couple.id), usageFields(['avantaj']));
   try {
     await batch.commit();
     return 'ok';
@@ -273,6 +275,7 @@ export async function getCode(couple: Couple, uid: string, p: Partner, perks: Pe
     code: `2MZ-${rnd(4)}`,
   });
   batch.set(visitRef(p.id, couple.id), visitData(couple, !perks.some((x) => x.pid === p.id), now), { merge: true });
+  batch.update(doc(db, 'couples', couple.id), usageFields(['avantaj']));
   await batch.commit();
 }
 

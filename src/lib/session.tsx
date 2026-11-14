@@ -53,6 +53,8 @@ export type Couple = {
   seenTasks?: string[]; // yakın zamanda gösterilen görevler (tekrar etmesin)
   favorites?: string[]; // favori görevler (arşiv ve çark)
   lastBonusDay?: string; // bonus görev puanı günde bir kez
+  use?: import('./usage').Usage; // bölüm kullanım sayaçları (istatistik)
+  os?: Record<string, { p: string; v: string }>; // üyelerin platformu ve uygulama sürümü (istatistik)
   activity?: Record<string, Record<string, number>>; // günlük etkileşim puanları (kalp ve iletişim serisi)
   openBonus?: { id: string; taskId: string; by: string; atMs: number }[]; // kabul edilmiş, bekleyen bonus görevler
   seenGames?: { thisthat?: number[]; knowme?: number[] }; // oyunlarda görülen sorular

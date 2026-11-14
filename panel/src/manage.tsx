@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react';
 import { saveAlbumConfig, tl, type AlbumConfig } from '../../src/lib/orders';
 import { db } from './firebase';
+import { saveCosts, useCosts } from './stats';
 
 const day = (ms: number | undefined) =>
   ms ? new Date(ms).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
@@ -270,6 +271,16 @@ export function Prices({ cfg }: { cfg: AlbumConfig | null | undefined }) {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const costs = useCosts();
+  const [c21, setC21] = useState('');
+  const [cA4, setCA4] = useState('');
+  const [cShip, setCShip] = useState('');
+  useEffect(() => {
+    if (!costs) return;
+    setC21(String(costs['21x21'] ?? ''));
+    setCA4(String(costs.A4 ?? ''));
+    setCShip(String(costs.shipping ?? ''));
+  }, [costs]);
   useEffect(() => {
     if (cfg === undefined) return;
     setP21(cfg?.prices?.['21x21'] ? String(cfg.prices['21x21']) : '');
@@ -291,6 +302,7 @@ export function Prices({ cfg }: { cfg: AlbumConfig | null | undefined }) {
     setBusy(true);
     try {
       await saveAlbumConfig({ prices: { '21x21': a, A4: b }, shipping: k, plusPct: d, open });
+      if (c21 || cA4 || cShip) await saveCosts({ '21x21': num(c21 || '0'), A4: num(cA4 || '0'), shipping: num(cShip || '0') });
       setMsg('Kaydedildi.');
     } catch {
       setMsg('Kaydedilemedi. Firestore kuralları güncel mi?');
@@ -324,6 +336,23 @@ export function Prices({ cfg }: { cfg: AlbumConfig | null | undefined }) {
             <input inputMode="numeric" value={pct} onChange={(e) => setPct(e.target.value)} />
           </label>
         </div>
+        <p className="muted small">
+          Bize maliyeti (isteğe bağlı): yalnızca Gelir bölümündeki kâr hesabında kullanılır, kullanıcılar göremez.
+        </p>
+        <div className="form">
+          <label>
+            21×21 baskı maliyeti (TL)
+            <input inputMode="numeric" value={c21} onChange={(e) => setC21(e.target.value)} />
+          </label>
+          <label>
+            A4 baskı maliyeti (TL)
+            <input inputMode="numeric" value={cA4} onChange={(e) => setCA4(e.target.value)} />
+          </label>
+          <label>
+            Kargo maliyeti (TL)
+            <input inputMode="numeric" value={cShip} onChange={(e) => setCShip(e.target.value)} />
+          </label>
+        </div>
         <label className="check">
           <input type="checkbox" checked={open} onChange={(e) => setOpen(e.target.checked)} />
           Sipariş alınsın (kapalıyken çiftler yalnızca baskı talebi bırakabilir)
@@ -349,7 +378,11 @@ export function Admins({ me }: { me: string }) {
     () =>
       onSnapshot(
         collection(db, 'admins'),
-        (s) => setList(s.docs.map((d) => ({ email: d.id, ...(d.data() as { addedBy?: string; atMs?: number }) }))),
+        // '_' ile başlayan belgeler yönetici değil, yönetim ayarıdır (ör. maliyetler)
+        (s) =>
+          setList(
+            s.docs.filter((d) => !d.id.startsWith('_')).map((d) => ({ email: d.id, ...(d.data() as { addedBy?: string; atMs?: number }) })),
+          ),
         () => setList([]),
       ),
     [],

@@ -1,3 +1,4 @@
+import type { Feature } from './usage';
 import {
   addDoc,
   collection,
@@ -298,11 +299,13 @@ export function useMyOpenInvite(coupleId: string | undefined, uid: string | unde
 export async function finishGame(coupleId: string, id: string, uid: string) {
   const gameRef = doc(gamesCol(coupleId), id);
   const coupleRef = doc(db, 'couples', coupleId);
+  let type: GameType | null = null;
   await runTransaction(db, async (tx) => {
     const g = await tx.get(gameRef);
     const c = await tx.get(coupleRef);
     if (!g.exists() || !c.exists()) return;
     const game = g.data() as Game;
+    type = game.type;
     const couple = c.data() as Couple;
     const finished = { ...(game.finished ?? {}), [uid]: true };
     const both = [game.from, game.to].every((m) => finished[m]);
@@ -311,7 +314,7 @@ export async function finishGame(coupleId: string, id: string, uid: string) {
       tx.update(coupleRef, { points: (couple.points ?? 0) + GAME_POINTS, lastGameDay: dayKey() });
     }
   });
-  logActivity(coupleId, uid, 'game');
+  logActivity(coupleId, uid, 'game', 1, type ? ['oyun', `oyun_${type}` as Feature] : ['oyun']);
 }
 
 // ---------- Bu mu, o mu? ----------

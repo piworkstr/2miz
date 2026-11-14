@@ -1,3 +1,4 @@
+import { logUse } from './usage';
 import * as Cal from 'expo-calendar/legacy';
 import { addDoc, collection, deleteDoc, doc, documentId, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -68,6 +69,7 @@ export async function addEvent(
   notify?: { to: string | null; fromName: string },
 ) {
   await addDoc(eventsCol(coupleId), { ...e, title: e.title.trim().slice(0, 60), createdAtMs: Date.now() });
+  logUse(coupleId, 'takvim');
   if (notify?.to && e.owner !== e.by) {
     const [y, mo, d] = e.day.split('-').map(Number);
     const when = `${d} ${trMonth(mo - 1)}${e.time ? ` ${e.time}` : ''}`;

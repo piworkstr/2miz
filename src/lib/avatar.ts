@@ -17,7 +17,7 @@ export async function setMood(
   notify?: { to: string | null; fromName: string },
 ) {
   await updateDoc(doc(db, 'users', uid), { mood: key ? { key, atMs: Date.now() } : null });
-  if (key && coupleId) logActivity(coupleId, uid, 'message');
+  if (key && coupleId) logActivity(coupleId, uid, 'message', 1, ['ruhhali']);
   if (key && notify?.to) {
     notifyPartner(notify.to, notify.fromName, `Ruh hali: ${MOODS[key].emoji} ${MOODS[key].label}`, { type: 'mood', url: '/' });
   }

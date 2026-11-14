@@ -8,6 +8,7 @@ import { CoupleDock, DOCK_GAP, DOCK_H, dockOn } from '../../components/CoupleDoc
 import { Glass, hexA } from '../../components/Glass';
 import { InviteModal } from '../../components/InviteModal';
 import { useUnreadCount } from '../../lib/chat';
+import { useDeviceStamp } from '../../lib/deviceStamp';
 import { usePushSetup } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { tx, type ThemeId } from '../../lib/theme';
@@ -108,6 +109,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { user, couple } = useSession();
   usePushSetup(user?.uid);
+  useDeviceStamp(couple, user?.uid);
   const pad = TAB_BAR_H + insets.bottom + 8;
   const dockPad = dockOn(couple) ? DOCK_H + DOCK_GAP : 0;
   const label = (s: string) => tx(t, s);
