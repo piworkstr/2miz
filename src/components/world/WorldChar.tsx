@@ -39,8 +39,9 @@ const FEM_TOPS = new Set([
   'froBand',
   'hijab',
 ]);
-// Gövde seçimi: profilde cinsiyet yok; avatarın saç ve sakalından çıkarılır.
+// Gövde seçimi: profilde cinsiyet belirtilmişse o; belirtilmemişse avatarın saç ve sakalından çıkarılır.
 export function bodyOf(profile: Profile | null | undefined): 'm' | 'f' {
+  if (profile?.gender) return profile.gender;
   const a = profile?.avatar;
   if (a?.kind === 'art') return artBody(a.opts);
   if (a?.kind === 'drawn') {

@@ -1,5 +1,6 @@
 import qrcode from 'qrcode-generator';
 import { useEffect, useMemo, useState } from 'react';
+import { AUDIENCE_OPTIONS } from '../../src/lib/gender';
 import {
   CATS,
   loadSecret,
@@ -100,6 +101,7 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
   const [period, setPeriod] = useState<Period>(partner?.period ?? 'month');
   const [ttl, setTtl] = useState(String(partner?.ttlMin ?? 15));
   const [note, setNote] = useState(partner?.note ?? '');
+  const [audience, setAudience] = useState<'f' | 'm' | ''>(partner?.audience ?? '');
   const [active, setActive] = useState(partner?.active ?? true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -134,6 +136,7 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
           offer: offer.trim(),
           ...(type === 'stamp' ? { goal: g, welcome } : { period, ttlMin: m }),
           note: note.trim(),
+          audience,
           active,
         },
         true, // basılı kart: kasa kodu sabit
@@ -250,6 +253,16 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
               </label>
             </>
           )}
+          <label>
+            Kime uygun (herkese görünür; uygun kişide üstte çıkar)
+            <select value={audience} onChange={(e) => setAudience(e.target.value as 'f' | 'm' | '')}>
+              {AUDIENCE_OPTIONS.map((o) => (
+                <option key={o.id || 'all'} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             Koşullar (isteğe bağlı)
             <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={120} placeholder="Hafta içi geçerlidir" />

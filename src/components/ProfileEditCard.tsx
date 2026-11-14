@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { updateProfile } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { deleteField, doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ageFrom, DateInput, toDateKey, type DateParts } from './DateInput';
 import { Avatar } from './Avatar';
 import { auth, db } from '../lib/firebase';
+import { GENDER_OPTIONS, type Gender } from '../lib/gender';
 import { INTERESTS } from '../lib/interests';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
@@ -26,6 +27,7 @@ export function ProfileEditCard() {
   const [birth, setBirth] = useState<DateParts>({ d: '', m: '', y: '' });
   const [phone, setPhone] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
+  const [gender, setGender] = useState<Gender | ''>('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   if (!user || !profile) return null;
@@ -35,6 +37,7 @@ export function ProfileEditCard() {
     setBirth(partsOf(profile.birthDate));
     setPhone(profile.phone ?? '');
     setInterests(profile.interests ?? []);
+    setGender(profile.gender ?? '');
     setError('');
     setOpen(true);
   };
@@ -54,6 +57,7 @@ export function ProfileEditCard() {
         birthDate: key,
         phone: phone.replace(/[^0-9+]/g, '').slice(0, 16),
         interests,
+        gender: gender || deleteField(),
       });
       if (couple) await updateDoc(doc(db, 'couples', couple.id), { [`names.${user.uid}`]: n }).catch(() => {});
       if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: n }).catch(() => {});
@@ -95,6 +99,33 @@ export function ProfileEditCard() {
           <DateInput value={birth} onChange={setBirth} />
           <Muted style={{ fontSize: 12 }}>Telefon numaran (isteğe bağlı · yalnızca partnerin görür, oyunda “Ara” için)</Muted>
           <Input value={phone} onChangeText={setPhone} maxLength={18} placeholder="+90 5xx xxx xx xx" keyboardType="phone-pad" />
+          <Muted style={{ fontSize: 12 }}>Cinsiyetin (isteğe bağlı · yalnızca önerileri sana göre sıralamak için)</Muted>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {GENDER_OPTIONS.map((o) => {
+              const on = gender === o.id;
+              return (
+                <Pressable
+                  key={o.id || 'yok'}
+                  onPress={() => setGender(o.id)}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: on ? t.colors.primary : t.colors.border,
+                    backgroundColor: on ? t.colors.primarySoft : t.colors.card,
+                  }}
+                >
+                  <Text
+                    maxFontSizeMultiplier={1.25}
+                    style={{ color: on ? t.colors.onPrimarySoft : t.colors.text, fontWeight: on ? '700' : '400' }}
+                  >
+                    {o.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <Muted style={{ fontSize: 12 }}>Sevdiklerin (partnerin “Birbirinizi tanıyın” bölümünde görür)</Muted>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {INTERESTS.map((i) => {

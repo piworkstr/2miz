@@ -362,9 +362,10 @@ export const DEFAULT_ART: ArtOpts = {
   bg: '#ffd5dc',
 };
 
-export function randomArt(): ArtOpts {
+// pref: profilde cinsiyet belirtilmişse rastgele avatar ona göre başlar; belirtilmemişse yazı tura.
+export function randomArt(pref?: 'f' | 'm'): ArtOpts {
   const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
-  const fem = Math.random() < 0.5;
+  const fem = pref ? pref === 'f' : Math.random() < 0.5;
   const hairs = ART.hair.filter((h) => (fem ? h.f : h.m));
   return {
     skin: pick(ART.skin.slice(0, 6)),

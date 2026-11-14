@@ -13,6 +13,7 @@ export type Profile = {
   birthDate?: string; // YYYY-MM-DD
   phone?: string; // partnerin arayabilmesi için (isteğe bağlı); yalnızca partner görür
   interests?: string[];
+  gender?: import('./gender').Gender; // isteğe bağlı; yoksa kişiselleştirme yapılmaz
   notifyTime?: 'sabah' | 'ogle' | 'aksam';
   onboarded?: boolean;
   avatar?: import('./avatar').AvatarData;

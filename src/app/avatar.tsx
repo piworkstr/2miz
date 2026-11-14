@@ -35,7 +35,6 @@ export default function AvatarScreen() {
   const [opts, setOpts] = useState<ArtOpts>(current?.kind === 'art' ? { ...DEFAULT_ART, ...current.opts } : DEFAULT_ART);
   const [photo, setPhoto] = useState<string | null>(current?.kind === 'photo' ? current.photo : null);
   const [cat, setCat] = useState<Cat>('hair');
-  const [hairSet, setHairSet] = useState<'f' | 'm'>('f');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const catInfo = CATS.find((c) => c.key === cat)!;
@@ -79,7 +78,6 @@ export default function AvatarScreen() {
   // seçenekler
   const colors = catInfo.color ? (ART[cat as 'skin' | 'hairColor' | 'clothColor' | 'bg'] as string[]) : null;
   let items: ArtItem[] | null = catInfo.color ? null : (ART[cat as 'face' | 'hair' | 'beard' | 'glasses' | 'head' | 'top'] as ArtItem[]);
-  if (cat === 'hair' && items) items = items.filter((h) => h.id === 'none' || (hairSet === 'f' ? h.f : h.m));
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top']}>
@@ -110,7 +108,7 @@ export default function AvatarScreen() {
               <ArtAvatar opts={opts} size={200} variant="bust" />
             </View>
             <Pressable
-              onPress={() => setOpts(randomArt())}
+              onPress={() => setOpts(randomArt(profile?.gender))}
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.6 : 1 })}
             >
               <Ionicons name="shuffle" size={18} color={t.colors.primary} />
@@ -134,17 +132,6 @@ export default function AvatarScreen() {
               </Pressable>
             ))}
           </ScrollView>
-          {cat === 'hair' && (
-            <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', paddingTop: 4 }}>
-              {(['f', 'm'] as const).map((k) => (
-                <Pressable key={k} onPress={() => setHairSet(k)} style={[chip(hairSet === k), { paddingVertical: 5 }]}>
-                  <Text maxFontSizeMultiplier={1.25} style={[chipText(hairSet === k), { fontSize: 12 }]}>
-                    {k === 'f' ? 'Kadın' : 'Erkek'}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
 
           <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 16, justifyContent: 'center' }}>
             {colors?.map((v) => {

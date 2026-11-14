@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Button, ErrorText, Muted, Screen, Title } from '../components/ui';
 import { db } from '../lib/firebase';
+import { GENDER_OPTIONS, type Gender } from '../lib/gender';
 import { INTERESTS } from '../lib/interests';
 import { useSession, type Profile } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
@@ -17,6 +18,7 @@ export default function Setup() {
   const t = useTheme();
   const { user } = useSession();
   const [interests, setInterests] = useState<string[]>([]);
+  const [gender, setGender] = useState<Gender | ''>('');
   const [time, setTime] = useState<Profile['notifyTime']>('aksam');
   const [busy, setBusy] = useState<'save' | 'skip' | null>(null);
   const [error, setError] = useState('');
@@ -30,7 +32,10 @@ export default function Setup() {
     setError('');
     setBusy(skip ? 'skip' : 'save');
     try {
-      await updateDoc(doc(db, 'users', user.uid), skip ? { onboarded: true } : { interests, notifyTime: time, onboarded: true });
+      await updateDoc(
+        doc(db, 'users', user.uid),
+        skip ? { onboarded: true } : { interests, notifyTime: time, onboarded: true, ...(gender ? { gender } : {}) },
+      );
     } catch {
       setError('Kaydedilemedi, tekrar dene.');
       setBusy(null);
@@ -64,6 +69,26 @@ export default function Setup() {
                 style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}
               >
                 {i}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
+        Cinsiyetin (isteğe bağlı)
+      </Text>
+      <Muted>Yalnızca önerileri sana göre sıralamak için. Partnerinle eşleşmeni etkilemez.</Muted>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {GENDER_OPTIONS.map((o) => {
+          const on = gender === o.id;
+          return (
+            <Pressable key={o.id || 'yok'} onPress={() => setGender(o.id)} style={chip(on)}>
+              <Text
+                maxFontSizeMultiplier={1.25}
+                style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}
+              >
+                {o.label}
               </Text>
             </Pressable>
           );

@@ -38,6 +38,7 @@ export type Partner = {
   period?: Period; // indirim kodu: ne sıklıkla alınır
   ttlMin?: number; // indirim kodu kaç dakika geçerli
   note?: string; // koşullar (ör. hafta içi geçerli)
+  audience?: 'f' | 'm' | ''; // kime uygun (boş = herkes); teklif herkese görünür, uygun kişide üstte çıkar
   active: boolean;
   createdAtMs: number;
 };

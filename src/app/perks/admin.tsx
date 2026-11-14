@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { QR } from '../../components/QR';
 import { Button, Card, ErrorText, Input, Loading, Muted, Screen, T, Title } from '../../components/ui';
+import { AUDIENCE_OPTIONS } from '../../lib/gender';
 import {
   CATS,
   isFounder,
@@ -131,6 +132,7 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
   const [period, setPeriod] = useState<Period>(partner?.period ?? 'month');
   const [ttl, setTtl] = useState(String(partner?.ttlMin ?? 15));
   const [note, setNote] = useState(partner?.note ?? '');
+  const [audience, setAudience] = useState<'f' | 'm' | ''>(partner?.audience ?? '');
   const [active, setActive] = useState(partner?.active ?? true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -165,6 +167,7 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
           offer: offer.trim(),
           ...(type === 'stamp' ? { goal: g, welcome } : { period, ttlMin: m }),
           note: note.trim(),
+          audience,
           active,
         },
         true, // basılı kart: kasa kodu sabit
@@ -258,6 +261,8 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
         </>
       )}
 
+      {label('Kime uygun (herkese görünür; uygun kişide üstte çıkar)')}
+      <Chips value={audience} options={AUDIENCE_OPTIONS.map((o) => [o.id, o.label])} onChange={setAudience} />
       {label('Koşullar (isteğe bağlı)')}
       <Input value={note} onChangeText={setNote} placeholder="Hafta içi geçerlidir" maxLength={120} />
 

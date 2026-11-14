@@ -10,11 +10,13 @@ import { useTheme } from '../../lib/useTheme';
 // Avantajlar: anlaşmalı mekanların listesi. Damga kartlarında ilerleme, indirimlerde "Kod" etiketi görünür.
 export default function Perks() {
   const t = useTheme();
-  const { couple } = useSession();
+  const { couple, profile } = useSession();
   const partners = usePartners();
   const perks = usePerks(couple?.id);
   if (!couple || partners === null || perks === null) return <Loading />;
-  const active = partners.filter((p) => p.active);
+  // Kişiye uygun teklifler üstte; cinsiyet belirtilmemişse sıra değişmez.
+  const mine = (p: Partner) => !!profile?.gender && p.audience === profile.gender;
+  const active = partners.filter((p) => p.active).sort((a, b) => Number(mine(b)) - Number(mine(a)));
   const cities = [...new Set(active.map((p) => p.city))];
 
   return (
@@ -33,7 +35,7 @@ export default function Perks() {
       </Muted>
 
       {active.map((p) => (
-        <Row key={p.id} p={p} perks={perks} />
+        <Row key={p.id} p={p} perks={perks} forMe={mine(p)} />
       ))}
 
       {isFounder(couple) && (
@@ -51,7 +53,7 @@ export default function Perks() {
   );
 }
 
-function Row({ p, perks }: { p: Partner; perks: Perk[] }) {
+function Row({ p, perks, forMe }: { p: Partner; perks: Perk[]; forMe: boolean }) {
   const t = useTheme();
   const cat = CATS[p.cat] ?? CATS.diger;
   const card = p.type === 'stamp' ? cardOf(p, perks) : null;
@@ -68,6 +70,11 @@ function Row({ p, perks }: { p: Partner; perks: Perk[] }) {
           <View style={{ flex: 1, gap: 2 }}>
             <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{p.name}</T>
             <Muted>{p.offer}</Muted>
+            {forMe && (
+              <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, fontWeight: '700', color: t.colors.primary }}>
+                Senin için
+              </Text>
+            )}
           </View>
           {code && (
             <View
