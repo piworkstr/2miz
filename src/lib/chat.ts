@@ -48,7 +48,9 @@ function audioCol(coupleId: string) {
   return collection(db, 'couples', coupleId, 'messageAudio');
 }
 
-export function useMessages(coupleId: string | undefined, max = 150) {
+// max: ekranda tutulan son mesaj sayısı. Her dinleme (ve uzun aradan sonra her geri dönüş) bu kadar okuma harcar;
+// bu yüzden küçük başlar, kullanıcı yukarı kaydırdıkça sohbet ekranı büyütür.
+export function useMessages(coupleId: string | undefined, max = 50) {
   const [messages, setMessages] = useState<Message[] | null>(null);
   useEffect(() => {
     if (!coupleId) return;
@@ -303,7 +305,7 @@ export function useUnreadCount() {
   useEffect(() => {
     if (!couple?.id) return;
     return onSnapshot(
-      query(messagesCol(couple.id), orderBy('createdAtMs', 'desc'), limit(20)),
+      query(messagesCol(couple.id), orderBy('createdAtMs', 'desc'), limit(8)), // rozet için son birkaç mesaj yeter
       (snap) => setLatest(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Message, 'id'>) }))),
       () => setLatest([]),
     );

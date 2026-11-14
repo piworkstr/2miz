@@ -6,7 +6,7 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { collection, doc, getDoc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useAlbumConfig, useAllOrders } from '../../src/lib/orders';
@@ -36,11 +36,27 @@ function useList<T>(name: string, enabled: boolean): T[] | null {
   const [list, setList] = useState<T[] | null>(null);
   useEffect(() => {
     if (!enabled) return;
-    return onSnapshot(
-      query(collection(db, name), orderBy('createdAt', 'desc'), limit(300)),
-      (s) => setList(s.docs.map((d) => ({ id: d.id, ...d.data() }) as T)),
-      () => setList([]),
-    );
+    // Canlı dinleme yok: panel açık kaldıkça her yeni kayıt okuma kotası harcamasın. Sekmeye dönünce (en çok dakikada bir) yenilenir.
+    let last = 0;
+    const load = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - last < 60000) return;
+      last = Date.now();
+      getDocs(query(collection(db, name), orderBy('createdAt', 'desc'), limit(100)))
+        .then((s) => setList(s.docs.map((d) => ({ id: d.id, ...d.data() }) as T)))
+        .catch(() => setList((l) => l ?? []));
+    };
+    load();
+    // Panelden yapılan değişiklikten sonra (durum güncelleme) beklemeden yenile.
+    const force = () => {
+      last = 0;
+      load();
+    };
+    document.addEventListener('visibilitychange', load);
+    window.addEventListener('panel-reload', force);
+    return () => {
+      document.removeEventListener('visibilitychange', load);
+      window.removeEventListener('panel-reload', force);
+    };
   }, [name, enabled]);
   return list;
 }

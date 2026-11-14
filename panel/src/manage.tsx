@@ -296,7 +296,9 @@ export function FeedbackList({ list }: { list: Feedback[] | null }) {
   const real = list.filter((f) => f.kind !== 'olay');
   const shown = all ? real : real.filter((f) => f.status !== 'yapildi');
   const set = (f: Feedback, status: 'yeni' | 'yapildi') =>
-    updateDoc(doc(db, 'feedback', f.id), { status }).catch(() => alert('Kaydedilemedi.'));
+    updateDoc(doc(db, 'feedback', f.id), { status })
+      .then(() => window.dispatchEvent(new Event('panel-reload')))
+      .catch(() => alert('Kaydedilemedi.'));
   return (
     <>
       <div className="spread">
@@ -354,7 +356,10 @@ export type Report = {
 
 export function Reports({ list }: { list: Report[] | null }) {
   if (list === null) return <p className="muted">Yükleniyor…</p>;
-  const done = (r: Report) => updateDoc(doc(db, 'reports', r.id), { status: 'incelendi' }).catch(() => alert('Kaydedilemedi.'));
+  const done = (r: Report) =>
+    updateDoc(doc(db, 'reports', r.id), { status: 'incelendi' })
+      .then(() => window.dispatchEvent(new Event('panel-reload')))
+      .catch(() => alert('Kaydedilemedi.'));
   return (
     <>
       <div>

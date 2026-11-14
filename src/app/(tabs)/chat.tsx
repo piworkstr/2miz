@@ -52,7 +52,9 @@ import { useTheme } from '../../lib/useTheme';
 export default function Chat() {
   const t = useTheme();
   const { user, couple, partnerName, partnerId, profile, partnerProfile } = useSession();
-  const messages = useMessages(couple?.id);
+  // Son 50 mesajla açılır; en üste kaydırınca 50'şer eski mesaj daha yüklenir.
+  const [msgMax, setMsgMax] = useState(50);
+  const messages = useMessages(couple?.id, msgMax);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [menu, setMenu] = useState<Message | null>(null);
@@ -194,6 +196,10 @@ export default function Chat() {
       <View style={{ flex: 1 }}>
         <FlatList
           inverted
+          onEndReachedThreshold={0.3}
+          onEndReached={() => {
+            if (messages && messages.length >= msgMax && msgMax < 600) setMsgMax(msgMax + 50);
+          }}
           data={visible}
           keyExtractor={(m) => m.id}
           keyboardDismissMode="on-drag"
