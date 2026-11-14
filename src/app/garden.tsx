@@ -247,7 +247,8 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
   const D = 18;
   const lx = L.x - TW / 2;
   const rx = R.x + TW / 2;
-  const hiTiles = sel === null ? [] : f.tiles[sel].k === 'locked' ? parcelTiles(f, sel) : [sel];
+  // sel arazinin dışına düşebilir (ör. sürüklenen binanın çatısından tutulduğunda): o zaman vurgu yok.
+  const hiTiles = sel === null || !f.tiles[sel] ? [] : f.tiles[sel].k === 'locked' ? parcelTiles(f, sel) : [sel];
   return (
     <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }}>
       <Defs>
@@ -884,8 +885,12 @@ export default function GardenScreen() {
   if (lift) {
     const one = { ...farm, tiles: farm.tiles.map((t, j) => (j === lift.from ? t : ({ k: 'grass' } as Tile))) };
     const o = center(...rc(lift.from));
-    ghost = sprites(one, now).map((sp) => ({ ...sp, x: sp.x + lift.wx - o.x, y: sp.y + lift.wy - o.y - TH * 0.6, z: 9000, o: 0.8 }));
-    liftTarget = tileAt(lift.wx, lift.wy);
+    // Yalnızca kaldırılan eşyanın (ve binaysa içindekilerin) kopyası; sabit tezgâh gibi başka çizimler karışmasın.
+    ghost = sprites(one, now)
+      .filter((sp) => sp.key === `s${lift.from}` || sp.key.startsWith(`s${lift.from}r`))
+      .map((sp) => ({ ...sp, x: sp.x + lift.wx - o.x, y: sp.y + lift.wy - o.y - TH * 0.6, z: 9000, o: 0.8 }));
+    const target = tileAt(lift.wx, lift.wy);
+    liftTarget = target >= 0 ? target : null; // parmak arazinin dışındaysa hedef yok
   }
   const badges: { key: string; i: number; x: number; y: number; art: string; z: number; n?: number; label?: string }[] = [];
   // Depo rozeti: ahırın üstünde en çok olan ürün ve toplam adet; dokununca depo açılır.
