@@ -1,7 +1,9 @@
 import * as Notifications from 'expo-notifications';
-import { doc, increment, runTransaction } from 'firebase/firestore';
+import { collection, doc, increment, onSnapshot, runTransaction } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { dayKey } from './date';
+import { BONUS_ITEMS, BONUS_MAX, bonusText, type FarmBonus } from './farmBonus';
 import type { Couple } from './session';
 
 // Bizim Çiftlik: çiftin ortak çiftliği (2.5D). Amaç: birlikte emek vermek ve emeğin meyvesini birlikte görmek.
@@ -897,5 +899,62 @@ export async function collectDreamBank(coupleId: string, uid: string, name: stri
     };
     tx.update(ref, { ...farmWrite(farm), dreamBank: 0 });
     return bank;
+  });
+}
+
+// ---------- Yönetimden gelen çiftlik bonusu ----------
+// Açılmamış paketler (en eskisi önce).
+export function useFarmBonuses(coupleId: string | undefined): FarmBonus[] {
+  const [list, setList] = useState<FarmBonus[]>([]);
+  useEffect(() => {
+    if (!coupleId) return;
+    return onSnapshot(
+      collection(db, 'couples', coupleId, 'bonuses'),
+      (snap) =>
+        setList(
+          snap.docs
+            .map((d) => ({ ...(d.data() as Omit<FarmBonus, 'id'>), id: d.id }))
+            .filter((b) => !b.opened)
+            .sort((a, b) => a.atMs - b.atMs),
+        ),
+      () => setList([]),
+    );
+  }, [coupleId]);
+  return list;
+}
+
+// Paketi açar: içindekiler çiftliğe eklenir ve paket "açıldı" işaretlenir. İki telefondan aynı anda basılsa da bir kez işler.
+export async function openFarmBonus(coupleId: string, uid: string, bonusId: string): Promise<string | null> {
+  const coupleRef = doc(db, 'couples', coupleId);
+  const bonusRef = doc(db, 'couples', coupleId, 'bonuses', bonusId);
+  return runTransaction(db, async (tx) => {
+    const b = await tx.get(bonusRef);
+    const c = await tx.get(coupleRef);
+    if (!b.exists() || !c.exists()) return null;
+    const bonus = b.data() as Omit<FarmBonus, 'id'>;
+    if (bonus.opened) return null;
+    const farm = farmOf(c.data() as Couple);
+    const clamp = (n: unknown, max: number) => Math.max(0, Math.min(max, Math.floor(Number(n) || 0)));
+    const coins = clamp(bonus.coins, BONUS_MAX.coins);
+    const xp = clamp(bonus.xp, BONUS_MAX.xp);
+    const stock = { ...farm.stock };
+    const given: Record<string, number> = {};
+    for (const [k, n] of Object.entries(bonus.stock ?? {})) {
+      const add = BONUS_ITEMS[k] ? clamp(n, BONUS_MAX.item) : 0;
+      if (!add) continue;
+      stock[k] = (stock[k] ?? 0) + add;
+      given[k] = add;
+    }
+    const text = bonusText({ coins, xp, stock: given });
+    const next: Farm = {
+      ...farm,
+      coins: farm.coins + coins,
+      xp: farm.xp + xp,
+      stock,
+      log: [{ by: uid, text: `2miz’den hediye: ${text}`, at: Date.now() }, ...farm.log].slice(0, 14),
+    };
+    tx.update(coupleRef, farmWrite(next));
+    tx.update(bonusRef, { opened: { by: uid, atMs: Date.now() } });
+    return text;
   });
 }

@@ -12,12 +12,29 @@ async function wipe(path: string[]) {
   }
 }
 
-const COUPLE_PARTS = ['photos', 'days', 'dates', 'coupons', 'games', 'messages', 'messagePhotos', 'messageAudio', 'presence', 'events', 'busy', 'albumOrders', 'trips', 'tripPhotos'];
+const COUPLE_PARTS = [
+  'photos',
+  'days',
+  'dates',
+  'coupons',
+  'games',
+  'messages',
+  'messagePhotos',
+  'messageAudio',
+  'presence',
+  'events',
+  'busy',
+  'albumOrders',
+  'trips',
+  'tripPhotos',
+  'bonuses',
+];
 
 // Çiftin tüm ortak verilerini ve çift belgesini siler. Kimse yeniden davet kodu olmadan
 // eşleşemez; bu yüzden eşleşmeyi bitirmek aynı zamanda engellemek demektir.
 async function wipeCouple(coupleId: string) {
-  for (const sub of COUPLE_PARTS) await wipe(['couples', coupleId, sub]);
+  // Bir alt koleksiyon silinemese de (ör. kural izin vermiyorsa) hesap silme yarıda kalmasın.
+  for (const sub of COUPLE_PARTS) await wipe(['couples', coupleId, sub]).catch(() => {});
   await deleteDoc(doc(db, 'couples', coupleId));
 }
 

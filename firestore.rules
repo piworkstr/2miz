@@ -172,6 +172,17 @@ service cloud.firestore {
           && request.resource.data.status in ['talep', 'odeme'];
         allow update: if isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusAtMs', 'tracking']);
+        // Hesap silme ve eşleşmeyi bitirme: adres ve telefon içeren sipariş kayıtları da silinebilsin.
+        allow delete: if isMember(coupleId);
+      }
+
+      // Çiftlik bonusu: yönetim gönderir; çift yalnızca "açıldı" işaretini yazabilir.
+      match /bonuses/{bonusId} {
+        allow read: if isMember(coupleId) || isAdmin();
+        allow create: if isAdmin();
+        allow update: if isMember(coupleId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['opened']);
+        allow delete: if isMember(coupleId);
       }
 
       // Avantaj hareketleri (damga, ödül, indirim kodu): yalnızca oluşturulur; silinmez ve değişmez.

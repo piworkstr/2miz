@@ -9,11 +9,13 @@ import {
   query,
   setDoc,
   updateDoc,
+  writeBatch,
   type Timestamp,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { saveAlbumConfig, tl, type AlbumConfig } from '../../src/lib/orders';
-import { db } from './firebase';
+import { BONUS_ITEMS, BONUS_MAX, bonusText } from '../../src/lib/farmBonus';
+import { auth, db } from './firebase';
 import { saveCosts, useCosts } from './stats';
 
 const day = (ms: number | undefined) =>
@@ -36,6 +38,8 @@ export function Couples() {
   const [list, setList] = useState<CoupleRow[] | null>(null);
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
+  const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const load = () =>
     getDocs(query(collection(db, 'couples'), limit(1000)))
       .then((s) =>
@@ -84,15 +88,19 @@ export function Couples() {
       <div>
         <h1>Çiftler ve Plus</h1>
         <p className="muted">
-          {list.length} çift. Buradan seçtiğiniz çifte ücretsiz Plus verirsiniz; çift uygulamada “2miz ikinize hediye etti” olarak görür.
-          Mesajlar ve fotoğraflar panelde görünmez.
+          {list.length} çift. Soldaki kutuyla çift seçip çiftlik bonusu gönderebilir, sağdaki düğmelerle ücretsiz Plus verebilirsiniz; çift
+          uygulamada “2miz ikinize hediye etti” olarak görür. Mesajlar ve fotoğraflar panelde görünmez.
         </p>
       </div>
       <input placeholder="Ada göre ara" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 320 }} />
+      {picked.length > 0 && (
+        <BonusForm names={list.filter((c) => picked.includes(c.id)).map(name)} ids={picked} onDone={() => setPicked([])} />
+      )}
       <div className="card scroll">
         <table>
           <thead>
             <tr>
+              <th>Seç</th>
               <th>Çift</th>
               <th>Eşleşme</th>
               <th>Seri</th>
@@ -106,7 +114,16 @@ export function Couples() {
               const active = !!c.plus && c.plus.until > now;
               const bought = active && c.plus!.by !== 'hediye';
               return (
-                <tr key={c.id}>
+                <tr key={c.id} className={picked.includes(c.id) ? 'sel' : ''}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      style={{ width: 'auto' }}
+                      checked={picked.includes(c.id)}
+                      onChange={() => toggle(c.id)}
+                      aria-label={`${name(c)} çiftini seç`}
+                    />
+                  </td>
                   <td>{name(c)}</td>
                   <td>{ts(c.createdAt)}</td>
                   <td>{c.streak ?? 0}</td>
@@ -146,6 +163,117 @@ export function Couples() {
         {shown.length > 200 && <p className="muted small">İlk 200 sonuç gösteriliyor; aramayı daraltın.</p>}
       </div>
     </>
+  );
+}
+
+// Seçilen çiftlere çiftlik bonusu: çift çiftliğe girince hediye paketi olarak görür ve açar.
+function BonusForm({ ids, names, onDone }: { ids: string[]; names: string[]; onDone: () => void }) {
+  const [coins, setCoins] = useState('');
+  const [xp, setXp] = useState('');
+  const [item, setItem] = useState('egg');
+  const [qty, setQty] = useState('');
+  const [stock, setStock] = useState<Record<string, number>>({});
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [sure, setSure] = useState(false);
+  const int = (v: string, max: number) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
+  const bonus = { coins: int(coins, BONUS_MAX.coins), xp: int(xp, BONUS_MAX.xp), stock };
+  const text = bonusText(bonus);
+
+  function addItem() {
+    const n = int(qty, BONUS_MAX.item);
+    if (!n) return;
+    setStock((s) => ({ ...s, [item]: Math.min(BONUS_MAX.item, (s[item] ?? 0) + n) }));
+    setQty('');
+  }
+  function removeItem(k: string) {
+    setStock((s) => Object.fromEntries(Object.entries(s).filter(([x]) => x !== k)));
+  }
+  async function send() {
+    if (busy) return;
+    if (!text) return setMsg('Altın, tecrübe ya da en az bir ürün girin.');
+    // Birden fazla çifte gönderirken yanlışlıkla basılmasın.
+    if (ids.length > 1 && !sure) return setSure(true);
+    setBusy(true);
+    setMsg('');
+    try {
+      const batch = writeBatch(db);
+      const now = Date.now();
+      for (const id of ids)
+        batch.set(doc(collection(db, 'couples', id, 'bonuses')), {
+          ...bonus,
+          note: note.trim().slice(0, 120),
+          by: auth.currentUser?.email ?? '',
+          atMs: now,
+        });
+      await batch.commit();
+      onDone();
+    } catch {
+      setMsg('Gönderilemedi. Firestore kuralları güncel mi?');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card stack">
+      <div>
+        <h2 style={{ margin: 0 }}>Çiftlik bonusu gönder</h2>
+        <p className="muted small">{`${ids.length} çift seçili: ${names.join(' · ')}`}</p>
+      </div>
+      <div className="form">
+        <label>
+          Altın
+          <input inputMode="numeric" value={coins} onChange={(e) => setCoins(e.target.value)} placeholder="500" />
+        </label>
+        <label>
+          Tecrübe puanı
+          <input inputMode="numeric" value={xp} onChange={(e) => setXp(e.target.value)} placeholder="0" />
+        </label>
+        <label>
+          Ambar ürünü
+          <select value={item} onChange={(e) => setItem(e.target.value)}>
+            {Object.entries(BONUS_ITEMS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Adet
+          <div className="row" style={{ flexWrap: 'nowrap' }}>
+            <input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="3" />
+            <button type="button" onClick={addItem}>
+              Ekle
+            </button>
+          </div>
+        </label>
+      </div>
+      {Object.keys(stock).length > 0 && (
+        <div className="chips">
+          {Object.entries(stock).map(([k, n]) => (
+            <button key={k} className="chip on" title="Çıkarmak için tıkla" onClick={() => removeItem(k)}>
+              {`${n} ${BONUS_ITEMS[k]} ×`}
+            </button>
+          ))}
+        </div>
+      )}
+      <label>
+        Not (çift pakette görür, isteğe bağlı)
+        <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={120} placeholder="İlk çiftlerimize teşekkürler!" />
+      </label>
+      <p className="small">{text ? `Paket: ${text}` : 'Paket boş.'}</p>
+      {msg && <p className="error">{msg}</p>}
+      <div className="row">
+        <button className="primary" disabled={busy} onClick={send}>
+          {sure ? `Emin misin? ${ids.length} çifte gönder` : ids.length > 1 ? `${ids.length} çifte gönder` : 'Gönder'}
+        </button>
+        <button disabled={busy} onClick={onDone}>
+          Vazgeç
+        </button>
+      </div>
+    </div>
   );
 }
 
