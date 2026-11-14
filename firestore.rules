@@ -38,6 +38,34 @@ service cloud.firestore {
       allow update: if isFounder() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
+    // Avantajlar: anlaşmalı mekanlar. Herkes okur; yalnızca kurucu çift ekler ve değiştirir.
+    match /partners/{partnerId} {
+      allow read: if signedIn();
+      allow write: if isFounder();
+      // Mekana gelen çiftler (çift başına tek belge): çift kendi belgesini yazar, sayıları kurucu çift görür.
+      match /visits/{coupleId} {
+        allow create, update: if isMember(coupleId);
+        allow read: if isFounder();
+      }
+    }
+    // Mekanın kasa anahtarı: uygulama okuyamaz; damga kuralı kodu bununla doğrular.
+    match /partnerSecrets/{partnerId} {
+      allow read, write: if isFounder();
+    }
+    // Türkiye saatiyle bugün, sıfır dolgusuz ("2026-11-14"); uygulamadaki istDay() ile aynı.
+    function istDay() {
+      let n = request.time + duration.value(3, 'h');
+      return string(n.year()) + '-' + string(n.month()) + '-' + string(n.day());
+    }
+    // Damga: kasa kodu doğruysa ve belge kimliği "mekan_s_bugün" ise geçer (çift başına mekanda günde bir damga).
+    function stampOk(perkId) {
+      let d = request.resource.data;
+      let s = get(/databases/$(database)/documents/partnerSecrets/$(d.pid)).data;
+      let day = istDay();
+      let hash = hashing.sha256(s.key + ':' + (s.get('fixed', false) ? 'sabit' : day)).toHexString().lower();
+      return d.day == day && perkId == d.pid + '_s_' + day && d.code == hash[0:6];
+    }
+
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
@@ -111,6 +139,15 @@ service cloud.firestore {
       match /albumOrders/{orderId} {
         allow read: if isMember(coupleId);
         allow create: if isMember(coupleId) && request.resource.data.by == request.auth.uid;
+      }
+
+      // Avantaj hareketleri (damga, ödül, indirim kodu): yalnızca oluşturulur; silinmez ve değişmez.
+      match /perks/{perkId} {
+        allow read: if isMember(coupleId);
+        allow create: if isMember(coupleId)
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.t in ['stamp', 'redeem', 'code']
+          && (request.resource.data.t != 'stamp' || stampOk(perkId));
       }
 
       // Ortak takvim: planları iki üye de ekler ve siler.
