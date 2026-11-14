@@ -212,6 +212,7 @@ export type Farm = {
   notes: FarmNote[];
   gifts?: Gift[]; // açılmayı bekleyen hediye sepetleri
   giftAt?: Record<string, number>; // kişi başı son sepet gönderme zamanı
+  kiss?: { by: string; at: number }; // son öpücük (iki ekranda kalp efekti için)
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -464,7 +465,9 @@ export type Action =
   | { a: 'gift'; i: number; basket: BasketId }
   | { a: 'openGift'; i: number; gift: string }
   // Not Ağacı'na not.
-  | { a: 'note'; i: number; text: string };
+  | { a: 'note'; i: number; text: string }
+  // Öpücük: i, partnerin yanındaki kare; avatar oraya yürür ve iki ekranda da kalpler uçar.
+  | { a: 'kiss'; i: number };
 
 export type Result = { farm: Farm; text: string; gained: number; ready?: number; points?: number };
 
@@ -824,6 +827,11 @@ export function applyAction(
       gained = b.coins;
       points = b.points;
       text = `${name} ${b.name.toLocaleLowerCase('tr-TR')}ni açtı: +${b.coins} altın, +${b.points} puan · ortak hasat 💛`;
+      break;
+    }
+    case 'kiss': {
+      f.kiss = { by: uid, at: now };
+      text = `${name} bir öpücük kondurdu 💋`;
       break;
     }
     case 'note': {

@@ -541,6 +541,22 @@ export default function GardenScreen() {
   const [myTile, setMyTile] = useState<number>(() => farm.pos[uid] ?? (2 + OFF) * N + 2 + OFF);
   const myTileRef = useRef(myTile);
   const partnerTile = (partnerId ? farm.pos[partnerId] : undefined) ?? (2 + OFF) * N + 5 + OFF;
+  const partnerTileRef = useRef(partnerTile);
+  partnerTileRef.current = partnerTile;
+  // Partner öptüyse: kalpler benim üstümde uçar (yalnızca yeni öpücükte, bir kez).
+  const kissSeen = useRef(farm.kiss?.at ?? 0);
+  const kissAt = farm.kiss?.at ?? 0;
+  const kissBy = farm.kiss?.by;
+  useEffect(() => {
+    if (!kissAt || kissAt <= kissSeen.current) return;
+    kissSeen.current = kissAt;
+    if (kissBy && kissBy !== uid && Date.now() - kissAt < 15000) {
+      heartsRef.current(myTileRef.current);
+      setSay('🥰');
+      setTimeout(() => setSay(''), 2200);
+    }
+  }, [kissAt, kissBy, uid]);
+  const heartsRef = useRef<(tile: number) => void>(() => {});
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -602,6 +618,7 @@ export default function GardenScreen() {
   const MAX_ZOOM = 4;
   // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
   const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
+  const kissRef = useRef<(wx: number, wy: number) => boolean>(() => false);
   const placeRef = useRef<(i: number) => void>(() => {});
 
   const pr = useMemo(
@@ -695,6 +712,8 @@ export default function GardenScreen() {
             if (i >= 0) placeRef.current(i);
             return;
           }
+          // Aradaki öpücük balonu: dokununca avatar partnerin yanına yürür.
+          if (kissRef.current(wx, wy)) return;
           if (quickRef.current(wx, wy)) {
             setSel(null);
             setShowLog(false);
@@ -730,6 +749,21 @@ export default function GardenScreen() {
     setTimeout(() => setSay(''), 1800);
   };
 
+  // Öpücük efekti: verilen karenin üstünde kalpler uçar.
+  const hearts = (tile: number) => {
+    const { x, y } = center(...rc(tile));
+    ['💋', '❤️', '💕'].forEach((text, k) => {
+      const id = Date.now() + Math.random();
+      setTimeout(() => {
+        setFloats((f) => [...f, { id, x: x + (k - 1) * 18, y: y - TW * (0.7 + k * 0.15), text }]);
+        setTimeout(() => setFloats((f) => f.filter((q) => q.id !== id)), 1300);
+      }, k * 220);
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  };
+
+  heartsRef.current = hearts;
+
   async function work(a: Action) {
     queue.current.push(a);
     if (busy.current || !couple || !partnerId) return;
@@ -750,7 +784,15 @@ export default function GardenScreen() {
         if (typeof r === 'string') flash(r);
         else {
           const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
-          if (helped || ('scene' in job && job.scene) || job.a === 'harvestDay' || (job.a === 'deliver' && r.gained) || job.a === 'note')
+          if (job.a === 'kiss') hearts(partnerTileRef.current);
+          if (
+            helped ||
+            ('scene' in job && job.scene) ||
+            job.a === 'harvestDay' ||
+            (job.a === 'deliver' && r.gained) ||
+            job.a === 'note' ||
+            job.a === 'kiss'
+          )
             together = true;
           else solo = true;
           if (r.gained) {
@@ -986,6 +1028,24 @@ export default function GardenScreen() {
   };
   const meAt = stand(sceneTile ?? myTile, -1);
   const pAt = stand(sceneTile ?? partnerTile, 1);
+  // Öpücük balonu: ikiniz ayrı yerlerdeyken aranızda çıkar. Dokunan, partnerin yanındaki boş kareye yürür ve öper.
+  const [mr, mc] = rc(myTile);
+  const [qr, qc] = rc(partnerTile);
+  const apart = sceneTile === null && !placing && Math.abs(mr - qr) + Math.abs(mc - qc) >= 2;
+  const kissAtPos = apart ? { x: (meAt.x + pAt.x) / 2, y: (meAt.y + pAt.y) / 2 - TW * 0.9 } : null;
+  kissRef.current = (wx, wy) => {
+    if (!kissAtPos || Math.hypot(wx - kissAtPos.x, wy - kissAtPos.y) > 30) return false;
+    const walkable = (j: number) => j >= 0 && j < N * N && (farm.tiles[j]?.k === 'path' || farm.tiles[j]?.k === 'grass');
+    const near = [qc > 0 ? partnerTile - 1 : -1, qc < N - 1 ? partnerTile + 1 : -1, partnerTile - N, partnerTile + N]
+      .filter(walkable)
+      .sort((a, b) => {
+        const d = (j: number) => Math.abs(rc(j)[0] - mr) + Math.abs(rc(j)[1] - mc);
+        return d(a) - d(b);
+      });
+    setSel(null);
+    void work({ a: 'kiss', i: near[0] ?? partnerTile });
+    return true;
+  };
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const pill = {
@@ -1074,6 +1134,29 @@ export default function GardenScreen() {
               ) : null
             }
           />
+          {kissAtPos && (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: kissAtPos.x - 23,
+                top: kissAtPos.y - 23,
+                width: 46,
+                height: 46,
+                borderRadius: 23,
+                backgroundColor: '#FFE3EA',
+                borderWidth: 2,
+                borderColor: '#E8516A',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9000,
+              }}
+            >
+              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 24 }}>
+                💋
+              </Text>
+            </View>
+          )}
           {floats.map((f) => (
             <FloatText key={f.id} x={f.x} y={f.y} text={f.text} />
           ))}
