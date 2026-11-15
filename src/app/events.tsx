@@ -6,6 +6,7 @@ import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Button, Card, Loading, Muted, Screen, T, Title } from '../components/ui';
 import { addEvent } from '../lib/calendar';
 import { trMonth } from '../lib/date';
+import { planDateFor } from '../lib/dates';
 import { CITIES, EVENT_CATS, loadCityEvents, safeUrl, type CityEvent, type EventCat } from '../lib/events';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
@@ -19,7 +20,8 @@ const dayLabel = (key: string) => {
   return `${d} ${trMonth(m - 1)} ${DAYS[new Date(y, m - 1, d).getDay()]}`;
 };
 
-// Şehrinizde bu ay: seçilen ildeki etkinlikler. Biri seçilip tek dokunuşla ortak takvime eklenir; bilet sayfası dışarıda açılır.
+// Şehrinizde bu ay: seçilen ildeki etkinlikler. Biri seçilip tek dokunuşla date olarak planlanır ya da ortak takvime eklenir;
+// bilet sayfası dışarıda açılır.
 export default function Events() {
   const t = useTheme();
   const { user, couple, profile, partnerId } = useSession();
@@ -27,6 +29,7 @@ export default function Events() {
   const [cat, setCat] = useState<EventCat | 'hepsi'>('hepsi');
   const [pick, setPick] = useState(false);
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [dated, setDated] = useState<Record<string, boolean>>({});
   const city = couple?.city;
 
   useEffect(() => {
@@ -59,6 +62,17 @@ export default function Events() {
       );
     } catch {
       setAdded((m) => ({ ...m, [e.id]: false }));
+    }
+  };
+
+  // Date olarak planla: o güne date önerisi açılır (partner onaylar), etkinliğin adı date'in üstünde görünür.
+  const date = async (e: CityEvent) => {
+    if (dated[e.id]) return;
+    setDated((m) => ({ ...m, [e.id]: true }));
+    try {
+      await planDateFor(couple.id, e.day, user.uid, [e.title, e.time, e.venue].filter(Boolean).join(' · '));
+    } catch {
+      setDated((m) => ({ ...m, [e.id]: false }));
     }
   };
 
@@ -153,9 +167,9 @@ export default function Events() {
                       <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Button
                           style={{ flex: 1 }}
-                          variant={added[e.id] ? 'secondary' : 'primary'}
-                          label={added[e.id] ? 'Takvime eklendi ✓' : 'Takvime ekle'}
-                          onPress={() => plan(e)}
+                          variant={dated[e.id] ? 'secondary' : 'primary'}
+                          label={dated[e.id] ? 'Date planlandı ✓' : 'Date planla'}
+                          onPress={() => date(e)}
                         />
                         {!!url && (
                           <Button
@@ -166,6 +180,9 @@ export default function Events() {
                           />
                         )}
                       </View>
+                      <Pressable onPress={() => plan(e)} hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 2 }}>
+                        <Muted style={{ fontSize: 13 }}>{added[e.id] ? 'Takvime eklendi ✓' : 'Yalnızca takvime ekle'}</Muted>
+                      </Pressable>
                     </Card>
                   );
                 })}

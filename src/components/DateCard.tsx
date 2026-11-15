@@ -53,6 +53,7 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
         {toConfirm.map((d) => (
           <Card key={d.id} accent style={{ borderColor: t.colors.primary }}>
             <T>{t.copy.date.partnerPlanned(partnerName, prettyDate(d.id))}</T>
+            {!!d.what && <Muted>{d.what}</Muted>}
             <Button label={t.copy.date.confirm} busy={busy === d.id} onPress={() => run(d.id, () => confirmDate(couple.id, d.id))} />
           </Card>
         ))}
@@ -164,6 +165,7 @@ function UpcomingRow({
           </Pressable>
         )}
       </View>
+      {!!plan.what && <Muted style={{ fontSize: 13 }}>{plan.what}</Muted>}
       {plan.status === 'proposed' && !needsMyOk && <Muted style={{ fontSize: 13 }}>{t.copy.date.waiting(partnerName)}</Muted>}
       {needsMyOk && <Button label={t.copy.date.confirm} onPress={onConfirm} busy={busy} />}
     </View>

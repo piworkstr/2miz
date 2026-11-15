@@ -25,9 +25,9 @@ export function EventsCard() {
 
   const mine = couple.city ? total(cities[citySlug(couple.city)]) : 0;
   const line = !couple.city
-    ? 'Şehrinizi seçin; konser, tiyatro ve gösterileri birlikte planlayın'
+    ? 'Şehrinizi seçin; konser, tiyatro ve gösterileri birlikte date planlayın'
     : mine
-      ? `${couple.city}: ${mine} etkinlik · birini seçip takvime ekleyin`
+      ? `${couple.city}: ${mine} etkinlik · birini seçip date planlayın`
       : `${couple.city} için liste hazırlanıyor · başka bir ile de bakabilirsiniz`;
 
   return (
