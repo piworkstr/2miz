@@ -23,6 +23,7 @@ export const FEATURES = {
   takvim: 'Ortak takvim',
   date: 'Date',
   avantaj: 'Avantajlar (mekanlar)',
+  etkinlik: 'Şehir etkinlikleri',
 } as const;
 export type Feature = keyof typeof FEATURES;
 export type Usage = Partial<Record<Feature, { n?: number; d?: string }>>;

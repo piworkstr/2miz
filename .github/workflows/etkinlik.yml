@@ -1,0 +1,28 @@
+name: Şehir etkinlikleri (günlük çekim)
+
+# Bilet sağlayıcısından (Ticketmaster Discovery API, Türkiye) yaklaşan etkinlikleri çekip Firestore'a yazar.
+# Gerekli gizli anahtarlar: TICKETMASTER_KEY (developer.ticketmaster.com hesabındaki "Consumer Key") ve
+# FIREBASE_SERVICE_ACCOUNT (panel yayınında kullanılanla aynı). TICKETMASTER_KEY yoksa iş hiçbir şey yapmadan biter.
+on:
+  schedule:
+    - cron: '17 3 * * *' # her gün 06:17 (Türkiye)
+  workflow_dispatch:
+
+concurrency:
+  group: etkinlik
+  cancel-in-progress: true
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-audit --no-fund firebase-admin@13
+        working-directory: scripts
+      - run: node scripts/etkinlik-cek.mjs
+        env:
+          TICKETMASTER_KEY: ${{ secrets.TICKETMASTER_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

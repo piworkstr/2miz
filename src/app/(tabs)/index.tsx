@@ -7,6 +7,7 @@ import { Avatar } from '../../components/Avatar';
 import { greeting } from '../../lib/greeting';
 import { BoredCard } from '../../components/BoredCard';
 import { dockOn } from '../../components/CoupleDock';
+import { EventsCard } from '../../components/EventsCard';
 import { PerksCard } from '../../components/PerksCard';
 import { GardenCard } from '../../components/GardenCard';
 import { SkyHero } from '../../components/home/SkyHero';
@@ -177,6 +178,7 @@ export default function Today() {
         <WeekStrip />
         <GardenCard />
         <PerksCard />
+        <EventsCard />
 
         <Pressable
           onPress={() => router.push('/archive')}

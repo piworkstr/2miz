@@ -12,19 +12,21 @@ import { createRoot } from 'react-dom/client';
 import { useAlbumConfig, useAllOrders } from '../../src/lib/orders';
 import { usePartners } from '../../src/lib/perks';
 import { auth, db } from './firebase';
+import { Events } from './events';
 import { Admins, Couples, FeedbackList, Prices, Reports, type Feedback, type Report } from './manage';
 import { Orders } from './orders';
 import { Overview } from './overview';
 import { Partners } from './partners';
 import { Revenue, Stats } from './stats';
 
-type Tab = 'genel' | 'gelir' | 'istatistik' | 'siparis' | 'mekan' | 'cift' | 'bildirim' | 'sikayet' | 'fiyat' | 'yonetici';
+type Tab = 'genel' | 'gelir' | 'istatistik' | 'siparis' | 'mekan' | 'etkinlik' | 'cift' | 'bildirim' | 'sikayet' | 'fiyat' | 'yonetici';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'genel', label: 'Genel bakış' },
   { id: 'gelir', label: 'Gelir' },
   { id: 'istatistik', label: 'İstatistik' },
   { id: 'siparis', label: 'Siparişler' },
   { id: 'mekan', label: 'Mekanlar' },
+  { id: 'etkinlik', label: 'Etkinlikler' },
   { id: 'cift', label: 'Çiftler ve Plus' },
   { id: 'bildirim', label: 'Geri bildirim' },
   { id: 'sikayet', label: 'Şikayetler' },
@@ -199,6 +201,7 @@ function Panel({ user }: { user: User }) {
         {tab === 'istatistik' && <Stats />}
         {tab === 'siparis' && <Orders orders={orders} />}
         {tab === 'mekan' && <Partners partners={partners} />}
+        {tab === 'etkinlik' && <Events />}
         {tab === 'cift' && <Couples />}
         {tab === 'bildirim' && <FeedbackList list={feedback} />}
         {tab === 'sikayet' && <Reports list={reports} />}
