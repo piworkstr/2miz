@@ -6,9 +6,11 @@ import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
-import { LogBox } from 'react-native';
+import { LogBox, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Loading } from '../components/ui';
+import { Loading, Muted, Title } from '../components/ui';
+import { DEMO_COUPLE } from '../lib/demoPersona';
+import { useMaintenance } from '../lib/maintenance';
 import { LangProvider } from '../lib/i18n';
 import { OnboardingProvider } from '../lib/onboarding';
 import { SessionProvider, useSession } from '../lib/session';
@@ -21,10 +23,25 @@ LogBox.ignoreLogs([/Could not reach Cloud Firestore backend/, /operate in offlin
 // Hesap yokken ilk ekran her zaman hoş geldin; aksi halde çıkış sonrası grup içindeki başka bir ekran (test) açılabiliyordu.
 export const unstable_settings = { anchor: 'welcome' };
 
+// Bakım ekranı: panelden bakım modu açıkken herkes bunu görür (kurucu çift hariç).
+function Maintenance({ message }: { message?: string }) {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.bg, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+      <Title>Kısa bir bakım arası</Title>
+      <Muted style={{ textAlign: 'center', fontSize: 16 }}>
+        {message?.trim() ||
+          '2miz’i sizin için daha iyi hale getiriyoruz. Anılarınız ve çiftliğiniz güvende; kısa süre sonra yeniden buradayız.'}
+      </Muted>
+    </View>
+  );
+}
+
 function RootNavigator() {
   const session = useSession();
   const theme = useTheme();
   useAutoUpdate();
+  const maint = useMaintenance(session.user?.uid);
   // Eski sürümlerin kurduğu "hasada hazır" hatırlatmalarını açılışta temizle.
   useEffect(() => {
     clearFarmReminders().catch(() => {});
@@ -38,6 +55,7 @@ function RootNavigator() {
 
   const { user, couple, profile } = stable.current;
   const ready = !!profile?.onboarded;
+  if (user && maint.maintenance && couple?.id !== DEMO_COUPLE) return <Maintenance message={maint.message} />;
 
   // Hesap yok → hoş geldin + sevgi dili testi + kayıt
   // Hesap var, tanışma bitmedi → ilgi alanları

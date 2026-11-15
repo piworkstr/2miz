@@ -15,7 +15,7 @@ import { auth, db } from './firebase';
 import { Events } from './events';
 import { Admins, Couples, FeedbackList, Prices, Reports, type Feedback, type Report } from './manage';
 import { Orders } from './orders';
-import { Overview } from './overview';
+import { MaintenanceCard, Overview } from './overview';
 import { Partners } from './partners';
 import { Revenue, Stats } from './stats';
 
@@ -194,6 +194,7 @@ function Panel({ user }: { user: User }) {
         </div>
       </aside>
       <main className="main">
+        {tab === 'genel' && <MaintenanceCard />}
         {tab === 'genel' && (
           <Overview orders={orders} partners={partners} feedback={feedback} reports={reports} go={(t) => setTab(t as Tab)} />
         )}

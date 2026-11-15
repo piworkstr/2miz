@@ -1,4 +1,4 @@
-import { collection, getCountFromServer, query, Timestamp, where } from 'firebase/firestore';
+import { collection, doc, getCountFromServer, onSnapshot, query, setDoc, Timestamp, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { dayKey } from '../../src/lib/date';
 import { STATUS, tl, type Order } from '../../src/lib/orders';
@@ -146,5 +146,67 @@ export function Badge({ status }: { status: Order['status'] }) {
     <span className="badge" style={{ background: s.soft, color: s.color }}>
       {s.label}
     </span>
+  );
+}
+
+// Bakım modu: açıkken uygulamayı açan herkes bakım ekranını görür (kurucu çift hariç). config/app belgesinde durur.
+export function MaintenanceCard() {
+  const [cfg, setCfg] = useState<{ maintenance?: boolean; message?: string } | null>(null);
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(
+    () =>
+      onSnapshot(
+        doc(db, 'config', 'app'),
+        (s) => {
+          const d = (s.data() as { maintenance?: boolean; message?: string } | undefined) ?? {};
+          setCfg(d);
+          setMsg(d.message ?? '');
+        },
+        () => setCfg({}),
+      ),
+    [],
+  );
+  const on = !!cfg?.maintenance;
+  async function save(next: boolean) {
+    setBusy(true);
+    setErr('');
+    try {
+      await setDoc(doc(db, 'config', 'app'), { maintenance: next, message: msg.trim().slice(0, 200) }, { merge: true });
+    } catch {
+      setErr('Kaydedilemedi.');
+    }
+    setBusy(false);
+  }
+  return (
+    <div className="card stack" style={on ? { borderColor: '#d9534f' } : undefined}>
+      <div className="spread">
+        <div>
+          <h2>Bakım modu: {cfg === null ? '…' : on ? 'AÇIK' : 'kapalı'}</h2>
+          <p className="muted">
+            Açıkken uygulamaya giren herkes bakım ekranını görür ve hiçbir yere geçemez; kurucu çift (siz) hariç. Kapatınca ekran
+            kendiliğinden kalkar. Yalnızca bu özelliği içeren güncellemeyi almış telefonlarda çalışır.
+          </p>
+        </div>
+        <button className={on ? '' : 'primary'} disabled={busy || cfg === null} onClick={() => save(!on)}>
+          {on ? 'Bakım modunu kapat' : 'Bakım modunu aç'}
+        </button>
+      </div>
+      <div className="form">
+        <label>
+          Ekranda görünecek not (boşsa hazır metin)
+          <input value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={200} placeholder="Yarın 10:00'da yeniden açılıyoruz." />
+        </label>
+      </div>
+      {on && (
+        <div className="row">
+          <button disabled={busy} onClick={() => save(true)}>
+            Notu güncelle
+          </button>
+        </div>
+      )}
+      {!!err && <p className="error">{err}</p>}
+    </div>
   );
 }
