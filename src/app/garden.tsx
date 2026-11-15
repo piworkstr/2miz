@@ -71,6 +71,7 @@ import {
   stockValue,
   TILL,
   PAVE,
+  kitchenSlots,
   BLOOM,
   timeLeft,
   treeReady,
@@ -1062,6 +1063,8 @@ export default function GardenScreen() {
         art: ART[top[0]] ? top[0] : 'coin',
         z: zOf(ar, ac) + 420,
         n,
+        // Verilebilecek sipariş varsa depo rozeti bunu söyler (alttaki Sipariş düğmesinin yerine).
+        ...(farm.orders.some((o) => o.openAt <= now && canGive(farm, o) > 0) ? { label: 'Sipariş' } : {}),
       });
     }
   }
@@ -1072,15 +1075,20 @@ export default function GardenScreen() {
     const [hr, hc] = FIXED_ANCHOR.house;
     const h = center(hr, hc);
     const hb = center(hr - 1, hc - 1);
-    if (can.length)
+    // Mutfak rozeti: hazır ürün varsa "Hazır", üretim sürüyorsa kalan süre, boş ocak ve malzeme varsa "Mutfak".
+    const jobs = farm.prod ?? [];
+    const doneJob = jobs.find((j) => j.ready <= now);
+    const nextJob = jobs.slice().sort((a, b) => a.ready - b.ready)[0];
+    const free = jobs.length < kitchenSlots(lvNow);
+    if (doneJob || nextJob || (can.length && free))
       badges.push({
         key: 'mutfak',
         i: hr * N + hc,
         x: (h.x + hb.x) / 2,
         y: h.y - TW * 1.45,
-        art: ART[can[0]] ? can[0] : 'bugday',
+        art: doneJob ? doneJob.recipe : nextJob ? nextJob.recipe : ART[can[0]] ? can[0] : 'bugday',
         z: zOf(hr, hc) + 420,
-        label: 'Mutfak',
+        label: doneJob ? 'Hazır' : nextJob ? timeLeft(nextJob.ready - now) : 'Mutfak',
       });
     // Sepet tezgâhı: gelen sepet varsa "Aç", yoksa hazırlanabilecek sepet varsa "Sepet".
     const [gr, gc] = rc(GIFT_TILE);
@@ -1608,6 +1616,7 @@ export default function GardenScreen() {
                 })
               }
               onScene={begin}
+              onStay={(a) => work(a)}
               onAct={(a, all) => {
                 if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
                 else work(a);
@@ -1675,6 +1684,7 @@ type SheetProps = {
   onSell: () => void;
   onScene: (k: 'harvest' | 'market') => void;
   onAct: (a: Action, all?: boolean) => void;
+  onStay: (a: Action) => void; // paneli kapatmadan iş ver (mutfak)
 };
 
 function Btn({
@@ -2040,7 +2050,7 @@ function Sheet(p: SheetProps) {
             ? `Günlük görevden ${p.bank} altın geldi`
             : hungryAll
               ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
-              : '';
+              : 'Depoya, eve ya da çimene dokun: depo, pazar, mutfak, dükkân';
     return (
       <>
         {!!hint && (
@@ -2062,31 +2072,16 @@ function Sheet(p: SheetProps) {
             </Text>
           </View>
         )}
-        {/* Sula ve Topla menünün üstünde sabit; iş yoksa pasif görünür. */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
-          <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />
-          <Quick icon="basket" label="Topla" count={small > 0 ? small : 0} onPress={p.onAll} />
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginHorizontal: -10 }}
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-end', gap: 10, paddingHorizontal: 10 }}
-        >
-          {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
-          {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
-          <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
-          {n > 0 &&
-            (weekend ? (
-              <Round icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} accent onPress={() => p.onScene('market')} />
-            ) : (
-              <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
-            ))}
-          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
-          <Round icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
-          <Round icon="book" label="Günlük" onPress={p.onLog} />
-          <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
-        </ScrollView>
+        {/* Alt alan sade: yalnızca o an yapılacak iş varsa düğme çıkar. Depo, sipariş, pazar, dükkân, mutfak ve günlük
+            çiftlikteki nesnelere (depo, ev, çimen) dokunarak açılır. */}
+        {(p.thirsty > 0 || small > 0 || p.bank > 0 || big > 0) && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+            {p.thirsty > 0 && <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />}
+            {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
+            {p.bank > 0 && <Quick icon="gift" label="Görev altını" count={p.bank} onPress={p.onBank} />}
+            {big > 0 && <Quick icon="people" label="Hasat günü" count={big} onPress={() => p.onScene('harvest')} />}
+          </View>
+        )}
       </>
     );
   }
@@ -2197,6 +2192,11 @@ function Sheet(p: SheetProps) {
             </View>
           </>
         )}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {items.length === 0 && <Btn flex kind="soft" label="Siparişler" onPress={p.onOrders} />}
+          <Btn flex kind="soft" label="Çiftçi pazarı" onPress={p.onMarket} />
+          <Btn flex kind="soft" label="Dükkân" onPress={p.onShop} />
+        </View>
         <Btn kind="soft" label="Depoyu taşı · sonra 2×2 boş çimene dokun" onPress={() => p.onPlace({ a: 'moveBarn' })} />
       </>
     );
@@ -2205,7 +2205,14 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art={t.item} title="Eviniz · Mutfak" onClose={p.onClose} />
-        <Kitchen farm={farm} level={level} onCook={(recipe) => p.onAct({ a: 'cook', i, recipe })} />
+        <Kitchen
+          farm={farm}
+          level={level}
+          now={now}
+          onCook={(recipe) => p.onStay({ a: 'cook', i, recipe })}
+          onCollect={() => p.onStay({ a: 'collectProd', i })}
+        />
+        <Btn kind="soft" label="Çiftlik günlüğü" onPress={p.onLog} />
       </>
     );
   if (t.k === 'soil') {
@@ -2646,28 +2653,93 @@ function Orders({
 }
 
 // Not Ağacı: evin yanındaki ağaç. Kısa notlar; yalnız ikiniz görürsünüz.
-// Mutfak: depodaki ürünlerden tarif. Yapılan ürün depoya girer; ham hâlinden değerlidir, sepetlere ve siparişlere gider.
-function Kitchen({ farm, level, onCook }: { farm: Farm; level: number; onCook: (r: RecipeId) => void }) {
+// Mutfak: depodaki ürünlerden tarif işe konur, süresi dolunca buradan toplanır. Aynı anda birkaç iş (seviyeyle artar).
+function Kitchen({
+  farm,
+  level,
+  now,
+  onCook,
+  onCollect,
+}: {
+  farm: Farm;
+  level: number;
+  now: number;
+  onCook: (r: RecipeId) => void;
+  onCollect: () => void;
+}) {
+  const jobs = farm.prod ?? [];
+  const slots = kitchenSlots(level);
+  const full = jobs.length >= slots;
+  const ready = jobs.filter((j) => j.ready <= now).length;
   return (
     <>
-      <Note>Depodaki ürünlerden yap: daha pahalıya satılır, siparişlerde istenir, hediye sepetine girer.</Note>
-      <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {Array.from({ length: slots }, (_, k) => {
+          const j = jobs[k];
+          const done = !!j && j.ready <= now;
+          return (
+            <View
+              key={k}
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                paddingVertical: 6,
+                borderRadius: 14,
+                backgroundColor: done ? '#E9F6DF' : '#FBFAF6',
+                borderWidth: 1,
+                borderColor: done ? GREEN : '#F0E2DC',
+                minHeight: 74,
+                justifyContent: 'center',
+              }}
+            >
+              {j ? (
+                <>
+                  <StockIcon k={j.recipe} w={34} h={32} />
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 11, color: done ? GREEN : INK }}>
+                    {done ? 'Hazır' : timeLeft(j.ready - now)}
+                  </Text>
+                </>
+              ) : (
+                <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: MUTED }}>
+                  Boş ocak
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+      {ready > 0 ? (
+        <Btn kind="accent" label={`Hazır olanları topla (${ready})`} onPress={onCollect} />
+      ) : (
+        <Note>
+          {jobs.length
+            ? 'Üretim sürüyor. Süre dolunca buradan toplarsın; ürün depoya girer.'
+            : 'Depodaki ürünlerden bir tarif seç; süresi dolunca buradan toplanır. Daha pahalıya satılır, siparişlerde istenir.'}
+        </Note>
+      )}
+      <ScrollView style={{ maxHeight: 200 }} contentContainerStyle={{ gap: 8 }}>
         {(Object.keys(RECIPES) as RecipeId[]).map((id) => {
           const r = RECIPES[id];
           const locked = level < r.lvl;
-          const ok = !locked && hasAll(farm, r.needs);
+          const ok = !locked && !full && hasAll(farm, r.needs);
           return (
             <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: locked ? 0.5 : 1 }}>
               <StockIcon k={id} w={34} h={34} />
               <View style={{ flex: 1 }}>
                 <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
-                  {r.name} · {r.sell} altın{(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
+                  {r.name} · {r.sell} altın · {timeLeft(r.mins * MIN)}
+                  {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
                 </Text>
                 <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: ok ? GREEN : MUTED }}>
                   {locked ? `${r.lvl}. seviyede açılır` : needsText(r.needs)}
                 </Text>
               </View>
-              <Btn kind={ok ? 'green' : 'soft'} label={ok ? 'Yap' : 'Eksik'} disabled={!ok} onPress={() => onCook(id)} />
+              <Btn
+                kind={ok ? 'green' : 'soft'}
+                label={ok ? 'Başlat' : locked ? 'Kilitli' : full ? 'Dolu' : 'Eksik'}
+                disabled={!ok}
+                onPress={() => onCook(id)}
+              />
             </View>
           );
         })}

@@ -87,15 +87,20 @@ export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) =
 export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut';
 export const RECIPES: Record<
   RecipeId,
-  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number }
+  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number; mins: number }
 > = {
-  ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugday: 3 }, sell: 30, xp: 4, lvl: 1 },
-  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2 },
-  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 3 },
-  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4 },
-  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4 },
-  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5 },
+  // mins: üretim süresi. Üretim anında değildir: işe konur, süre dolunca mutfaktan toplanır.
+  ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugday: 3 }, sell: 30, xp: 4, lvl: 1, mins: 20 },
+  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45 },
+  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 3, mins: 120 },
+  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90 },
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180 },
+  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60 },
 };
+// Üretimdeki iş: tarif işe konunca malzeme depodan çıkar; ready geçince toplanır ve ürün depoya girer.
+export type ProdJob = { id: string; recipe: RecipeId; by: string; at: number; ready: number; n: number };
+// Mutfakta aynı anda kaç iş: 2 ile başlar, 8. ve 14. seviyede birer artar.
+export const kitchenSlots = (level: number) => 2 + (level >= 8 ? 1 : 0) + (level >= 14 ? 1 : 0);
 export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.emoji]));
 
 // ---------- Hediye sepeti ----------
@@ -252,6 +257,7 @@ export type Farm = {
   gifts?: Gift[]; // açılmayı bekleyen hediye sepetleri
   giftAt?: Record<string, number>; // kişi başı son sepet gönderme zamanı
   kiss?: { by: string; at: number }; // son öpücük (iki ekranda kalp efekti için)
+  prod?: ProdJob[]; // mutfakta üretimdeki işler
   name?: string; // çiftçi pazarında görünen çiftlik adı (çiftin gerçek adı görünmez)
   trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
 };
@@ -532,6 +538,8 @@ export type Action =
   | { a: 'deliver'; i: number; order: string }
   // Mutfak: depodaki ürünlerden tarif yap.
   | { a: 'cook'; i: number; recipe: RecipeId }
+  // Süresi dolan üretimi mutfaktan topla (job verilmezse hazır olanların hepsi).
+  | { a: 'collectProd'; i: number; job?: string }
   // Hediye sepeti hazırla ve partnere gönder / gelen sepeti aç.
   | { a: 'gift'; i: number; basket: BasketId }
   | { a: 'openGift'; i: number; gift: string }
@@ -960,12 +968,29 @@ export function applyAction(
       const r = RECIPES[act.recipe];
       if (!r) return 'Böyle bir tarif yok.';
       if (lv < r.lvl) return `${r.name} ${r.lvl}. seviyede açılır.`;
+      const jobs = f.prod ?? [];
+      if (jobs.length >= kitchenSlots(lv)) return 'Mutfak dolu. Önce hazır olanları toplayın ya da bitmesini bekleyin.';
       if (!hasAll(f, r.needs)) return `${r.name} için depoda ${needsText(r.needs)} gerek.`;
       take(r.needs);
       // Değirmen unu bollaştırır: ekmek ve kek çift çıkar.
-      put(act.recipe, MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1);
-      f.xp += r.xp;
-      text = `${name} ${r.name.toLocaleLowerCase('tr-TR')} yaptı ${r.emoji}`;
+      const n = MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1;
+      f.prod = [...jobs, { id: `${now.toString(36)}${jobs.length}`, recipe: act.recipe, by: uid, at: now, ready: now + r.mins * MIN, n }];
+      text = `${name} ${r.name.toLocaleLowerCase('tr-TR')} yapmaya koydu ${r.emoji}`;
+      break;
+    }
+    case 'collectProd': {
+      const jobs = f.prod ?? [];
+      const done = jobs.filter((j) => j.ready <= now && (!act.job || j.id === act.job));
+      if (!done.length) return 'Henüz hazır olan yok.';
+      for (const j of done) {
+        put(j.recipe, j.n);
+        f.xp += RECIPES[j.recipe]?.xp ?? 0;
+        gained += j.n;
+      }
+      f.prod = jobs.filter((j) => !done.includes(j));
+      const names = [...new Set(done.map((j) => RECIPES[j.recipe]?.name.toLocaleLowerCase('tr-TR')))].join(', ');
+      text = `${name} mutfaktan ${names} aldı`;
+      gained = 0;
       break;
     }
     case 'gift': {
