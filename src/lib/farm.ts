@@ -252,6 +252,8 @@ export type Farm = {
   gifts?: Gift[]; // açılmayı bekleyen hediye sepetleri
   giftAt?: Record<string, number>; // kişi başı son sepet gönderme zamanı
   kiss?: { by: string; at: number }; // son öpücük (iki ekranda kalp efekti için)
+  name?: string; // çiftçi pazarında görünen çiftlik adı (çiftin gerçek adı görünmez)
+  trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -392,7 +394,7 @@ export const growFactor = (s: Season) => (s === 'kis' ? 1.5 : s === 'bahar' ? 0.
 export const isWeekend = (now = Date.now()) => [0, 6].includes(new Date(now).getDay());
 
 // ---------- Depo ----------
-const PRICE: Record<string, number> = {
+export const PRICE: Record<string, number> = {
   ...Object.fromEntries(Object.entries(CROPS).map(([k, v]) => [k, v.sell])),
   ...Object.fromEntries(Object.entries(PRODUCTS).map(([k, v]) => [k, v.sell])),
   ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.sell])),
@@ -502,6 +504,13 @@ export type Action =
   | { a: 'collect'; i: number }
   | { a: 'till'; i: number }
   | { a: 'pave'; i: number } // çimene patika taşı döşe
+  // Çiftçi pazarı (çiftler arası): ilanın kendisi market koleksiyonunda durur, bunlar çiftliğin depo/altın tarafıdır (market.ts).
+  | { a: 'mkOut'; i: number; key: string; n: number } // ilana konan ürün depodan çıkar
+  | { a: 'mkBack'; i: number; key: string; n: number } // satılmayan ilan depoya döner
+  | { a: 'mkIn'; i: number; key: string; n: number; cost: number } // başka çiftlikten alınan ürün
+  | { a: 'mkPaid'; i: number; key: string; n: number; coins: number } // satılan ilanın bedeli
+  | { a: 'trader'; i: number; key: string; n: number; cost: number; offer: string; day: string } // gezgin tüccardan alım
+  | { a: 'rename'; i: number; name: string } // çiftlik adı
   | { a: 'bloom'; i: number; all?: boolean } // çit/duvarın dibine çiçek ek ya da çiçekleri kaldır
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'tree'; i: number; item: TreeId }
@@ -657,6 +666,47 @@ export function applyAction(
       }
       ids.forEach((j) => (f.tiles[j] = { ...(f.tiles[j] as Extract<Tile, { k: 'decor' }>), item: other }));
       text = d.flowers ? `${name} çiçekleri kaldırdı` : `${name} ${d.name.toLocaleLowerCase('tr-TR')} dibine çiçek ekti 🌸`;
+      break;
+    }
+    case 'mkOut': {
+      if (!PRICE[act.key] || act.n < 1 || (f.stock[act.key] ?? 0) < act.n) return 'Depoda o kadar ürün yok.';
+      take({ [act.key]: act.n });
+      text = `${name} pazara ${act.n} ${PRODUCT_NAME[act.key].toLocaleLowerCase('tr-TR')} koydu`;
+      break;
+    }
+    case 'mkBack': {
+      put(act.key, act.n);
+      text = `Satılmayan ${act.n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} pazardan depoya döndü`;
+      break;
+    }
+    case 'mkIn': {
+      if (f.coins < act.cost) return 'Yeterli altının yok.';
+      f.coins -= act.cost;
+      put(act.key, act.n);
+      text = `${name} çiftçi pazarından ${act.n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} aldı (${act.cost} altın)`;
+      break;
+    }
+    case 'mkPaid': {
+      f.coins += act.coins;
+      gained = act.coins;
+      text = `Pazarda ${act.n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} satıldı: +${act.coins} altın 🧺`;
+      break;
+    }
+    case 'trader': {
+      const got = f.trader?.day === act.day ? f.trader.got : [];
+      if (got.includes(act.offer)) return 'Bu teklifi bugün zaten aldınız.';
+      if (f.coins < act.cost) return 'Yeterli altının yok.';
+      f.coins -= act.cost;
+      put(act.key, act.n);
+      f.trader = { day: act.day, got: [...got, act.offer] };
+      text = `${name} gezgin tüccardan ${act.n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} aldı (${act.cost} altın)`;
+      break;
+    }
+    case 'rename': {
+      const nm = act.name.trim().slice(0, 22);
+      if (nm.length < 3) return 'Çiftlik adı en az 3 harf olmalı.';
+      f.name = nm;
+      text = `${name} çiftliğe ad verdi: ${nm}`;
       break;
     }
     case 'pave': {
@@ -973,7 +1023,8 @@ export function applyAction(
       break;
     }
   }
-  f.pos[uid] = restNear(f, act.i);
+  // Pazar işleri bir kareye bağlı değil; avatar yerinde kalır.
+  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'rename'].includes(act.a)) f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
   return { farm: f, text, gained, ready, points };
 }

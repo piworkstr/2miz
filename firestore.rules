@@ -86,6 +86,23 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
+    // Çiftçi pazarı: çiftler arası ürün ilanları (oyun altınıyla). Herkes okur; ilanı satıcı çift açar ve siler;
+    // başka bir çiftin üyesi yalnızca açık ilanı "satıldı" yapabilir (başka alan değişemez).
+    match /market/{listingId} {
+      allow read: if signedIn();
+      allow create: if isMember(request.resource.data.seller)
+        && request.resource.data.status == 'open'
+        && request.resource.data.n is int && request.resource.data.n > 0 && request.resource.data.n <= 50
+        && request.resource.data.price is int && request.resource.data.price > 0
+        && request.resource.data.farm is string && request.resource.data.farm.size() <= 22;
+      allow update: if resource.data.status == 'open'
+        && request.resource.data.status == 'sold'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'buyer', 'soldAtMs'])
+        && request.resource.data.buyer != resource.data.seller
+        && isMember(request.resource.data.buyer);
+      allow delete: if isMember(resource.data.seller);
+    }
+
     // Yönetim ekranı bütün çiftlerin siparişlerini tek sorguda listeler.
     match /{path=**}/albumOrders/{orderId} {
       allow read: if isAdmin();

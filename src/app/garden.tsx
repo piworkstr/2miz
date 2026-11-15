@@ -89,6 +89,8 @@ import {
 } from '../lib/farm';
 import { logActivityCapped } from '../lib/bond';
 import { FarmBonusGift } from '../components/world/FarmBonusGift';
+import { FarmMarket } from '../components/world/FarmMarket';
+import { settleMine } from '../lib/market';
 import { useFarmBonuses } from '../lib/farm';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART } from '../lib/farmArt';
@@ -555,6 +557,7 @@ export default function GardenScreen() {
   const [shop, setShop] = useState<Shop>('crop');
   const [plantAll, setPlantAll] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [showMarket, setShowMarket] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [placing, setPlacing] = useState<Placing | null>(null);
@@ -837,6 +840,21 @@ export default function GardenScreen() {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
   };
+
+  // Çiftçi pazarı: çiftlik açılınca satılan ilanların bedeli tahsil edilir, süresi dolanlar depoya döner (tek sorgu).
+  const coupleId = couple?.id;
+  useEffect(() => {
+    if (!coupleId || !uid) return;
+    settleMine({ coupleId, uid, name: myName, partnerName })
+      .then((r) => {
+        if (r.sold) {
+          setSay(`Pazarda ${r.sold} ilanın satıldı: +${r.coins} altın 🧺`);
+          setTimeout(() => setSay(''), 3500);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coupleId, uid]);
 
   // Öpücük efekti: verilen karenin üstünde kalpler uçar.
   const hearts = (tile: number) => {
@@ -1575,6 +1593,7 @@ export default function GardenScreen() {
                 setPlantAll(false);
               }}
               onLog={() => setShowLog(true)}
+              onMarket={() => setShowMarket(true)}
               onAll={() =>
                 ready.forEach((i) => {
                   const x = farm.tiles[i];
@@ -1599,6 +1618,14 @@ export default function GardenScreen() {
           )}
         </View>
       </View>
+      {couple && user && (
+        <FarmMarket
+          open={showMarket}
+          onClose={() => setShowMarket(false)}
+          farm={farm}
+          who={{ coupleId: couple.id, uid: user.uid, name: myName, partnerName }}
+        />
+      )}
       {/* Yönetimden gelen hediye paketi: her şeyin üstünde, ortada. */}
       {gift && couple && user && (
         <FarmBonusGift
@@ -1642,6 +1669,7 @@ type SheetProps = {
   onBank: () => void;
   onClose: () => void;
   onLog: () => void;
+  onMarket: () => void;
   onAll: () => void;
   onWaterAll: () => void;
   onSell: () => void;
@@ -2055,6 +2083,7 @@ function Sheet(p: SheetProps) {
               <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
             ))}
           <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
+          <Round icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
           <Round icon="book" label="Günlük" onPress={p.onLog} />
           <Round icon="storefront" label="Dükkân" onPress={p.onShop} />
         </ScrollView>
