@@ -1,0 +1,16 @@
+{
+  "city": "Antalya",
+  "items": [
+    { "title": "Serkan Altuniğne - Umurumda Değil", "day": "2026-11-17", "time": "20:30", "cat": "standup", "venue": "Antalya Rockbull", "url": "https://tuzbiberstandup.com/" },
+    { "title": "Kanaviçe", "day": "2026-11-19", "time": "20:30", "cat": "tiyatro", "venue": "Dada Tiyatro", "url": "https://www.biletmio.com/tr/Turkiye/detail/Kanavice-5-12-19-26-Kasim-Dada-Tiyatro" },
+    { "title": "Ceylan Ertem", "day": "2026-11-21", "time": "22:00", "cat": "konser", "venue": "The Bar, Kaleiçi", "url": "https://www.biletmio.com/tr/Turkiye/detail/Ceylan-Ertem-21-Kasim-The-Bar" },
+    { "title": "Sergen Deveci - Ketenpere / Olan Stand Up", "day": "2026-11-28", "cat": "standup", "venue": "Nazım Hikmet KM Tarık Akan Salonu", "price": "750 TL'den başlar", "url": "https://biletinial.com/tr-tr/tiyatro/antalya" },
+    { "title": "Pınar Fidan Stand Up", "day": "2026-12-05", "cat": "standup", "venue": "Nazım Hikmet Kültür Merkezi", "price": "750 TL'den başlar", "url": "https://biletinial.com/tr-tr/tiyatro/antalya" },
+    { "title": "Özge Özel - Yeni Doküman", "day": "2026-12-08", "time": "20:30", "cat": "standup", "venue": "Antalya Rockbull", "url": "https://tuzbiberstandup.com/" },
+    { "title": "Fazlı Polat - Şaka Şaka Stand-Up", "day": "2026-12-09", "cat": "standup", "venue": "Türkan Şoray Kültür Merkezi", "price": "1000 TL'den başlar", "url": "https://biletinial.com/tr-tr/tiyatro/antalya" },
+    { "title": "Özgür Turhan - Yepyenisi", "day": "2026-12-10", "cat": "standup", "venue": "Nazım Hikmet Kültür Merkezi", "price": "1000 TL'den başlar", "url": "https://biletinial.com/tr-tr/tiyatro/antalya" },
+    { "title": "Morkomedyen Stand Up", "day": "2026-12-14", "cat": "standup", "venue": "Antalya Atatürk Kültür Merkezi", "price": "1299 TL'den başlar", "url": "https://biletinial.com/tr-tr/tiyatro/antalya" },
+    { "title": "Anlatanadam Stand Up", "day": "2026-12-18", "time": "20:30", "cat": "standup", "venue": "Nazım Hikmet Kongre Merkezi", "price": "665 TL'den başlar", "url": "https://www.bubilet.com.tr/antalya/etkinlik/anlatanadam-standup" },
+    { "title": "Utku Ergin - Yeni Gösteri", "day": "2026-12-20", "time": "19:30", "cat": "standup", "venue": "Nazım Hikmet Kongre Merkezi", "url": "https://tuzbiberstandup.com/" }
+  ]
+}

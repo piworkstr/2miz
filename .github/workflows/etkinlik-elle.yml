@@ -1,0 +1,29 @@
+name: Şehir etkinlikleri (elle derlenen liste)
+
+# etkinlikler/*.json değişince içeriği Firestore'a yazar. Ayrıntı: etkinlikler/README.md
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'etkinlikler/**'
+      - 'scripts/etkinlik-elle.mjs'
+      - '.github/workflows/etkinlik-elle.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: etkinlik-elle
+  cancel-in-progress: false
+
+jobs:
+  yaz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-audit --no-fund firebase-admin@13
+        working-directory: scripts
+      - run: node scripts/etkinlik-elle.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
