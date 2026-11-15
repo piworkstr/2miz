@@ -8,7 +8,8 @@ import { Button, Card, Loading, Muted, Screen, T, Title } from '../components/ui
 import { addEvent } from '../lib/calendar';
 import { trMonth } from '../lib/date';
 import { planDateFor, unplanDateFor, useUpcomingDates } from '../lib/dates';
-import { CITIES, EVENT_CATS, loadCityEvents, safeUrl, type CityEvent, type EventCat } from '../lib/events';
+import { CITIES, EVENT_CATS, filmWhat, loadCityEvents, loadFilms, safeUrl, type CityEvent, type EventCat, type Film } from '../lib/events';
+import { dayKey } from '../lib/date';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
@@ -29,6 +30,13 @@ export default function Events() {
   const [items, setItems] = useState<CityEvent[] | null>(null);
   const [cat, setCat] = useState<EventCat | 'hepsi'>('hepsi');
   const [pick, setPick] = useState(false);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [filmPick, setFilmPick] = useState<string | null>(null); // gün seçimi açık olan film
+  useEffect(() => {
+    loadFilms()
+      .then(setFilms)
+      .catch(() => {});
+  }, []);
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [dated, setDated] = useState<Record<string, boolean>>({});
   // Daha önce date olarak planlananlar ekrana yeniden girince de işaretli gelsin (ana ekranla aynı dinleme).
@@ -61,7 +69,10 @@ export default function Events() {
     if (d) unplanDateFor(couple!.id, d).catch(() => {});
   };
 
-  const cats = useMemo(() => [...new Set((items ?? []).map((e) => e.cat))], [items]);
+  const cats = useMemo(
+    () => [...new Set([...(items ?? []).map((e) => e.cat), ...(films.length ? (['sinema'] as EventCat[]) : [])])],
+    [items, films.length],
+  );
   const shown = (items ?? []).filter((e) => cat === 'hepsi' || e.cat === cat);
   const days = [...new Set(shown.map((e) => e.day))];
 
@@ -226,6 +237,75 @@ export default function Events() {
             Tarih, saat ve fiyatlar değişebilir; bilet almadan önce satış sayfasından doğrulayın. Bilet satışı 2miz üzerinden yapılmaz.
           </Muted>
         </>
+      )}
+
+      {films.length > 0 && (cat === 'hepsi' || cat === 'sinema') && (
+        <View style={{ gap: 8 }}>
+          <Muted style={{ fontWeight: '600' }}>Vizyondaki filmler</Muted>
+          {films.map((f) => {
+            const today = dayKey();
+            const soon = !!f.since && f.since > today;
+            const planned = dates.find((d) => d.what === filmWhat(f));
+            // Gün seçenekleri: bugünden (ya da vizyon gününden) başlayarak 10 gün.
+            const start = soon ? new Date(`${f.since}T12:00:00`) : new Date();
+            const days = Array.from({ length: 10 }, (_, i) => dayKey(new Date(start.getTime() + i * 86400000)));
+            return (
+              <Card key={f.id} style={{ gap: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                  <MaterialCommunityIcons name="filmstrip" size={22} color={t.colors.primary} style={{ marginTop: 1 }} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{f.title}</T>
+                    <Muted>{[f.genre, soon ? `${dayLabel(f.since!)} günü vizyona giriyor` : 'Vizyonda'].filter(Boolean).join(' · ')}</Muted>
+                  </View>
+                </View>
+                {planned ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Muted style={{ color: t.colors.primary, fontWeight: '600' }}>{`Date planlandı ✓ · ${dayLabel(planned.id)}`}</Muted>
+                    <Pressable onPress={() => unplanDateFor(couple.id, planned).catch(() => {})} hitSlop={8}>
+                      <Muted style={{ fontSize: 13, textDecorationLine: 'underline' }}>İptal et</Muted>
+                    </Pressable>
+                  </View>
+                ) : filmPick === f.id ? (
+                  <View style={{ gap: 6 }}>
+                    <Muted style={{ fontSize: 13 }}>Hangi gün gidiyorsunuz?</Muted>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={{ flexGrow: 0 }}
+                      contentContainerStyle={{ gap: 8, alignItems: 'center' }}
+                    >
+                      {days.map((d) => (
+                        <Pressable
+                          key={d}
+                          onPress={() => {
+                            setFilmPick(null);
+                            planDateFor(couple.id, d, user.uid, filmWhat(f), 'sinema').catch(() => {});
+                          }}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: t.radius.pill,
+                            backgroundColor: t.colors.primarySoft,
+                          }}
+                        >
+                          <Text
+                            maxFontSizeMultiplier={1.25}
+                            style={{ color: t.colors.primary, fontSize: 13, fontWeight: '600', fontFamily: t.fonts.button }}
+                          >
+                            {dayLabel(d).split(' ').slice(0, 2).join(' ') + ' ' + dayLabel(d).split(' ')[2].slice(0, 3)}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+                ) : (
+                  <Button label="Sinema date'i planla" onPress={() => setFilmPick(f.id)} />
+                )}
+              </Card>
+            );
+          })}
+          <Muted style={{ fontSize: 12 }}>Seans ve salon bilgisi için sinemanızın programına bakın.</Muted>
+        </View>
       )}
 
       <Modal visible={pick} animationType="slide" transparent onRequestClose={() => setPick(false)}>

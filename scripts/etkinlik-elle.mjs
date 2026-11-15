@@ -29,6 +29,22 @@ const dir = new URL('../etkinlikler/', import.meta.url);
 let bad = 0;
 for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
   const file = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
+  if (f === 'filmler.json') {
+    // Vizyondaki filmler: bütün iller için tek liste.
+    const films = (file.items ?? [])
+      .filter((x) => x.title)
+      .map((x) => {
+        const out = { id: 'f_' + createHash('sha1').update(String(x.title).trim().toLocaleLowerCase('tr-TR')).digest('hex').slice(0, 10), title: String(x.title).trim().slice(0, 90) };
+        if (x.genre) out.genre = String(x.genre).trim().slice(0, 50);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(x.since ?? '')) out.since = x.since;
+        return out;
+      })
+      .slice(0, 40);
+    await db.doc('config/films').set({ items: films, updatedAtMs: Date.now() });
+    await db.doc('config/events').set({ films: films.length }, { merge: true });
+    console.log(`Filmler: ${films.length}`);
+    continue;
+  }
   const city = String(file.city ?? '').trim();
   if (!city) {
     console.error(`${f}: "city" yok, atlandı.`);

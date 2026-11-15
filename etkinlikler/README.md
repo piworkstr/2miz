@@ -13,3 +13,8 @@ Alanlar: `title` (zorunlu), `day` (YYYY-AA-GG, zorunlu), `cat` (konser | tiyatro
 
 Kurallar: yalnızca kaynağında adı, tarihi ve mekanı açıkça birlikte görünen etkinlikler eklenir; emin olunmayan saat/fiyat boş bırakılır.
 Bilet sitelerinden otomatik/toplu veri kazıma yapılmaz; liste elle derlenir.
+
+## Vizyondaki filmler
+
+`etkinlikler/filmler.json`: bütün iller için tek liste (`config/films`). Alanlar: `title` (zorunlu), `genre`, `since` (vizyona giriş günü, YYYY-AA-GG;
+gelecekteyse uygulamada "vizyona giriyor" yazar). Vizyondan kalkan filmler dosyadan silinir. Sinema zinciri adı ya da logosu yazılmaz.

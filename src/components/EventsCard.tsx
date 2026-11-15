@@ -42,7 +42,8 @@ export function EventsCard() {
   }, [couple?.id, couple?.city, missing]);
   const cities = index?.cities ?? {};
   const total = (c?: { n?: number; auto?: number }) => (c?.n ?? 0) + (c?.auto ?? 0);
-  const any = Object.values(cities).some((c) => total(c) > 0);
+  const films = index?.films ?? 0;
+  const any = films > 0 || Object.values(cities).some((c) => total(c) > 0);
   if (!couple || !any) return null;
 
   const mine = couple.city ? total(cities[citySlug(couple.city)]) : 0;
@@ -50,7 +51,9 @@ export function EventsCard() {
     ? 'Şehrinizi seçin; konser, tiyatro ve gösterileri birlikte date planlayın'
     : mine
       ? `${couple.city}: ${mine} etkinlik · birini seçip date planlayın`
-      : `${couple.city} için liste hazırlanıyor · başka bir ile de bakabilirsiniz`;
+      : films
+        ? `Vizyonda ${films} film · birini seçip sinema date'i planlayın`
+        : `${couple.city} için liste hazırlanıyor · başka bir ile de bakabilirsiniz`;
 
   return (
     <Pressable onPress={() => router.push('/events')} style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>

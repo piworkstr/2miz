@@ -35,7 +35,10 @@ export type CityEvent = {
   auto?: boolean; // otomatik çekildi (elle eklenenler üstte gösterilir)
 };
 export type CityDoc = { city: string; items: CityEvent[]; updatedAtMs: number };
-export type EventIndex = { cities?: Record<string, { name: string; n?: number; auto?: number }> };
+export type EventIndex = { cities?: Record<string, { name: string; n?: number; auto?: number }>; films?: number };
+
+// Vizyondaki filmler: il fark etmez, hepsi için aynı liste (config/films). since: vizyona giriş günü (gelecekteyse "yakında").
+export type Film = { id: string; title: string; genre?: string; since?: string };
 
 export const CITIES = [
   'Adana',
@@ -166,6 +169,12 @@ export async function loadCityEvents(city: string): Promise<CityEvent[]> {
   const auto = ((a.data() as CityDoc | undefined)?.items ?? []).filter((e) => !seen.has(key(e))).map((e) => ({ ...e, auto: true }));
   return upcoming([...manual, ...auto]);
 }
+
+export async function loadFilms(): Promise<Film[]> {
+  const s = await getDoc(doc(db, 'config', 'films'));
+  return ((s.data() as { items?: Film[] } | undefined)?.items ?? []).slice();
+}
+export const filmWhat = (f: Film) => `Sinema: ${f.title}`;
 
 // ---------- Yönetim paneli ----------
 export async function loadManual(city: string): Promise<CityEvent[]> {
