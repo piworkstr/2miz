@@ -4,12 +4,11 @@ import {
   collection,
   doc,
   documentId,
-  limit,
   onSnapshot,
-  orderBy,
   query,
   runTransaction,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { DayDoc } from './daily';
@@ -18,17 +17,20 @@ import { db } from './firebase';
 
 export const BONUS_POINTS = 5;
 
-// Geçmiş günler, en yeni en üstte (belge kimlikleri "YYYY-MM-DD").
+// Geçmiş günler, en yeni en üstte (belge kimlikleri "YYYY-MM-DD"). max: kaç gün geriye bakılacağı.
+// Belge kimliğine göre AZALAN sıralama Firestore'da özel dizin ister ve dizin yokken sorgu hata verip liste boş kalıyordu;
+// bu yüzden son `max` günün aralığı artan sırayla istenir, sıra uygulamada çevrilir.
 export function useDays(coupleId: string | undefined, max = 90) {
   const [days, setDays] = useState<{ key: string; day: DayDoc }[] | null>(null);
+  const from = dayKey(new Date(Date.now() - max * 86400000));
   useEffect(() => {
     if (!coupleId) return;
     return onSnapshot(
-      query(collection(db, 'couples', coupleId, 'days'), orderBy(documentId(), 'desc'), limit(max)),
-      (snap) => setDays(snap.docs.map((d) => ({ key: d.id, day: d.data() as DayDoc }))),
+      query(collection(db, 'couples', coupleId, 'days'), where(documentId(), '>=', from)),
+      (snap) => setDays(snap.docs.map((d) => ({ key: d.id, day: d.data() as DayDoc })).sort((a, b) => (a.key < b.key ? 1 : -1))),
       () => setDays([]),
     );
-  }, [coupleId, max]);
+  }, [coupleId, from]);
   return days;
 }
 
