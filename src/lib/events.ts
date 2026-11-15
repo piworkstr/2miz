@@ -8,15 +8,18 @@ import { db } from './firebase';
 //   config/events          -> dizin: hangi ilde kaç etkinlik var (ana ekrandaki kart tek okumayla karar versin diye)
 // Bu dosya panelde de kullanılır; expo/react-native içe aktarma.
 export type EventCat = 'konser' | 'tiyatro' | 'sinema' | 'gosteri' | 'festival' | 'spor' | 'diger';
-export const EVENT_CATS: Record<EventCat, { label: string; icon: string }> = {
-  konser: { label: 'Konser', icon: 'musical-notes' },
-  tiyatro: { label: 'Tiyatro', icon: 'film' },
-  sinema: { label: 'Sinema', icon: 'videocam' },
-  gosteri: { label: 'Gösteri', icon: 'mic' },
-  festival: { label: 'Festival', icon: 'bonfire' },
-  spor: { label: 'Spor', icon: 'football' },
-  diger: { label: 'Diğer', icon: 'sparkles' },
+// icon: MaterialCommunityIcons adı (uygulamada liste ve takvimde aynı simge); emoji: metin satırlarında.
+export const EVENT_CATS: Record<EventCat, { label: string; icon: string; emoji: string }> = {
+  konser: { label: 'Konser', icon: 'microphone', emoji: '🎤' },
+  tiyatro: { label: 'Tiyatro', icon: 'curtains', emoji: '🎭' },
+  sinema: { label: 'Sinema', icon: 'filmstrip', emoji: '🎞️' },
+  gosteri: { label: 'Gösteri', icon: 'microphone-variant', emoji: '🎙️' },
+  festival: { label: 'Festival', icon: 'party-popper', emoji: '🎉' },
+  spor: { label: 'Spor', icon: 'soccer', emoji: '⚽' },
+  diger: { label: 'Diğer', icon: 'star-four-points', emoji: '✨' },
 };
+// Etkinliksiz, düz date
+export const DATE_ICON = { icon: 'glass-wine', emoji: '🍷' };
 
 export type CityEvent = {
   id: string;

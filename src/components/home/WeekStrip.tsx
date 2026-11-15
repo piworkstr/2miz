@@ -1,3 +1,4 @@
+import { DATE_ICON, EVENT_CATS } from '../../lib/events';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -54,8 +55,8 @@ export function WeekStrip() {
   const dayName = (k: string) => week[(new Date(k).getDay() + 6) % 7];
   const next = upcomingDate
     ? {
-        icon: '🍷',
-        text: `${dayName(upcomingDate.id)} · ${upcomingDate.status === 'confirmed' ? 'Date' : l('Date önerisi', 'Date idea')}`,
+        icon: (upcomingDate.cat ? (EVENT_CATS[upcomingDate.cat] ?? DATE_ICON) : DATE_ICON).emoji,
+        text: `${dayName(upcomingDate.id)} · ${upcomingDate.what ? `${upcomingDate.what.split(' · ')[0]} · ` : ''}${upcomingDate.status === 'confirmed' ? 'Date' : l('Date önerisi', 'Date idea')}`,
         when: daysTo(upcomingDate.id),
       }
     : nextEvent

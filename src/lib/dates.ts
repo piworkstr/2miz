@@ -24,6 +24,7 @@ export type DatePlan = {
   by: string; // öneren kişi
   instant: boolean; // "Bugün date'teyiz" ile mi başladı
   selfie: string | null; // ortak selfieyi ekleyen kişi (fotoğrafın kendisi photos koleksiyonunda)
+  cat?: import('./events').EventCat; // etkinliğin türü: takvimde nokta yerine simge (konser, tiyatro, sinema…)
   what?: string; // ne yapılacak: şehir etkinliğinden planlandıysa etkinliğin adı, saati ve mekanı
 };
 
@@ -60,11 +61,11 @@ export async function proposeDate(coupleId: string, key: string, uid: string, in
 
 // Şehir etkinliğinden date planı: o gün için date yoksa öneri açar, varsa yalnızca "ne yapılacak" notunu ekler
 // (onaylanmış bir date'in durumu bozulmaz).
-export async function planDateFor(coupleId: string, key: string, uid: string, what: string) {
+export async function planDateFor(coupleId: string, key: string, uid: string, what: string, cat: import('./events').EventCat) {
   const ref = doc(datesCol(coupleId), key);
   const text = what.trim().slice(0, 140);
-  if ((await getDoc(ref)).exists()) return updateDoc(ref, { what: text });
-  await setDoc(ref, { status: 'proposed', by: uid, instant: false, selfie: null, what: text, createdAt: serverTimestamp() });
+  if ((await getDoc(ref)).exists()) return updateDoc(ref, { what: text, cat });
+  await setDoc(ref, { status: 'proposed', by: uid, instant: false, selfie: null, what: text, cat, createdAt: serverTimestamp() });
   logUse(coupleId, 'date');
 }
 

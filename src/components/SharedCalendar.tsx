@@ -1,3 +1,5 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { DATE_ICON, EVENT_CATS } from '../lib/events';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -85,7 +87,6 @@ export function SharedCalendar() {
     for (const e of events) if (e.day === k && !dots.includes(colorOf(e.owner))) dots.push(colorOf(e.owner));
     if (myBusy?.items.some((b) => b.day === k) && !dots.includes(ME)) dots.push(ME);
     if (theirBusy?.items.some((b) => b.day === k) && !dots.includes(t.colors.primary)) dots.push(t.colors.primary);
-    if (dates[k] && !dots.includes(BOTH)) dots.push(BOTH);
     if (specials[k]) dots.push(SPECIAL);
     return dots.slice(0, 4);
   };
@@ -157,7 +158,18 @@ export function SharedCalendar() {
                 </Text>
               </View>
               {bothDone && <Ionicons name="heart" size={8} color={t.colors.primary} style={{ position: 'absolute', top: 2, right: 6 }} />}
-              <View style={{ flexDirection: 'row', gap: 2, marginTop: 3 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2, height: 13 }}>
+                {/* Date günü nokta yerine simgeyle görünür: konser mikrofon, tiyatro perde, sinema film şeridi, düz date kadeh. */}
+                {!!dates[k] && (
+                  <MaterialCommunityIcons
+                    name={
+                      (dates[k].cat ? (EVENT_CATS[dates[k].cat!] ?? DATE_ICON) : DATE_ICON)
+                        .icon as keyof typeof MaterialCommunityIcons.glyphMap
+                    }
+                    size={13}
+                    color={BOTH}
+                  />
+                )}
                 {dotsFor(k).map((c, j) => (
                   <View key={j} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c }} />
                 ))}
@@ -171,7 +183,7 @@ export function SharedCalendar() {
         {[
           [ME, 'Sen'],
           [t.colors.primary, partnerName],
-          [BOTH, 'Birlikte / date'],
+          [BOTH, 'Birlikte'],
           [SPECIAL, 'Özel gün'],
         ].map(([c, l]) => (
           <View key={l} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -179,6 +191,10 @@ export function SharedCalendar() {
             <Muted style={{ fontSize: 11 }}>{l}</Muted>
           </View>
         ))}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <MaterialCommunityIcons name="glass-wine" size={12} color={BOTH} />
+          <Muted style={{ fontSize: 11 }}>Date (etkinlikse kendi simgesi)</Muted>
+        </View>
       </View>
 
       <DaySheet
@@ -301,7 +317,13 @@ function DaySheet({
               </View>
 
               {specials.map((s) => line(s.text, SPECIAL, s.icon, s.text))}
-              {date && line('date', BOTH, '💑', date.status === 'confirmed' ? 'Date günü' : 'Date önerildi, onay bekliyor')}
+              {date &&
+                line(
+                  'date',
+                  BOTH,
+                  (date.cat ? (EVENT_CATS[date.cat] ?? DATE_ICON) : DATE_ICON).emoji,
+                  `${date.what ? `${date.what} · ` : ''}${date.status === 'confirmed' ? 'Date günü' : 'Date önerildi, onay bekliyor'}`,
+                )}
               {bothDone && line('task', t.colors.primary, '❤️', 'Günün görevini birlikte tamamladınız')}
               {events.map((e) =>
                 line(

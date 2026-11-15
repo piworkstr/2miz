@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,6 +44,16 @@ export default function Events() {
       .catch(() => setItems([]));
   }, [city]);
 
+  // Tür bilgisi eklenmeden önce planlanmış date'lere türü sonradan yaz (takvimde simge çıksın).
+  useEffect(() => {
+    if (!couple?.id || !items) return;
+    for (const d of dates) {
+      if (d.cat || !d.what) continue;
+      const e = items.find((x) => x.day === d.id && d.what!.startsWith(x.title));
+      if (e) updateDoc(doc(db, 'couples', couple.id, 'dates', d.id), { cat: e.cat }).catch(() => {});
+    }
+  }, [dates, items, couple?.id]);
+
   const cats = useMemo(() => [...new Set((items ?? []).map((e) => e.cat))], [items]);
   const shown = (items ?? []).filter((e) => cat === 'hepsi' || e.cat === cat);
   const days = [...new Set(shown.map((e) => e.day))];
@@ -73,7 +84,7 @@ export default function Events() {
     if (isDated(e)) return;
     setDated((m) => ({ ...m, [e.id]: true }));
     try {
-      await planDateFor(couple.id, e.day, user.uid, [e.title, e.time, e.venue].filter(Boolean).join(' · '));
+      await planDateFor(couple.id, e.day, user.uid, [e.title, e.time, e.venue].filter(Boolean).join(' · '), e.cat);
     } catch {
       setDated((m) => ({ ...m, [e.id]: false }));
     }
@@ -149,11 +160,11 @@ export default function Events() {
                   return (
                     <Card key={e.id} style={{ gap: 8 }}>
                       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-                        <Ionicons
-                          name={c.icon as keyof typeof Ionicons.glyphMap}
-                          size={20}
+                        <MaterialCommunityIcons
+                          name={c.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+                          size={22}
                           color={t.colors.primary}
-                          style={{ marginTop: 2 }}
+                          style={{ marginTop: 1 }}
                         />
                         <View style={{ flex: 1, gap: 2 }}>
                           <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{e.title}</T>
