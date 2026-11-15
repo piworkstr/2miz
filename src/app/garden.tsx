@@ -2050,7 +2050,9 @@ function Sheet(p: SheetProps) {
             ? `Günlük görevden ${p.bank} altın geldi`
             : hungryAll
               ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
-              : 'Depoya, eve ya da çimene dokun: depo, pazar, mutfak, dükkân';
+              : farm.harvests < 20
+                ? 'Depoya, eve ya da çimene dokun: depo, pazar, mutfak, dükkân'
+                : '';
     return (
       <>
         {!!hint && (
