@@ -31,7 +31,7 @@ const catOf = (ev) => {
   if (seg.includes('music')) return genre.includes('festival') ? 'festival' : 'konser';
   if (seg.includes('sport')) return 'spor';
   if (seg.includes('film')) return 'sinema';
-  if (seg.includes('arts')) return /comedy|stand|variety|magic|circus|dance/.test(genre) ? 'gosteri' : 'tiyatro';
+  if (seg.includes('arts')) return /comedy|stand/.test(genre) ? 'standup' : /variety|magic|circus|dance/.test(genre) ? 'gosteri' : 'tiyatro';
   return 'diger';
 };
 

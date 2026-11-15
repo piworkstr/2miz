@@ -7,13 +7,14 @@ import { db } from './firebase';
 //   config/eventsauto_<il> -> bilet sağlayıcısından otomatik çekilenler (scripts/etkinlik-cek.mjs, günde bir)
 //   config/events          -> dizin: hangi ilde kaç etkinlik var (ana ekrandaki kart tek okumayla karar versin diye)
 // Bu dosya panelde de kullanılır; expo/react-native içe aktarma.
-export type EventCat = 'konser' | 'tiyatro' | 'sinema' | 'gosteri' | 'festival' | 'spor' | 'diger';
+export type EventCat = 'konser' | 'tiyatro' | 'standup' | 'sinema' | 'gosteri' | 'festival' | 'spor' | 'diger';
 // icon: MaterialCommunityIcons adı (uygulamada liste ve takvimde aynı simge); emoji: metin satırlarında.
 export const EVENT_CATS: Record<EventCat, { label: string; icon: string; emoji: string }> = {
   konser: { label: 'Konser', icon: 'microphone', emoji: '🎤' },
   tiyatro: { label: 'Tiyatro', icon: 'curtains', emoji: '🎭' },
   sinema: { label: 'Sinema', icon: 'filmstrip', emoji: '🎞️' },
-  gosteri: { label: 'Gösteri', icon: 'microphone-variant', emoji: '🎙️' },
+  standup: { label: 'Stand-up', icon: 'microphone-variant', emoji: '🎙️' },
+  gosteri: { label: 'Gösteri', icon: 'drama-masks', emoji: '🎪' },
   festival: { label: 'Festival', icon: 'party-popper', emoji: '🎉' },
   spor: { label: 'Spor', icon: 'soccer', emoji: '⚽' },
   diger: { label: 'Diğer', icon: 'star-four-points', emoji: '✨' },
