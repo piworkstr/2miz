@@ -6,7 +6,7 @@ import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Button, Card, Loading, Muted, Screen, T, Title } from '../components/ui';
 import { addEvent } from '../lib/calendar';
 import { trMonth } from '../lib/date';
-import { planDateFor } from '../lib/dates';
+import { planDateFor, useUpcomingDates } from '../lib/dates';
 import { CITIES, EVENT_CATS, loadCityEvents, safeUrl, type CityEvent, type EventCat } from '../lib/events';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
@@ -30,6 +30,9 @@ export default function Events() {
   const [pick, setPick] = useState(false);
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [dated, setDated] = useState<Record<string, boolean>>({});
+  // Daha önce date olarak planlananlar ekrana yeniden girince de işaretli gelsin (ana ekranla aynı dinleme).
+  const dates = useUpcomingDates(couple?.id);
+  const isDated = (e: CityEvent) => !!dated[e.id] || dates.some((d) => d.id === e.day && !!d.what?.startsWith(e.title));
   const city = couple?.city;
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function Events() {
 
   // Date olarak planla: o güne date önerisi açılır (partner onaylar), etkinliğin adı date'in üstünde görünür.
   const date = async (e: CityEvent) => {
-    if (dated[e.id]) return;
+    if (isDated(e)) return;
     setDated((m) => ({ ...m, [e.id]: true }));
     try {
       await planDateFor(couple.id, e.day, user.uid, [e.title, e.time, e.venue].filter(Boolean).join(' · '));
@@ -103,7 +106,12 @@ export default function Events() {
       ) : (
         <>
           {cats.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ flexGrow: 0, flexShrink: 0 }}
+              contentContainerStyle={{ gap: 8, alignItems: 'center' }}
+            >
               {(['hepsi', ...cats] as const).map((c) => {
                 const on = cat === c;
                 return (
@@ -113,6 +121,7 @@ export default function Events() {
                     style={{
                       paddingHorizontal: 14,
                       paddingVertical: 8,
+                      alignSelf: 'flex-start',
                       borderRadius: t.radius.pill,
                       backgroundColor: on ? t.colors.primary : t.colors.primarySoft,
                     }}
@@ -167,8 +176,8 @@ export default function Events() {
                       <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Button
                           style={{ flex: 1 }}
-                          variant={dated[e.id] ? 'secondary' : 'primary'}
-                          label={dated[e.id] ? 'Date planlandı ✓' : 'Date planla'}
+                          variant={isDated(e) ? 'secondary' : 'primary'}
+                          label={isDated(e) ? 'Date planlandı ✓' : 'Date planla'}
                           onPress={() => date(e)}
                         />
                         {!!url && (
