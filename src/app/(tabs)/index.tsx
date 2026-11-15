@@ -1,3 +1,5 @@
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
@@ -22,7 +24,8 @@ import { Button, Card, Display, ErrorText, Input, Loading, Muted, Pill, T } from
 import { GlassCircle } from '../../components/Glass';
 import { completeTask, modeOf, POINTS, respond, useToday, type DayDoc } from '../../lib/daily';
 import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
-import { saveTaskPhoto, usePhotos } from '../../lib/photos';
+import { bonusPhotoPrefix, saveTaskPhoto, usePhotos } from '../../lib/photos';
+import { BonusDoneSheet } from '../../components/BonusDoneSheet';
 import { useSession, type Profile } from '../../lib/session';
 import { categoryLabels, taskById, type Task } from '../../lib/tasks';
 import { BONUS_POINTS, toggleFavorite } from '../../lib/archive';
@@ -173,6 +176,7 @@ export default function Today() {
         )}
 
         <OpenBonusCard />
+        <BonusPhotoCard today={day} todayKey={key} />
         <DateCard mode="banner" />
         <SpecialDays />
         <WeekStrip />
@@ -496,24 +500,22 @@ function OpenBonusCard() {
   const l = useL();
   const { lang } = useLang();
   const [busy, setBusy] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<{ id: string; taskId: string } | null>(null);
   const open = couple?.openBonus ?? [];
   if (!user || !couple || open.length === 0) return null;
   const doneToday = couple.lastBonusDay === dayKey();
 
+  // Görev tamamlanır; fotoğraflar (varsa) tamamlama ekranından albüme eklenir.
   async function finish(id: string, taskId: string) {
-    if (!user || !couple || busy) return;
-    setBusy(id);
-    try {
-      const ok = await finishOpenBonus(couple.id, id, user.uid, BONUS_POINTS);
-      if (ok && partnerId) {
-        notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi tamamladı 🎉`, taskById(taskId).title, {
-          type: 'wheel',
-          url: '/',
-        });
-      }
-    } finally {
-      setBusy(null);
+    if (!user || !couple) return false;
+    const ok = await finishOpenBonus(couple.id, id, user.uid, BONUS_POINTS);
+    if (ok && partnerId) {
+      notifyPartner(partnerId, `${profile?.name ?? 'Partnerin'} bonus görevi tamamladı 🎉`, taskById(taskId).title, {
+        type: 'wheel',
+        url: '/',
+      });
     }
+    return ok;
   }
 
   return (
@@ -532,11 +534,62 @@ function OpenBonusCard() {
           </Muted>
           <Button
             label={doneToday ? l('Tamamladım', 'Done') : l(`Tamamladım · +${BONUS_POINTS} puan`, `Done · +${BONUS_POINTS} points`)}
-            onPress={() => finish(o.id, o.taskId)}
+            onPress={() => setSheet({ id: o.id, taskId: o.taskId })}
             busy={busy === o.id}
           />
         </View>
       ))}
+      {sheet && (
+        <BonusDoneSheet
+          open
+          onClose={() => setSheet(null)}
+          coupleId={couple.id}
+          uid={user.uid}
+          day={dayKey()}
+          taskId={sheet.taskId}
+          doneLabel={l('Tamamla ve albüme ekle', 'Finish and add to album')}
+          onDone={() => finish(sheet.id, sheet.taskId)}
+        />
+      )}
+    </Card>
+  );
+}
+
+// Bugün ya da dün tamamlanmış bonus göreve sonradan fotoğraf ekleme (henüz fotoğrafı yoksa görünür).
+function BonusPhotoCard({ today, todayKey }: { today: DayDoc | null | undefined; todayKey: string }) {
+  const t = useTheme();
+  const { user, couple } = useSession();
+  const photos = usePhotos(couple?.id, 30);
+  const [yBonus, setYBonus] = useState<DayDoc['bonus'] | null>(null);
+  const [open, setOpen] = useState<{ day: string; taskId: string } | null>(null);
+  const yKey = yesterdayKey();
+  useEffect(() => {
+    if (!couple?.id) return;
+    getDoc(doc(db, 'couples', couple.id, 'days', yKey))
+      .then((d) => setYBonus((d.data() as DayDoc | undefined)?.bonus ?? null))
+      .catch(() => {});
+  }, [couple?.id, yKey]);
+  if (!user || !couple || !photos) return null;
+  const list = [
+    today?.bonus ? { day: todayKey, taskId: today.bonus.taskId } : null,
+    yBonus ? { day: yKey, taskId: yBonus.taskId } : null,
+  ].filter((x): x is { day: string; taskId: string } => !!x && !photos.some((p) => p.id.startsWith(bonusPhotoPrefix(x.day, x.taskId))));
+  if (!list.length) return null;
+  return (
+    <Card style={{ gap: 10 }}>
+      {list.map((b) => (
+        <Pressable key={b.day + b.taskId} onPress={() => setOpen(b)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Ionicons name="images-outline" size={22} color={t.colors.primary} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>{taskById(b.taskId).title}</T>
+            <Muted>{`${b.day === todayKey ? 'Bugün' : 'Dün'} tamamladığınız bonus görev · fotoğraf ekle`}</Muted>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={t.colors.muted} />
+        </Pressable>
+      ))}
+      {open && (
+        <BonusDoneSheet open onClose={() => setOpen(null)} coupleId={couple.id} uid={user.uid} day={open.day} taskId={open.taskId} />
+      )}
     </Card>
   );
 }

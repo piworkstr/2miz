@@ -94,6 +94,27 @@ export async function saveDatePhoto(coupleId: string, day: string, uid: string, 
   });
 }
 
+// Bonus görevin fotoğrafları: albümde "anı" sayfası gibi durur, taskId dolu olduğu için "Bonus görev" başlığıyla gösterilir.
+// Kimlik gün + görevle sabit; aynı göreve sonradan eklenenler sıradaki boş numarayı alır (en çok 6).
+export const bonusPhotoPrefix = (day: string, taskId: string) => `moment_bonus_${day}_${taskId}_`;
+export async function saveBonusPhotos(coupleId: string, day: string, uid: string, taskId: string, note: string, list: string[]) {
+  const base = Date.now().toString(36);
+  await Promise.all(
+    list.map((data, i) =>
+      setDoc(doc(photosCol(coupleId), `${bonusPhotoPrefix(day, taskId)}${base}${i}`), {
+        kind: 'moment',
+        day,
+        uid,
+        from: uid,
+        taskId,
+        note: note.trim(),
+        data,
+        createdAt: serverTimestamp(),
+      }),
+    ),
+  );
+}
+
 // Albüm için son fotoğraflar, en yeni gün en üstte.
 export function usePhotos(coupleId: string | undefined, max = 90) {
   const [photos, setPhotos] = useState<Photo[] | null>(null);

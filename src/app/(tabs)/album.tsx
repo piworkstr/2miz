@@ -219,8 +219,13 @@ export default function Album() {
               <>
                 <View style={{ alignItems: 'center' }}>
                   <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>
-                    Anı
+                    {page.photo.taskId ? 'Bonus görev' : 'Anı'}
                   </Text>
+                  {!!page.photo.taskId && (
+                    <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#8A7F78', textAlign: 'center' }}>
+                      {taskById(page.photo.taskId).title}
+                    </Text>
+                  )}
                 </View>
                 <Polaroid
                   photo={page.photo}
