@@ -7,7 +7,7 @@ import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Button, Card, Loading, Muted, Screen, T, Title } from '../components/ui';
 import { addEvent } from '../lib/calendar';
 import { trMonth } from '../lib/date';
-import { planDateFor, useUpcomingDates } from '../lib/dates';
+import { planDateFor, unplanDateFor, useUpcomingDates } from '../lib/dates';
 import { CITIES, EVENT_CATS, loadCityEvents, safeUrl, type CityEvent, type EventCat } from '../lib/events';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
@@ -53,6 +53,13 @@ export default function Events() {
       if (e) updateDoc(doc(db, 'couples', couple.id, 'dates', d.id), { cat: e.cat }).catch(() => {});
     }
   }, [dates, items, couple?.id]);
+
+  // Yanlışlıkla basıldıysa geri al.
+  const undate = (e: CityEvent) => {
+    const d = dates.find((x) => x.id === e.day && !!x.what?.startsWith(e.title));
+    setDated((m) => ({ ...m, [e.id]: false }));
+    if (d) unplanDateFor(couple!.id, d).catch(() => {});
+  };
 
   const cats = useMemo(() => [...new Set((items ?? []).map((e) => e.cat))], [items]);
   const shown = (items ?? []).filter((e) => cat === 'hepsi' || e.cat === cat);
@@ -188,7 +195,7 @@ export default function Events() {
                         <Button
                           style={{ flex: 1 }}
                           variant={isDated(e) ? 'secondary' : 'primary'}
-                          label={isDated(e) ? 'Date planlandı ✓' : 'Date planla'}
+                          label={isDated(e) ? 'Planlandı ✓' : 'Date planla'}
                           onPress={() => date(e)}
                         />
                         {!!url && (
@@ -200,9 +207,16 @@ export default function Events() {
                           />
                         )}
                       </View>
-                      <Pressable onPress={() => plan(e)} hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 2 }}>
-                        <Muted style={{ fontSize: 13 }}>{added[e.id] ? 'Takvime eklendi ✓' : 'Yalnızca takvime ekle'}</Muted>
-                      </Pressable>
+                      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+                        {isDated(e) && (
+                          <Pressable onPress={() => undate(e)} hitSlop={8} style={{ paddingVertical: 2 }}>
+                            <Muted style={{ fontSize: 13, textDecorationLine: 'underline' }}>Date'i iptal et</Muted>
+                          </Pressable>
+                        )}
+                        <Pressable onPress={() => plan(e)} hitSlop={8} style={{ paddingVertical: 2 }}>
+                          <Muted style={{ fontSize: 13 }}>{added[e.id] ? 'Takvime eklendi ✓' : 'Yalnızca takvime ekle'}</Muted>
+                        </Pressable>
+                      </View>
                     </Card>
                   );
                 })}

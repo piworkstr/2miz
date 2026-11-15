@@ -2,6 +2,7 @@ import { logUse } from './usage';
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   documentId,
   getDoc,
@@ -25,6 +26,7 @@ export type DatePlan = {
   instant: boolean; // "Bugün date'teyiz" ile mi başladı
   selfie: string | null; // ortak selfieyi ekleyen kişi (fotoğrafın kendisi photos koleksiyonunda)
   cat?: import('./events').EventCat; // etkinliğin türü: takvimde nokta yerine simge (konser, tiyatro, sinema…)
+  fromEvent?: boolean; // date bu etkinlik için açıldı (iptalinde date de silinir); yoksa var olan date'e not eklenmiştir
   what?: string; // ne yapılacak: şehir etkinliğinden planlandıysa etkinliğin adı, saati ve mekanı
 };
 
@@ -65,8 +67,25 @@ export async function planDateFor(coupleId: string, key: string, uid: string, wh
   const ref = doc(datesCol(coupleId), key);
   const text = what.trim().slice(0, 140);
   if ((await getDoc(ref)).exists()) return updateDoc(ref, { what: text, cat });
-  await setDoc(ref, { status: 'proposed', by: uid, instant: false, selfie: null, what: text, cat, createdAt: serverTimestamp() });
+  await setDoc(ref, {
+    status: 'proposed',
+    by: uid,
+    instant: false,
+    selfie: null,
+    what: text,
+    cat,
+    fromEvent: true,
+    createdAt: serverTimestamp(),
+  });
   logUse(coupleId, 'date');
+}
+
+// Etkinlikten planlanan date'i geri al: date bu etkinlik için açıldıysa (ya da hâlâ öneriyse) silinir;
+// önceden var olan, onaylanmış bir date'e yalnızca not eklendiyse date kalır, not ve simge kaldırılır.
+export async function unplanDateFor(coupleId: string, plan: DatePlan) {
+  const ref = doc(datesCol(coupleId), plan.id);
+  if (plan.fromEvent || plan.status === 'proposed') return deleteDoc(ref);
+  await updateDoc(ref, { what: deleteField(), cat: deleteField() });
 }
 
 export async function confirmDate(coupleId: string, key: string) {
