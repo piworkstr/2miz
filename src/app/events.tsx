@@ -148,7 +148,7 @@ export default function Events() {
                       maxFontSizeMultiplier={1.25}
                       style={{ color: on ? '#fff' : t.colors.primary, fontSize: 13, fontWeight: '600', fontFamily: t.fonts.button }}
                     >
-                      {c === 'hepsi' ? 'Hepsi' : EVENT_CATS[c].label}
+                      {c === 'hepsi' ? 'Hepsi' : (EVENT_CATS[c]?.label ?? 'Diğer')}
                     </Text>
                   </Pressable>
                 );
