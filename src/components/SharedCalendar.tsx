@@ -136,39 +136,46 @@ export function SharedCalendar() {
               onPress={() => setSelected(k)}
               style={{ width: `${100 / 7}%`, height: 46, alignItems: 'center', paddingTop: 4 }}
             >
+              {/* Date günü: rakamın yerinde büyük simge durur (konser mikrofon, tiyatro perde, sinema film şeridi, düz date kadeh);
+                  günün rakamı altına küçük yazılır. */}
               <View
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: isToday ? t.colors.primary : 'transparent',
+                  backgroundColor: isToday ? t.colors.primary : dates[k] ? `${BOTH}26` : 'transparent',
                 }}
               >
-                <Text
-                  maxFontSizeMultiplier={1.25}
-                  style={{
-                    fontSize: 14,
-                    fontWeight: isToday ? '700' : '400',
-                    color: isToday ? t.colors.onPrimary : k < today ? t.colors.muted : t.colors.text,
-                  }}
-                >
-                  {d}
-                </Text>
-              </View>
-              {bothDone && <Ionicons name="heart" size={8} color={t.colors.primary} style={{ position: 'absolute', top: 2, right: 6 }} />}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2, height: 13 }}>
-                {/* Date günü nokta yerine simgeyle görünür: konser mikrofon, tiyatro perde, sinema film şeridi, düz date kadeh. */}
-                {!!dates[k] && (
+                {dates[k] ? (
                   <MaterialCommunityIcons
                     name={
                       (dates[k].cat ? (EVENT_CATS[dates[k].cat!] ?? DATE_ICON) : DATE_ICON)
                         .icon as keyof typeof MaterialCommunityIcons.glyphMap
                     }
-                    size={13}
-                    color={BOTH}
+                    size={21}
+                    color={isToday ? t.colors.onPrimary : BOTH}
                   />
+                ) : (
+                  <Text
+                    maxFontSizeMultiplier={1.25}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: isToday ? '700' : '400',
+                      color: isToday ? t.colors.onPrimary : k < today ? t.colors.muted : t.colors.text,
+                    }}
+                  >
+                    {d}
+                  </Text>
+                )}
+              </View>
+              {bothDone && <Ionicons name="heart" size={8} color={t.colors.primary} style={{ position: 'absolute', top: 2, right: 6 }} />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 1, height: 12 }}>
+                {!!dates[k] && (
+                  <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 9, fontWeight: '700', color: BOTH }}>
+                    {d}
+                  </Text>
                 )}
                 {dotsFor(k).map((c, j) => (
                   <View key={j} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c }} />
@@ -192,7 +199,7 @@ export function SharedCalendar() {
           </View>
         ))}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <MaterialCommunityIcons name="glass-wine" size={12} color={BOTH} />
+          <MaterialCommunityIcons name="glass-wine" size={14} color={BOTH} />
           <Muted style={{ fontSize: 11 }}>Date (etkinlikse kendi simgesi)</Muted>
         </View>
       </View>

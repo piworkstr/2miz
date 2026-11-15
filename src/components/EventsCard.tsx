@@ -2,7 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { citySlug, loadIndex, type EventIndex } from '../lib/events';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useUpcomingDates } from '../lib/dates';
+import { citySlug, loadCityEvents, loadIndex, type EventIndex } from '../lib/events';
+import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted, T } from './ui';
@@ -18,6 +21,25 @@ export function EventsCard() {
       .then(setIndex)
       .catch(() => setIndex({}));
   }, [couple?.id]);
+  // Tür bilgisi eklenmeden önce etkinlikten planlanmış date'lere türü bir kez sonradan yazar (takvimde doğru simge çıksın).
+  const dates = useUpcomingDates(couple?.id);
+  const missing = dates
+    .filter((d) => d.what && !d.cat)
+    .map((d) => d.id)
+    .join(',');
+  useEffect(() => {
+    if (!couple?.id || !couple.city || !missing) return;
+    loadCityEvents(couple.city)
+      .then((items) => {
+        for (const d of dates) {
+          if (d.cat || !d.what) continue;
+          const e = items.find((x) => x.day === d.id && d.what!.startsWith(x.title));
+          if (e) updateDoc(doc(db, 'couples', couple.id, 'dates', d.id), { cat: e.cat }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couple?.id, couple?.city, missing]);
   const cities = index?.cities ?? {};
   const total = (c?: { n?: number; auto?: number }) => (c?.n ?? 0) + (c?.auto ?? 0);
   const any = Object.values(cities).some((c) => total(c) > 0);
