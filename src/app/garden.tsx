@@ -1602,6 +1602,7 @@ export default function GardenScreen() {
               }}
               onLog={() => setShowLog(true)}
               onMarket={() => setShowMarket(true)}
+              onKitchen={() => setSel(FIXED_ANCHOR.house[0] * N + FIXED_ANCHOR.house[1])}
               onAll={() =>
                 ready.forEach((i) => {
                   const x = farm.tiles[i];
@@ -1679,6 +1680,7 @@ type SheetProps = {
   onClose: () => void;
   onLog: () => void;
   onMarket: () => void;
+  onKitchen: () => void;
   onAll: () => void;
   onWaterAll: () => void;
   onSell: () => void;
@@ -2033,6 +2035,7 @@ function Sheet(p: SheetProps) {
     const big = bigReady(farm, now).length;
     const weekend = isWeekend(now);
     const small = p.ready - big;
+    const kitchenReady = (farm.prod ?? []).filter((j) => j.ready <= now).length;
     const deliverable = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
     // Yalnız iş varsa kısa bir balon; altta oyun düğmeleri. Zemin yok, çiftlik görünür kalır.
     const gift = (farm.gifts ?? []).find((g) => g.from !== p.uid);
@@ -2074,16 +2077,35 @@ function Sheet(p: SheetProps) {
             </Text>
           </View>
         )}
-        {/* Alt alan sade: yalnızca o an yapılacak iş varsa düğme çıkar. Depo, sipariş, pazar, dükkân, mutfak ve günlük
-            çiftlikteki nesnelere (depo, ev, çimen) dokunarak açılır. */}
-        {(p.thirsty > 0 || small > 0 || p.bank > 0 || big > 0) && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+        {/* Sula ve Topla menünün üstünde; yalnızca iş varken görünür. */}
+        {(p.thirsty > 0 || small > 0) && (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
             {p.thirsty > 0 && <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />}
             {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
-            {p.bank > 0 && <Quick icon="gift" label="Görev altını" count={p.bank} onPress={p.onBank} />}
-            {big > 0 && <Quick icon="people" label="Hasat günü" count={big} onPress={() => p.onScene('harvest')} />}
           </View>
         )}
+        {/* Alt menü: her şey buradan da açılır (çiftlikteki depo, ev ve tezgâha dokunmak da aynı yere götürür). */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -10 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-end', gap: 10, paddingHorizontal: 10 }}
+        >
+          {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
+          {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
+          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
+          <Round icon="restaurant" label="Mutfak" badge={kitchenReady} accent={kitchenReady > 0} onPress={p.onKitchen} />
+          <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
+          {n > 0 &&
+            (weekend ? (
+              <Round icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} accent onPress={() => p.onScene('market')} />
+            ) : (
+              <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
+            ))}
+          <Round icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
+          <Round icon="cart" label="Dükkân" onPress={p.onShop} />
+          <Round icon="book" label="Günlük" onPress={p.onLog} />
+        </ScrollView>
       </>
     );
   }
