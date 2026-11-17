@@ -85,7 +85,12 @@ import {
   stockValue,
   TILL,
   PAVE,
-  kitchenSlots,
+  STATIONS,
+  hasStation,
+  stationJobs,
+  stationOf,
+  stationSlots,
+  type Station,
   BLOOM,
   timeLeft,
   treeReady,
@@ -1299,15 +1304,17 @@ export default function GardenScreen() {
   {
     // Ev: mutfak. Yapılabilecek bir tarif varsa rozet çıkar.
     const lvNow = levelOf(farm.xp).level;
-    const can = (Object.keys(RECIPES) as RecipeId[]).filter((id) => RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs));
+    const can = (Object.keys(RECIPES) as RecipeId[]).filter(
+      (id) => stationOf(id) === 'mutfak' && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
+    );
     const [hr, hc] = FIXED_ANCHOR.house;
     const h = center(hr, hc);
     const hb = center(hr - 1, hc - 1);
     // Mutfak rozeti: hazır ürün varsa "Hazır", üretim sürüyorsa kalan süre, boş ocak ve malzeme varsa "Mutfak".
-    const jobs = farm.prod ?? [];
+    const jobs = stationJobs(farm, 'mutfak');
     const doneJob = jobs.find((j) => j.ready <= now);
     const nextJob = jobs.slice().sort((a, b) => a.ready - b.ready)[0];
-    const free = jobs.length < kitchenSlots(lvNow);
+    const free = jobs.length < stationSlots('mutfak', lvNow);
     if (doneJob || nextJob || (can.length && free))
       badges.push({
         key: 'mutfak',
@@ -1363,6 +1370,27 @@ export default function GardenScreen() {
     if (tl.k === 'animal' && animalReady(tl, now))
       badges.push({ key: `b${i}`, i, x, y: y - TW * 0.85, art: PRODUCTS[ANIMALS[tl.item].products[0]].art, z });
     if (tl.k === 'tree' && treeReady(tl, now)) badges.push({ key: `b${i}`, i, x, y: y - TW * 1.15, art: 'coin', z });
+    if (tl.k === 'decor' && DECOR[tl.item].station) {
+      // Atölye rozeti: hazır ürün varsa "Hazır", üretim sürüyorsa kalan süre, boşsa ve malzeme varsa atölyenin adı.
+      const st = tl.item as Station;
+      const lvNow = levelOf(farm.xp).level;
+      const js = stationJobs(farm, st);
+      const dj = js.find((j) => j.ready <= now);
+      const nj = js.slice().sort((a, b) => a.ready - b.ready)[0];
+      const can = (Object.keys(RECIPES) as RecipeId[]).filter(
+        (id) => stationOf(id) === st && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
+      );
+      if (dj || nj || (can.length && js.length < stationSlots(st, lvNow)))
+        badges.push({
+          key: `b${i}`,
+          i,
+          x,
+          y: y - TW * 1.45,
+          art: dj ? dj.recipe : nj ? nj.recipe : can[0],
+          z,
+          label: dj ? 'Hazır' : nj ? timeLeft(nj.ready - now) : STATIONS[st].name,
+        });
+    }
     if (tl.k === 'building') {
       const ready = tl.res.filter((r) => residentReady(r, now));
       const hungry = tl.res.filter((r) => needsFeed(r.id) && r.fed === null);
@@ -1445,8 +1473,15 @@ export default function GardenScreen() {
   quickRef.current = (wx, wy) => {
     // Önce rozetler: rozet karenin üstünde durduğu için aksi hâlde arkadaki kare seçilirdi.
     const hit = badges.find((b) => Math.hypot(b.x - wx, b.y - wy) < TW * 0.45);
-    if (hit?.key === 'depo' || hit?.key === 'mutfak' || hit?.key === 'sepetb') {
-      setSel(hit.i);
+    // Depo, mutfak, sepet ve atölye rozetleri: o yerin panelini açar. Seçim bir sonraki turda yapılır; çünkü bu
+    // işlev true dönünce çağıran yer seçimi temizler.
+    const hitTile = hit ? farm.tiles[hit.i] : undefined;
+    if (
+      hit &&
+      (hit.key === 'depo' || hit.key === 'mutfak' || hit.key === 'sepetb' || (hitTile?.k === 'decor' && DECOR[hitTile.item].station))
+    ) {
+      const to = hit.i;
+      setTimeout(() => setSel(to), 0);
       return true;
     }
     const obj = objectAtRef.current(wx, wy);
@@ -1840,6 +1875,13 @@ export default function GardenScreen() {
                 setSel(null);
               }}
               onOrders={() => setShowOrders(true)}
+              onWorkshop={(tile) => {
+                if (tile >= 0) setSel(tile);
+                else {
+                  flash('Mandırayı dükkândan alıp çiftliğe koy');
+                  setShowShop(true);
+                }
+              }}
               onDepot={() => setSel(BARN_TILE)}
               onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
               onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
@@ -1928,6 +1970,7 @@ type SheetProps = {
   onShop: () => void;
   onPlace: (pl: Placing) => void;
   onOrders: () => void;
+  onWorkshop: (tile: number) => void;
   onDepot: () => void;
   onDeliver: (orderId: string) => void;
   onNote: (text: string) => void;
@@ -2294,7 +2337,11 @@ function Sheet(p: SheetProps) {
     const big = bigReady(farm, now).length;
     const weekend = isWeekend(now);
     const small = p.ready - big;
-    const kitchenReady = (farm.prod ?? []).filter((j) => j.ready <= now).length;
+    const kitchenReady = stationJobs(farm, 'mutfak').filter((j) => j.ready <= now).length;
+    const shopTile = farm.tiles.findIndex((x) => x.k === 'decor' && DECOR[x.item].station);
+    const shopReady = (farm.prod ?? []).filter(
+      (j) => j.ready <= now && stationOf(j.recipe) !== 'mutfak' && hasStation(farm, stationOf(j.recipe)),
+    ).length;
     const deliverable = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
     // Yalnız iş varsa kısa bir balon; altta oyun düğmeleri. Zemin yok, çiftlik görünür kalır.
     const gift = (farm.gifts ?? []).find((g) => g.from !== p.uid);
@@ -2354,6 +2401,9 @@ function Sheet(p: SheetProps) {
           {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
           <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           <Round icon="restaurant" label="Mutfak" badge={kitchenReady} accent={kitchenReady > 0} onPress={p.onKitchen} />
+          {level >= DECOR.mandira.lvl && (
+            <Round icon="construct" label="Atölye" badge={shopReady} accent={shopReady > 0} onPress={() => p.onWorkshop(shopTile)} />
+          )}
           <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
           {n > 0 &&
             (weekend ? (
@@ -2493,7 +2543,7 @@ function Sheet(p: SheetProps) {
           level={level}
           now={now}
           onCook={(recipe) => p.onStay({ a: 'cook', i, recipe })}
-          onCollect={() => p.onStay({ a: 'collectProd', i })}
+          onCollect={() => p.onStay({ a: 'collectProd', i, at: 'mutfak' })}
         />
         <Btn kind="soft" label="Çiftlik günlüğü" onPress={p.onLog} />
       </>
@@ -2602,6 +2652,27 @@ function Sheet(p: SheetProps) {
           {done && <Btn flex label="Meyve topla" onPress={() => p.onAct({ a: 'pick', i })} />}
           <Btn kind="soft" label={`Kes (+${Math.floor(tr.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
         </View>
+        <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
+      </>
+    );
+  }
+  if (t.k === 'decor' && DECOR[t.item].station) {
+    const d = DECOR[t.item];
+    const st = t.item as Station;
+    return (
+      <>
+        <Head art={d.sp} title={d.name} onClose={p.onClose} />
+        <Kitchen
+          farm={farm}
+          level={level}
+          now={now}
+          station={st}
+          onCook={(recipe) => p.onStay({ a: 'cook', i, recipe })}
+          onCollect={() => p.onStay({ a: 'collectProd', i, at: st })}
+        />
+        {stationJobs(farm, st).length === 0 && (
+          <Btn kind="soft" label={`Kaldır (+${Math.floor(d.cost / 2)})`} onPress={() => p.onAct({ a: 'remove', i })} />
+        )}
         <Note>Taşımak için üstüne basılı tutup sürükle.</Note>
       </>
     );
@@ -2973,17 +3044,19 @@ function Kitchen({
   farm,
   level,
   now,
+  station = 'mutfak',
   onCook,
   onCollect,
 }: {
   farm: Farm;
   level: number;
   now: number;
+  station?: Station;
   onCook: (r: RecipeId) => void;
   onCollect: () => void;
 }) {
-  const jobs = farm.prod ?? [];
-  const slots = kitchenSlots(level);
+  const jobs = stationJobs(farm, station);
+  const slots = Math.max(stationSlots(station, level), jobs.length);
   const full = jobs.length >= slots;
   const ready = jobs.filter((j) => j.ready <= now).length;
   return (
@@ -3016,7 +3089,7 @@ function Kitchen({
                 </>
               ) : (
                 <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: MUTED }}>
-                  Boş ocak
+                  Boş {STATIONS[station].slot}
                 </Text>
               )}
             </View>
@@ -3029,35 +3102,37 @@ function Kitchen({
         <Note>
           {jobs.length
             ? 'Üretim sürüyor. Süre dolunca buradan toplarsın; ürün depoya girer.'
-            : 'Depodaki ürünlerden bir tarif seç; süresi dolunca buradan toplanır. Daha pahalıya satılır, siparişlerde istenir.'}
+            : 'Depodaki ürünlerden bir ürün seç; süresi dolunca buradan toplanır. Daha pahalıya satılır, siparişlerde istenir.'}
         </Note>
       )}
       <ScrollView style={{ maxHeight: 200 }} contentContainerStyle={{ gap: 8 }}>
-        {(Object.keys(RECIPES) as RecipeId[]).map((id) => {
-          const r = RECIPES[id];
-          const locked = level < r.lvl;
-          const ok = !locked && !full && hasAll(farm, r.needs);
-          return (
-            <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: locked ? 0.5 : 1 }}>
-              <StockIcon k={id} w={34} h={34} />
-              <View style={{ flex: 1 }}>
-                <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
-                  {r.name} · {r.sell} altın · {timeLeft(r.mins * MIN)}
-                  {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
-                </Text>
-                <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: ok ? GREEN : MUTED }}>
-                  {locked ? `${r.lvl}. seviyede açılır` : needsText(r.needs)}
-                </Text>
+        {(Object.keys(RECIPES) as RecipeId[])
+          .filter((id) => stationOf(id) === station)
+          .map((id) => {
+            const r = RECIPES[id];
+            const locked = level < r.lvl;
+            const ok = !locked && !full && hasAll(farm, r.needs);
+            return (
+              <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: locked ? 0.5 : 1 }}>
+                <StockIcon k={id} w={34} h={34} />
+                <View style={{ flex: 1 }}>
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+                    {r.name} · {r.sell} altın · {timeLeft(r.mins * MIN)}
+                    {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
+                  </Text>
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: ok ? GREEN : MUTED }}>
+                    {locked ? `${r.lvl}. seviyede açılır` : needsText(r.needs)}
+                  </Text>
+                </View>
+                <Btn
+                  kind={ok ? 'green' : 'soft'}
+                  label={ok ? 'Başlat' : locked ? 'Kilitli' : full ? 'Dolu' : 'Eksik'}
+                  disabled={!ok}
+                  onPress={() => onCook(id)}
+                />
               </View>
-              <Btn
-                kind={ok ? 'green' : 'soft'}
-                label={ok ? 'Başlat' : locked ? 'Kilitli' : full ? 'Dolu' : 'Eksik'}
-                disabled={!ok}
-                onPress={() => onCook(id)}
-              />
-            </View>
-          );
-        })}
+            );
+          })}
       </ScrollView>
     </>
   );

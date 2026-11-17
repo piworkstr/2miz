@@ -31,6 +31,7 @@ export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
 export type DecorId =
+  | 'mandira'
   | 'posta'
   | 'lamba'
   | 'kopru'
@@ -84,15 +85,21 @@ export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) =
 // ---------- Mutfak: tarifler ----------
 // Depodaki ürünlerden yapılır, anında hazır olur. Ham hâlinden yaklaşık bir buçuk kat değerlidir;
 // hediye sepetleri de bunlardan hazırlanır.
-export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut';
+export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut' | 'tereyagi' | 'atki' | 'kazak';
+// Üretim yeri: mutfak evin içindedir; atölyeler dükkândan alınıp çiftliğe konur.
+export type Station = 'mutfak' | 'mandira' | 'atolye';
 export const RECIPES: Record<
   RecipeId,
-  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number; mins: number }
+  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number; mins: number; at?: Station }
 > = {
   // mins: üretim süresi. Üretim anında değildir: işe konur, süre dolunca mutfaktan toplanır.
   ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugday: 3 }, sell: 30, xp: 4, lvl: 1, mins: 20 },
   omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45 },
-  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 3, mins: 120 },
+  // Süt ürünleri mandırada, yün işleri dikiş atölyesinde yapılır (at). Yeri çiftlikte yoksa o tarif görünmez.
+  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 5, mins: 120, at: 'mandira' },
+  tereyagi: { name: 'Tereyağı', emoji: '🧈', needs: { milk: 1 }, sell: 80, xp: 7, lvl: 5, mins: 40, at: 'mandira' },
+  atki: { name: 'Atkı', emoji: '🧣', needs: { wool: 2 }, sell: 125, xp: 10, lvl: 9, mins: 90, at: 'atolye' },
+  kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 10, mins: 180, at: 'atolye' },
   kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90 },
   recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180 },
   ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60 },
@@ -101,6 +108,14 @@ export const RECIPES: Record<
 export type ProdJob = { id: string; recipe: RecipeId; by: string; at: number; ready: number; n: number };
 // Mutfakta aynı anda kaç iş: 2 ile başlar, 8. ve 14. seviyede birer artar.
 export const kitchenSlots = (level: number) => 2 + (level >= 8 ? 1 : 0) + (level >= 14 ? 1 : 0);
+export const STATIONS: Record<Station, { name: string; slot: string; from: string; inn: string }> = {
+  mutfak: { name: 'Mutfak', slot: 'ocak', from: 'mutfaktan', inn: 'mutfakta' },
+  mandira: { name: 'Mandıra', slot: 'tekne', from: 'mandıradan', inn: 'mandırada' },
+  atolye: { name: 'Dikiş atölyesi', slot: 'tezgâh', from: 'atölyeden', inn: 'atölyede' },
+};
+export const stationOf = (r: RecipeId): Station => RECIPES[r]?.at ?? 'mutfak';
+// Atölyelerde 2 yer; 12. seviyede 3.
+export const stationSlots = (st: Station, level: number) => (st === 'mutfak' ? kitchenSlots(level) : 2 + (level >= 12 ? 1 : 0));
 export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.emoji]));
 
 // ---------- Hediye sepeti ----------
@@ -195,9 +210,12 @@ export const DECOR: Record<
     perk?: string;
     flowers?: boolean;
     hidden?: boolean;
+    station?: boolean;
   }
 > = {
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
+  // Üretim atölyesi: çiftlikte bir tane olur; dokununca üretim paneli açılır.
+  mandira: { name: 'Mandıra', sp: 'mandira', cost: 600, xp: 15, lvl: 5, w: 1.5, perk: 'Sütten tereyağı ve peynir üretir', station: true },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
   cit: { name: 'Çit', sp: 'fence', cost: 20, xp: 1, lvl: 1, w: 0.92, wall: 'cit' },
   duvar: { name: 'Taş duvar', sp: 'fence', cost: 25, xp: 1, lvl: 1, w: 0.92, wall: 'duvar' },
@@ -454,7 +472,8 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
   }
   // Malzemesinin hepsi üretilebilen tarifler de sipariş edilebilir (mutfağa iş çıkar).
   const raw = [...pool];
-  for (const [k, r] of Object.entries(RECIPES)) if (r.lvl <= lv && Object.keys(r.needs).every((x) => raw.includes(x))) pool.push(k);
+  for (const [k, r] of Object.entries(RECIPES))
+    if (r.lvl <= lv && hasStation(f, r.at ?? 'mutfak') && Object.keys(r.needs).every((x) => raw.includes(x))) pool.push(k);
   const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
   const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
   const items: Record<string, number> = {};
@@ -565,7 +584,7 @@ export type Action =
   // Mutfak: depodaki ürünlerden tarif yap.
   | { a: 'cook'; i: number; recipe: RecipeId }
   // Süresi dolan üretimi mutfaktan topla (job verilmezse hazır olanların hepsi).
-  | { a: 'collectProd'; i: number; job?: string }
+  | { a: 'collectProd'; i: number; job?: string; at?: Station }
   // Hediye sepeti hazırla ve partnere gönder / gelen sepeti aç.
   | { a: 'gift'; i: number; basket: BasketId }
   | { a: 'openGift'; i: number; gift: string }
@@ -584,6 +603,13 @@ const emptyOk = (t: Tile) => t.k === 'grass';
 export const SERA_RANGE = 2;
 export const SERA_FACTOR = 0.75;
 export const MILL_RECIPES: string[] = ['ekmek', 'kek'];
+export const hasStation = (f: Farm, st: Station) => st === 'mutfak' || f.tiles.some((x) => x.k === 'decor' && (x.item as string) === st);
+// Bir üretim yerinin işleri. Yeri kaldırılmış atölyenin yarım işleri mutfakta görünür ki toplanabilsin.
+export const stationJobs = (f: Farm, st: Station) =>
+  (f.prod ?? []).filter((j) => {
+    const at = stationOf(j.recipe);
+    return at === st || (st === 'mutfak' && !hasStation(f, at));
+  });
 export function nearDecor(f: Farm, i: number, item: DecorId, range: number): boolean {
   const r0 = Math.floor(i / N);
   const c0 = i % N;
@@ -760,6 +786,8 @@ export function applyAction(
       const d = DECOR[act.item];
       if (!emptyOk(t)) return 'Süsler çimene konur; boş bir çimen seç.';
       if (lv < d.lvl) return `${d.name} ${d.lvl}. seviyede açılır.`;
+      if (d.station && f.tiles.some((x) => x.k === 'decor' && x.item === act.item))
+        return `Çiftlikte zaten bir ${d.name.toLocaleLowerCase('tr-TR')} var.`;
       if (f.coins < d.cost) return 'Yeterli altının yok.';
       f.coins -= d.cost;
       f.xp += d.xp;
@@ -1006,18 +1034,22 @@ export function applyAction(
       if (!r) return 'Böyle bir tarif yok.';
       if (lv < r.lvl) return `${r.name} ${r.lvl}. seviyede açılır.`;
       const jobs = f.prod ?? [];
-      if (jobs.length >= kitchenSlots(lv)) return 'Mutfak dolu. Önce hazır olanları toplayın ya da bitmesini bekleyin.';
+      const st = stationOf(act.recipe);
+      if (!hasStation(f, st)) return `${r.name} için çiftlikte ${STATIONS[st].name.toLocaleLowerCase('tr-TR')} gerek.`;
+      if (stationJobs(f, st).length >= stationSlots(st, lv))
+        return `${STATIONS[st].name} dolu. Önce hazır olanları toplayın ya da bitmesini bekleyin.`;
       if (!hasAll(f, r.needs)) return `${r.name} için depoda ${needsText(r.needs)} gerek.`;
       take(r.needs);
       // Değirmen unu bollaştırır: ekmek ve kek çift çıkar.
       const n = MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1;
       f.prod = [...jobs, { id: `${now.toString(36)}${jobs.length}`, recipe: act.recipe, by: uid, at: now, ready: now + r.mins * MIN, n }];
-      text = `${name} ${r.name.toLocaleLowerCase('tr-TR')} yapmaya koydu ${r.emoji}`;
+      text = `${name} ${st === 'mutfak' ? '' : `${STATIONS[st].inn} `}${r.name.toLocaleLowerCase('tr-TR')} yapmaya koydu ${r.emoji}`;
       break;
     }
     case 'collectProd': {
       const jobs = f.prod ?? [];
-      const done = jobs.filter((j) => j.ready <= now && (!act.job || j.id === act.job));
+      const mine = act.at ? stationJobs(f, act.at) : jobs;
+      const done = mine.filter((j) => j.ready <= now && (!act.job || j.id === act.job));
       if (!done.length) return 'Henüz hazır olan yok.';
       for (const j of done) {
         put(j.recipe, j.n);
@@ -1026,7 +1058,7 @@ export function applyAction(
       }
       f.prod = jobs.filter((j) => !done.includes(j));
       const names = [...new Set(done.map((j) => RECIPES[j.recipe]?.name.toLocaleLowerCase('tr-TR')))].join(', ');
-      text = `${name} mutfaktan ${names} aldı`;
+      text = `${name} ${STATIONS[act.at ?? 'mutfak'].from} ${names} aldı`;
       gained = 0;
       break;
     }

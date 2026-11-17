@@ -31,6 +31,11 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   kopru: { src: require('../../assets/farm/kopru.webp'), h: 0.61 },
   lamba: { src: require('../../assets/farm/lamba.webp'), h: 1.44 },
   posta: { src: require('../../assets/farm/posta.webp'), h: 1.4 },
+  // Atölyeler ve ürünleri
+  mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },
+  tereyagi: { src: require('../../assets/farm/tereyagi.webp'), h: 0.62 },
+  atki: { src: require('../../assets/farm/atki.webp'), h: 0.5 },
+  kazak: { src: require('../../assets/farm/kazak.webp'), h: 0.667 },
   salincak: { src: require('../../assets/farm/salincak.webp'), h: 0.85 },
   cardak: { src: require('../../assets/farm/cardak.webp'), h: 1.01 },
   gul: { src: require('../../assets/farm/gul.webp'), h: 0.84 },
