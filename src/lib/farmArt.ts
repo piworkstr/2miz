@@ -54,6 +54,9 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   manzara: { src: require('../../assets/farm/manzara.webp'), h: 720 / 1280 }, // çiftliğin oturduğu manzara (1280×720)
   kumes: { src: require('../../assets/farm/kumes.webp'), h: 0.988 },
   agil: { src: require('../../assets/farm/agil.webp'), h: 0.988 },
+  // Hayvanların önünde kalan ön çit/tel: binanın üstüne aynı yere bir kez daha çizilir, hayvanlar içeride görünür.
+  kumes_on: { src: require('../../assets/farm/kumes_on.webp'), h: 0.988 },
+  agil_on: { src: require('../../assets/farm/agil_on.webp'), h: 0.988 },
   kovan: { src: require('../../assets/farm/kovan.webp'), h: 0.909 },
   tree: { src: require('../../assets/farm/tree.webp'), h: 1.03 },
   well: { src: require('../../assets/farm/well.webp'), h: 1.42 },

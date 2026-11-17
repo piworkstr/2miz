@@ -194,6 +194,30 @@ type Spr = {
   wall?: { kind: WallKind; mask: number; flowers?: boolean };
 };
 
+// Binaların içi: hayvanların ayak noktaları (kaynak çizimin pikselinde, arkadan öne sıralı) ve çizimdeki genişlikleri.
+const PENS: Partial<Record<string, { sw: number; sh: number; slots: [number, number][]; px: Record<string, number> }>> = {
+  agil: {
+    sw: 431,
+    sh: 426,
+    slots: [
+      [92, 302],
+      [222, 314],
+      [160, 330],
+    ],
+    px: { koyun: 76, inek: 92 },
+  },
+  kumes: {
+    sw: 412,
+    sh: 407,
+    slots: [
+      [318, 300],
+      [346, 332],
+      [226, 352],
+    ],
+    px: { tavuk: 46 },
+  },
+};
+
 function sprites(f: Farm, now: number): Spr[] {
   const barnAt = barnTile(f);
   const out: Spr[] = [];
@@ -212,19 +236,26 @@ function sprites(f: Farm, now: number): Spr[] {
     if (t.k === 'animal') out.push({ key: `s${i}`, art: t.item, ...up, w: TW * ANIMALS[t.item].w });
     if (t.k === 'tree') out.push({ key: `s${i}`, art: ART[t.item] ? t.item : 'tree', ...up, w: TW * TREES[t.item].w });
     if (t.k === 'building') {
-      out.push({ key: `s${i}`, art: t.item, ...up, y: up.y + TH * 0.25, w: TW * BUILDINGS[t.item].w });
-      // İçindekiler binanın önünde küçük küçük görünür.
-      t.res.forEach((r, k) => {
-        if (r.id === 'ari') return;
-        out.push({
-          key: `s${i}r${k}`,
-          art: r.id,
-          x: up.x + (k - 1) * TW * 0.3,
-          y: up.y + TH * 0.62 + (k % 2) * 4,
-          z: up.z + 1,
-          w: TW * ANIMALS[r.id].w * 0.45,
+      const bw = TW * BUILDINGS[t.item].w;
+      const by = up.y + TH * 0.25;
+      out.push({ key: `s${i}`, art: t.item, ...up, y: by, w: bw });
+      const pen = PENS[t.item];
+      if (pen) {
+        // Hayvanlar binanın içinde durur: çizimdeki yerlerine konur, ön çit üstlerine yeniden çizilir.
+        const bh = bw * ART[t.item].h;
+        t.res.forEach((r, k) => {
+          const [sx, sy] = pen.slots[k % pen.slots.length];
+          out.push({
+            key: `s${i}r${k}`,
+            art: r.id,
+            x: up.x - bw / 2 + (sx / pen.sw) * bw,
+            y: by - bh + (sy / pen.sh) * bh,
+            z: up.z + 1 + sy / 1000,
+            w: ((pen.px[r.id] ?? 60) / pen.sw) * bw,
+          });
         });
-      });
+        out.push({ key: `s${i}on`, art: `${t.item}_on`, ...up, y: by, z: up.z + 2, w: bw });
+      }
     }
     if (t.k === 'decor') {
       const wall = DECOR[t.item].wall;
