@@ -742,6 +742,19 @@ const emptyOk = (t: Tile) => t.k === 'grass';
 export const SERA_RANGE = 2;
 export const SERA_FACTOR = 0.75;
 export const MILL_RECIPES: string[] = ['ekmek', 'kek'];
+// Bir malzemenin nereden geldiği (tarif panelinde eksik malzemenin yanında yazar).
+export function sourceOf(k: string, f?: Farm): string {
+  if (CROPS[k as CropId]) return 'tarlaya ekilir';
+  if (RECIPES[k as RecipeId]) return `${STATIONS[stationOf(k as RecipeId, f)].inn} yapılır`;
+  const from = (Object.keys(ANIMALS) as AnimalId[]).filter((a) => ANIMALS[a].products.includes(k));
+  if (from.length) {
+    const who = from.map((a) => ANIMALS[a].name.toLocaleLowerCase('tr-TR')).join(' ya da ');
+    const home = BUILDINGS[buildingFor(from[0])].name.toLocaleLowerCase('tr-TR');
+    return from[0] === 'ari' ? 'arı kovanından toplanır' : `${who} verir (${home})`;
+  }
+  if (TREES[k as TreeId]) return 'ağaçtan toplanır';
+  return 'depodan';
+}
 export const hasStation = (f: Farm, st: Station) => st === 'mutfak' || f.tiles.some((x) => x.k === 'decor' && (x.item as string) === st);
 // Bir üretim yerinin işleri. Yeri kaldırılmış atölyenin yarım işleri mutfakta görünür ki toplanabilsin.
 export const stationJobs = (f: Farm, st: Station) =>

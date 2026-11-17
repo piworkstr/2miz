@@ -107,6 +107,7 @@ import {
   type TreeId,
   applyAction,
   orderWho,
+  sourceOf,
 } from '../lib/farm';
 import { randomArt } from '../lib/avatarArt';
 import { liveFresh, overlayFarm, publishLive, usePartnerLive } from '../lib/farmLive';
@@ -3263,9 +3264,51 @@ function Kitchen({
                     {r.name} · {r.sell} altın · {timeLeft(r.mins * MIN)}
                     {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
                   </Text>
-                  <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: ok ? GREEN : MUTED }}>
-                    {locked ? `${r.lvl}. seviyede açılır` : needsText(r.needs)}
-                  </Text>
+                  {locked ? (
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED }}>
+                      {r.lvl}. seviyede açılır
+                    </Text>
+                  ) : (
+                    <>
+                      {/* Malzemeler: her biri resmiyle ve "depoda/gereken" sayısıyla; yeten yeşil, eksik kırmızı. */}
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 3 }}>
+                        {Object.entries(r.needs).map(([k, q]) => {
+                          const have = farm.stock[k] ?? 0;
+                          const enough = have >= q;
+                          return (
+                            <View
+                              key={k}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 3,
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                borderRadius: 10,
+                                backgroundColor: enough ? '#E8F5E4' : '#FDE7EA',
+                              }}
+                            >
+                              <StockIcon k={k} w={16} h={16} />
+                              <Text
+                                maxFontSizeMultiplier={1.0}
+                                style={{ fontSize: 11, fontWeight: '800', color: enough ? GREEN : '#C7354F' }}
+                              >
+                                {PRODUCT_NAME[k]} {Math.min(have, q)}/{q}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                      {/* Eksik malzeme nereden gelir: tek tek, açıkça. */}
+                      {Object.entries(r.needs)
+                        .filter(([k, q]) => (farm.stock[k] ?? 0) < q)
+                        .map(([k, q]) => (
+                          <Text key={k} maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: '#C7354F', marginTop: 2 }}>
+                            {q - (farm.stock[k] ?? 0)} {PRODUCT_NAME[k].toLocaleLowerCase('tr-TR')} eksik · {sourceOf(k, farm)}
+                          </Text>
+                        ))}
+                    </>
+                  )}
                 </View>
                 <Btn
                   kind={ok ? 'green' : 'soft'}
