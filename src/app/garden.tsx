@@ -180,7 +180,7 @@ const GREEN = '#5FA83A';
 const INK = '#2B1D22';
 const MUTED = '#8A7479';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-type Shop = 'crop' | 'animal' | 'building' | 'tree' | 'decor';
+type Shop = 'crop' | 'animal' | 'building' | 'workshop' | 'tree' | 'decor';
 // Dükkandan seçilen, yere konacak şey: sonraki dokunuş o kareye yerleştirir.
 type Placing =
   | { a: 'plant'; crop: CropId }
@@ -1877,7 +1877,7 @@ export default function GardenScreen() {
               onWorkshop={(tile) => {
                 if (tile >= 0) setSel(tile);
                 else {
-                  flash('Atölyeler dükkânda: alıp çiftliğe koy');
+                  setShop('workshop');
                   setShowShop(true);
                 }
               }}
@@ -2406,7 +2406,7 @@ function Sheet(p: SheetProps) {
           {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
           <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           <Round icon="restaurant" label="Mutfak" badge={kitchenReady} accent={kitchenReady > 0} onPress={p.onKitchen} />
-          {level >= DECOR.mandira.lvl && (
+          {shopTile >= 0 && (
             <Round icon="construct" label="Atölye" badge={shopReady} accent={shopReady > 0} onPress={() => p.onWorkshop(shopTile)} />
           )}
           <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
@@ -2883,7 +2883,8 @@ function ShopPanel({
                 a: { a: 'tree', i: -1, item: id },
               }))
             : (Object.keys(DECOR) as DecorId[])
-                .filter((id) => !DECOR[id].hidden)
+                // Atölyeler kendi sekmesinde durur; süslerin arasında aranmaz.
+                .filter((id) => !DECOR[id].hidden && !!DECOR[id].station === (shop === 'workshop'))
                 .map((id) => ({
                   id,
                   wall: DECOR[id].wall,
@@ -2916,6 +2917,7 @@ function ShopPanel({
           ['crop', 'Tohum'],
           ['animal', 'Hayvan'],
           ['building', 'Bina'],
+          ['workshop', 'Atölye'],
           ['tree', 'Ağaç'],
           ['decor', 'Süs'],
         ]}
@@ -2930,7 +2932,9 @@ function ShopPanel({
             : 'Boş tarla yok: çimene dokunup tarla sür.'
           : shop === 'animal'
             ? 'Hayvan binasında yaşar: kümes, ağıl ya da kovan. Önce binayı kur.'
-            : 'Seç, sonra boş bir çimene dokun.'}
+            : shop === 'workshop'
+              ? 'Atölyeyi seç, boş bir çimene koy. Sonra üstüne dokunup üretime başla. Her atölyeden bir tane olur.'
+              : 'Seç, sonra boş bir çimene dokun.'}
       </Note>
     </>
   );
