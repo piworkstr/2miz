@@ -4,7 +4,7 @@ import { dayKey } from './date';
 import { db } from './firebase';
 import { useSession, type Couple } from './session';
 
-// 2miz Plus: çift aboneliği. Biri öder, ikisi kullanır.
+// biriz Plus: çift aboneliği. Biri öder, ikisi kullanır.
 // Ödeme gelince (RevenueCat) çift belgesine `plus` yazılır; bu alanı uygulama yazamaz, kurallar engeller.
 
 // Beta boyunca Plus herkese açık. Satışlar başlayınca false yapılacak.

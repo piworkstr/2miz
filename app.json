@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "2miz",
+    "name": "biriz",
     "slug": "usdaily",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,7 +30,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "2miz, görevleri tamamlarken ve partnerine anlık fotoğraf gönderirken kamerayı kullanır.",
+          "cameraPermission": "biriz, görevleri tamamlarken ve partnerine anlık fotoğraf gönderirken kamerayı kullanır.",
           "recordAudioAndroid": false
         }
       ],
@@ -52,7 +52,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "2miz, seyahat albümünüze ve profil fotoğrafına eklemek için yalnızca seçtiğin fotoğraflara erişir.",
+          "photosPermission": "biriz, seyahat albümünüze ve profil fotoğrafına eklemek için yalnızca seçtiğin fotoğraflara erişir.",
           "cameraPermission": false,
           "microphonePermission": false
         }
@@ -60,13 +60,13 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "2miz, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
+          "microphonePermission": "biriz, partnerine sesli mesaj gönderebilmen için mikrofonu yalnızca sen kayda basılı tutarken kullanır."
         }
       ],
       [
         "expo-calendar",
         {
-          "calendarPermission": "2miz, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
+          "calendarPermission": "biriz, telefon takvimindeki işlerini partnerinle paylaşmayı seçersen takvimini okur. Takvimine bir şey yazmaz.",
           "remindersPermission": false
         }
       ]

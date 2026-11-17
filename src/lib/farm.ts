@@ -1188,7 +1188,7 @@ export async function openFarmBonus(coupleId: string, uid: string, bonusId: stri
       coins: farm.coins + coins,
       xp: farm.xp + xp,
       stock,
-      log: [{ by: uid, text: `2miz’den hediye: ${text}`, at: Date.now() }, ...farm.log].slice(0, 14),
+      log: [{ by: uid, text: `biriz’den hediye: ${text}`, at: Date.now() }, ...farm.log].slice(0, 14),
     };
     tx.update(coupleRef, farmWrite(next));
     tx.update(bonusRef, { opened: { by: uid, atMs: Date.now() } });

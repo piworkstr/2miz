@@ -472,7 +472,7 @@ function ShareSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     } catch (e) {
       setError(
         (e as Error).message === 'permission'
-          ? 'Takvim izni verilmedi. Ayarlar > 2miz > Takvimler bölümünden açabilirsin.'
+          ? 'Takvim izni verilmedi. Ayarlar > biriz > Takvimler bölümünden açabilirsin.'
           : 'Olmadı, tekrar dene.',
       );
     } finally {

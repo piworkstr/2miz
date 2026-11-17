@@ -102,7 +102,7 @@ async function scheduleReminders(specials: Special[]) {
         if (s.days < before || at.getTime() <= now) continue;
         await Notifications.scheduleNotificationAsync({
           identifier: id,
-          content: { title: '2miz', body: s.remind(before), data: { type: 'message', url: '/' } },
+          content: { title: 'biriz', body: s.remind(before), data: { type: 'message', url: '/' } },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
         });
       }

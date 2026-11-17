@@ -60,7 +60,7 @@ export default function PerkScan() {
             </>
           )}
           <Text style={{ color: '#fff', fontSize: 15, textAlign: 'center', fontWeight: '600' }}>
-            {wrong ? 'Bu bir 2miz kasa kodu değil. Kasadaki 2miz kartını okutun.' : 'Kasadaki 2miz kartının karekodunu çerçeveye getirin'}
+            {wrong ? 'Bu bir biriz kasa kodu değil. Kasadaki biriz kartını okutun.' : 'Kasadaki biriz kartının karekodunu çerçeveye getirin'}
           </Text>
         </View>
       </SafeAreaView>

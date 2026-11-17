@@ -9,7 +9,7 @@ Her il için bir dosya: `etkinlikler/<il>.json` (ör. `antalya.json`). Dosya `ma
 - Geçmiş tarihliler yazılmaz; dosyadan da silinebilir.
 
 Alanlar: `title` (zorunlu), `day` (YYYY-AA-GG, zorunlu), `cat` (konser | tiyatro | standup | sinema | gosteri | festival | spor | diger),
-`time` (SS:DD), `venue`, `url` (https://, mümkünse etkinliğin kendi sayfası), `price` ("750 TL'den başlar"), `deal` (2miz'e özel indirim; yalnızca gerçek anlaşma varsa).
+`time` (SS:DD), `venue`, `url` (https://, mümkünse etkinliğin kendi sayfası), `price` ("750 TL'den başlar"), `deal` (biriz'e özel indirim; yalnızca gerçek anlaşma varsa).
 
 Kurallar: yalnızca kaynağında adı, tarihi ve mekanı açıkça birlikte görünen etkinlikler eklenir; emin olunmayan saat/fiyat boş bırakılır.
 Bilet sitelerinden otomatik/toplu veri kazıma yapılmaz; liste elle derlenir.

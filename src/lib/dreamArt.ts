@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-// Mavi Yolculuk ve Sahilde Ev çizimleri (ElevenLabs'te 2miz için üretildi). h: yükseklik / genişlik.
+// Mavi Yolculuk ve Sahilde Ev çizimleri (ElevenLabs'te biriz için üretildi). h: yükseklik / genişlik.
 export const DART: Record<string, { src: ImageSourcePropType; h: number }> = {
   sandal: { src: require('../../assets/dream/sandal.webp'), h: 0.68 },
   motor: { src: require('../../assets/dream/motor.webp'), h: 0.78 },

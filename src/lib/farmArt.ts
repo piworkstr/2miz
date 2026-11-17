@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-// Çiftlik çizimleri (ElevenLabs'te 2miz için üretildi). h: yükseklik / genişlik oranı.
+// Çiftlik çizimleri (ElevenLabs'te biriz için üretildi). h: yükseklik / genişlik oranı.
 export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   // Mutfak ürünleri ve hediye sepeti
   ekmek: { src: require('../../assets/farm/ekmek.webp'), h: 0.82 },
