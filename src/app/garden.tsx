@@ -109,6 +109,7 @@ import {
   orderWho,
 } from '../lib/farm';
 import { randomArt } from '../lib/avatarArt';
+import { liveFresh, overlayFarm, publishLive, usePartnerLive } from '../lib/farmLive';
 import type { Profile } from '../lib/session';
 import { logActivityCapped } from '../lib/bond';
 import { FarmBonusGift } from '../components/world/FarmBonusGift';
@@ -814,14 +815,62 @@ export default function GardenScreen() {
   const visitTapRef = useRef<(wx: number, wy: number) => boolean>(() => false);
   const scene = useOpenScene(couple?.id, 'farm');
 
-  const farm = farmOf(couple);
+  // Canlı eşleşme: partnerin (ve benim) henüz kaydedilmemiş işleri çiftliğin üstüne uygulanır; iki ekran aynı anda aynı şeyi gösterir.
+  const partnerLive = usePartnerLive(couple?.id, partnerId);
+  const partnerHere = liveFresh(partnerLive);
+  const partnerHereRef = useRef(partnerHere);
+  partnerHereRef.current = partnerHere;
+  const [mine, setMine] = useState<{ a: Action; sent: boolean }[]>([]);
+  const savedFarm = farmOf(couple);
+  const farm = useMemo(
+    () =>
+      overlayFarm(
+        overlayFarm(
+          savedFarm,
+          mine.map((x) => x.a),
+          user?.uid ?? '',
+        ),
+        partnerHere ? (partnerLive?.acts ?? []) : [],
+        partnerId ?? '',
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [couple, mine, partnerLive, partnerHere],
+  );
+  // Kayıt geldi: gönderilmiş işler artık kayıtta, üst katmandan düşer.
+  useEffect(() => {
+    setMine((m) => (m.some((x) => x.sent) ? m.filter((x) => !x.sent) : m));
+  }, [couple]);
   const BARN_TILE = barnTile(farm); // depo taşınabilir: yeri kayıttan gelir
   const PILE_TILE = pileTile(farm); // deponun önü
   const uid = user?.uid ?? '';
   const myName = profile?.name ?? 'Ben';
   const [myTile, setMyTile] = useState<number>(() => farm.pos[uid] ?? (2 + OFF) * N + 2 + OFF);
   const myTileRef = useRef(myTile);
-  const partnerTile = (partnerId ? farm.pos[partnerId] : undefined) ?? (2 + OFF) * N + 5 + OFF;
+  const liveTile = partnerHere && partnerLive && partnerLive.tile >= 0 && partnerLive.tile < N * N ? partnerLive.tile : undefined;
+  const partnerTile = liveTile ?? (partnerId ? farm.pos[partnerId] : undefined) ?? (2 + OFF) * N + 5 + OFF;
+  // Partnerin elindeki alet (sulama kabı, tohum): iş geldiğinde kısa süre görünür.
+  const [pTool, setPTool] = useState<string | null>(null);
+  useEffect(() => {
+    if (!partnerLive?.tool || !liveFresh(partnerLive)) return;
+    setPTool(partnerLive.tool);
+    const t = setTimeout(() => setPTool(null), 1600);
+    return () => clearTimeout(t);
+  }, [partnerLive]);
+  // Kalp atışı: çiftlikte olduğumu partner bilsin (45 sn'de bir; çıkınca silinir). İş yazmaları yalnız ikimiz de buradayken yapılır.
+  const liveCoupleId = couple?.id;
+  useEffect(() => {
+    if (!liveCoupleId || !uid) return;
+    const beat = () => {
+      if (!busy.current) publishLive(liveCoupleId, uid, { tile: myTileRef.current, tool: null, acts: [] });
+    };
+    beat();
+    const iv = setInterval(beat, 45_000);
+    return () => {
+      clearInterval(iv);
+      publishLive(liveCoupleId, uid, { tile: myTileRef.current, tool: null, acts: [], atMs: 0 });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveCoupleId, uid]);
   const partnerTileRef = useRef(partnerTile);
   partnerTileRef.current = partnerTile;
   // Partner öptüyse: kalpler benim üstümde uçar (yalnızca yeni öpücükte, bir kez).
@@ -1077,6 +1126,9 @@ export default function GardenScreen() {
       queue.current = [];
       const c = flushCtx.current;
       if (pending.length && c.coupleId) farmFlush(c.coupleId, c.uid, c.myName, c.partnerName, pending).catch(() => {});
+      setMine([]);
+      // Arka plana geçtim: partner beni çiftlikte saymasın.
+      if (c.coupleId && c.uid) publishLive(c.coupleId, c.uid, { tile: myTileRef.current, tool: null, acts: [], atMs: 0 });
     });
     return () => sub.remove();
   }, []);
@@ -1126,8 +1178,15 @@ export default function GardenScreen() {
       while (queue.current.length) {
         const job = queue.current.shift()!;
         current.current = job;
-        await walkTo(job.i);
         const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
+        // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
+        const plain =
+          !('scene' in job && job.scene) &&
+          !['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
+        // Partner de çiftlikteyse nereye gittiğimi ve henüz kaydedilmemiş işlerimi anında görür.
+        if (partnerHereRef.current)
+          publishLive(couple.id, uid, { tile: job.i, tool: tl, acts: plain ? [...batch.current, job] : batch.current });
+        await walkTo(job.i);
         setTool(tl);
         await sleep(tl ? (queue.current.length ? 400 : 800) : 250);
         setTool(null);
@@ -1157,19 +1216,18 @@ export default function GardenScreen() {
         }
         const packedBefore = farmBefore.orders.filter((o) => o.packed);
         const handBefore = job.a === 'handover' ? farmBefore.orders.find((o) => o.id === job.order) : undefined;
-        // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
-        const plain =
-          !('scene' in job && job.scene) &&
-          !['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
         if (plain && (queue.current.length > 0 || batch.current.length > 0)) {
           if (job.a === 'water' && before?.k === 'crop' && before.by !== uid) together = true;
           else solo = true;
           batch.current.push(job);
+          setMine((m) => [...m, { a: job, sent: false }]);
           if (queue.current.length > 0 && batch.current.length < 10) continue;
         }
         if (batch.current.length) {
           const acts = batch.current;
           batch.current = [];
+          // Gönderilen işler kayıt gelince üst katmandan düşer (bkz. mine).
+          setMine((m) => m.map((x) => (acts.includes(x.a) ? { ...x, sent: true } : x)));
           try {
             const n = await Promise.race([farmFlush(couple.id, uid, myName, partnerName, acts), sleep(12000).then(() => -1)]);
             if (n === -1) flash('Bağlantı yavaş, tekrar dene');
@@ -1250,6 +1308,7 @@ export default function GardenScreen() {
       }
       // İş bitti: tarlanın içinde dikilme, yanındaki yola çekil.
       const rest = restNear(farmOf(couple), myTileRef.current);
+      if (partnerHereRef.current) publishLive(couple.id, uid, { tile: rest, tool: null, acts: [] });
       if (rest !== myTileRef.current) void walkTo(rest);
       if (together) logActivityCapped(couple.id, uid, 'farmTogether');
       else if (solo) logActivityCapped(couple.id, uid, 'farm');
@@ -1637,7 +1696,23 @@ export default function GardenScreen() {
             <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} n={b.n} label={b.label} />
           ))}
           <Dog />
-          <WorldChar profile={partnerProfile} name={partnerName} x={pAt.x} y={pAt.y} z={pAt.z} tag={partnerName} />
+          <WorldChar
+            profile={partnerProfile}
+            name={partnerName}
+            x={pAt.x}
+            y={pAt.y}
+            z={pAt.z}
+            tag={partnerName}
+            tool={
+              pTool && ART[pTool] ? (
+                <Image
+                  source={ART[pTool].src}
+                  style={{ position: 'absolute', left: 42, top: 30, width: 26, height: 26, transform: [{ rotate: '-25deg' }] }}
+                  resizeMode="contain"
+                />
+              ) : null
+            }
+          />
           {packed.map((o, k) => (
             <Visitors key={o.id} id={o.id} who={orderWho(o)} slot={k} mode="wait" walkIn={walkIns.has(o.id)} />
           ))}
