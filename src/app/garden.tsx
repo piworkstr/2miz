@@ -5,7 +5,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, AppState, Easing, Image, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Animated,
+  AppState,
+  Dimensions,
+  Easing,
+  Image,
+  PanResponder,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useKeyboardTop } from '../components/KeyboardSpace';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
@@ -541,6 +555,9 @@ function Dog() {
 
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();
+  // Klavye açılınca alt tabela klavyenin üstüne çıkar (Not Ağacı yazı alanı klavyenin altında kalıyordu).
+  const kbTop = useKeyboardTop();
+  const kbLift = Platform.OS === 'ios' && kbTop !== null ? Math.max(0, Dimensions.get('window').height - kbTop) : 0;
   const { user, couple, partnerId, partnerName, profile, partnerProfile } = useSession();
   // Yönetimden gelen, açılmayı bekleyen hediye paketleri.
   const bonuses = useFarmBonuses(couple?.id);
@@ -1514,7 +1531,7 @@ export default function GardenScreen() {
       {/* alt bölüm: zemin yok. Bir şey seçiliyse ahşap tabela, yoksa oyun düğmeleri. */}
       <View
         pointerEvents="box-none"
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 10, paddingBottom: insets.bottom + 8 }}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: kbLift, padding: 10, paddingBottom: kbLift ? 8 : insets.bottom + 8 }}
       >
         <View
           pointerEvents="box-none"
