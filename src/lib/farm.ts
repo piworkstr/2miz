@@ -26,12 +26,28 @@ export const BLOOM = 10;
 export const HARVESTS_PER_PARCEL = 10;
 export const MARKET_BONUS = 1.5;
 
-export type CropId = 'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' | 'aycicegi' | 'kabak';
+export type CropId =
+  | 'bugday'
+  | 'havuc'
+  | 'domates'
+  | 'misir'
+  | 'gul'
+  | 'cilek'
+  | 'aycicegi'
+  | 'kabak'
+  | 'pamuk'
+  | 'pancar'
+  | 'patates'
+  | 'sogan'
+  | 'kavun'
+  | 'karpuz';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
 export type DecorId =
   | 'mandira'
+  | 'atolye'
+  | 'konserve'
   | 'posta'
   | 'lamba'
   | 'kopru'
@@ -62,6 +78,13 @@ export const CROPS: Record<CropId, { name: string; cost: number; mins: number; s
   cilek: { name: 'Çilek', cost: 20, mins: 300, sell: 65, xp: 14, lvl: 4 },
   aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 360, sell: 90, xp: 20, lvl: 5, big: true },
   kabak: { name: 'Bal kabağı', cost: 40, mins: 480, sell: 140, xp: 26, lvl: 6, big: true },
+  // 17–28. seviye: her yeni ürün eskilerle birleşip yeni tarifler açar (RECIPES). Aradaki seviyeler üretimi geliştirir.
+  pamuk: { name: 'Pamuk', cost: 45, mins: 300, sell: 150, xp: 28, lvl: 17 },
+  pancar: { name: 'Şeker pancarı', cost: 50, mins: 330, sell: 170, xp: 30, lvl: 19 },
+  patates: { name: 'Patates', cost: 55, mins: 360, sell: 185, xp: 32, lvl: 21 },
+  sogan: { name: 'Soğan', cost: 60, mins: 390, sell: 205, xp: 35, lvl: 23 },
+  kavun: { name: 'Kavun', cost: 70, mins: 420, sell: 240, xp: 40, lvl: 25 },
+  karpuz: { name: 'Karpuz', cost: 80, mins: 480, sell: 280, xp: 45, lvl: 28 },
 };
 
 // Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
@@ -87,12 +110,45 @@ export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) =
 // ---------- Mutfak: tarifler ----------
 // Depodaki ürünlerden yapılır, anında hazır olur. Ham hâlinden yaklaşık bir buçuk kat değerlidir;
 // hediye sepetleri de bunlardan hazırlanır.
-export type RecipeId = 'ekmek' | 'omlet' | 'peynir' | 'kek' | 'recel' | 'ballisut' | 'tereyagi' | 'atki' | 'kazak';
+export type RecipeId =
+  | 'ekmek'
+  | 'omlet'
+  | 'peynir'
+  | 'kek'
+  | 'recel'
+  | 'ballisut'
+  | 'tereyagi'
+  | 'atki'
+  | 'kazak'
+  | 'kumas'
+  | 'canta'
+  | 'seker'
+  | 'kurabiye'
+  | 'patomlet'
+  | 'pure'
+  | 'menemen'
+  | 'tursu'
+  | 'kavunsuyu'
+  | 'kavuntatli'
+  | 'karpuzsuyu'
+  | 'meyvetabagi'
+  | 'yaspasta'
+  | 'pikniksepeti';
 // Üretim yeri: mutfak evin içindedir; atölyeler dükkândan alınıp çiftliğe konur.
-export type Station = 'mutfak' | 'mandira' | 'atolye';
+export type Station = 'mutfak' | 'mandira' | 'atolye' | 'konserve';
 export const RECIPES: Record<
   RecipeId,
-  { name: string; emoji: string; needs: Record<string, number>; sell: number; xp: number; lvl: number; mins: number; at?: Station }
+  {
+    name: string;
+    emoji: string;
+    needs: Record<string, number>;
+    sell: number;
+    xp: number;
+    lvl: number;
+    mins: number;
+    at?: Station;
+    alt?: Station;
+  }
 > = {
   // mins: üretim süresi. Üretim anında değildir: işe konur, süre dolunca mutfaktan toplanır.
   ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugday: 3 }, sell: 30, xp: 4, lvl: 1, mins: 20 },
@@ -103,21 +159,67 @@ export const RECIPES: Record<
   atki: { name: 'Atkı', emoji: '🧣', needs: { wool: 2 }, sell: 125, xp: 10, lvl: 9, mins: 90, at: 'atolye' },
   kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 10, mins: 180, at: 'atolye' },
   kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90 },
-  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180 },
+  // alt: o atölye çiftlikteyse tarif oraya taşınır (mutfakta yer açılır); yoksa mutfakta yapılır.
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180, alt: 'konserve' },
   ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60 },
+  // 17. seviye: pamuk
+  kumas: { name: 'Kumaş', emoji: '🧵', needs: { pamuk: 3 }, sell: 560, xp: 20, lvl: 17, mins: 120, at: 'atolye' },
+  canta: { name: 'Çanta', emoji: '👜', needs: { kumas: 1, wool: 2 }, sell: 800, xp: 30, lvl: 17, mins: 180, at: 'atolye' },
+  // 19. seviye: şeker pancarı
+  seker: { name: 'Şeker', emoji: '🍬', needs: { pancar: 2 }, sell: 420, xp: 18, lvl: 19, mins: 60 },
+  kurabiye: { name: 'Kurabiye', emoji: '🍪', needs: { seker: 1, bugday: 3, tereyagi: 1 }, sell: 660, xp: 28, lvl: 19, mins: 90 },
+  // 21. seviye: patates
+  patomlet: { name: 'Patatesli omlet', emoji: '🥔', needs: { patates: 2, egg: 2 }, sell: 500, xp: 22, lvl: 21, mins: 60 },
+  pure: { name: 'Patates püresi', emoji: '🥣', needs: { patates: 2, tereyagi: 1 }, sell: 570, xp: 24, lvl: 21, mins: 75 },
+  // 23. seviye: soğan
+  menemen: { name: 'Menemen', emoji: '🍳', needs: { domates: 2, sogan: 1, egg: 2 }, sell: 370, xp: 20, lvl: 23, mins: 45 },
+  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, alt: 'konserve' },
+  // 25. seviye: kavun
+  kavunsuyu: { name: 'Kavun suyu', emoji: '🍹', needs: { kavun: 2 }, sell: 600, xp: 26, lvl: 25, mins: 45 },
+  kavuntatli: { name: 'Kavunlu tatlı', emoji: '🍮', needs: { kavun: 1, seker: 1, milk: 1 }, sell: 900, xp: 34, lvl: 25, mins: 120 },
+  // 28. seviye: karpuz
+  karpuzsuyu: { name: 'Karpuz suyu', emoji: '🍉', needs: { karpuz: 2 }, sell: 700, xp: 30, lvl: 28, mins: 45 },
+  meyvetabagi: { name: 'Meyve tabağı', emoji: '🍓', needs: { kavun: 1, karpuz: 1, cilek: 2 }, sell: 830, xp: 34, lvl: 28, mins: 60 },
+  // 35. seviye: ileri ürünler (uzun tarif zincirleri)
+  yaspasta: { name: 'Yaş pasta', emoji: '🎂', needs: { kek: 1, seker: 1, cilek: 2 }, sell: 950, xp: 40, lvl: 35, mins: 180 },
+  pikniksepeti: {
+    name: 'Piknik sepeti',
+    emoji: '🧺',
+    needs: { ekmek: 1, peynir: 1, karpuzsuyu: 1 },
+    sell: 1150,
+    xp: 45,
+    lvl: 35,
+    mins: 120,
+  },
 };
 // Üretimdeki iş: tarif işe konunca malzeme depodan çıkar; ready geçince toplanır ve ürün depoya girer.
-export type ProdJob = { id: string; recipe: RecipeId; by: string; at: number; ready: number; n: number };
+// st: işin konduğu yer (reçel/turşu konserve atölyesi sonradan kurulsa da başladığı yerde kalır).
+export type ProdJob = { id: string; recipe: RecipeId; by: string; at: number; ready: number; n: number; st?: Station };
 // Mutfakta aynı anda kaç iş: 2 ile başlar, 8. ve 14. seviyede birer artar.
-export const kitchenSlots = (level: number) => 2 + (level >= 8 ? 1 : 0) + (level >= 14 ? 1 : 0);
+// Seviye ödülleri (yeni ürün açılmayan seviyeler üretimi geliştirir):
+// 18: atölyelere +1 yer · 20: 4. sipariş, daha büyük siparişler · 22: atölyeler %20 hızlı · 24: özel siparişler
+// 26: mutfağa +1 ocak · 30: konserve atölyesi · 32: bütün üretim yerlerine +1 yer
+export const kitchenSlots = (level: number) =>
+  2 + (level >= 8 ? 1 : 0) + (level >= 14 ? 1 : 0) + (level >= 26 ? 1 : 0) + (level >= 32 ? 1 : 0);
+export const orderSlots = (level: number) => (level >= 20 ? 4 : 3);
+export const WORKSHOP_FAST_LVL = 22;
+export const SPECIAL_ORDER_LVL = 24;
 export const STATIONS: Record<Station, { name: string; slot: string; from: string; inn: string }> = {
   mutfak: { name: 'Mutfak', slot: 'ocak', from: 'mutfaktan', inn: 'mutfakta' },
   mandira: { name: 'Mandıra', slot: 'tekne', from: 'mandıradan', inn: 'mandırada' },
   atolye: { name: 'Dikiş atölyesi', slot: 'tezgâh', from: 'atölyeden', inn: 'atölyede' },
+  konserve: { name: 'Konserve atölyesi', slot: 'kazan', from: 'konserve atölyesinden', inn: 'konserve atölyesinde' },
 };
-export const stationOf = (r: RecipeId): Station => RECIPES[r]?.at ?? 'mutfak';
-// Atölyelerde 2 yer; 12. seviyede 3.
-export const stationSlots = (st: Station, level: number) => (st === 'mutfak' ? kitchenSlots(level) : 2 + (level >= 12 ? 1 : 0));
+// Tarifin yapıldığı yer. alt'ı olan tarif (reçel, turşu) o atölye çiftlikteyse orada, değilse mutfakta yapılır.
+export const stationOf = (r: RecipeId, f?: Farm): Station => {
+  const x = RECIPES[r];
+  if (!x) return 'mutfak';
+  if (x.alt && f && hasStation(f, x.alt)) return x.alt;
+  return x.at ?? 'mutfak';
+};
+// Atölyelerde 2 yer; 12, 18 ve 32. seviyelerde birer yer daha.
+export const stationSlots = (st: Station, level: number) =>
+  st === 'mutfak' ? kitchenSlots(level) : 2 + (level >= 12 ? 1 : 0) + (level >= 18 ? 1 : 0) + (level >= 32 ? 1 : 0);
 export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.emoji]));
 
 // ---------- Hediye sepeti ----------
@@ -218,6 +320,26 @@ export const DECOR: Record<
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
   // Üretim atölyesi: çiftlikte bir tane olur; dokununca üretim paneli açılır.
   mandira: { name: 'Mandıra', sp: 'mandira', cost: 600, xp: 15, lvl: 5, w: 1.5, perk: 'Sütten tereyağı ve peynir üretir', station: true },
+  atolye: {
+    name: 'Dikiş atölyesi',
+    sp: 'atolye',
+    cost: 900,
+    xp: 20,
+    lvl: 9,
+    w: 1.6,
+    perk: 'Yünden atkı ve kazak, pamuktan kumaş ve çanta üretir',
+    station: true,
+  },
+  konserve: {
+    name: 'Konserve atölyesi',
+    sp: 'konserve',
+    cost: 2500,
+    xp: 40,
+    lvl: 30,
+    w: 1.5,
+    perk: 'Reçel ve turşu burada yapılır; mutfakta yer açılır',
+    station: true,
+  },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
   cit: { name: 'Çit', sp: 'fence', cost: 20, xp: 1, lvl: 1, w: 0.92, wall: 'cit' },
   duvar: { name: 'Taş duvar', sp: 'fence', cost: 25, xp: 1, lvl: 1, w: 0.92, wall: 'duvar' },
@@ -265,6 +387,7 @@ export type Order = {
   xp: number;
   openAt: number; // bu zamandan önce görünmez (tamamlanan siparişin yerine 20 dk sonra yenisi)
   who?: string; // siparişi veren (kurgusal) çift; eski siparişlerde yok, kimlikten türetilir
+  special?: boolean; // özel sipariş: ödülü iki katı
   packed?: number; // ürünlerin hepsi ayrıldı: çift girişte bekliyor, ödül elden teslimde (handover) verilir
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
@@ -483,25 +606,30 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
   // Malzemesinin hepsi üretilebilen tarifler de sipariş edilebilir (mutfağa iş çıkar).
   const raw = [...pool];
   for (const [k, r] of Object.entries(RECIPES))
-    if (r.lvl <= lv && hasStation(f, r.at ?? 'mutfak') && Object.keys(r.needs).every((x) => raw.includes(x))) pool.push(k);
+    if (r.lvl <= lv && hasStation(f, r.at ?? 'mutfak') && Object.keys(r.needs).every((x) => raw.includes(x) || pool.includes(x)))
+      pool.push(k);
   const n = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));
   const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, n);
   const items: Record<string, number> = {};
   let value = 0;
   let qty = 0;
   for (const k of picks) {
-    const q = 1 + Math.floor(Math.random() * (PRICE[k] >= 40 ? 2 : 5));
+    // 20. seviyeden sonra siparişler büyür.
+    const q = 1 + Math.floor(Math.random() * ((PRICE[k] >= 40 ? 2 : 5) + (lv >= 20 ? 1 : 0)));
     items[k] = q;
     value += PRICE[k] * q;
     qty += q;
   }
+  // 24. seviyeden sonra ara sıra özel sipariş gelir: ödülü iki katıdır.
+  const special = lv >= SPECIAL_ORDER_LVL && Math.random() < 0.2;
   return {
     id: `${now.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`,
     items,
     given: {},
     by: [],
-    coins: Math.round(value * 1.4),
-    xp: 5 * picks.length + 3 * qty,
+    coins: Math.round(value * 1.4 * (special ? 2 : 1)),
+    xp: (5 * picks.length + 3 * qty) * (special ? 2 : 1),
+    ...(special ? { special: true } : {}),
     openAt,
     who: `${ORDER_WOMEN[Math.floor(Math.random() * ORDER_WOMEN.length)]} ve ${ORDER_MEN[Math.floor(Math.random() * ORDER_MEN.length)]}`,
   };
@@ -512,7 +640,8 @@ export const orderLeft = (o: Order) => Object.fromEntries(Object.entries(o.items
 export const canGive = (f: Farm, o: Order) => Object.entries(orderLeft(o)).reduce((a, [k, q]) => a + Math.min(q, f.stock[k] ?? 0), 0);
 // Pano hep ORDER_SLOTS sipariş tutar; eksikse üretilir.
 export function fillOrders(f: Farm, now: number) {
-  while (f.orders.length < ORDER_SLOTS) f.orders.push(makeOrder(f, now));
+  const slots = orderSlots(levelOf(f.xp).level);
+  while (f.orders.length < slots) f.orders.push(makeOrder(f, now));
 }
 export const notesToday = (f: Farm, uid: string, now = Date.now()) =>
   f.notes.filter((n) => n.by === uid && dayKey(new Date(n.at)) === dayKey(new Date(now))).length;
@@ -617,7 +746,7 @@ export const hasStation = (f: Farm, st: Station) => st === 'mutfak' || f.tiles.s
 // Bir üretim yerinin işleri. Yeri kaldırılmış atölyenin yarım işleri mutfakta görünür ki toplanabilsin.
 export const stationJobs = (f: Farm, st: Station) =>
   (f.prod ?? []).filter((j) => {
-    const at = stationOf(j.recipe);
+    const at = j.st ?? stationOf(j.recipe);
     return at === st || (st === 'mutfak' && !hasStation(f, at));
   });
 export function nearDecor(f: Farm, i: number, item: DecorId, range: number): boolean {
@@ -1044,7 +1173,7 @@ export function applyAction(
       if (!r) return 'Böyle bir tarif yok.';
       if (lv < r.lvl) return `${r.name} ${r.lvl}. seviyede açılır.`;
       const jobs = f.prod ?? [];
-      const st = stationOf(act.recipe);
+      const st = stationOf(act.recipe, f);
       if (!hasStation(f, st)) return `${r.name} için çiftlikte ${STATIONS[st].name.toLocaleLowerCase('tr-TR')} gerek.`;
       if (stationJobs(f, st).length >= stationSlots(st, lv))
         return `${STATIONS[st].name} dolu. Önce hazır olanları toplayın ya da bitmesini bekleyin.`;
@@ -1052,7 +1181,12 @@ export function applyAction(
       take(r.needs);
       // Değirmen unu bollaştırır: ekmek ve kek çift çıkar.
       const n = MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1;
-      f.prod = [...jobs, { id: `${now.toString(36)}${jobs.length}`, recipe: act.recipe, by: uid, at: now, ready: now + r.mins * MIN, n }];
+      // 22. seviyeden sonra atölyeler (mutfak hariç) %20 hızlı çalışır.
+      const dur = r.mins * MIN * (st !== 'mutfak' && lv >= WORKSHOP_FAST_LVL ? 0.8 : 1);
+      f.prod = [
+        ...jobs,
+        { id: `${now.toString(36)}${jobs.length}`, recipe: act.recipe, by: uid, at: now, ready: now + Math.round(dur), n, st },
+      ];
       text = `${name} ${st === 'mutfak' ? '' : `${STATIONS[st].inn} `}${r.name.toLocaleLowerCase('tr-TR')} yapmaya koydu ${r.emoji}`;
       break;
     }

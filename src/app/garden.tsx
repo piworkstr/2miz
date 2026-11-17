@@ -86,7 +86,6 @@ import {
   TILL,
   PAVE,
   STATIONS,
-  hasStation,
   stationJobs,
   stationOf,
   stationSlots,
@@ -1305,7 +1304,7 @@ export default function GardenScreen() {
     // Ev: mutfak. Yapılabilecek bir tarif varsa rozet çıkar.
     const lvNow = levelOf(farm.xp).level;
     const can = (Object.keys(RECIPES) as RecipeId[]).filter(
-      (id) => stationOf(id) === 'mutfak' && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
+      (id) => stationOf(id, farm) === 'mutfak' && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
     );
     const [hr, hc] = FIXED_ANCHOR.house;
     const h = center(hr, hc);
@@ -1378,7 +1377,7 @@ export default function GardenScreen() {
       const dj = js.find((j) => j.ready <= now);
       const nj = js.slice().sort((a, b) => a.ready - b.ready)[0];
       const can = (Object.keys(RECIPES) as RecipeId[]).filter(
-        (id) => stationOf(id) === st && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
+        (id) => stationOf(id, farm) === st && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
       );
       if (dj || nj || (can.length && js.length < stationSlots(st, lvNow)))
         badges.push({
@@ -1878,7 +1877,7 @@ export default function GardenScreen() {
               onWorkshop={(tile) => {
                 if (tile >= 0) setSel(tile);
                 else {
-                  flash('Mandırayı dükkândan alıp çiftliğe koy');
+                  flash('Atölyeler dükkânda: alıp çiftliğe koy');
                   setShowShop(true);
                 }
               }}
@@ -2338,10 +2337,16 @@ function Sheet(p: SheetProps) {
     const weekend = isWeekend(now);
     const small = p.ready - big;
     const kitchenReady = stationJobs(farm, 'mutfak').filter((j) => j.ready <= now).length;
-    const shopTile = farm.tiles.findIndex((x) => x.k === 'decor' && DECOR[x.item].station);
-    const shopReady = (farm.prod ?? []).filter(
-      (j) => j.ready <= now && stationOf(j.recipe) !== 'mutfak' && hasStation(farm, stationOf(j.recipe)),
-    ).length;
+    // Atölyeler: hazır ürünü olan öne alınır; düğme onu açar.
+    const shops = farm.tiles
+      .map((x, k) => (x.k === 'decor' && DECOR[x.item].station ? k : -1))
+      .filter((k) => k >= 0)
+      .map((k) => ({
+        k,
+        ready: stationJobs(farm, (farm.tiles[k] as { item: string }).item as Station).filter((j) => j.ready <= now).length,
+      }));
+    const shopReady = shops.reduce((a, b) => a + b.ready, 0);
+    const shopTile = (shops.find((x) => x.ready > 0) ?? shops[0])?.k ?? -1;
     const deliverable = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
     // Yalnız iş varsa kısa bir balon; altta oyun düğmeleri. Zemin yok, çiftlik görünür kalır.
     const gift = (farm.gifts ?? []).find((g) => g.from !== p.uid);
@@ -2985,6 +2990,7 @@ function Orders({
                     </View>
                     <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 14, color: INK }}>
                       {orderWho(o)}
+                      {o.special ? ' · özel sipariş ⭐' : ''}
                     </Text>
                     <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
                       +{o.coins} altın · +{o.xp} tecrübe
@@ -3107,7 +3113,10 @@ function Kitchen({
       )}
       <ScrollView style={{ maxHeight: 200 }} contentContainerStyle={{ gap: 8 }}>
         {(Object.keys(RECIPES) as RecipeId[])
-          .filter((id) => stationOf(id) === station)
+          .filter((id) => stationOf(id, farm) === station)
+          .sort((x, y) => RECIPES[x].lvl - RECIPES[y].lvl)
+          // Liste uzamasın: açılmış tarifler ve sıradaki iki kilitli tarif görünür.
+          .filter((id, k, all) => RECIPES[id].lvl <= level || all.filter((q) => RECIPES[q].lvl > level).indexOf(id) < 2)
           .map((id) => {
             const r = RECIPES[id];
             const locked = level < r.lvl;
