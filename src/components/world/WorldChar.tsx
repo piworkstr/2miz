@@ -65,6 +65,7 @@ export function WorldChar({
   tag,
   say,
   tool,
+  hop,
   onArrive,
 }: {
   profile: Profile | null | undefined;
@@ -75,6 +76,7 @@ export function WorldChar({
   tag?: string;
   say?: string;
   tool?: React.ReactNode;
+  hop?: boolean; // sevinçle zıplar (teslim alan çift)
   onArrive?: () => void;
 }) {
   const pos = useRef(new Animated.ValueXY({ x, y })).current;
@@ -132,6 +134,24 @@ export function WorldChar({
     return () => clearInterval(id);
   }, [walking]);
 
+  // Sevinç zıplaması: açıkken kısa sıçramalar döner.
+  const jump = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!hop) {
+      jump.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(jump, { toValue: -9, duration: 170, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(jump, { toValue: 0, duration: 190, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        Animated.delay(120),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [hop, jump]);
+
   const a = profile?.avatar;
   const body = BODY[bodyOf(profile)];
   const bodyW = BODY_H / body.ratio;
@@ -155,7 +175,7 @@ export function WorldChar({
           backgroundColor: 'rgba(30,50,10,0.28)',
         }}
       />
-      <View
+      <Animated.View
         style={{
           position: 'absolute',
           left: -30,
@@ -163,7 +183,7 @@ export function WorldChar({
           width: 60,
           height: total,
           alignItems: 'center',
-          transform: [{ scaleX: flip ? -1 : 1 }],
+          transform: [{ translateY: jump }, { scaleX: flip ? -1 : 1 }],
         }}
       >
         {/* gövde: ayaklar (x, y) noktasında */}
@@ -199,7 +219,7 @@ export function WorldChar({
           )}
         </View>
         {tool}
-      </View>
+      </Animated.View>
       {!!tag && (
         <View style={{ position: 'absolute', top: -total - 18, left: -40, width: 80, alignItems: 'center' }}>
           <Text

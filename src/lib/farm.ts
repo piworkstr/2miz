@@ -245,6 +245,7 @@ export type Order = {
   xp: number;
   openAt: number; // bu zamandan önce görünmez (tamamlanan siparişin yerine 20 dk sonra yenisi)
   who?: string; // siparişi veren (kurgusal) çift; eski siparişlerde yok, kimlikten türetilir
+  packed?: number; // ürünlerin hepsi ayrıldı: çift girişte bekliyor, ödül elden teslimde (handover) verilir
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
 export type FarmNote = { by: string; text: string; at: number };
@@ -560,6 +561,7 @@ export type Action =
   | { a: 'sell'; i: number; scene?: string }
   // Siparişe depodan teslim (kısmi olabilir); tamamlanınca ödül, ikisi de katkı yaptıysa ortak hasat.
   | { a: 'deliver'; i: number; order: string }
+  | { a: 'handover'; i: number; order: string }
   // Mutfak: depodaki ürünlerden tarif yap.
   | { a: 'cook'; i: number; recipe: RecipeId }
   // Süresi dolan üretimi mutfaktan topla (job verilmezse hazır olanların hepsi).
@@ -963,6 +965,7 @@ export function applyAction(
       if (k < 0) return 'Bu sipariş artık yok.';
       const o = f.orders[k];
       if (o.openAt > now) return 'Bu sipariş henüz açılmadı.';
+      if (o.packed) return `${orderWho(o)} girişte bekliyor; yanlarına gidip teslim et.`;
       let moved = 0;
       for (const [key, left] of Object.entries(orderLeft(o))) {
         const n = Math.min(left, f.stock[key] ?? 0);
@@ -975,17 +978,27 @@ export function applyAction(
       if (!moved) return 'Depoda bu siparişe uygun ürün yok.';
       if (!o.by.includes(uid)) o.by.push(uid);
       if (orderDone(o)) {
-        f.coins += o.coins;
-        f.xp += o.xp;
-        gained = o.coins;
-        const both = o.by.length >= 2;
-        if (both) f.harvests += 1;
-        f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
-        text = `${name}, ${orderWho(o)} siparişini teslim etti: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
+        // Ürünler hazır: çift girişe gelir. Altın ve tecrübe elden teslimde (handover) kazanılır.
+        o.packed = now;
+        text = `${name}, ${orderWho(o)} siparişini hazırladı; almaya geliyorlar`;
       } else {
         const left = Object.values(orderLeft(o)).reduce((a, b) => a + b, 0);
         text = `${name} siparişe ${moved} ürün verdi; ${left} ürün kaldı`;
       }
+      break;
+    }
+    case 'handover': {
+      const k = f.orders.findIndex((o) => o.id === act.order);
+      if (k < 0) return 'Bu sipariş artık yok.';
+      const o = f.orders[k];
+      if (!o.packed || !orderDone(o)) return 'Bu sipariş henüz hazır değil.';
+      f.coins += o.coins;
+      f.xp += o.xp;
+      gained = o.coins;
+      const both = o.by.length >= 2;
+      if (both) f.harvests += 1;
+      f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
+      text = `${name}, ${orderWho(o)} siparişini teslim etti: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
       break;
     }
     case 'cook': {

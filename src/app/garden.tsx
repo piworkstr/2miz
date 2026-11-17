@@ -295,7 +295,29 @@ const MAIL = (() => {
 })();
 const MAIL_FROM = { x: MAIL.x - TW * 0.25, y: MAIL.y + TW * 4 }; // yolun aşağısı: müşteriler buradan gelir, buraya döner
 const mailHit = (wx: number, wy: number) => Math.abs(wx - MAIL.x) < TW * 0.45 && wy < MAIL.y + TW * 0.15 && wy > MAIL.y - TW * 1.75;
-type Visit = { id: string; who: string; f: Profile; m: Profile; stage: 'come' | 'take' | 'go'; coins: number };
+// Bekleyen çiftlerin yeri: posta kutusunun solunda, kenar boyunca yan yana (en çok 3 sipariş).
+const visitSlot = (k: number) => {
+  const dx = -(1.2 + 1.45 * k) * TW;
+  return { x: MAIL.x + dx, y: MAIL.y + dx * 0.5 + TW * 0.18 };
+};
+const visitHit = (k: number, wx: number, wy: number) => {
+  const p = visitSlot(k);
+  return Math.abs(wx - p.x) < TW * 0.78 && wy < p.y + TW * 0.25 && wy > p.y - TW * 1.9;
+};
+// Teslim sırasında avatarın yürüdüğü kare: girişe en yakın köşe.
+const VISIT_TILE = (N - 1) * N + (N - 3);
+type Leaving = { id: string; who: string; slot: number };
+// Her siparişin çifti aynı görünsün diye yüzler sipariş kimliğiyle saklanır.
+const visitFaces = new Map<string, { f: Profile; m: Profile }>();
+const facesOf = (id: string) => {
+  let v = visitFaces.get(id);
+  if (!v) {
+    const mk = (g: 'f' | 'm') => ({ gender: g, avatar: { kind: 'art', opts: randomArt(g) } }) as unknown as Profile;
+    v = { f: mk('f'), m: mk('m') };
+    visitFaces.set(id, v);
+  }
+  return v;
+};
 
 const SCENERY: Spr[] = (() => {
   const L = center(N - 1, 0);
@@ -338,45 +360,106 @@ function SpriteImg({ s }: { s: Spr }) {
   );
 }
 
-// Siparişi almaya gelen çift: yolun aşağısından posta kutusuna yürür, sepeti alıp teşekkür eder, geri döner.
-function Visitors({ v, onStage }: { v: Visit; onStage: (stage: Visit['stage'] | null) => void }) {
-  // İlk karede yolun aşağısında belirirler; hedef bir sonraki karede verilir ki yürüyerek gelsinler.
-  const [started, setStarted] = useState(false);
+// Siparişi almaya gelen çift. 'wait': yoldan yürüyüp girişte bekler, üstlerinde sepet balonu zıplar (dokununca teslim).
+// 'thanks': sepeti alır, sevinçle zıplayıp teşekkür eder, sonra yoldan geri döner.
+function Visitors({
+  id,
+  who,
+  slot,
+  mode,
+  walkIn,
+  onGone,
+}: {
+  id: string;
+  who: string;
+  slot: number;
+  mode: 'wait' | 'thanks';
+  walkIn: boolean;
+  onGone?: () => void;
+}) {
+  const faces = facesOf(id);
+  // Yeni hazırlanan siparişte ilk karede yolun aşağısında belirirler; hedef sonraki karede verilir ki yürüyerek gelsinler.
+  const [started, setStarted] = useState(!walkIn);
+  const [here, setHere] = useState(!walkIn);
+  const [going, setGoing] = useState(false);
   useEffect(() => {
+    if (started) return;
     const t = setTimeout(() => setStarted(true), 60);
     return () => clearTimeout(t);
-  }, []);
+  }, [started]);
   useEffect(() => {
-    if (v.stage !== 'take') return;
-    const t = setTimeout(() => onStage('go'), 2200);
+    if (mode !== 'thanks') return;
+    const t = setTimeout(() => setGoing(true), 2400);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [v.stage]);
-  const at = started && v.stage !== 'go';
-  const fx = at ? MAIL.x - TW * 0.5 : MAIL_FROM.x - TW * 0.25;
-  const mx = at ? MAIL.x + TW * 0.48 : MAIL_FROM.x + TW * 0.3;
-  const y = at ? MAIL.y + TW * 0.22 : MAIL_FROM.y;
-  const basket =
-    v.stage === 'come' ? null : (
-      <Image source={ART.sepet_dolu.src} style={{ position: 'absolute', left: 40, top: 34, width: 24, height: 23 }} resizeMode="contain" />
+  }, [mode]);
+  // Bekleme balonu: hafifçe zıplar.
+  const bob = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: -6, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(bob, { toValue: 0, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
     );
+    loop.start();
+    return () => loop.stop();
+  }, [bob]);
+  const p = visitSlot(slot);
+  const at = started && !going;
+  const fx = at ? p.x - TW * 0.3 : MAIL_FROM.x - TW * 0.25;
+  const mx = at ? p.x + TW * 0.32 : MAIL_FROM.x + TW * 0.3;
+  const y = at ? p.y : MAIL_FROM.y;
+  const z = MAIL.z + 20 - slot * 2;
+  const thanks = mode === 'thanks' && !going;
+  const basket =
+    mode === 'thanks' ? (
+      <Image source={ART.sepet_dolu.src} style={{ position: 'absolute', left: 40, top: 34, width: 24, height: 23 }} resizeMode="contain" />
+    ) : null;
   return (
     <>
-      <WorldChar profile={v.f} name={v.who} x={fx} y={y} z={MAIL.z + 20} say={v.stage === 'take' ? 'Teşekkürler!' : undefined} />
+      <WorldChar profile={faces.f} name={who} x={fx} y={y} z={z} hop={thanks} say={thanks ? 'Teşekkürler!' : undefined} />
       <WorldChar
-        profile={v.m}
-        name={v.who}
+        profile={faces.m}
+        name={who}
         x={mx}
-        y={y + 4}
-        z={MAIL.z + 21}
-        tag={v.stage === 'go' ? undefined : v.who}
+        y={y + 3}
+        z={z + 1}
+        hop={thanks}
+        tag={going ? undefined : who}
         tool={basket}
         onArrive={() => {
           if (!started) return;
-          if (v.stage === 'come') onStage('take');
-          else if (v.stage === 'go') onStage(null);
+          if (going) onGone?.();
+          else setHere(true);
         }}
       />
+      {mode === 'wait' && here && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: p.x - 19,
+            top: p.y - 128,
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            backgroundColor: '#fff',
+            borderWidth: 2,
+            borderColor: GREEN,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9000,
+            transform: [{ translateY: bob }],
+          }}
+        >
+          <Image source={ART.sepet_dolu.src} style={{ width: 24, height: 23 }} resizeMode="contain" />
+        </Animated.View>
+      )}
+      {thanks && (
+        <View pointerEvents="none" style={{ position: 'absolute', left: p.x - 12, top: p.y - 112, zIndex: 9000 }}>
+          <Ionicons name="heart" size={24} color="#E8516A" />
+        </View>
+      )}
     </>
   );
 }
@@ -685,7 +768,9 @@ export default function GardenScreen() {
   const [tool, setTool] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
   // Teslim alan çift: sipariş tamamlanınca yoldan posta kutusuna yürür, sepeti alır, döner.
-  const [visit, setVisit] = useState<Visit | null>(null);
+  const [leaving, setLeaving] = useState<Leaving[]>([]);
+  const seenPacked = useRef<Set<string> | null>(null);
+  const visitTapRef = useRef<(wx: number, wy: number) => boolean>(() => false);
   const scene = useOpenScene(couple?.id, 'farm');
 
   const farm = farmOf(couple);
@@ -869,6 +954,8 @@ export default function GardenScreen() {
             if (i >= 0) placeRef.current(i);
             return;
           }
+          // Girişte bekleyen çift: dokununca hazırlanan ürünler teslim edilir.
+          if (visitTapRef.current(wx, wy)) return;
           // Posta kutusu (ve üstündeki rozet): sipariş defteri açılır.
           if (mailHit(wx, wy)) {
             setSel(null);
@@ -1007,11 +1094,14 @@ export default function GardenScreen() {
         if (current.current !== job) continue;
         current.current = null;
         const before = farmOf(couple).tiles[job.i];
-        const ordBefore = job.a === 'deliver' ? farmOf(couple).orders.find((o) => o.id === job.order) : undefined;
+        const farmBefore = farmOf(couple);
+        const ordBefore = job.a === 'deliver' ? farmBefore.orders.find((o) => o.id === job.order) : undefined;
+        const packedBefore = farmBefore.orders.filter((o) => o.packed);
+        const handBefore = job.a === 'handover' ? farmBefore.orders.find((o) => o.id === job.order) : undefined;
         // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
         const plain =
           !('scene' in job && job.scene) &&
-          !['kiss', 'deliver', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
+          !['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
         if (plain && (queue.current.length > 0 || batch.current.length > 0)) {
           if (job.a === 'water' && before?.k === 'crop' && before.by !== uid) together = true;
           else solo = true;
@@ -1040,24 +1130,41 @@ export default function GardenScreen() {
           else {
             const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
             if (job.a === 'kiss') hearts(partnerTileRef.current);
-            // Sipariş tamamlandı: sahibi çift almaya gelir.
-            if (job.a === 'deliver' && r.gained && ordBefore) {
-              const mk = (g: 'f' | 'm') => ({ gender: g, avatar: { kind: 'art', opts: randomArt(g) } }) as unknown as Profile;
-              setVisit({ id: ordBefore.id, who: orderWho(ordBefore), f: mk('f'), m: mk('m'), stage: 'come', coins: r.gained });
-              flash(`${orderWho(ordBefore)} siparişi almaya geliyor`);
+            // Sipariş hazırlandı: defter kapanır, çift girişe gelir.
+            if (
+              job.a === 'deliver' &&
+              ordBefore &&
+              canGive(farmBefore, ordBefore) >= Object.values(orderLeft(ordBefore)).reduce((a, b) => a + b, 0)
+            ) {
+              flash(`${orderWho(ordBefore)} almaya geliyor`);
               setShowOrders(false);
+            }
+            // Elden teslim: çift teşekkür eder, ödül girişte belirir.
+            if (job.a === 'handover' && r.gained && handBefore) {
+              const slot = Math.max(
+                0,
+                packedBefore.findIndex((o) => o.id === handBefore.id),
+              );
+              setLeaving((l) => [...l, { id: handBefore.id, who: orderWho(handBefore), slot }]);
+              const sp = visitSlot(slot);
+              const fid = Date.now() + Math.random();
+              setFloats((f) => [
+                ...f,
+                { id: fid, x: sp.x, y: sp.y - TW * 2.1, text: `+${handBefore.coins} altın · +${handBefore.xp} tecrübe` },
+              ]);
+              setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1600);
             }
             if (
               helped ||
               ('scene' in job && job.scene) ||
               job.a === 'harvestDay' ||
-              (job.a === 'deliver' && r.gained) ||
+              job.a === 'handover' ||
               job.a === 'note' ||
               job.a === 'kiss'
             )
               together = true;
             else solo = true;
-            if (r.gained) {
+            if (r.gained && job.a !== 'handover') {
               const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
               const id = Date.now() + Math.random();
               setFloats((f) => [
@@ -1227,10 +1334,21 @@ export default function GardenScreen() {
         label: incoming ? 'Aç' : 'Sepet',
       });
   }
+  // Hazırlanmış siparişlerin çiftleri girişte bekler. Bu oturumda yeni hazırlananlar yoldan yürüyerek gelir;
+  // çiftlik açıldığında zaten hazır olanlar yerlerinde durur.
+  const packed = farm.orders.filter((o) => o.packed && !leaving.some((l) => l.id === o.id)).slice(0, 3);
+  if (!seenPacked.current) seenPacked.current = new Set(packed.map((o) => o.id));
+  const walkIns = new Set(packed.filter((o) => !seenPacked.current!.has(o.id)).map((o) => o.id));
+  visitTapRef.current = (wx, wy) => {
+    const k = packed.findIndex((_, n) => visitHit(n, wx, wy));
+    if (k < 0) return false;
+    work({ a: 'handover', i: VISIT_TILE, order: packed[k].id });
+    return true;
+  };
   {
     // Posta kutusu: verilebilecek sipariş varsa rozet çıkar.
     const giv = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
-    if (giv && !visit)
+    if (giv)
       badges.push({ key: 'siparis', i: -1, x: MAIL.x, y: MAIL.y - TW * 1.5, art: 'sepet_dolu', z: MAIL.z + 400, n: giv, label: 'Sipariş' });
   }
   farm.tiles.forEach((tl, i) => {
@@ -1431,7 +1549,20 @@ export default function GardenScreen() {
           ))}
           <Dog />
           <WorldChar profile={partnerProfile} name={partnerName} x={pAt.x} y={pAt.y} z={pAt.z} tag={partnerName} />
-          {visit && <Visitors key={visit.id} v={visit} onStage={(stage) => setVisit((v) => (v ? (stage ? { ...v, stage } : null) : v))} />}
+          {packed.map((o, k) => (
+            <Visitors key={o.id} id={o.id} who={orderWho(o)} slot={k} mode="wait" walkIn={walkIns.has(o.id)} />
+          ))}
+          {leaving.map((l) => (
+            <Visitors
+              key={`go${l.id}`}
+              id={l.id}
+              who={l.who}
+              slot={l.slot}
+              mode="thanks"
+              walkIn={false}
+              onGone={() => setLeaving((q) => q.filter((x) => x.id !== l.id))}
+            />
+          ))}
           <WorldChar
             profile={profile}
             name={myName}
@@ -2751,8 +2882,8 @@ function Orders({
     <>
       <Head title="Sipariş defteri" onClose={onClose} />
       <Note>
-        Sipariş tamamlanınca sahibi çift posta kutusuna almaya gelir. Sayılar teslim edilen/istenen; ikiniz de katkı verirseniz ortak hasat
-        sayılır.
+        Siparişi teslim edince sahibi çift girişe gelir; yanlarına gidip dokununca ürünleri verirsiniz, altın ve tecrübe o an kazanılır.
+        İkiniz de katkı verirseniz ortak hasat sayılır.
       </Note>
       <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
         {farm.orders.length === 0 && <Note>İlk işinizden sonra deftere sipariş yazılmaya başlar.</Note>}
@@ -2809,7 +2940,15 @@ function Orders({
                     </Text>
                     <Btn
                       kind={give ? 'green' : 'soft'}
-                      label={give ? (give >= leftN ? 'Teslim et, gelsinler' : `Hazır olanı ayır (${give})`) : 'Depoda yok'}
+                      label={
+                        o.packed
+                          ? 'Girişte bekliyorlar'
+                          : give
+                            ? give >= leftN
+                              ? 'Teslim et, gelsinler'
+                              : `Hazır olanı ayır (${give})`
+                            : 'Depoda yok'
+                      }
                       onPress={() => onDeliver(o.id)}
                       disabled={!give}
                     />
