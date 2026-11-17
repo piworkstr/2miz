@@ -105,6 +105,7 @@ import {
   type Season,
   type Tile,
   type TreeId,
+  applyAction,
   orderWho,
 } from '../lib/farm';
 import { randomArt } from '../lib/avatarArt';
@@ -660,29 +661,65 @@ function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; 
   );
 }
 
-function FloatText({ x, y, text }: { x: number; y: number; text: string }) {
+function FloatText({ x, y, text, art }: { x: number; y: number; text: string; art?: string }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(v, { toValue: 1, duration: 1200, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
-  }, [v]);
+    Animated.timing(v, { toValue: 1, duration: art ? 1700 : 1200, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [v, art]);
+  const label = {
+    color: '#fff',
+    fontWeight: '900' as const,
+    fontSize: 16,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowRadius: 3,
+  };
+  const move = {
+    opacity: v.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 1, 0] }),
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -46] }) }],
+  };
+  // Toplanan ürün: resmi ve adediyle birlikte yukarı süzülür (ne toplandığı belli olsun).
+  if (art && ART[art])
+    return (
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            left: x - 90,
+            top: y,
+            width: 180,
+            zIndex: 4000,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+          },
+          move,
+        ]}
+      >
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: '#fff',
+            borderWidth: 2,
+            borderColor: GREEN,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Image source={ART[art].src} style={{ width: 28, height: 28 }} resizeMode="contain" />
+        </View>
+        <Text maxFontSizeMultiplier={1.0} style={label}>
+          {text}
+        </Text>
+      </Animated.View>
+    );
   return (
     <Animated.Text
       pointerEvents="none"
-      style={{
-        position: 'absolute',
-        left: x - 40,
-        top: y,
-        width: 80,
-        textAlign: 'center',
-        zIndex: 4000,
-        color: '#fff',
-        fontWeight: '900',
-        fontSize: 16,
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowRadius: 3,
-        opacity: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-        transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -46] }) }],
-      }}
+      style={[{ position: 'absolute', left: x - 40, top: y, width: 80, textAlign: 'center', zIndex: 4000 }, label, move]}
     >
       {text}
     </Animated.Text>
@@ -770,7 +807,7 @@ export default function GardenScreen() {
   const [toast, setToast] = useState('');
   const [say, setSay] = useState('');
   const [tool, setTool] = useState<string | null>(null);
-  const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
+  const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string; art?: string }[]>([]);
   // Teslim alan çift: sipariş tamamlanınca yoldan posta kutusuna yürür, sepeti alır, döner.
   const [leaving, setLeaving] = useState<Leaving[]>([]);
   const seenPacked = useRef<Set<string> | null>(null);
@@ -1100,6 +1137,24 @@ export default function GardenScreen() {
         const before = farmOf(couple).tiles[job.i];
         const farmBefore = farmOf(couple);
         const ordBefore = job.a === 'deliver' ? farmBefore.orders.find((o) => o.id === job.order) : undefined;
+        // Toplama işleri: depoya ne girdiği hemen gösterilir (iş topluca kaydedilse bile). Aynı kural yerelde denenir,
+        // depo farkı alınır; kural reddederse (hazır değil vb.) bir şey gösterilmez.
+        if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) {
+          const sim = applyAction(farmBefore, job, uid, () => '', myName, Date.now(), null);
+          if (typeof sim !== 'string') {
+            const got = Object.entries(sim.farm.stock)
+              .map(([k, n]) => [k, n - (farmBefore.stock[k] ?? 0)] as const)
+              .filter(([, n]) => n > 0);
+            const at = center(...rc(job.i));
+            got.forEach(([k, n], idx) => {
+              const fid = Date.now() + Math.random();
+              setTimeout(() => {
+                setFloats((f) => [...f, { id: fid, x: at.x, y: at.y - TW * 1.1, text: `+${n} ${PRODUCT_NAME[k] ?? ''}`.trim(), art: k }]);
+                setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
+              }, idx * 350);
+            });
+          }
+        }
         const packedBefore = farmBefore.orders.filter((o) => o.packed);
         const handBefore = job.a === 'handover' ? farmBefore.orders.find((o) => o.id === job.order) : undefined;
         // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
@@ -1168,7 +1223,7 @@ export default function GardenScreen() {
             )
               together = true;
             else solo = true;
-            if (r.gained && job.a !== 'handover') {
+            if (r.gained && !['handover', 'collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) {
               const { x, y } = center(...rc(job.a === 'sell' ? PILE_TILE : job.i));
               const id = Date.now() + Math.random();
               setFloats((f) => [
@@ -1642,7 +1697,7 @@ export default function GardenScreen() {
             </View>
           )}
           {floats.map((f) => (
-            <FloatText key={f.id} x={f.x} y={f.y} text={f.text} />
+            <FloatText key={f.id} x={f.x} y={f.y} text={f.text} art={f.art} />
           ))}
         </View>
       )}
