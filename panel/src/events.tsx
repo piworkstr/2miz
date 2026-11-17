@@ -106,7 +106,7 @@ export function Events() {
                 <th>Etkinlik</th>
                 <th>Tür</th>
                 <th>Mekan</th>
-                <th>biriz'e özel</th>
+                <th>bir iz'e özel</th>
                 <th></th>
               </tr>
             </thead>
@@ -204,7 +204,7 @@ function Form({
           <input value={e.url ?? ''} onChange={(x) => set({ url: x.target.value })} placeholder="https://" />
         </label>
         <label>
-          biriz çiftlerine özel (anlaşma varsa)
+          bir iz çiftlerine özel (anlaşma varsa)
           <input
             value={e.deal ?? ''}
             onChange={(x) => set({ deal: x.target.value })}

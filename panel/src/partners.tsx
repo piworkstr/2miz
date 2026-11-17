@@ -298,13 +298,13 @@ function Form({ partner, onClose }: { partner: Partner | null; onClose: () => vo
           <h2>Kasa kartı</h2>
           {code ? (
             <div className="kasa">
-              <div className="brand">biriz</div>
+              <div className="brand">bir iz</div>
               <p>
                 <b>{partner.name}</b> · {partner.offer}
               </p>
               <div className="qr" dangerouslySetInnerHTML={{ __html: qr }} />
               <p className="code">{code.toUpperCase()}</p>
-              <p className="muted small">biriz uygulamasında Avantajlar → {partner.name} → “Kasadaki kodu okut”</p>
+              <p className="muted small">bir iz uygulamasında Avantajlar → {partner.name} → “Kasadaki kodu okut”</p>
               <button className="noprint" onClick={() => window.print()}>
                 Kartı yazdır
               </button>

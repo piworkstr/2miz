@@ -61,7 +61,7 @@ export type Couple = {
   status?: 'sevgili' | 'nisanli' | 'evli' | 'uzak';
   city?: string; // şehir etkinlikleri için seçilen il (ikisi için ortak)
   living?: 'together' | 'city' | 'far'; // aynı ev / aynı şehir ayrı ev / farklı şehir — görevler buna göre seçilir
-  plus?: { until: number; by: string; product?: 'monthly' | 'yearly' }; // biriz Plus; yalnızca ödeme sunucusu ya da yönetim paneli yazar (by: 'hediye')
+  plus?: { until: number; by: string; product?: 'monthly' | 'yearly' }; // bir iz Plus; yalnızca ödeme sunucusu ya da yönetim paneli yazar (by: 'hediye')
   printOrder?: string; // açık baskı siparişi; doluyken yönetim paneli albüm fotoğraflarını görebilir
   gameUse?: { day: string; n: number }; // ücretsizde günlük oyun hakkı
   delReq?: Record<string, import('./delreq').DelReq>; // ortak albümlerde bekleyen silme istekleri

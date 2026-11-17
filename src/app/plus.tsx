@@ -11,7 +11,7 @@ import { useTheme } from '../lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-// Sınıra gelince ya da Biz ekranındaki karttan açılan biriz Plus ekranı.
+// Sınıra gelince ya da Biz ekranındaki karttan açılan bir iz Plus ekranı.
 const HEADLINES: Record<PlusReason, { title: string; sub: string }> = {
   wheel: { title: 'Bugünkü çark hakkınız bitti', sub: 'Ücretsizde çark günde bir kez döner. Plus ile istediğiniz kadar çevirin.' },
   game: { title: 'Bugünkü oyununuzu oynadınız', sub: 'Ücretsizde günde bir canlı oyun var. Plus ile sınırsız oynayın.' },
@@ -23,7 +23,7 @@ const HEADLINES: Record<PlusReason, { title: string; sub: string }> = {
     title: `Bu seyahat ${FREE.tripPhotos} fotoğrafla doldu`,
     sub: `Plus ile her seyahate ${PLUS.tripPhotos} fotoğrafa kadar ekleyin.`,
   },
-  card: { title: 'biriz Plus', sub: 'Biriniz öder, ikiniz de kullanırsınız.' },
+  card: { title: 'bir iz Plus', sub: 'Biriniz öder, ikiniz de kullanırsınız.' },
 };
 
 const FEATURES: { icon: IconName; text: string; soon?: boolean }[] = [
@@ -44,8 +44,8 @@ export default function PlusScreen() {
   const head = HEADLINES[from && from in HEADLINES ? from : 'card'];
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
-  // by 'hediye': biriz'in yönetim panelinden verdiği ücretsiz Plus
-  const payer = plus.by === 'hediye' ? 'biriz’in hediyesi' : plus.by === user?.uid ? 'Senin' : `${partnerName}’in`;
+  // by 'hediye': bir iz'in yönetim panelinden verdiği ücretsiz Plus
+  const payer = plus.by === 'hediye' ? 'bir iz’in hediyesi' : plus.by === user?.uid ? 'Senin' : `${partnerName}’in`;
   const until = plus.until ? trDate(new Date(plus.until), { year: true }) : '';
 
   return (

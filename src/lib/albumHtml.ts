@@ -125,7 +125,7 @@ function pageBody(p: AlbumPage, input: AlbumInput, plan: AlbumPlan, a4: boolean)
       };
     case 'end':
       return {
-        html: `<div class="safe" style="justify-content:center;gap:3cqw"><div class="title" style="font-size:9cqw">Devamı gelecek…</div><div style="font-size:3cqw;color:var(--quiet);letter-spacing:.3cqw">biriz</div></div>`,
+        html: `<div class="safe" style="justify-content:center;gap:3cqw"><div class="title" style="font-size:9cqw">Devamı gelecek…</div><div style="font-size:3cqw;color:var(--quiet);letter-spacing:.3cqw">bir iz</div></div>`,
       };
   }
 }
@@ -153,7 +153,7 @@ export function albumPreviewHtml(plan: AlbumPlan, input: AlbumInput, size: Album
   const pages = plan.pages
     .map((p, i) => {
       const { html, cls } = pageBody(p, input, plan, a4);
-      return `<div class="slot"><div class="page ${cls ?? ''}" style="aspect-ratio:${ratio}" data-id="${p.id}">${html}<div class="mark">biriz önizleme · ${i + 1}</div></div></div>`;
+      return `<div class="slot"><div class="page ${cls ?? ''}" style="aspect-ratio:${ratio}" data-id="${p.id}">${html}<div class="mark">bir iz önizleme · ${i + 1}</div></div></div>`;
     })
     .join('');
   const cover = `<div class="slot"><div class="page" style="aspect-ratio:${ratio};background:#E8516A" data-id="cover">${coverBody(input, plan, a4)}<div class="mark" style="color:rgba(255,255,255,.5)">Kapak</div></div></div>`;

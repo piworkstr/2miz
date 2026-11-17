@@ -154,14 +154,14 @@ export default function Profile() {
   );
 }
 
-// Her zaman görünen biriz Plus kartı: açıksa kimin hediye ettiği ve bitiş tarihi.
+// Her zaman görünen bir iz Plus kartı: açıksa kimin hediye ettiği ve bitiş tarihi.
 function PlusCard() {
   const t = useTheme();
   const { user, partnerName } = useSession();
   const plus = usePlus();
   const until = plus.until ? trDate(new Date(plus.until)) : '';
   const line = plus.paid
-    ? `${plus.by === 'hediye' ? 'biriz' : plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
+    ? `${plus.by === 'hediye' ? 'bir iz' : plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
     : plus.beta
       ? 'Beta boyunca her şey açık'
       : 'Sınırsız çark, oyun ve seyahat albümü';
@@ -184,7 +184,7 @@ function PlusCard() {
           maxFontSizeMultiplier={1.25}
           style={{ color: t.colors.onPrimarySoft, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}
         >
-          biriz Plus
+          bir iz Plus
         </Text>
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimarySoft, fontSize: 13, opacity: 0.85 }}>
           {line}

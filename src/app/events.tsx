@@ -198,7 +198,7 @@ export default function Events() {
                             maxFontSizeMultiplier={1.25}
                             style={{ color: t.colors.primary, fontSize: 13, fontWeight: '600', fontFamily: t.fonts.button }}
                           >
-                            {`biriz'e özel: ${e.deal}`}
+                            {`bir iz'e özel: ${e.deal}`}
                           </Text>
                         </View>
                       )}
@@ -234,7 +234,7 @@ export default function Events() {
             </View>
           ))}
           <Muted style={{ fontSize: 12 }}>
-            Tarih, saat ve fiyatlar değişebilir; bilet almadan önce satış sayfasından doğrulayın. Bilet satışı biriz üzerinden yapılmaz.
+            Tarih, saat ve fiyatlar değişebilir; bilet almadan önce satış sayfasından doğrulayın. Bilet satışı bir iz üzerinden yapılmaz.
           </Muted>
         </>
       )}

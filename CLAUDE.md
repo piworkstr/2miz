@@ -1,6 +1,6 @@
-# biriz (eski adı 2miz; depo ve klasör adları 2miz olarak kaldı) — Claude için çalışma kuralları
+# bir iz (eski adı 2miz; depo ve klasör adları 2miz olarak kaldı) — Claude için çalışma kuralları
 
-biriz, Taner ve Aleyna'nın çiftler uygulaması (Expo SDK 58, Expo Router, Firebase Auth + Firestore). Kullanıcıyla iletişim **Türkçe**. Genel Expo kuralları için `AGENTS.md`'yi de oku.
+bir iz, Taner ve Aleyna'nın çiftler uygulaması (Expo SDK 58, Expo Router, Firebase Auth + Firestore). Kullanıcıyla iletişim **Türkçe**. Genel Expo kuralları için `AGENTS.md`'yi de oku.
 
 ## Plan
 - Proje planı (Claude Doc): https://claude.ai/artifact/NtKknGD8Z1D5jgPgH9Tdi5 — işler buradan, sırayla. "(Sen)" yazanlar Taner/Aleyna'nın işi; diğerleri Claude'un. Biten maddeyi `[x]` yap.

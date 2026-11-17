@@ -43,7 +43,7 @@ export function UpdateCard() {
   return (
     <View style={{ alignItems: 'center', gap: 4 }}>
       <Muted style={{ fontSize: 12 }}>
-        biriz {version}
+        bir iz {version}
         {build ? ` (${build})` : ''}
         {upd ? ` · güncelleme ${upd}` : ''}
         {Constants.appOwnership === 'expo' ? ' · Expo Go' : ''}

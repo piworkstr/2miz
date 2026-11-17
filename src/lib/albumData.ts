@@ -40,7 +40,7 @@ export async function loadAlbumInput(
   return { people, startDate, photos, trips };
 }
 
-// Baskı talebi: sadece seçimler kaydedilir; baskı dosyası biriz Baskı Merkezi'nde üretilir.
+// Baskı talebi: sadece seçimler kaydedilir; baskı dosyası bir iz Baskı Merkezi'nde üretilir.
 export async function saveAlbumRequest(coupleId: string, uid: string, opts: AlbumOptions, pageCount: number) {
   await addDoc(collection(db, 'couples', coupleId, 'albumOrders'), {
     by: uid,

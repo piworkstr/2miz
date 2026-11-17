@@ -40,7 +40,7 @@ async function registerToken(uid: string) {
   if (!Device.isDevice) return;
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'biriz',
+      name: 'bir iz',
       importance: Notifications.AndroidImportance.HIGH,
       lightColor: '#E8516A',
     });

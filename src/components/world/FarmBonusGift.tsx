@@ -95,7 +95,7 @@ export function FarmBonusGift({ bonus, coupleId, uid, onClose }: { bonus: FarmBo
             maxFontSizeMultiplier={1.0}
             style={{ fontFamily: t.fonts.title, fontSize: 34, lineHeight: 38, color: '#5A3E0A', textAlign: 'center' }}
           >
-            {opened ? 'Çiftliğinize eklendi!' : 'biriz’den hediye!'}
+            {opened ? 'Çiftliğinize eklendi!' : 'bir iz’den hediye!'}
           </Text>
           {!!bonus.note && !opened && (
             <Text

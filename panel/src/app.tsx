@@ -111,7 +111,7 @@ function Login() {
   }
   return (
     <form className="login card" onSubmit={submit}>
-      <div className="brand">biriz Yönetim</div>
+      <div className="brand">bir iz Yönetim</div>
       <p className="muted small">Uygulamadaki yönetici hesabının e-postası ve şifresiyle gir.</p>
       <label>
         E-posta
@@ -136,7 +136,7 @@ function NoAccess({ user }: { user: User }) {
   const [sent, setSent] = useState(false);
   return (
     <div className="login card">
-      <div className="brand">biriz Yönetim</div>
+      <div className="brand">bir iz Yönetim</div>
       <p>
         <b>{user.email}</b> hesabının yönetim yetkisi yok.
       </p>
@@ -178,7 +178,7 @@ function Panel({ user }: { user: User }) {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="brand">biriz Yönetim</div>
+        <div className="brand">bir iz Yönetim</div>
         {TABS.map((t) => (
           <button key={t.id} className={`nav${tab === t.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>
             {t.label}

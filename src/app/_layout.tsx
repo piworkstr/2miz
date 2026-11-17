@@ -31,7 +31,7 @@ function Maintenance({ message }: { message?: string }) {
       <Title>Kısa bir bakım arası</Title>
       <Muted style={{ textAlign: 'center', fontSize: 16 }}>
         {message?.trim() ||
-          'biriz’i sizin için daha iyi hale getiriyoruz. Anılarınız ve çiftliğiniz güvende; kısa süre sonra yeniden buradayız.'}
+          'bir iz’i sizin için daha iyi hale getiriyoruz. Anılarınız ve çiftliğiniz güvende; kısa süre sonra yeniden buradayız.'}
       </Muted>
     </View>
   );

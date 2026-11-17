@@ -66,7 +66,7 @@ export default function Pair() {
             <Button
               label="Kodu paylaş"
               variant="secondary"
-              onPress={() => Share.share({ message: `biriz'de eşleşelim! Davet kodum: ${code}` })}
+              onPress={() => Share.share({ message: `bir iz'de eşleşelim! Davet kodum: ${code}` })}
             />
           </View>
         ) : (

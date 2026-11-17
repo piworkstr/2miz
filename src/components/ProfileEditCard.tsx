@@ -48,7 +48,7 @@ export function ProfileEditCard() {
     if (!n) return setError('Partnerinin göreceği adını yaz.');
     const key = toDateKey(birth);
     if (!key) return setError('Doğum tarihini gün / ay / yıl olarak gir.');
-    if (ageFrom(key) < 18) return setError('biriz, 18 yaş ve üzeri içindir.');
+    if (ageFrom(key) < 18) return setError('bir iz, 18 yaş ve üzeri içindir.');
     setBusy(true);
     setError('');
     try {

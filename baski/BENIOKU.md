@@ -1,4 +1,4 @@
-# biriz Baskı Merkezi
+# bir iz Baskı Merkezi
 
 Albüm baskı dosyaları yalnızca burada üretilir; uygulama kullanıcıya hiçbir zaman PDF vermez.
 

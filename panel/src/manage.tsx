@@ -89,7 +89,7 @@ export function Couples() {
         <h1>Çiftler ve Plus</h1>
         <p className="muted">
           {list.length} çift. Soldaki kutuyla çift seçip çiftlik bonusu gönderebilir, sağdaki düğmelerle ücretsiz Plus verebilirsiniz; çift
-          uygulamada “biriz ikinize hediye etti” olarak görür. Mesajlar ve fotoğraflar panelde görünmez.
+          uygulamada “bir iz ikinize hediye etti” olarak görür. Mesajlar ve fotoğraflar panelde görünmez.
         </p>
       </div>
       <input placeholder="Ada göre ara" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 320 }} />

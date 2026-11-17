@@ -31,7 +31,7 @@ export type CityEvent = {
   cat: EventCat;
   url?: string; // bilet / ayrıntı sayfası
   price?: string; // serbest metin: "450 TL'den başlar"
-  deal?: string; // biriz çiftlerine özel: "İkinci bilet %50", "Kod: BIRIZ10"
+  deal?: string; // bir iz çiftlerine özel: "İkinci bilet %50", "Kod: BIRIZ10"
   auto?: boolean; // otomatik çekildi (elle eklenenler üstte gösterilir)
 };
 export type CityDoc = { city: string; items: CityEvent[]; updatedAtMs: number };

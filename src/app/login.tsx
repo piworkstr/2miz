@@ -59,7 +59,7 @@ export default function Login() {
       if (!name.trim()) return setError(l('Partnerinin göreceği adını yaz.', 'Enter the name your partner will see.'));
       birthDate = toDateKey(birth);
       if (!birthDate) return setError(l('Doğum tarihini gün / ay / yıl olarak gir.', 'Enter your date of birth as day / month / year.'));
-      if (ageFrom(birthDate) < 18) return setError(l('biriz, 18 yaş ve üzeri içindir.', 'biriz is for ages 18 and up.'));
+      if (ageFrom(birthDate) < 18) return setError(l('bir iz, 18 yaş ve üzeri içindir.', 'bir iz is for ages 18 and up.'));
     }
     if (!email.trim() || !password) return setError(l('E-posta ve şifre gerekli.', 'Email and password are required.'));
 
