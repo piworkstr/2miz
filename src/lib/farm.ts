@@ -51,15 +51,17 @@ export type DecorId =
   | 'kuyu'
   | 'cesme';
 
+// Süreler: seviye ilerledikçe uzar ama en uzunu 8 saattir; kimse bir ürün için bir gün beklemez.
+// Ekinler 15 dk – 8 saat, hayvanlar 2 – 6 saat, ağaçlar 2 – 4 saat, mutfak ve atölye 20 dk – 3 saat.
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
-  bugday: { name: 'Buğday', cost: 2, mins: 30, sell: 6, xp: 2, lvl: 1 },
-  havuc: { name: 'Havuç', cost: 5, mins: 120, sell: 15, xp: 4, lvl: 1 },
-  domates: { name: 'Domates', cost: 8, mins: 240, sell: 25, xp: 7, lvl: 2 },
-  misir: { name: 'Mısır', cost: 12, mins: 480, sell: 40, xp: 10, lvl: 3 },
-  gul: { name: 'Aşk gülü', cost: 30, mins: 1440, sell: 110, xp: 30, lvl: 3, big: true },
-  cilek: { name: 'Çilek', cost: 20, mins: 720, sell: 65, xp: 14, lvl: 4 },
-  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 1440, sell: 90, xp: 20, lvl: 5, big: true },
-  kabak: { name: 'Bal kabağı', cost: 40, mins: 1440, sell: 140, xp: 26, lvl: 6, big: true },
+  bugday: { name: 'Buğday', cost: 2, mins: 15, sell: 6, xp: 2, lvl: 1 },
+  havuc: { name: 'Havuç', cost: 5, mins: 45, sell: 15, xp: 4, lvl: 1 },
+  domates: { name: 'Domates', cost: 8, mins: 90, sell: 25, xp: 7, lvl: 2 },
+  misir: { name: 'Mısır', cost: 12, mins: 180, sell: 40, xp: 10, lvl: 3 },
+  gul: { name: 'Aşk gülü', cost: 30, mins: 240, sell: 110, xp: 30, lvl: 3, big: true },
+  cilek: { name: 'Çilek', cost: 20, mins: 300, sell: 65, xp: 14, lvl: 4 },
+  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 360, sell: 90, xp: 20, lvl: 5, big: true },
+  kabak: { name: 'Bal kabağı', cost: 40, mins: 480, sell: 140, xp: 26, lvl: 6, big: true },
 };
 
 // Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
@@ -74,10 +76,10 @@ export const ANIMALS: Record<
   AnimalId,
   { name: string; products: string[]; cost: number; mins: number; xp: number; lvl: number; w: number }
 > = {
-  tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 240, xp: 3, lvl: 2, w: 0.6 },
-  koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 360, xp: 5, lvl: 3, w: 0.78 },
-  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 480, xp: 6, lvl: 4, w: 0.95 },
-  ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 720, xp: 8, lvl: 5, w: 0.72 },
+  tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 120, xp: 3, lvl: 2, w: 0.6 },
+  koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 180, xp: 5, lvl: 3, w: 0.78 },
+  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 240, xp: 6, lvl: 4, w: 0.95 },
+  ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 360, xp: 8, lvl: 5, w: 0.72 },
 };
 export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
 export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
@@ -346,8 +348,16 @@ export function newFarm(): Farm {
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
 export function farmOf(couple: Couple | null | undefined): Farm {
+  // Süreler kısaltılmadan önce ekilmiş ekinler eski (uzun) süresini beklemesin: en çok yeni sürenin kış katı kadar.
+  const capCrops = (tiles: Tile[]): Tile[] => {
+    const late = (t: Tile) => t.k === 'crop' && !!CROPS[t.crop] && t.ready - t.at > CROPS[t.crop].mins * MIN * 1.5;
+    return tiles.some(late)
+      ? tiles.map((t) => (t.k === 'crop' && late(t) ? { ...t, ready: t.at + CROPS[t.crop].mins * MIN * 1.5 } : t))
+      : tiles;
+  };
   const fill = (f: Farm): Farm => ({
     ...f,
+    tiles: Array.isArray(f.tiles) ? capCrops(f.tiles) : f.tiles,
     pos: f.pos ?? {},
     stock: f.stock ?? {},
     harvests: f.harvests ?? 0,
