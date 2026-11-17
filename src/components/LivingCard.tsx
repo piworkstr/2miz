@@ -3,7 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { Pressable, Text, View } from 'react-native';
 import { db } from '../lib/firebase';
 import { useSession } from '../lib/session';
-import { LIVING, type Living } from '../lib/tasks';
+import { livingList, type Living } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 
@@ -18,7 +18,7 @@ export function LivingChips({ compact }: { compact?: boolean }) {
   const cur = couple.living ?? (couple.status === 'uzak' ? 'far' : undefined);
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      {LIVING.map((l) => {
+      {livingList(t.lang).map((l) => {
         const on = cur === l.id;
         return (
           <Pressable

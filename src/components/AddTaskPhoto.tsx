@@ -8,7 +8,7 @@ import type { DayDoc } from '../lib/daily';
 import { prettyDate } from '../lib/date';
 import { db } from '../lib/firebase';
 import { saveTaskPhoto, shrink, updatePhotoNote, type Photo } from '../lib/photos';
-import { taskById } from '../lib/tasks';
+import { taskById, taskTitle } from '../lib/tasks';
 import { useTheme } from '../lib/useTheme';
 import { Polaroid } from './Polaroid';
 import { Button, ErrorText, Input, Muted, Title } from './ui';
@@ -86,7 +86,7 @@ export function AddTaskPhoto(props: {
             <Ionicons name="close" size={28} color={t.colors.text} />
           </Pressable>
           <Title>Fotoğrafını ekle</Title>
-          <Muted>{`${prettyDate(day)} · ${taskById(props.fallbackTaskId).title}`}</Muted>
+          <Muted>{`${prettyDate(day)} · ${taskTitle(taskById(props.fallbackTaskId), t.lang)}`}</Muted>
           <Muted>O gün fotoğraf eklememiştin. Şimdi eklersen albümde ve baskıda bu sayfa tamamlanır.</Muted>
 
           {data ? (
@@ -199,7 +199,7 @@ export function MissingPhotoDays(props: {
             <View style={{ flex: 1, gap: 2 }}>
               <Muted style={{ fontSize: 12 }}>{prettyDate(d.key)}</Muted>
               <Text maxFontSizeMultiplier={1.25} numberOfLines={2} style={{ color: t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}>
-                {taskById(taskId).title}
+                {taskTitle(taskById(taskId), t.lang)}
               </Text>
             </View>
             <Ionicons name="add-circle" size={26} color={t.colors.primary} />

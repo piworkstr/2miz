@@ -1,4 +1,6 @@
+import type { Lang } from './i18n';
 import { extraTasks, REMOTE } from './taskBank';
+import { EN_BANK, EN_BASE } from './tasksEn';
 
 export type Category = 'iletisim' | 'minnet' | 'romantik' | 'eglence' | 'yeni' | 'surpriz';
 
@@ -15,6 +17,14 @@ export const LIVING: { id: Living; label: string; hint: string }[] = [
   { id: 'city', label: 'Aynı şehir, ayrı ev', hint: 'Ev içi görevler çıkmaz' },
   { id: 'far', label: 'Uzak mesafe', hint: 'Yalnız uzaktan yapılabilenler' },
 ];
+const LIVING_EN: Record<Living, { label: string; hint: string }> = {
+  together: { label: 'Same home', hint: 'Every task works' },
+  city: { label: 'Same city, separate homes', hint: 'No at-home tasks' },
+  far: { label: 'Long distance', hint: 'Only tasks you can do apart' },
+};
+export function livingList(lang: Lang): { id: Living; label: string; hint: string }[] {
+  return lang === 'en' ? LIVING.map((x) => ({ id: x.id, ...LIVING_EN[x.id] })) : LIVING;
+}
 // Görevin gerektirdiği yakınlık: home = aynı ev, meet = buluşmak, any = her yerden, remote = yalnız ayrı yaşayanlara.
 export type Need = 'home' | 'meet' | 'any' | 'remote';
 // Uzaktan da yapılabilen işaretler: mesaj, arama, gönderme, anlatma, konuşma.
@@ -109,6 +119,28 @@ export const categoryLabels: Record<Category, string> = {
   yeni: 'Yeni deneyim',
   surpriz: 'Sürpriz',
 };
+const categoryLabelsEn: Record<Category, string> = {
+  iletisim: 'Communication',
+  minnet: 'Gratitude',
+  romantik: 'Romantic',
+  eglence: 'Fun',
+  yeni: 'New experience',
+  surpriz: 'Surprise',
+};
+export function categoryLabel(c: Category, lang: Lang): string {
+  return lang === 'en' ? categoryLabelsEn[c] : categoryLabels[c];
+}
+
+// Görevin seçili dildeki metni. Türkçe metin (task.title) kimlik gibi kalır: yakınlık süzgeci (needOf) ona bakar.
+// İngilizcesi eksikse Türkçesi görünür.
+export function taskTitle(task: Task, lang: Lang): string {
+  if (lang !== 'en') return task.title;
+  const base = EN_BASE[task.id];
+  if (base) return base;
+  const m = /^([a-z]+)-(\d+)$/.exec(task.id);
+  const en = m ? EN_BANK[m[1] as Category]?.[Number(m[2]) - 1] : undefined;
+  return en ?? task.title;
+}
 
 // İlk görev bankası (kimlikleri t01–t36). Ek görevler taskBank.ts dosyasında.
 const BASE: Task[] = [

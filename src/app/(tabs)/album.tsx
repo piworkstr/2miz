@@ -15,7 +15,8 @@ import { useTrips, type Trip } from '../../lib/trips';
 import { TripCover } from '../../components/TripCover';
 import { router } from 'expo-router';
 import { useSession } from '../../lib/session';
-import { taskById } from '../../lib/tasks';
+import { taskById, taskTitle } from '../../lib/tasks';
+import type { Lang } from '../../lib/i18n';
 import { useTheme } from '../../lib/useTheme';
 
 type Page =
@@ -223,7 +224,7 @@ export default function Album() {
                   </Text>
                   {!!page.photo.taskId && (
                     <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#8A7F78', textAlign: 'center' }}>
-                      {taskById(page.photo.taskId).title}
+                      {taskTitle(taskById(page.photo.taskId), t.lang)}
                     </Text>
                   )}
                 </View>
@@ -281,7 +282,7 @@ export default function Album() {
                   maxFontSizeMultiplier={1.25}
                   style={{ fontFamily: handFont, fontSize: 25, lineHeight: 28, color: inkColor, textAlign: 'center' }}
                 >
-                  {taskTitle(page)}
+                  {pageTaskTitle(page, t.lang)}
                 </Text>
               </>
             )}
@@ -308,11 +309,11 @@ export default function Album() {
 }
 
 // Ortak görevde iki fotoğrafın görevi aynıdır; ayrı görevlerde ikisi de yazılır.
-function taskTitle(page: Extract<Page, { kind: 'task' }>): string {
+function pageTaskTitle(page: Extract<Page, { kind: 'task' }>, lang: Lang): string {
   const a = page.mine?.taskId;
   const b = page.theirs?.taskId;
-  if (a && b && a !== b) return `${taskById(a).title} · ${taskById(b).title}`;
-  return taskById((a ?? b)!).title;
+  if (a && b && a !== b) return `${taskTitle(taskById(a), lang)} · ${taskTitle(taskById(b), lang)}`;
+  return taskTitle(taskById((a ?? b)!), lang);
 }
 
 // Siparişi olan çift için Siparişler bağlantısı.

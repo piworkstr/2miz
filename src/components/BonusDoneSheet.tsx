@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveBonusPhotos, shrink } from '../lib/photos';
-import { taskById } from '../lib/tasks';
+import { taskById, taskTitle } from '../lib/tasks';
 import { useTheme } from '../lib/useTheme';
 import { Button, ErrorText, Input, Muted, Title } from './ui';
 
@@ -94,7 +94,7 @@ export function BonusDoneSheet(props: {
             <Ionicons name="close" size={28} color={t.colors.text} />
           </Pressable>
           <Title>{props.onDone ? 'Görevi tamamla' : 'Fotoğraf ekle'}</Title>
-          <Muted>{taskById(taskId).title}</Muted>
+          <Muted>{taskTitle(taskById(taskId), t.lang)}</Muted>
           <Muted>{`Bu göreve ${BONUS_PHOTO_MAX} fotoğrafa kadar ekleyebilirsin; albümünüze "Bonus görev" olarak düşer.${props.onDone ? ' İstersen fotoğrafsız da tamamlayabilirsin.' : ''}`}</Muted>
 
           {photos.length > 0 && (

@@ -27,7 +27,7 @@ import { dayKey, prettyDate, yesterdayKey } from '../../lib/date';
 import { bonusPhotoPrefix, saveTaskPhoto, usePhotos } from '../../lib/photos';
 import { BonusDoneSheet } from '../../components/BonusDoneSheet';
 import { useSession, type Profile } from '../../lib/session';
-import { categoryLabels, taskById, type Task } from '../../lib/tasks';
+import { categoryLabel, taskById, taskTitle, type Task } from '../../lib/tasks';
 import { BONUS_POINTS, toggleFavorite } from '../../lib/archive';
 import { finishOpenBonus } from '../../lib/daily';
 import { notifyPartner } from '../../lib/push';
@@ -296,7 +296,7 @@ function TaskTitle({ task, label }: { task: Task; label: string }) {
     <View style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
         <Pill>{label}</Pill>
-        <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabels[task.category])}</Muted>
+        <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabel(task.category, t.lang))}</Muted>
         {couple && (
           <Pressable
             onPress={() => toggleFavorite(couple.id, task.id, !fav).catch(() => {})}
@@ -307,7 +307,7 @@ function TaskTitle({ task, label }: { task: Task; label: string }) {
           </Pressable>
         )}
       </View>
-      <Display>{task.title}</Display>
+      <Display>{taskTitle(task, t.lang)}</Display>
     </View>
   );
 }
@@ -429,7 +429,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
                       {r.who}:{' '}
                     </Text>
                   ) : null}
-                  {r.task.title}
+                  {taskTitle(r.task, t.lang)}
                 </Text>
                 {open && !!r.note && <T style={{ fontFamily: t.fonts.note, fontSize: 21 }}>“{r.note}”</T>}
                 {open && !!r.theirNote && (
@@ -486,7 +486,7 @@ function TaskCard({ day, uid, partnerId, partnerName, shared, coupleId, members,
       {!shared && (
         <Card style={{ gap: 6 }}>
           <Muted>{tx(t, t.copy.partnerTask)}</Muted>
-          <Display style={{ fontSize: t.displaySize * 0.8 }}>{partnerTask.title}</Display>
+          <Display style={{ fontSize: t.displaySize * 0.8 }}>{taskTitle(partnerTask, t.lang)}</Display>
         </Card>
       )}
     </>

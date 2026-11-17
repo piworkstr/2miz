@@ -12,7 +12,7 @@ import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
 import { FREE, openPlus, usePlus } from '../lib/plus';
 import { useSession } from '../lib/session';
-import { allowed, CATEGORIES, categoryLabels, categoryStyle, taskById, TASKS, type Category, type Task } from '../lib/tasks';
+import { allowed, CATEGORIES, categoryLabel, categoryStyle, taskById, taskTitle, TASKS, type Category, type Task } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, Display, Muted, Pill, T } from './ui';
@@ -286,7 +286,7 @@ export function TaskWheel() {
                 >
                   <Ionicons name={categoryStyle[c].icon as IconName} size={22} color="#fff" />
                   <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
-                    {c === 'yeni' ? 'Yeni' : categoryLabels[c]}
+                    {c === 'yeni' ? (t.lang === 'en' ? 'New' : 'Yeni') : categoryLabel(c, t.lang)}
                   </Text>
                 </View>
               );
@@ -336,12 +336,12 @@ export function TaskWheel() {
           </Muted>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pill>{t.copy.surpriseLabel}</Pill>
-            <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabels[task.category])}</Muted>
+            <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabel(task.category, t.lang))}</Muted>
             <Pressable onPress={() => toggleFavorite(coupleId, task.id, !isFav).catch(() => {})} hitSlop={10} accessibilityLabel="Favori">
               <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={24} color={t.colors.primary} />
             </Pressable>
           </View>
-          <Display>{task.title}</Display>
+          <Display>{taskTitle(task, t.lang)}</Display>
           {!ANSWER_TASKS.has(task.id) ? (
             <DecideBox spin={live ?? shown} uid={uid} partnerName={partnerName} onDecide={decide} busy={busy} />
           ) : (

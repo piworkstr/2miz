@@ -7,7 +7,7 @@ import { toggleFavorite, useDays } from '../lib/archive';
 import { modeOf, type DayDoc } from '../lib/daily';
 import { dayKey, prettyDate } from '../lib/date';
 import { useSession } from '../lib/session';
-import { categoryLabels, categoryStyle, taskById, TASKS } from '../lib/tasks';
+import { categoryLabel, categoryStyle, taskById, taskTitle, TASKS } from '../lib/tasks';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
 
@@ -86,9 +86,9 @@ export default function Archive() {
               <CategoryDot id={task.id} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: t.colors.text, fontFamily: t.fonts.body }}>
-                  {task.title}
+                  {taskTitle(task, t.lang)}
                 </Text>
-                <Muted style={{ fontSize: 12 }}>{tx(t, categoryLabels[task.category])}</Muted>
+                <Muted style={{ fontSize: 12 }}>{tx(t, categoryLabel(task.category, t.lang))}</Muted>
               </View>
               <Heart coupleId={couple.id} id={task.id} on />
             </Card>
@@ -136,7 +136,7 @@ export default function Archive() {
                           opacity: r.done || key === today ? 1 : 0.6,
                         }}
                       >
-                        {taskById(r.id).title}
+                        {taskTitle(taskById(r.id), t.lang)}
                       </Text>
                     </View>
                     <Heart coupleId={couple.id} id={r.id} on={favorites.includes(r.id)} />
