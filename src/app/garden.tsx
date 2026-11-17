@@ -101,7 +101,10 @@ import {
   type Season,
   type Tile,
   type TreeId,
+  orderWho,
 } from '../lib/farm';
+import { randomArt } from '../lib/avatarArt';
+import type { Profile } from '../lib/session';
 import { logActivityCapped } from '../lib/bond';
 import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
@@ -284,6 +287,16 @@ function sprites(f: Farm, now: number): Spr[] {
 }
 
 // Çiftliğin çevresi: yalnızca süs.
+// Sipariş posta kutusu: çiftliğin ön (sol alt) kenarının hemen dışında, toprak yolun başında sabit durur.
+// Dokununca sipariş defteri açılır; teslim edilen siparişin sahibi çift yoldan yürüyerek buraya gelir.
+const MAIL = (() => {
+  const B = center(N - 1, N - 1);
+  return { x: B.x - TW * 1.25, y: B.y + TH / 2 - TW * 0.15, z: zOf(N, N) + 40, w: TW * 0.72 };
+})();
+const MAIL_FROM = { x: MAIL.x - TW * 0.25, y: MAIL.y + TW * 4 }; // yolun aşağısı: müşteriler buradan gelir, buraya döner
+const mailHit = (wx: number, wy: number) => Math.abs(wx - MAIL.x) < TW * 0.45 && wy < MAIL.y + TW * 0.15 && wy > MAIL.y - TW * 1.75;
+type Visit = { id: string; who: string; f: Profile; m: Profile; stage: 'come' | 'take' | 'go'; coins: number };
+
 const SCENERY: Spr[] = (() => {
   const L = center(N - 1, 0);
   const R = center(0, N - 1);
@@ -292,6 +305,7 @@ const SCENERY: Spr[] = (() => {
   const btm = B.y + TH / 2;
   const s = (art: string, x: number, y: number, w: number, z: number, k: number): Spr => ({ key: `sc${k}`, art, x, y, w, z });
   return [
+    { key: 'mail', art: 'posta', x: MAIL.x, y: MAIL.y, w: MAIL.w, z: MAIL.z },
     s('tree', T.x - TW * 1.4, T.y + TW * 0.1, TW * 1.3, 1, 1),
     s('tree', T.x + TW * 1.6, T.y - TW * 0.3, TW * 1.1, 1, 2),
     s('tree', L.x - TW * 0.9, L.y - TW * 0.2, TW * 1.4, 1, 3),
@@ -321,6 +335,49 @@ function SpriteImg({ s }: { s: Spr }) {
       source={a.src}
       style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
     />
+  );
+}
+
+// Siparişi almaya gelen çift: yolun aşağısından posta kutusuna yürür, sepeti alıp teşekkür eder, geri döner.
+function Visitors({ v, onStage }: { v: Visit; onStage: (stage: Visit['stage'] | null) => void }) {
+  // İlk karede yolun aşağısında belirirler; hedef bir sonraki karede verilir ki yürüyerek gelsinler.
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), 60);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    if (v.stage !== 'take') return;
+    const t = setTimeout(() => onStage('go'), 2200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v.stage]);
+  const at = started && v.stage !== 'go';
+  const fx = at ? MAIL.x - TW * 0.5 : MAIL_FROM.x - TW * 0.25;
+  const mx = at ? MAIL.x + TW * 0.48 : MAIL_FROM.x + TW * 0.3;
+  const y = at ? MAIL.y + TW * 0.22 : MAIL_FROM.y;
+  const basket =
+    v.stage === 'come' ? null : (
+      <Image source={ART.sepet_dolu.src} style={{ position: 'absolute', left: 40, top: 34, width: 24, height: 23 }} resizeMode="contain" />
+    );
+  return (
+    <>
+      <WorldChar profile={v.f} name={v.who} x={fx} y={y} z={MAIL.z + 20} say={v.stage === 'take' ? 'Teşekkürler!' : undefined} />
+      <WorldChar
+        profile={v.m}
+        name={v.who}
+        x={mx}
+        y={y + 4}
+        z={MAIL.z + 21}
+        tag={v.stage === 'go' ? undefined : v.who}
+        tool={basket}
+        onArrive={() => {
+          if (!started) return;
+          if (v.stage === 'come') onStage('take');
+          else if (v.stage === 'go') onStage(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -627,6 +684,8 @@ export default function GardenScreen() {
   const [say, setSay] = useState('');
   const [tool, setTool] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
+  // Teslim alan çift: sipariş tamamlanınca yoldan posta kutusuna yürür, sepeti alır, döner.
+  const [visit, setVisit] = useState<Visit | null>(null);
   const scene = useOpenScene(couple?.id, 'farm');
 
   const farm = farmOf(couple);
@@ -810,6 +869,14 @@ export default function GardenScreen() {
             if (i >= 0) placeRef.current(i);
             return;
           }
+          // Posta kutusu (ve üstündeki rozet): sipariş defteri açılır.
+          if (mailHit(wx, wy)) {
+            setSel(null);
+            setShowLog(false);
+            setShowShop(false);
+            setShowOrders(true);
+            return;
+          }
           // Aradaki öpücük balonu: dokununca avatar partnerin yanına yürür.
           if (kissRef.current(wx, wy)) return;
           if (quickRef.current(wx, wy)) {
@@ -940,6 +1007,7 @@ export default function GardenScreen() {
         if (current.current !== job) continue;
         current.current = null;
         const before = farmOf(couple).tiles[job.i];
+        const ordBefore = job.a === 'deliver' ? farmOf(couple).orders.find((o) => o.id === job.order) : undefined;
         // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
         const plain =
           !('scene' in job && job.scene) &&
@@ -972,6 +1040,13 @@ export default function GardenScreen() {
           else {
             const helped = job.a === 'water' && before.k === 'crop' && before.by !== uid;
             if (job.a === 'kiss') hearts(partnerTileRef.current);
+            // Sipariş tamamlandı: sahibi çift almaya gelir.
+            if (job.a === 'deliver' && r.gained && ordBefore) {
+              const mk = (g: 'f' | 'm') => ({ gender: g, avatar: { kind: 'art', opts: randomArt(g) } }) as unknown as Profile;
+              setVisit({ id: ordBefore.id, who: orderWho(ordBefore), f: mk('f'), m: mk('m'), stage: 'come', coins: r.gained });
+              flash(`${orderWho(ordBefore)} siparişi almaya geliyor`);
+              setShowOrders(false);
+            }
             if (
               helped ||
               ('scene' in job && job.scene) ||
@@ -1111,8 +1186,6 @@ export default function GardenScreen() {
         art: ART[top[0]] ? top[0] : 'coin',
         z: zOf(ar, ac) + 420,
         n,
-        // Verilebilecek sipariş varsa depo rozeti bunu söyler (alttaki Sipariş düğmesinin yerine).
-        ...(farm.orders.some((o) => o.openAt <= now && canGive(farm, o) > 0) ? { label: 'Sipariş' } : {}),
       });
     }
   }
@@ -1153,6 +1226,12 @@ export default function GardenScreen() {
         z: zOf(gr, gc) + 420,
         label: incoming ? 'Aç' : 'Sepet',
       });
+  }
+  {
+    // Posta kutusu: verilebilecek sipariş varsa rozet çıkar.
+    const giv = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
+    if (giv && !visit)
+      badges.push({ key: 'siparis', i: -1, x: MAIL.x, y: MAIL.y - TW * 1.5, art: 'sepet_dolu', z: MAIL.z + 400, n: giv, label: 'Sipariş' });
   }
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
@@ -1352,6 +1431,7 @@ export default function GardenScreen() {
           ))}
           <Dog />
           <WorldChar profile={partnerProfile} name={partnerName} x={pAt.x} y={pAt.y} z={pAt.z} tag={partnerName} />
+          {visit && <Visitors key={visit.id} v={visit} onStage={(stage) => setVisit((v) => (v ? (stage ? { ...v, stage } : null) : v))} />}
           <WorldChar
             profile={profile}
             name={myName}
@@ -2595,17 +2675,19 @@ function ShopPanel({
                 sub: `${TREES[id].yieldN} ${TREES[id].fruit.toLowerCase()} / ${timeLeft(TREES[id].mins * MIN)}`,
                 a: { a: 'tree', i: -1, item: id },
               }))
-            : (Object.keys(DECOR) as DecorId[]).map((id) => ({
-                id,
-                wall: DECOR[id].wall,
-                flowers: DECOR[id].flowers,
-                art: DECOR[id].sp,
-                name: DECOR[id].name,
-                cost: DECOR[id].cost,
-                lvl: DECOR[id].lvl,
-                sub: DECOR[id].perk ?? `+${DECOR[id].xp} tecrübe`,
-                a: { a: 'decor', i: -1, item: id },
-              }));
+            : (Object.keys(DECOR) as DecorId[])
+                .filter((id) => !DECOR[id].hidden)
+                .map((id) => ({
+                  id,
+                  wall: DECOR[id].wall,
+                  flowers: DECOR[id].flowers,
+                  art: DECOR[id].sp,
+                  name: DECOR[id].name,
+                  cost: DECOR[id].cost,
+                  lvl: DECOR[id].lvl,
+                  sub: DECOR[id].perk ?? `+${DECOR[id].xp} tecrübe`,
+                  a: { a: 'decor', i: -1, item: id },
+                }));
   const pick = (a: Action) => {
     if (a.a === 'plant') return onPlace({ a: 'plant', crop: a.crop });
     if (a.a === 'build') return onPlace({ a: 'build', item: a.item });
@@ -2647,7 +2729,8 @@ function ShopPanel({
   );
 }
 
-// Kasaba siparişleri: 3 açık sipariş; depodan teslim edilir, ikisi de katkı verirse ortak hasat sayılır.
+// Sipariş defteri: kasabadaki çiftlerin 3 açık siparişi; depodan teslim edilir, ikisi de katkı verirse ortak hasat sayılır.
+// Sipariş tamamlanınca sahibi çift posta kutusuna almaya gelir.
 function Orders({
   farm,
   now,
@@ -2666,17 +2749,18 @@ function Orders({
   const who = (o: Order) => (o.by.length ? o.by.map((b) => (b === uid ? 'sen' : partnerName)).join(' + ') : '');
   return (
     <>
-      <Head title="Kasaba siparişleri" onClose={onClose} />
+      <Head title="Sipariş defteri" onClose={onClose} />
       <Note>
-        Sayılar teslim edilen/istenen; yanında depodaki miktar yazar. İkiniz de katkı verirseniz ortak hasat sayılır. Ödül ham satışın 1,4
-        katı.
+        Sipariş tamamlanınca sahibi çift posta kutusuna almaya gelir. Sayılar teslim edilen/istenen; ikiniz de katkı verirseniz ortak hasat
+        sayılır.
       </Note>
       <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
-        {farm.orders.length === 0 && <Note>Kasaba ilk işinizden sonra sipariş göndermeye başlar.</Note>}
+        {farm.orders.length === 0 && <Note>İlk işinizden sonra deftere sipariş yazılmaya başlar.</Note>}
         {farm.orders.map((o) => {
           const open = o.openAt <= now;
           const give = canGive(farm, o);
           const left = orderLeft(o);
+          const leftN = Object.values(left).reduce((a, b) => a + b, 0);
           return (
             <View
               key={o.id}
@@ -2684,6 +2768,26 @@ function Orders({
             >
               {open ? (
                 <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 15,
+                        backgroundColor: '#FDE7EA',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="heart" size={15} color="#E8516A" />
+                    </View>
+                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 14, color: INK }}>
+                      {orderWho(o)}
+                    </Text>
+                    <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
+                      +{o.coins} altın · +{o.xp} tecrübe
+                    </Text>
+                  </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                     {Object.entries(o.items).map(([k, q]) => (
                       <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
@@ -2701,11 +2805,11 @@ function Orders({
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
-                      +{o.coins} altın · +{o.xp} tecrübe{who(o) ? ` · ${who(o)}` : ''}
+                      {who(o) ? `Katkı: ${who(o)}` : ''}
                     </Text>
                     <Btn
                       kind={give ? 'green' : 'soft'}
-                      label={give ? `Teslim et (${give})` : 'Depoda yok'}
+                      label={give ? (give >= leftN ? 'Teslim et, gelsinler' : `Hazır olanı ayır (${give})`) : 'Depoda yok'}
                       onPress={() => onDeliver(o.id)}
                       disabled={!give}
                     />
@@ -2713,7 +2817,7 @@ function Orders({
                 </>
               ) : (
                 <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 13 }}>
-                  Yeni sipariş {timeLeft(o.openAt - now)} sonra
+                  Yeni sipariş {timeLeft(o.openAt - now)} sonra yazılacak
                 </Text>
               )}
             </View>

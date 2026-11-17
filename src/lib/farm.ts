@@ -184,7 +184,18 @@ export const TREES: Record<
 
 export const DECOR: Record<
   DecorId,
-  { name: string; sp: string; cost: number; xp: number; lvl: number; w: number; wall?: 'cit' | 'duvar'; perk?: string; flowers?: boolean }
+  {
+    name: string;
+    sp: string;
+    cost: number;
+    xp: number;
+    lvl: number;
+    w: number;
+    wall?: 'cit' | 'duvar';
+    perk?: string;
+    flowers?: boolean;
+    hidden?: boolean;
+  }
 > = {
   cicek: { name: 'Çiçeklik', sp: 'planter', cost: 15, xp: 1, lvl: 1, w: 0.92 },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).
@@ -198,7 +209,9 @@ export const DECOR: Record<
   bank: { name: 'Bank', sp: 'bench', cost: 60, xp: 3, lvl: 2, w: 0.85 },
   kuyu: { name: 'Kuyu', sp: 'well', cost: 120, xp: 5, lvl: 3, w: 0.78 },
   cesme: { name: 'Çeşme', sp: 'fountain', cost: 250, xp: 10, lvl: 5, w: 1.05 },
-  posta: { name: 'Posta kutusu', sp: 'posta', cost: 50, xp: 2, lvl: 1, w: 0.55 },
+  // Posta kutusu artık süs değil: çiftliğin önünde sabit durur ve sipariş defterini açar. Dükkânda satılmaz;
+  // önceden alınmış olanlar yerinde kalır.
+  posta: { name: 'Posta kutusu', sp: 'posta', cost: 50, xp: 2, lvl: 1, w: 0.55, hidden: true },
   lamba: { name: 'Sokak lambası', sp: 'lamba', cost: 70, xp: 3, lvl: 2, w: 0.7 },
   kopru: { name: 'Köprü', sp: 'kopru', cost: 90, xp: 4, lvl: 2, w: 1.15 },
   golet: { name: 'Gölet', sp: 'golet', cost: 150, xp: 6, lvl: 3, w: 1.3 },
@@ -231,6 +244,7 @@ export type Order = {
   coins: number;
   xp: number;
   openAt: number; // bu zamandan önce görünmez (tamamlanan siparişin yerine 20 dk sonra yenisi)
+  who?: string; // siparişi veren (kurgusal) çift; eski siparişlerde yok, kimlikten türetilir
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
 export type FarmNote = { by: string; text: string; at: number };
@@ -419,6 +433,15 @@ export const bigReady = (f: Farm, now: number) =>
   f.tiles.map((t, i) => (t.k === 'crop' && CROPS[t.crop].big && cropReady(t, now) ? i : -1)).filter((i) => i >= 0);
 
 // ---------- Siparişler ----------
+// Sipariş defteri: her siparişi kasabadan kurgusal bir çift verir; teslim edilince posta kutusuna almaya gelirler.
+const ORDER_WOMEN = ['Elif', 'Zeynep', 'Defne', 'Ece', 'Selin', 'Nil', 'İpek', 'Derin', 'Azra', 'Melis', 'Ada', 'Lara'];
+const ORDER_MEN = ['Can', 'Burak', 'Emre', 'Kerem', 'Deniz', 'Ozan', 'Alp', 'Tuna', 'Barış', 'Onur', 'Kaan', 'Efe'];
+const hashOf = (id: string) => [...id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+export const orderWho = (o: Order) => {
+  if (o.who) return o.who;
+  const h = hashOf(o.id);
+  return `${ORDER_WOMEN[h % ORDER_WOMEN.length]} ve ${ORDER_MEN[(h >>> 5) % ORDER_MEN.length]}`;
+};
 // Çiftin şu an üretebildiği ürünlerden rastgele bir sipariş. Ödül: ham değerin 1,4 katı altın; her kalem 5 + her adet 3 tecrübe.
 export function makeOrder(f: Farm, now: number, openAt = now): Order {
   const lv = levelOf(f.xp).level;
@@ -450,6 +473,7 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
     coins: Math.round(value * 1.4),
     xp: 5 * picks.length + 3 * qty,
     openAt,
+    who: `${ORDER_WOMEN[Math.floor(Math.random() * ORDER_WOMEN.length)]} ve ${ORDER_MEN[Math.floor(Math.random() * ORDER_MEN.length)]}`,
   };
 }
 export const orderDone = (o: Order) => Object.entries(o.items).every(([k, q]) => (o.given[k] ?? 0) >= q);
@@ -957,7 +981,7 @@ export function applyAction(
         const both = o.by.length >= 2;
         if (both) f.harvests += 1;
         f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
-        text = `${name} siparişi tamamladı: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
+        text = `${name}, ${orderWho(o)} siparişini teslim etti: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
       } else {
         const left = Object.values(orderLeft(o)).reduce((a, b) => a + b, 0);
         text = `${name} siparişe ${moved} ürün verdi; ${left} ürün kaldı`;
