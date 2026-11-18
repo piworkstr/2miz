@@ -692,6 +692,23 @@ export const PRODUCT_NAME: Record<string, string> = {
   ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.fruit])),
   ...Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.name])),
 };
+// Pazar tezgâhı: seviyesi açılmış ham ürünler (tarla, hayvan, meyve) satış fiyatının iki katına, istenildiği kadar alınır.
+// İki kat fiyat sayesinde alıp geri satmak kâr etmez; eksik malzemeyi tamamlamak içindir.
+export const STALL_MULT = 2;
+export const STALL_MAX = 50;
+export const STALL_GOODS: { key: string; lvl: number }[] = [
+  ...Object.entries(CROPS).map(([key, v]) => ({ key, lvl: v.lvl })),
+  ...Object.keys(PRODUCTS).map((key) => ({
+    key,
+    lvl: Math.min(
+      ...Object.values(ANIMALS)
+        .filter((a) => a.products.includes(key))
+        .map((a) => a.lvl),
+    ),
+  })),
+  ...Object.entries(TREES).map(([key, v]) => ({ key, lvl: v.lvl })),
+].sort((a, b) => a.lvl - b.lvl);
+export const stallPrice = (key: string, n = 1) => (PRICE[key] ?? 0) * STALL_MULT * n;
 export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
 export const stockValue = (f: Farm, bonus = 1) =>
   Math.round(Object.entries(f.stock).reduce((a, [k, n]) => a + (PRICE[k] ?? 0) * n, 0) * bonus);
@@ -813,6 +830,7 @@ export type Action =
   | { a: 'mkIn'; i: number; key: string; n: number; cost: number } // başka çiftlikten alınan ürün
   | { a: 'mkPaid'; i: number; key: string; n: number; coins: number } // satılan ilanın bedeli
   | { a: 'trader'; i: number; key: string; n: number; cost: number; offer: string; day: string } // gezgin tüccardan alım
+  | { a: 'stall'; i: number; key: string; n: number } // pazar tezgâhından alım
   | { a: 'rename'; i: number; name: string } // çiftlik adı
   | { a: 'bloom'; i: number; all?: boolean } // çit/duvarın dibine çiçek ek ya da çiçekleri kaldır
   | { a: 'animal'; i: number; item: AnimalId }
@@ -1026,6 +1044,18 @@ export function applyAction(
       put(act.key, act.n);
       f.trader = { day: act.day, got: [...got, act.offer] };
       text = `${name} gezgin tüccardan ${act.n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} aldı (${act.cost} altın)`;
+      break;
+    }
+    case 'stall': {
+      const good = STALL_GOODS.find((g) => g.key === act.key);
+      const n = Math.floor(act.n);
+      if (!good || !(n >= 1 && n <= STALL_MAX)) return 'Bu ürün tezgâhta yok.';
+      if (levelOf(f.xp).level < good.lvl) return `Bu ürün ${good.lvl}. seviyede açılır.`;
+      const cost = stallPrice(act.key, n);
+      if (f.coins < cost) return 'Yeterli altının yok.';
+      f.coins -= cost;
+      put(act.key, n);
+      text = `${name} pazar tezgâhından ${n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} aldı (${cost} altın)`;
       break;
     }
     case 'rename': {
@@ -1389,7 +1419,7 @@ export function applyAction(
     }
   }
   // Pazar işleri bir kareye bağlı değil; avatar yerinde kalır.
-  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'rename'].includes(act.a)) f.pos[uid] = restNear(f, act.i);
+  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'rename'].includes(act.a)) f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
   return { farm: f, text, gained, ready, points };
 }
