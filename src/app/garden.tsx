@@ -3455,7 +3455,7 @@ function ShopPanel({
             : (Object.keys(DECOR) as DecorId[])
                 // Atölyeler kendi sekmesinde durur; süslerin arasında aranmaz.
                 .filter((id) => !DECOR[id].hidden && !!DECOR[id].station === (shop === 'workshop'))
-                .sort((x, y) => (shop === 'workshop' ? DECOR[x].lvl - DECOR[y].lvl : 0))
+                .sort((x, y) => (shop === 'workshop' ? DECOR[x].lvl - DECOR[y].lvl : DECOR[x].cost - DECOR[y].cost))
                 .map((id) => ({
                   id,
                   wall: DECOR[id].wall,

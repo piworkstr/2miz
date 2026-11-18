@@ -33,6 +33,22 @@ export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut' | 'zeytin' | 'avokado';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
 export type DecorId =
+  | 'gulcali'
+  | 'lavanta'
+  | 'kusevi'
+  | 'cam'
+  | 'kusbanyo'
+  | 'korkuluk'
+  | 'elarabasi'
+  | 'kulube'
+  | 'piknikmasa'
+  | 'sogut'
+  | 'kampatesi'
+  | 'hamak'
+  | 'kalpcali'
+  | 'kemer'
+  | 'traktor'
+  | 'kalpheykel'
   | 'asci'
   | 'firin'
   | 'yag'
@@ -431,6 +447,23 @@ export const DECOR: Record<
   golet: { name: 'Gölet', sp: 'golet', cost: 150, xp: 6, lvl: 3, w: 1.3 },
   salincak: { name: 'Salıncak', sp: 'salincak', cost: 180, xp: 7, lvl: 4, w: 1.15 },
   cardak: { name: 'Çardak', sp: 'cardak', cost: 400, xp: 14, lvl: 6, w: 1.4 },
+  // Kasım 2026'da eklenen süsler: ucuzdan pahalıya; pahalı olanlar biriken altına harcama yeri açar.
+  gulcali: { name: 'Gül çalısı', sp: 'sus_gulcali', cost: 80, xp: 3, lvl: 2, w: 0.9 },
+  lavanta: { name: 'Lavanta tarhı', sp: 'sus_lavanta', cost: 90, xp: 3, lvl: 3, w: 0.95 },
+  kusevi: { name: 'Kuş evi', sp: 'sus_kusevi', cost: 110, xp: 4, lvl: 4, w: 0.5 },
+  cam: { name: 'Çam ağacı', sp: 'sus_cam', cost: 140, xp: 4, lvl: 5, w: 1.0 },
+  kusbanyo: { name: 'Kuş banyosu', sp: 'sus_kusbanyo', cost: 220, xp: 6, lvl: 6, w: 0.75 },
+  korkuluk: { name: 'Korkuluk', sp: 'sus_korkuluk', cost: 260, xp: 7, lvl: 7, w: 0.85 },
+  elarabasi: { name: 'Çiçekli el arabası', sp: 'sus_elarabasi', cost: 320, xp: 8, lvl: 8, w: 1.0 },
+  kulube: { name: 'Köpek kulübesi', sp: 'sus_kulube', cost: 450, xp: 10, lvl: 10, w: 1.05 },
+  piknikmasa: { name: 'Piknik masası', sp: 'sus_piknikmasa', cost: 600, xp: 12, lvl: 11, w: 1.2 },
+  sogut: { name: 'Söğüt ağacı', sp: 'sus_sogut', cost: 700, xp: 12, lvl: 12, w: 1.35 },
+  kampatesi: { name: 'Kamp ateşi', sp: 'sus_kampatesi', cost: 850, xp: 14, lvl: 13, w: 1.15 },
+  hamak: { name: 'Hamak', sp: 'sus_hamak', cost: 1000, xp: 15, lvl: 14, w: 1.25 },
+  kalpcali: { name: 'Kalp çalı', sp: 'sus_kalpcali', cost: 1500, xp: 18, lvl: 15, w: 1.1 },
+  kemer: { name: 'Çiçekli kemer', sp: 'sus_kemer', cost: 2200, xp: 22, lvl: 16, w: 1.1 },
+  traktor: { name: 'Traktör', sp: 'sus_traktor', cost: 3500, xp: 28, lvl: 18, w: 1.3 },
+  kalpheykel: { name: 'Kalp heykeli', sp: 'sus_kalpheykel', cost: 6000, xp: 40, lvl: 20, w: 1.1 },
   // İşe yarayan yapılar: sera çevresindeki (2 kare) ekinleri hızlandırır.
   sera: { name: 'Sera', sp: 'sera', cost: 500, xp: 16, lvl: 4, w: 1.3, perk: 'Yakın ekin %25 hızlı' },
   degirmen: {
