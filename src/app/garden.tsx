@@ -1163,6 +1163,10 @@ export default function GardenScreen() {
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushing = useRef(false);
+  // Tempolu iş sırası (henüz ekranda yapılmamış işler) ve onu yürüten döngünün bayrağı.
+  const paceQ = useRef<Action[]>([]);
+  const pacing = useRef(false);
+  const doQuickRef = useRef<(job: Action) => void>(() => {});
   // Aynı çizimde art arda verilen işler birbirinin sonucunu görsün diye yerel deneme zinciri; her çizimde sıfırlanır.
   const simFarm = useRef<Farm | null>(null);
   simFarm.current = null;
@@ -1184,8 +1188,9 @@ export default function GardenScreen() {
       }
       // iOS'ta bildirim paneli, izin penceresi gibi geçici durumlar 'inactive' gelir; işler yalnız gerçekten arka plana geçince kaydedilir.
       if (state !== 'background') return;
-      const pending = [...batch.current, ...(current.current ? [current.current] : []), ...queue.current];
+      const pending = [...batch.current, ...paceQ.current, ...(current.current ? [current.current] : []), ...queue.current];
       batch.current = [];
+      paceQ.current = [];
       current.current = null;
       queue.current = [];
       const c = flushCtx.current;
@@ -1198,7 +1203,7 @@ export default function GardenScreen() {
       sub.remove();
       // Çiftlikten çıkılırken bekleyen işler kaybolmasın: son toplu kayıt hemen gönderilir.
       if (flushTimer.current) clearTimeout(flushTimer.current);
-      const left = batch.current.splice(0);
+      const left = [...batch.current.splice(0), ...paceQ.current.splice(0)];
       const c = flushCtx.current;
       if (left.length && c.coupleId) farmFlush(c.coupleId, c.uid, c.myName, c.partnerName, left).catch(() => {});
     };
@@ -1284,7 +1289,7 @@ export default function GardenScreen() {
         if (n <= 0) setMine((m) => m.filter((x) => !acts.includes(x.a)));
         else logActivityCapped(couple.id, uid, together ? 'farmTogether' : 'farm');
       }
-      if (!busy.current && !queue.current.length) {
+      if (!busy.current && !queue.current.length && !paceQ.current.length) {
         const rest = restNear(farmOf(couple), myTileRef.current);
         if (partnerHereRef.current) publishLive(couple.id, uid, { tile: rest, tool: null, acts: [] });
         if (rest !== myTileRef.current) void walkTo(rest);
@@ -1294,7 +1299,28 @@ export default function GardenScreen() {
       if (batch.current.length) flushSoon(50);
     }
   }
+  // İşler sırayla, kısa bir tempoyla yapılır: avatar kareden kareye yürür, her iş o vardıkça görünür. Ağ beklenmez
+  // (kayıt arkadan toplu gider) ama hepsi aynı anda da olmaz; çok iş birikince tempo hızlanır.
   function quick(job: Action) {
+    paceQ.current.push(job);
+    if (pacing.current) return;
+    pacing.current = true;
+    (async () => {
+      try {
+        while (paceQ.current.length) {
+          const next = paceQ.current.shift()!;
+          const far = next.i >= 0 && next.i < N * N && next.i !== myTileRef.current;
+          if (far) void walkTo(next.i);
+          const left = paceQ.current.length;
+          await sleep(!far ? 120 : left > 20 ? 150 : left > 6 ? 230 : 340);
+          doQuickRef.current(next);
+        }
+      } finally {
+        pacing.current = false;
+      }
+    })();
+  }
+  function doQuick(job: Action) {
     if (!couple) return;
     const base = simFarm.current ?? farmRef.current;
     const sim = applyAction(base, job, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), myName, srvNow(), null);
@@ -1317,7 +1343,6 @@ export default function GardenScreen() {
     batch.current.push(job);
     setMine((m) => [...m, { a: job, sent: false }]);
     const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
-    if (job.i >= 0 && job.i < N * N) void walkTo(job.i);
     setTool(tl);
     if (toolTimer.current) clearTimeout(toolTimer.current);
     toolTimer.current = setTimeout(() => setTool(null), 700);
@@ -1325,6 +1350,8 @@ export default function GardenScreen() {
     // Art arda gelen işler tek yazmada toplanır: son işten kısa süre sonra ya da 10 iş birikince gönderilir.
     flushSoon(batch.current.length >= 10 ? 0 : 450);
   }
+
+  doQuickRef.current = doQuick;
 
   async function work(a: Action) {
     if (isPlain(a)) return quick(a);

@@ -7,7 +7,7 @@ import type { Profile } from '../../lib/session';
 
 // Hayal dünyalarındaki karakter: tam boy. Gövde dünyaya göre çizilmiş bir kıyafet (çiftlikte tulum),
 // baş kişinin kendi avatarı. Yürürken adım kareleri değişir. (x, y) ayakların bastığı nokta, dünya koordinatında.
-export const WALK_SPEED = 0.16; // px / ms
+export const WALK_SPEED = 0.13; // px / ms (sakin bir yürüyüş)
 
 type Frames = { stand: ImageSourcePropType; a: ImageSourcePropType; b: ImageSourcePropType; ratio: number };
 const BODY: Record<'m' | 'f', Frames> = {
