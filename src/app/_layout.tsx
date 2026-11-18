@@ -82,7 +82,6 @@ function RootNavigator() {
           <Stack.Screen name="archive" />
           <Stack.Screen name="album-builder" />
           <Stack.Screen name="orders" />
-          <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="wheel" />
           {/* Dünya ekranlarında parmakla gezinme var; kenardan kaydırma geri gitmesin. Geri düğmesi ekranda. */}
           <Stack.Screen name="garden" options={{ gestureEnabled: false }} />
@@ -97,6 +96,10 @@ function RootNavigator() {
           <Stack.Screen name="perks/[id]" />
           <Stack.Screen name="perks/scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="camera" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        </Stack.Protected>
+        {/* Karakter tasarımı partner beklerken de açılabilir. Sona yazılır ki açılış ekranı olmasın. */}
+        <Stack.Protected guard={!!user && ready}>
+          <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
         </Stack.Protected>
       </Stack>
     </>

@@ -20,6 +20,7 @@ import {
   View,
 } from 'react-native';
 import { useKeyboardTop } from '../components/KeyboardSpace';
+import { TourOnce } from '../components/Tour';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
@@ -1650,6 +1651,7 @@ export default function GardenScreen() {
       style={{ flex: 1, backgroundColor: SKY }}
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
     >
+      <TourOnce id="farm" when={lv.level <= 5} />
       {/* Ekran zemini: üstte gök, altta uzak çayır; manzara resmi bunların üstünde dünyayla birlikte ölçeklenir */}
       <Svg style={{ position: 'absolute', left: 0, top: 0 }} width="100%" height="100%" pointerEvents="none">
         <Defs>

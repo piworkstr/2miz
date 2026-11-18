@@ -21,6 +21,7 @@ import { useSession, type Couple, type Profile } from '../../lib/session';
 import { Hint } from '../../components/Hint';
 import { LivingChips } from '../../components/LivingCard';
 import { FeedbackCard } from '../../components/FeedbackCard';
+import { GuideCard } from '../../components/GuideCard';
 import { UpdateCard } from '../../components/UpdateCard';
 import { PersonaCard } from '../../components/PersonaCard';
 import { LanguageCard } from '../../components/LanguageCard';
@@ -78,6 +79,7 @@ export default function Profile() {
       </Card>
       <PersonaCard />
       <LanguageCard />
+      <GuideCard />
       <FeedbackCard />
       <PlusCard />
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, Card, ErrorText, Input, Loading, Muted, Screen, T, Title } from '../../components/ui';
 import {
@@ -25,6 +26,11 @@ export default function Coupons() {
   const { user, couple, partnerId, partnerName } = useSession();
   const coupons = useCoupons(couple?.id);
   const [adding, setAdding] = useState(false);
+  // Ana sayfadaki "Kupon yaz" kısayolu doğrudan yazma alanını açar.
+  const { new: openNew } = useLocalSearchParams<{ new?: string }>();
+  useEffect(() => {
+    if (openNew) setAdding(true);
+  }, [openNew]);
 
   if (!user || !couple || !partnerId || coupons === null) return <Loading />;
 

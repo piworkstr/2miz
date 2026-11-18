@@ -1,7 +1,7 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import type React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -44,6 +44,7 @@ export default function Today() {
   const l = useL();
   const { lang } = useLang();
   const [panel, setPanel] = useState<Panel>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   // Seri varken bugün henüz bir şey yapmadıysan akşam 21:00'de hatırlatma kurulur.
   const bond = bondOf(couple, user?.uid, partnerId);
@@ -60,6 +61,7 @@ export default function Today() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1, backgroundColor: t.colors.bg }}
       contentContainerStyle={{ paddingBottom: 24 }}
       keyboardShouldPersistTaps="handled"
@@ -178,7 +180,12 @@ export default function Today() {
         <OpenBonusCard />
         <BonusPhotoCard today={day} todayKey={key} />
         <DateCard mode="banner" />
-        <SpecialDays />
+        <SpecialDays
+          onPlanDate={() => {
+            setPanel('date');
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+          }}
+        />
         <WeekStrip />
         <GardenCard />
         <PerksCard />

@@ -1,14 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { Tabs, type BottomTabBarProps } from 'expo-router/tabs';
-import type { ComponentProps } from 'react';
+import { useEffect, type ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CoupleDock, DOCK_GAP, DOCK_H, dockOn } from '../../components/CoupleDock';
 import { Glass, hexA } from '../../components/Glass';
 import { InviteModal } from '../../components/InviteModal';
+import { TourOnce } from '../../components/Tour';
 import { useUnreadCount } from '../../lib/chat';
+import { createCoupon } from '../../lib/coupons';
 import { useDeviceStamp } from '../../lib/deviceStamp';
+import { clearCouponDraft, loadCouponDraft, saveCouponDraft } from '../../lib/invite';
 import { usePushSetup } from '../../lib/push';
 import { useSession } from '../../lib/session';
 import { tx, type ThemeId } from '../../lib/theme';
@@ -110,6 +113,19 @@ export default function TabsLayout() {
   const { user, couple } = useSession();
   usePushSetup(user?.uid);
   useDeviceStamp(couple, user?.uid);
+  // Yeni eşleşen çifte tanıtım kartları bir kez gösterilir; eski çiftler Profil'den açabilir.
+  const createdMs = couple?.createdAt?.toMillis?.() ?? 0;
+  const fresh = createdMs > 0 && Date.now() - createdMs < 7 * 86_400_000;
+  // Partner beklerken yazılan kupon, eşleşince gerçek kupona dönüşür.
+  const coupleId = couple?.id;
+  const uid = user?.uid;
+  useEffect(() => {
+    if (!coupleId || !uid) return;
+    loadCouponDraft(uid).then((d) => {
+      if (!d) return;
+      clearCouponDraft(uid).then(() => createCoupon(coupleId, uid, d.title, d.cost).catch(() => saveCouponDraft(uid, d)));
+    });
+  }, [coupleId, uid]);
   const pad = TAB_BAR_H + insets.bottom + 8;
   const dockPad = dockOn(couple) ? DOCK_H + DOCK_GAP : 0;
   const label = (s: string) => tx(t, s);
@@ -117,6 +133,7 @@ export default function TabsLayout() {
   return (
     <>
       <InviteModal />
+      <TourOnce id="app" when={fresh} />
       <Tabs
         tabBar={(p) => <GlassTabBar {...p} />}
         screenOptions={{

@@ -32,6 +32,7 @@ export type Couple = {
   streak: number;
   lastCompleteDay: string | null;
   startDate?: string; // birliktelik başlangıcı, YYYY-MM-DD
+  createdAt?: { toMillis: () => number } | null; // eşleşme anı
   spent?: Record<string, number>; // kuponlara harcanan puan, kişi başı
   passes?: Record<string, { week: string; used: number }>; // haftalık "şimdi olmaz" hakları
   farm?: import('./farm').Farm; // Bizim Bahçe (ortak çiftlik)
