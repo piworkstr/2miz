@@ -813,6 +813,8 @@ export default function GardenScreen() {
   const seedApi = useRef<SeedDragApi | null>(null);
   const seedDone = useRef(new Set<number>());
   const seedCoins = useRef(0);
+  // Sürükleme boyunca tabela ve dükkân, başlangıçtaki çiftliği gösterir: ekilen kare yüzünden liste değişip parmağı bırakmasın.
+  const seedFarm = useRef<Farm | null>(null);
   const rootRef = useRef<ComponentRef<typeof View>>(null);
   const rootOff = useRef({ x: 0, y: 0 });
   const [say, setSay] = useState('');
@@ -1381,6 +1383,7 @@ export default function GardenScreen() {
       rootRef.current?.measureInWindow((x: number, y: number) => (rootOff.current = { x, y }));
       seedDone.current = new Set();
       seedCoins.current = farm.coins;
+      seedFarm.current = farm;
       Haptics.selectionAsync().catch(() => {});
       setSeed({ it, x: px, y: py });
     },
@@ -2108,7 +2111,7 @@ export default function GardenScreen() {
               />
             ) : (
               <Sheet
-                farm={farm}
+                farm={(seed && seedFarm.current) || farm}
                 sel={sel}
                 now={now}
                 uid={uid}
@@ -2190,7 +2193,7 @@ export default function GardenScreen() {
         </View>
         {showShop && !scene && (
           <ShopPanel
-            farm={farm}
+            farm={(seed && seedFarm.current) || farm}
             level={lv.level}
             shop={shop}
             setShop={setShop}
@@ -2502,6 +2505,14 @@ function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 
   const api = useContext(SeedDrag);
   const ref = useRef(item);
   ref.current = item;
+  // Sürükleme sürerken bu parça ekrandan kalkarsa (liste değişirse) parmak olayı kaybolur; sürükleme açık kalmasın.
+  const active = useRef(false);
+  useEffect(
+    () => () => {
+      if (active.current) api?.current?.end();
+    },
+    [api],
+  );
   const pr = useMemo(
     () =>
       PanResponder.create({
@@ -2510,10 +2521,19 @@ function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 
           !!api?.current &&
           (dir === 'up' ? g.dy < -10 && Math.abs(g.dy) > Math.abs(g.dx) : g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy)),
         onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (e) => api?.current?.start(ref.current!, e.nativeEvent.pageX, e.nativeEvent.pageY),
+        onPanResponderGrant: (e) => {
+          active.current = true;
+          api?.current?.start(ref.current!, e.nativeEvent.pageX, e.nativeEvent.pageY);
+        },
         onPanResponderMove: (e) => api?.current?.move(e.nativeEvent.pageX, e.nativeEvent.pageY),
-        onPanResponderRelease: () => api?.current?.end(),
-        onPanResponderTerminate: () => api?.current?.end(),
+        onPanResponderRelease: () => {
+          active.current = false;
+          api?.current?.end();
+        },
+        onPanResponderTerminate: () => {
+          active.current = false;
+          api?.current?.end();
+        },
       }),
     [api, dir],
   );
