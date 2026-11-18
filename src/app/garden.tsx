@@ -300,6 +300,13 @@ const MAIL = (() => {
   const B = center(N - 1, N - 1);
   return { x: B.x - TW * 1.25, y: B.y + TH / 2 - TW * 0.15, z: zOf(N, N) + 40, w: TW * 0.72 };
 })();
+// Çiftçi pazarı tezgâhı: posta kutusunun karşısında, ön köşenin sağında sabit durur. Dokununca pazar açılır.
+const STALL = (() => {
+  const B = center(N - 1, N - 1);
+  return { x: B.x + TW * 1.6, y: B.y + TH / 2 + TW * 0.45, z: zOf(N, N) + 40, w: TW * 1.7 };
+})();
+const stallHit = (wx: number, wy: number) =>
+  Math.abs(wx - STALL.x) < STALL.w * 0.5 && wy < STALL.y + TW * 0.1 && wy > STALL.y - STALL.w * 0.85 - TW * 0.7;
 const MAIL_FROM = { x: MAIL.x - TW * 0.25, y: MAIL.y + TW * 4 }; // yolun aşağısı: müşteriler buradan gelir, buraya döner
 const mailHit = (wx: number, wy: number) => Math.abs(wx - MAIL.x) < TW * 0.45 && wy < MAIL.y + TW * 0.15 && wy > MAIL.y - TW * 1.75;
 // Bekleyen çiftlerin yeri: posta kutusunun solunda, kenar boyunca yan yana (en çok 3 sipariş).
@@ -335,6 +342,7 @@ const SCENERY: Spr[] = (() => {
   const s = (art: string, x: number, y: number, w: number, z: number, k: number): Spr => ({ key: `sc${k}`, art, x, y, w, z });
   return [
     { key: 'mail', art: 'posta', x: MAIL.x, y: MAIL.y, w: MAIL.w, z: MAIL.z },
+    { key: 'stall', art: 'pazar', x: STALL.x, y: STALL.y, w: STALL.w, z: STALL.z },
     s('tree', T.x - TW * 1.4, T.y + TW * 0.1, TW * 1.3, 1, 1),
     s('tree', T.x + TW * 1.6, T.y - TW * 0.3, TW * 1.1, 1, 2),
     s('tree', L.x - TW * 0.9, L.y - TW * 0.2, TW * 1.4, 1, 3),
@@ -1065,6 +1073,15 @@ export default function GardenScreen() {
             setShowOrders(true);
             return;
           }
+          // Pazar tezgâhı: çiftçi pazarı açılır.
+          if (stallHit(wx, wy)) {
+            setSel(null);
+            setShowLog(false);
+            setShowOrders(false);
+            setShowShop(false);
+            setShowMarket(true);
+            return;
+          }
           // Aradaki öpücük balonu: dokununca avatar partnerin yanına yürür.
           if (kissRef.current(wx, wy)) return;
           if (quickRef.current(wx, wy)) {
@@ -1652,6 +1669,15 @@ export default function GardenScreen() {
     if (giv)
       badges.push({ key: 'siparis', i: -1, x: MAIL.x, y: MAIL.y - TW * 1.5, art: 'sepet_dolu', z: MAIL.z + 400, n: giv, label: 'Sipariş' });
   }
+  badges.push({
+    key: 'pazar',
+    i: -1,
+    x: STALL.x,
+    y: STALL.y - STALL.w * 0.85 - TW * 0.1,
+    art: 'coin',
+    z: STALL.z + 400,
+    label: 'Çiftçi pazarı',
+  });
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
     const { x, y } = center(r, c);
@@ -2786,7 +2812,7 @@ function Sheet(p: SheetProps) {
           : hungryAll
             ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
             : farm.harvests < 20
-              ? 'Depoya, posta kutusuna, eve ya da atölyeye dokun: hepsi oradan açılır'
+              ? 'Depoya, posta kutusuna, pazar tezgâhına ya da atölyeye dokun: hepsi oradan açılır'
               : '';
     // Ekranda yalnızca Dükkân düğmesi durur; depo, sipariş, atölye, günlük ve pazar çiftlikteki yerlerine dokununca açılır.
     return (
