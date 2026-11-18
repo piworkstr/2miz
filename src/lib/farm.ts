@@ -59,23 +59,28 @@ export type DecorId =
   | 'kuyu'
   | 'cesme';
 
-// Süreler: seviye ilerledikçe uzar ama en uzunu 8 saattir; kimse bir ürün için bir gün beklemez.
-// Ekinler 15 dk – 8 saat, hayvanlar 2 – 6 saat, ağaçlar 2 – 4 saat, mutfak ve atölye 20 dk – 3 saat.
+// Denge (Kasım 2026): seviye ilerledikçe süre uzar, en uzunu 7 saattir; kimse bir ürün için bir gün beklemez.
+// Ekinler 10 dk – 7 saat, hayvanlar 1,5 – 4 saat, ağaçlar 1,5 – 4 saat, atölyeler 5 dk – 3 saat.
+// Açılış sırası 1–16 arasına yayılmıştır (her seviyede en fazla bir iki yenilik), 17–35 yol haritasıyla sürer:
+// 1 buğday, havuç · 2 domates, kümes, değirmen, fırın · 3 mısır, aşçı mutfağı, elma · 4 ağıl/koyun, gül · 5 çilek, mandıra
+// 6 inek, kek, kiraz · 7 reçel atölyesi · 8 ayçiçeği · 9 kovan, dikiş atölyesi · 10 ballı süt · 11 armut · 12 bal kabağı
+// 13 kurabiye · 14 kazak · 15 yağ fabrikası · 17 pamuk · 19 zeytin · 21 patates · 23 soğan · 24 avokado · 25 kavun, meyve suyu,
+// tatlı atölyesi · 28 karpuz · 35 yaş pasta, piknik sepeti
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
-  bugday: { name: 'Buğday', cost: 2, mins: 15, sell: 6, xp: 2, lvl: 1 },
-  havuc: { name: 'Havuç', cost: 5, mins: 45, sell: 15, xp: 4, lvl: 1 },
-  domates: { name: 'Domates', cost: 8, mins: 90, sell: 25, xp: 7, lvl: 2 },
-  misir: { name: 'Mısır', cost: 12, mins: 180, sell: 40, xp: 10, lvl: 3 },
-  gul: { name: 'Aşk gülü', cost: 30, mins: 240, sell: 110, xp: 30, lvl: 3, big: true },
-  cilek: { name: 'Çilek', cost: 20, mins: 300, sell: 65, xp: 14, lvl: 4 },
-  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 360, sell: 90, xp: 20, lvl: 5, big: true },
-  kabak: { name: 'Bal kabağı', cost: 40, mins: 480, sell: 140, xp: 26, lvl: 6, big: true },
+  bugday: { name: 'Buğday', cost: 2, mins: 10, sell: 6, xp: 2, lvl: 1 },
+  havuc: { name: 'Havuç', cost: 5, mins: 30, sell: 15, xp: 4, lvl: 1 },
+  domates: { name: 'Domates', cost: 8, mins: 60, sell: 25, xp: 7, lvl: 2 },
+  misir: { name: 'Mısır', cost: 12, mins: 120, sell: 40, xp: 10, lvl: 3 },
+  gul: { name: 'Aşk gülü', cost: 30, mins: 180, sell: 110, xp: 30, lvl: 4, big: true },
+  cilek: { name: 'Çilek', cost: 20, mins: 180, sell: 65, xp: 14, lvl: 5 },
+  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 240, sell: 90, xp: 20, lvl: 8, big: true },
+  kabak: { name: 'Bal kabağı', cost: 40, mins: 300, sell: 140, xp: 26, lvl: 12, big: true },
   // 17–28. seviye: her yeni ürün eskilerle birleşip yeni tarifler açar (RECIPES). Aradaki seviyeler üretimi geliştirir.
-  pamuk: { name: 'Pamuk', cost: 45, mins: 300, sell: 150, xp: 28, lvl: 17 },
-  patates: { name: 'Patates', cost: 55, mins: 360, sell: 185, xp: 32, lvl: 21 },
-  sogan: { name: 'Soğan', cost: 60, mins: 390, sell: 205, xp: 35, lvl: 23 },
-  kavun: { name: 'Kavun', cost: 70, mins: 420, sell: 240, xp: 40, lvl: 25 },
-  karpuz: { name: 'Karpuz', cost: 80, mins: 480, sell: 280, xp: 45, lvl: 28 },
+  pamuk: { name: 'Pamuk', cost: 45, mins: 240, sell: 150, xp: 28, lvl: 17 },
+  patates: { name: 'Patates', cost: 55, mins: 300, sell: 185, xp: 32, lvl: 21 },
+  sogan: { name: 'Soğan', cost: 60, mins: 330, sell: 205, xp: 35, lvl: 23 },
+  kavun: { name: 'Kavun', cost: 70, mins: 360, sell: 240, xp: 40, lvl: 25 },
+  karpuz: { name: 'Karpuz', cost: 80, mins: 420, sell: 280, xp: 45, lvl: 28 },
 };
 
 // Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
@@ -90,10 +95,10 @@ export const ANIMALS: Record<
   AnimalId,
   { name: string; products: string[]; cost: number; mins: number; xp: number; lvl: number; w: number }
 > = {
-  tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 120, xp: 3, lvl: 2, w: 0.6 },
-  koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 180, xp: 5, lvl: 3, w: 0.78 },
-  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 240, xp: 6, lvl: 4, w: 0.95 },
-  ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 360, xp: 8, lvl: 5, w: 0.72 },
+  tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 90, xp: 3, lvl: 2, w: 0.6 },
+  koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 150, xp: 5, lvl: 4, w: 0.78 },
+  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 180, xp: 6, lvl: 6, w: 0.95 },
+  ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 240, xp: 8, lvl: 9, w: 0.72 },
 };
 export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
 export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
@@ -148,37 +153,37 @@ export const RECIPES: Record<
 > = {
   // mins: üretim süresi. Üretim anında değildir: işe konur, süre dolunca mutfaktan toplanır.
   // Un zinciri: buğday → değirmende un → fırında ekmek. Fırın ve değirmen 2. seviyede, ucuz.
-  bugdayunu: { name: 'Buğday unu', emoji: '🌾', needs: { bugday: 3 }, sell: 22, xp: 2, lvl: 2, mins: 10, at: 'degirmen' },
-  misirunu: { name: 'Mısır unu', emoji: '🌽', needs: { misir: 2 }, sell: 100, xp: 6, lvl: 3, mins: 20, at: 'degirmen' },
-  ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugdayunu: 1 }, sell: 30, xp: 4, lvl: 2, mins: 20, at: 'firin' },
-  misirekmegi: { name: 'Mısır ekmeği', emoji: '🍞', needs: { misirunu: 1, milk: 1 }, sell: 190, xp: 12, lvl: 4, mins: 40, at: 'firin' },
+  bugdayunu: { name: 'Buğday unu', emoji: '🌾', needs: { bugday: 3 }, sell: 22, xp: 2, lvl: 2, mins: 5, at: 'degirmen' },
+  misirunu: { name: 'Mısır unu', emoji: '🌽', needs: { misir: 2 }, sell: 100, xp: 6, lvl: 4, mins: 15, at: 'degirmen' },
+  ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugdayunu: 1 }, sell: 30, xp: 4, lvl: 2, mins: 15, at: 'firin' },
+  misirekmegi: { name: 'Mısır ekmeği', emoji: '🍞', needs: { misirunu: 1, milk: 1 }, sell: 190, xp: 12, lvl: 5, mins: 40, at: 'firin' },
   // Yağ fabrikası (20): ayçiçeği tarladan, zeytin ve avokado ağaçtan gelir.
-  aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 240, xp: 16, lvl: 20, mins: 90, at: 'yag' },
-  zeytinyagi: { name: 'Zeytinyağı', emoji: '🫒', needs: { zeytin: 3 }, sell: 430, xp: 22, lvl: 20, mins: 120, at: 'yag' },
-  avokadoyagi: { name: 'Avokado yağı', emoji: '🥑', needs: { avokado: 3 }, sell: 590, xp: 28, lvl: 24, mins: 150, at: 'yag' },
+  aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 240, xp: 16, lvl: 15, mins: 60, at: 'yag' },
+  zeytinyagi: { name: 'Zeytinyağı', emoji: '🫒', needs: { zeytin: 3 }, sell: 430, xp: 22, lvl: 19, mins: 90, at: 'yag' },
+  avokadoyagi: { name: 'Avokado yağı', emoji: '🥑', needs: { avokado: 3 }, sell: 590, xp: 28, lvl: 24, mins: 120, at: 'yag' },
   // Evde mutfak yoktur: yemekler aşçı mutfağında, kek fırında, reçel reçel atölyesinde, ballı süt mandırada yapılır.
-  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45, at: 'asci' },
+  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 3, mins: 30, at: 'asci' },
   // Süt ürünleri mandırada, yün işleri dikiş atölyesinde yapılır (at). Yeri çiftlikte yoksa o tarif görünmez.
-  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 5, mins: 120, at: 'mandira' },
-  tereyagi: { name: 'Tereyağı', emoji: '🧈', needs: { milk: 1 }, sell: 80, xp: 7, lvl: 5, mins: 40, at: 'mandira' },
+  peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 5, mins: 90, at: 'mandira' },
+  tereyagi: { name: 'Tereyağı', emoji: '🧈', needs: { milk: 1 }, sell: 80, xp: 7, lvl: 5, mins: 30, at: 'mandira' },
   atki: { name: 'Atkı', emoji: '🧣', needs: { wool: 2 }, sell: 125, xp: 10, lvl: 9, mins: 90, at: 'atolye' },
-  kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 10, mins: 180, at: 'atolye' },
-  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90, at: 'firin' },
+  kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 14, mins: 150, at: 'atolye' },
+  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugdayunu: 1 }, sell: 140, xp: 14, lvl: 6, mins: 60, at: 'firin' },
   // alt: o atölye çiftlikteyse tarif oraya taşınır (mutfakta yer açılır); yoksa mutfakta yapılır.
-  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180, at: 'konserve' },
-  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60, at: 'mandira' },
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 7, mins: 120, at: 'konserve' },
+  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 10, mins: 45, at: 'mandira' },
   // 17. seviye: pamuk
-  kumas: { name: 'Kumaş', emoji: '🧵', needs: { pamuk: 3 }, sell: 560, xp: 20, lvl: 17, mins: 120, at: 'atolye' },
-  canta: { name: 'Çanta', emoji: '👜', needs: { kumas: 1, wool: 2 }, sell: 800, xp: 30, lvl: 17, mins: 180, at: 'atolye' },
-  // 19. seviye: yeni tarla ürünü yok; kurabiye açılır (tatlandırıcı baldır)
+  kumas: { name: 'Kumaş', emoji: '🧵', needs: { pamuk: 3 }, sell: 560, xp: 20, lvl: 17, mins: 90, at: 'atolye' },
+  canta: { name: 'Çanta', emoji: '👜', needs: { kumas: 1, wool: 2 }, sell: 800, xp: 30, lvl: 17, mins: 150, at: 'atolye' },
+  // Kurabiye: tatlandırıcı baldır
   kurabiye: {
     name: 'Kurabiye',
     emoji: '🍪',
-    needs: { bugdayunu: 1, tereyagi: 1, honey: 1 },
-    sell: 660,
-    xp: 28,
-    lvl: 19,
-    mins: 90,
+    needs: { bugdayunu: 2, tereyagi: 1, honey: 1 },
+    sell: 280,
+    xp: 16,
+    lvl: 13,
+    mins: 75,
     at: 'firin',
   },
   // 21. seviye: patates
@@ -186,21 +191,21 @@ export const RECIPES: Record<
   pure: { name: 'Patates püresi', emoji: '🥣', needs: { patates: 2, tereyagi: 1 }, sell: 570, xp: 24, lvl: 21, mins: 75, at: 'asci' },
   // 23. seviye: soğan
   menemen: { name: 'Menemen', emoji: '🍳', needs: { domates: 2, sogan: 1, egg: 2 }, sell: 370, xp: 20, lvl: 23, mins: 45, at: 'asci' },
-  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, at: 'asci' },
+  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 150, at: 'asci' },
   // 25. seviye: kavun
   kavunsuyu: { name: 'Kavun suyu', emoji: '🍹', needs: { kavun: 2 }, sell: 600, xp: 26, lvl: 25, mins: 45, at: 'meyvesuyu' },
   kavuntatli: {
     name: 'Kavunlu tatlı',
     emoji: '🍮',
-    needs: { kavun: 1, milk: 1, honey: 1 },
-    sell: 900,
+    needs: { kavun: 2, milk: 1, honey: 1 },
+    sell: 780,
     xp: 34,
     lvl: 25,
     mins: 120,
     at: 'tatli',
   },
   // 28. seviye: karpuz
-  karpuzsuyu: { name: 'Karpuz suyu', emoji: '🍉', needs: { karpuz: 2 }, sell: 700, xp: 30, lvl: 28, mins: 45, at: 'meyvesuyu' },
+  karpuzsuyu: { name: 'Karpuz suyu', emoji: '🍉', needs: { karpuz: 2 }, sell: 700, xp: 30, lvl: 28, mins: 60, at: 'meyvesuyu' },
   meyvetabagi: {
     name: 'Meyve tabağı',
     emoji: '🍓',
@@ -208,11 +213,20 @@ export const RECIPES: Record<
     sell: 830,
     xp: 34,
     lvl: 28,
-    mins: 60,
+    mins: 90,
     at: 'tatli',
   },
   // 35. seviye: ileri ürünler (uzun tarif zincirleri)
-  yaspasta: { name: 'Yaş pasta', emoji: '🎂', needs: { kek: 1, cilek: 2, honey: 1 }, sell: 950, xp: 40, lvl: 35, mins: 180, at: 'tatli' },
+  yaspasta: {
+    name: 'Yaş pasta',
+    emoji: '🎂',
+    needs: { kek: 2, cilek: 3, honey: 1, tereyagi: 1 },
+    sell: 850,
+    xp: 40,
+    lvl: 35,
+    mins: 180,
+    at: 'tatli',
+  },
   pikniksepeti: {
     name: 'Piknik sepeti',
     emoji: '🧺',
@@ -305,8 +319,8 @@ export const giftWait = (f: Farm, uid: string, now: number) => {
 // Tavuk/koyun/inek yemlenince üretime başlar (yem: depodan 1 buğday, yoksa 5 altın); arılar yemsiz kendi döngüsünde.
 export const BUILDINGS: Record<BuildingId, { name: string; cost: number; lvl: number; w: number; animals: AnimalId[]; cap: number }> = {
   kumes: { name: 'Kümes', cost: 120, lvl: 2, w: 1.45, animals: ['tavuk'], cap: 3 },
-  agil: { name: 'Ağıl', cost: 260, lvl: 3, w: 1.7, animals: ['koyun', 'inek'], cap: 3 },
-  kovan: { name: 'Kovanlar', cost: 220, lvl: 5, w: 1.3, animals: ['ari'], cap: 3 },
+  agil: { name: 'Ağıl', cost: 260, lvl: 4, w: 1.7, animals: ['koyun', 'inek'], cap: 3 },
+  kovan: { name: 'Kovanlar', cost: 400, lvl: 9, w: 1.3, animals: ['ari'], cap: 3 },
 };
 export const FEED_COINS = 5;
 export const FEED_CROP = 'bugday';
@@ -334,12 +348,12 @@ export const TREES: Record<
     w: number;
   }
 > = {
-  elma: { name: 'Elma ağacı', fruit: 'Elma', cost: 200, first: 240, mins: 120, yieldN: 3, sell: 30, xp: 6, lvl: 3, w: 1.15 },
-  kiraz: { name: 'Kiraz ağacı', fruit: 'Kiraz', cost: 320, first: 300, mins: 180, yieldN: 3, sell: 45, xp: 9, lvl: 4, w: 1.15 },
-  armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 360, mins: 240, yieldN: 3, sell: 60, xp: 12, lvl: 5, w: 1.15 },
+  elma: { name: 'Elma ağacı', fruit: 'Elma', cost: 200, first: 180, mins: 90, yieldN: 3, sell: 30, xp: 6, lvl: 3, w: 1.15 },
+  kiraz: { name: 'Kiraz ağacı', fruit: 'Kiraz', cost: 320, first: 240, mins: 120, yieldN: 3, sell: 45, xp: 9, lvl: 6, w: 1.15 },
+  armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 300, mins: 150, yieldN: 3, sell: 60, xp: 12, lvl: 11, w: 1.15 },
   // Yağ fabrikasının hammaddeleri
-  zeytin: { name: 'Zeytin ağacı', fruit: 'Zeytin', cost: 900, first: 360, mins: 240, yieldN: 3, sell: 110, xp: 16, lvl: 20, w: 1.2 },
-  avokado: { name: 'Avokado ağacı', fruit: 'Avokado', cost: 1200, first: 420, mins: 300, yieldN: 3, sell: 150, xp: 20, lvl: 24, w: 1.2 },
+  zeytin: { name: 'Zeytin ağacı', fruit: 'Zeytin', cost: 900, first: 360, mins: 180, yieldN: 3, sell: 110, xp: 16, lvl: 19, w: 1.2 },
+  avokado: { name: 'Avokado ağacı', fruit: 'Avokado', cost: 1200, first: 420, mins: 240, yieldN: 3, sell: 150, xp: 20, lvl: 24, w: 1.2 },
 };
 
 export const DECOR: Record<
@@ -374,9 +388,9 @@ export const DECOR: Record<
   konserve: {
     name: 'Reçel atölyesi',
     sp: 'konserve',
-    cost: 350,
+    cost: 500,
     xp: 12,
-    lvl: 4,
+    lvl: 7,
     w: 1.5,
     perk: 'Çilek reçeli yapar',
     station: true,
@@ -384,9 +398,9 @@ export const DECOR: Record<
   asci: {
     name: 'Aşçı mutfağı',
     sp: 'asci',
-    cost: 150,
+    cost: 200,
     xp: 8,
-    lvl: 2,
+    lvl: 3,
     w: 1.5,
     perk: 'Omlet, patatesli omlet, püre, menemen ve turşu yapar',
     station: true,
@@ -435,9 +449,9 @@ export const DECOR: Record<
   yag: {
     name: 'Yağ fabrikası',
     sp: 'yag',
-    cost: 1800,
+    cost: 1500,
     xp: 30,
-    lvl: 20,
+    lvl: 15,
     w: 1.6,
     perk: 'Ayçiçeği, zeytin ve avokadodan yağ üretir',
     station: true,
