@@ -1118,6 +1118,14 @@ export default function GardenScreen() {
   // Yürünüp bitirilmiş, topluca kaydedilmeyi bekleyen işler. Art arda verilen işler (hepsini sula, topla, çit diz…)
   // tek tek değil 10'arlı tek yazmayla kaydedilir: hem hızlı, hem veritabanı kotasını yemez.
   const batch = useRef<Action[]>([]);
+  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushing = useRef(false);
+  // Aynı çizimde art arda verilen işler birbirinin sonucunu görsün diye yerel deneme zinciri; her çizimde sıfırlanır.
+  const simFarm = useRef<Farm | null>(null);
+  simFarm.current = null;
+  const farmRef = useRef(farm);
+  farmRef.current = farm;
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
   // Bekleyen işler o anda animasyonsuz, tek yazmayla kaydedilir. Geri dönünce yarıda kalmış yürüyüş serbest bırakılır.
   const flushCtx = useRef({ coupleId: couple?.id, uid, myName, partnerName });
@@ -1141,7 +1149,14 @@ export default function GardenScreen() {
       // Arka plana geçtim: partner beni çiftlikte saymasın.
       if (c.coupleId && c.uid) publishLive(c.coupleId, c.uid, { tile: myTileRef.current, tool: null, acts: [], atMs: 0 });
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      // Çiftlikten çıkılırken bekleyen işler kaybolmasın: son toplu kayıt hemen gönderilir.
+      if (flushTimer.current) clearTimeout(flushTimer.current);
+      const left = batch.current.splice(0);
+      const c = flushCtx.current;
+      if (left.length && c.coupleId) farmFlush(c.coupleId, c.uid, c.myName, c.partnerName, left).catch(() => {});
+    };
   }, []);
   const flash = (text: string) => {
     setSay(text);
@@ -1178,7 +1193,83 @@ export default function GardenScreen() {
 
   heartsRef.current = hearts;
 
+  // Sıradan işler (ekme, sulama, toplama, taşıma, kurma…) anında yapılır: kural yerelde denenir, sonuç hemen ekranda
+  // görünür, avatar beklenmeden o kareye yürür, kayıt arkadan toplu gider. Böylece hiçbir iş yürüyüşü ya da ağı beklemez.
+  const NOT_PLAIN = ['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'];
+  const isPlain = (job: Action) => !('scene' in job && job.scene) && !NOT_PLAIN.includes(job.a);
+  const flushSoon = (ms: number) => {
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+    flushTimer.current = setTimeout(flushBatch, ms);
+  };
+  async function flushBatch() {
+    flushTimer.current = null;
+    if (flushing.current || !couple) return;
+    flushing.current = true;
+    try {
+      while (batch.current.length) {
+        const acts = batch.current.splice(0, 10);
+        const together = acts.some((x) => {
+          const tl = x.a === 'water' ? farmOf(couple).tiles[x.i] : undefined;
+          return tl?.k === 'crop' && tl.by !== uid;
+        });
+        setMine((m) => m.map((x) => (acts.includes(x.a) ? { ...x, sent: true } : x)));
+        let n = -2;
+        try {
+          n = await Promise.race([farmFlush(couple.id, uid, myName, partnerName, acts), sleep(12000).then(() => -1)]);
+        } catch {
+          n = -2;
+        }
+        if (n === -1) flash('Bağlantı yavaş, tekrar dene');
+        else if (n === -2) flash('Olmadı, tekrar dene');
+        else if (n < acts.length) flash(n ? `${n} iş yapıldı, ${acts.length - n} olmadı` : 'Olmadı');
+        // Hiçbiri kaydedilmediyse kayıt değişmez; ekrandaki geçici hâl elle geri alınır.
+        if (n <= 0) setMine((m) => m.filter((x) => !acts.includes(x.a)));
+        else logActivityCapped(couple.id, uid, together ? 'farmTogether' : 'farm');
+      }
+      if (!busy.current && !queue.current.length) {
+        const rest = restNear(farmOf(couple), myTileRef.current);
+        if (partnerHereRef.current) publishLive(couple.id, uid, { tile: rest, tool: null, acts: [] });
+        if (rest !== myTileRef.current) void walkTo(rest);
+      }
+    } finally {
+      flushing.current = false;
+      if (batch.current.length) flushSoon(50);
+    }
+  }
+  function quick(job: Action) {
+    if (!couple) return;
+    const base = simFarm.current ?? farmRef.current;
+    const sim = applyAction(base, job, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), myName, Date.now(), null);
+    if (typeof sim === 'string') return flash(sim);
+    simFarm.current = sim.farm;
+    // Toplama işleri: depoya ne girdiği hemen gösterilir.
+    if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) {
+      const got = Object.entries(sim.farm.stock)
+        .map(([k, n]) => [k, n - (base.stock[k] ?? 0)] as const)
+        .filter(([, n]) => n > 0);
+      const at = center(...rc(job.i));
+      got.forEach(([k, n], idx) => {
+        const fid = Date.now() + Math.random();
+        setTimeout(() => {
+          setFloats((f) => [...f, { id: fid, x: at.x, y: at.y - TW * 1.1, text: `+${n} ${PRODUCT_NAME[k] ?? ''}`.trim(), art: k }]);
+          setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
+        }, idx * 350);
+      });
+    }
+    batch.current.push(job);
+    setMine((m) => [...m, { a: job, sent: false }]);
+    const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
+    if (job.i >= 0 && job.i < N * N) void walkTo(job.i);
+    setTool(tl);
+    if (toolTimer.current) clearTimeout(toolTimer.current);
+    toolTimer.current = setTimeout(() => setTool(null), 700);
+    if (partnerHereRef.current) publishLive(couple.id, uid, { tile: job.i, tool: tl, acts: [...batch.current] });
+    // Art arda gelen işler tek yazmada toplanır: son işten kısa süre sonra ya da 10 iş birikince gönderilir.
+    flushSoon(batch.current.length >= 10 ? 0 : 450);
+  }
+
   async function work(a: Action) {
+    if (isPlain(a)) return quick(a);
     queue.current.push(a);
     if (busy.current || !couple || !partnerId) return;
     busy.current = true;
@@ -1197,10 +1288,11 @@ export default function GardenScreen() {
         // Partner de çiftlikteyse nereye gittiğimi ve henüz kaydedilmemiş işlerimi anında görür.
         if (partnerHereRef.current)
           publishLive(couple.id, uid, { tile: job.i, tool: tl, acts: plain ? [...batch.current, job] : batch.current });
-        await walkTo(job.i);
-        setTool(tl);
-        await sleep(tl ? (queue.current.length ? 400 : 800) : 250);
-        setTool(null);
+        // Yürüyüş yalnızca anlamı olduğu yerde beklenir (öpücük, elden teslim, sahneler); diğerlerinde avatar arkadan gelir.
+        if (job.a === 'kiss' || job.a === 'handover' || job.a === 'harvestDay' || ('scene' in job && job.scene)) {
+          await walkTo(job.i);
+          await sleep(250);
+        } else void walkTo(job.i);
         // Bu iş ekran kapanırken topluca kaydedildiyse yeniden gönderme.
         if (current.current !== job) continue;
         current.current = null;
