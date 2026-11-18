@@ -513,7 +513,11 @@ export type Order = {
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
 export type FarmNote = { by: string; text: string; at: number };
-export const NOTE_TREE = OFF * N + 3 + OFF; // (0,3) karesi (iç çiftlik)
+export const NOTE_TREE = OFF * N + 3 + OFF; // (0,3) karesi (iç çiftlik): Not Ağacı'nın ilk yeri
+export const GIFT_SPOT = (1 + OFF) * N + 3 + OFF; // hediye sepeti tezgâhının ilk yeri
+// İkisi de taşınabilir; yeni yerleri kayıtta durur (yoksa ilk yerlerindedirler).
+export const noteTile = (f: Farm) => f.noteAt ?? NOTE_TREE;
+export const giftTile = (f: Farm) => f.giftSpot ?? GIFT_SPOT;
 export const NOTE_MAX = 300;
 export const NOTES_PER_DAY = 10;
 export const ORDER_SLOTS = 3;
@@ -541,6 +545,8 @@ export type Farm = {
   trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
   // Kurma tecrübesi yalnız ilk kez verilir: her tür için bugüne dek aynı anda en çok kaç tane durduğu (al-kaldır döngüsü tecrübe basmasın).
   dx?: Record<string, number>;
+  noteAt?: number; // Not Ağacı taşındıysa yeni karesi
+  giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -1172,12 +1178,13 @@ export function applyAction(
         break;
       }
       if (t.k === 'path') {
+        if (act.i === giftTile(f)) return 'Sepet tezgâhı kalkmaz; taşıyabilirsin.';
         f.tiles[act.i] = { k: 'grass' };
         text = `${name} bir patikayı kaldırdı`;
         break;
       }
       if (t.k !== 'animal' && t.k !== 'decor' && t.k !== 'tree' && t.k !== 'building') return 'Kaldırılacak bir şey yok.';
-      if (act.i === NOTE_TREE) return 'Not Ağacı kalkmaz; notlarınız orada.';
+      if (act.i === noteTile(f)) return 'Not Ağacı kalkmaz; notlarınız orada.';
       if (t.k === 'building' && t.res.length) return 'İçinde hayvan varken bina kaldırılmaz.';
       const cost =
         t.k === 'animal'
@@ -1194,15 +1201,24 @@ export function applyAction(
       break;
     }
     case 'move': {
+      // Hediye sepeti tezgâhı: bir taş zeminin üstünde durur; yeni yerine taş döşenir, eski yerdeki taş kalır.
+      if (act.from === giftTile(f)) {
+        if (act.i === act.from) return 'Zaten orada.';
+        if (!emptyOk(t)) return 'Boş bir çimene taşıyabilirsin.';
+        f.tiles[act.i] = { k: 'path' };
+        f.giftSpot = act.i;
+        text = `${name} sepet tezgâhını taşıdı`;
+        break;
+      }
       const src = f.tiles[act.from];
       const field = !!src && (src.k === 'soil' || src.k === 'crop'); // tarla (boş ya da ekili) da taşınır; ekinin süresi korunur
       if (!src || (!field && src.k !== 'path' && src.k !== 'animal' && src.k !== 'decor' && src.k !== 'tree' && src.k !== 'building'))
         return 'Taşınacak bir şey yok.';
-      if (act.from === NOTE_TREE) return 'Not Ağacı yerinden oynamaz.';
       if (act.i === act.from) return 'Zaten orada.';
       if (!emptyOk(t)) return 'Boş bir çimene taşıyabilirsin.';
       f.tiles[act.i] = src;
       f.tiles[act.from] = { k: 'grass' };
+      if (act.from === noteTile(f)) f.noteAt = act.i; // Not Ağacı: notlar ağaçla birlikte gider
       const what =
         src.k === 'soil' || src.k === 'crop'
           ? 'Tarlayı'
@@ -1502,7 +1518,7 @@ export function applyAction(
       break;
     }
     case 'note': {
-      if (act.i !== NOTE_TREE) return 'Notlar yalnız Not Ağacı’na asılır.';
+      if (act.i !== noteTile(f)) return 'Notlar yalnız Not Ağacı’na asılır.';
       const txt = act.text.trim().slice(0, NOTE_MAX);
       if (!txt) return 'Boş not olmaz.';
       if (notesToday(f0, uid, now) >= NOTES_PER_DAY) return 'Bugünlük notlar doldu.';

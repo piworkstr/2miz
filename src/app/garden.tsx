@@ -53,7 +53,8 @@ import {
   isOuter,
   outerPrice,
   NOTE_MAX,
-  NOTE_TREE,
+  noteTile,
+  giftTile,
   NOTES_PER_DAY,
   notesToday,
   orderLeft,
@@ -234,6 +235,7 @@ const PENS: Partial<Record<string, { sw: number; sh: number; slots: [number, num
 function sprites(f: Farm, now: number): Spr[] {
   const barnAt = barnTile(f);
   const houseAt = houseTile(f);
+  const giftAt = giftTile(f);
   const out: Spr[] = [];
   f.tiles.forEach((t, i) => {
     const [r, c] = rc(i);
@@ -284,7 +286,7 @@ function sprites(f: Farm, now: number): Spr[] {
         out.push({ key: `s${i}`, art: 'fence', x, y, z: zOf(r, c) + 6, w: TW, wall: { kind: wall, mask, flowers: DECOR[t.item].flowers } });
       } else out.push({ key: `s${i}`, art: DECOR[t.item].sp, ...up, w: TW * DECOR[t.item].w });
     }
-    if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
+    if (i === giftAt && ART.sepet) out.push({ key: `s${i}`, art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
     if (t.k === 'fixed') {
       const [ar, ac] = rc(t.item === 'barn' ? barnAt : houseAt);
       if (r === ar && c === ac) {
@@ -865,6 +867,8 @@ export default function GardenScreen() {
   }, [couple]);
   const BARN_TILE = barnTile(farm); // depo taşınabilir: yeri kayıttan gelir
   const HOUSE_TILE = houseTile(farm); // ev de taşınabilir
+  const GIFT_TILE = giftTile(farm); // hediye sepeti tezgâhı ve Not Ağacı da taşınabilir
+  const NOTE_TILE = noteTile(farm);
   const PILE_TILE = pileTile(farm); // deponun önü
   const uid = user?.uid ?? '';
   const myName = profile?.name ?? 'Ben';
@@ -1571,6 +1575,7 @@ export default function GardenScreen() {
         tiles: farm.tiles.map((t, j) =>
           j === lift.from || (liftFixed && t.k === 'fixed' && t.item === liftFixed) ? ({ k: 'grass' } as Tile) : t,
         ),
+        ...(lift.from === GIFT_TILE ? { giftSpot: -1 } : {}),
       }
     : farm;
   const sprs = [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z);
@@ -1585,7 +1590,7 @@ export default function GardenScreen() {
       const k = farm.tiles[i]?.k;
       const tl = farm.tiles[i];
       const barn = tl?.k === 'fixed';
-      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && !barn) continue;
+      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && !barn && i !== GIFT_TILE) continue;
       const a = ART[sp.art];
       if (!a) continue;
       const h = sp.w * a.h;
@@ -1766,8 +1771,8 @@ export default function GardenScreen() {
     // Tarla (boş ya da ekili) ve depo da basılı tutup sürüklenerek taşınır.
     return (
       !!tl &&
-      i !== NOTE_TREE &&
-      (tl.k === 'tree' ||
+      (i === GIFT_TILE ||
+        tl.k === 'tree' ||
         tl.k === 'building' ||
         tl.k === 'decor' ||
         tl.k === 'animal' ||
@@ -2296,7 +2301,7 @@ export default function GardenScreen() {
                 }}
                 onDepot={() => setSel(BARN_TILE)}
                 onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
-                onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
+                onNote={(text) => work({ a: 'note', i: NOTE_TILE, text })}
                 ready={ready.length + prodReady + hungryNow}
                 thirsty={thirsty}
                 fields={fields}
@@ -2757,7 +2762,6 @@ function ago(ms: number) {
 }
 
 // Hediye sepeti tezgâhı: ev ile ahır arasındaki yol karesinde durur; dokununca sepet hazırlanır / gelen sepet açılır.
-const GIFT_TILE = (1 + OFF) * N + 3 + OFF;
 
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
 // Depodaki ürünler: birine dokununca yalnızca o ürün, seçilen adet kadar satılır (malzemeler elde kalsın).
@@ -2853,6 +2857,8 @@ function Sheet(p: SheetProps) {
         onSkip={(id) => p.onStay({ a: 'skipOrder', i: 0, order: id })}
       />
     );
+  const GIFT_TILE = giftTile(farm);
+  const NOTE_TILE = noteTile(farm);
   if (sel === GIFT_TILE)
     return (
       <>
@@ -2865,10 +2871,16 @@ function Sheet(p: SheetProps) {
           onGift={(basket) => p.onAct({ a: 'gift', i: GIFT_TILE, basket })}
           onOpen={(gift) => p.onAct({ a: 'openGift', i: GIFT_TILE, gift })}
         />
+        <Btn kind="soft" label="Tezgâhı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: GIFT_TILE })} />
       </>
     );
-  if (sel === NOTE_TREE)
-    return <NoteTree farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onNote={p.onNote} />;
+  if (sel === NOTE_TILE)
+    return (
+      <>
+        <NoteTree farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onNote={p.onNote} />
+        <Btn kind="soft" label="Not Ağacı’nı taşı · sonra boş bir çimene dokun" onPress={() => p.onPlace({ a: 'move', from: NOTE_TILE })} />
+      </>
+    );
 
   if (p.showLog)
     return (
