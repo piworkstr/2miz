@@ -27,24 +27,12 @@ export const HARVESTS_PER_PARCEL = 10;
 export const MARKET_BONUS = 1.5;
 
 export type CropId =
-  | 'bugday'
-  | 'havuc'
-  | 'domates'
-  | 'misir'
-  | 'gul'
-  | 'cilek'
-  | 'aycicegi'
-  | 'kabak'
-  | 'pamuk'
-  | 'pancar'
-  | 'patates'
-  | 'sogan'
-  | 'kavun'
-  | 'karpuz';
+  'bugday' | 'havuc' | 'domates' | 'misir' | 'gul' | 'cilek' | 'aycicegi' | 'kabak' | 'pamuk' | 'patates' | 'sogan' | 'kavun' | 'karpuz';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari';
 export type TreeId = 'elma' | 'kiraz' | 'armut' | 'zeytin' | 'avokado';
 export type BuildingId = 'kumes' | 'agil' | 'kovan';
 export type DecorId =
+  | 'asci'
   | 'firin'
   | 'yag'
   | 'meyvesuyu'
@@ -84,7 +72,6 @@ export const CROPS: Record<CropId, { name: string; cost: number; mins: number; s
   kabak: { name: 'Bal kabağı', cost: 40, mins: 480, sell: 140, xp: 26, lvl: 6, big: true },
   // 17–28. seviye: her yeni ürün eskilerle birleşip yeni tarifler açar (RECIPES). Aradaki seviyeler üretimi geliştirir.
   pamuk: { name: 'Pamuk', cost: 45, mins: 300, sell: 150, xp: 28, lvl: 17 },
-  pancar: { name: 'Şeker pancarı', cost: 50, mins: 330, sell: 170, xp: 30, lvl: 19 },
   patates: { name: 'Patates', cost: 55, mins: 360, sell: 185, xp: 32, lvl: 21 },
   sogan: { name: 'Soğan', cost: 60, mins: 390, sell: 205, xp: 35, lvl: 23 },
   kavun: { name: 'Kavun', cost: 70, mins: 420, sell: 240, xp: 40, lvl: 25 },
@@ -126,7 +113,6 @@ export type RecipeId =
   | 'kazak'
   | 'kumas'
   | 'canta'
-  | 'seker'
   | 'kurabiye'
   | 'patomlet'
   | 'pure'
@@ -144,8 +130,8 @@ export type RecipeId =
   | 'aycicekyagi'
   | 'zeytinyagi'
   | 'avokadoyagi';
-// Üretim yeri: mutfak evin içindedir; atölyeler dükkândan alınıp çiftliğe konur.
-export type Station = 'mutfak' | 'mandira' | 'atolye' | 'konserve' | 'degirmen' | 'firin' | 'yag' | 'meyvesuyu' | 'tatli';
+// Üretim yeri: hepsi dükkândan alınıp çiftliğe konan atölyelerdir. 'mutfak' yalnızca eski kayıtlardaki yarım işler için durur.
+export type Station = 'mutfak' | 'mandira' | 'atolye' | 'konserve' | 'degirmen' | 'firin' | 'yag' | 'meyvesuyu' | 'tatli' | 'asci';
 export const RECIPES: Record<
   RecipeId,
   {
@@ -170,25 +156,25 @@ export const RECIPES: Record<
   aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 240, xp: 16, lvl: 20, mins: 90, at: 'yag' },
   zeytinyagi: { name: 'Zeytinyağı', emoji: '🫒', needs: { zeytin: 3 }, sell: 430, xp: 22, lvl: 20, mins: 120, at: 'yag' },
   avokadoyagi: { name: 'Avokado yağı', emoji: '🥑', needs: { avokado: 3 }, sell: 590, xp: 28, lvl: 24, mins: 150, at: 'yag' },
-  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45 },
+  // Evde mutfak yoktur: yemekler aşçı mutfağında, kek fırında, reçel ve turşu reçel atölyesinde, ballı süt mandırada yapılır.
+  omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45, at: 'asci' },
   // Süt ürünleri mandırada, yün işleri dikiş atölyesinde yapılır (at). Yeri çiftlikte yoksa o tarif görünmez.
   peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 5, mins: 120, at: 'mandira' },
   tereyagi: { name: 'Tereyağı', emoji: '🧈', needs: { milk: 1 }, sell: 80, xp: 7, lvl: 5, mins: 40, at: 'mandira' },
   atki: { name: 'Atkı', emoji: '🧣', needs: { wool: 2 }, sell: 125, xp: 10, lvl: 9, mins: 90, at: 'atolye' },
   kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 10, mins: 180, at: 'atolye' },
-  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90 },
+  kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugday: 2 }, sell: 140, xp: 14, lvl: 4, mins: 90, at: 'firin' },
   // alt: o atölye çiftlikteyse tarif oraya taşınır (mutfakta yer açılır); yoksa mutfakta yapılır.
-  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180, alt: 'konserve' },
-  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60 },
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 4, mins: 180, at: 'konserve' },
+  ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 5, mins: 60, at: 'mandira' },
   // 17. seviye: pamuk
   kumas: { name: 'Kumaş', emoji: '🧵', needs: { pamuk: 3 }, sell: 560, xp: 20, lvl: 17, mins: 120, at: 'atolye' },
   canta: { name: 'Çanta', emoji: '👜', needs: { kumas: 1, wool: 2 }, sell: 800, xp: 30, lvl: 17, mins: 180, at: 'atolye' },
-  // 19. seviye: şeker pancarı
-  seker: { name: 'Şeker', emoji: '🍬', needs: { pancar: 2 }, sell: 420, xp: 18, lvl: 19, mins: 60 },
+  // 19. seviye: yeni tarla ürünü yok; kurabiye açılır (tatlandırıcı baldır)
   kurabiye: {
     name: 'Kurabiye',
     emoji: '🍪',
-    needs: { seker: 1, bugdayunu: 1, tereyagi: 1 },
+    needs: { bugdayunu: 1, tereyagi: 1, honey: 1 },
     sell: 660,
     xp: 28,
     lvl: 19,
@@ -196,17 +182,17 @@ export const RECIPES: Record<
     at: 'firin',
   },
   // 21. seviye: patates
-  patomlet: { name: 'Patatesli omlet', emoji: '🥔', needs: { patates: 2, egg: 2 }, sell: 500, xp: 22, lvl: 21, mins: 60 },
-  pure: { name: 'Patates püresi', emoji: '🥣', needs: { patates: 2, tereyagi: 1 }, sell: 570, xp: 24, lvl: 21, mins: 75 },
+  patomlet: { name: 'Patatesli omlet', emoji: '🥔', needs: { patates: 2, egg: 2 }, sell: 500, xp: 22, lvl: 21, mins: 60, at: 'asci' },
+  pure: { name: 'Patates püresi', emoji: '🥣', needs: { patates: 2, tereyagi: 1 }, sell: 570, xp: 24, lvl: 21, mins: 75, at: 'asci' },
   // 23. seviye: soğan
-  menemen: { name: 'Menemen', emoji: '🍳', needs: { domates: 2, sogan: 1, egg: 2 }, sell: 370, xp: 20, lvl: 23, mins: 45 },
-  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, alt: 'konserve' },
+  menemen: { name: 'Menemen', emoji: '🍳', needs: { domates: 2, sogan: 1, egg: 2 }, sell: 370, xp: 20, lvl: 23, mins: 45, at: 'asci' },
+  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, at: 'konserve' },
   // 25. seviye: kavun
   kavunsuyu: { name: 'Kavun suyu', emoji: '🍹', needs: { kavun: 2 }, sell: 600, xp: 26, lvl: 25, mins: 45, at: 'meyvesuyu' },
   kavuntatli: {
     name: 'Kavunlu tatlı',
     emoji: '🍮',
-    needs: { kavun: 1, seker: 1, milk: 1 },
+    needs: { kavun: 1, milk: 1, honey: 1 },
     sell: 900,
     xp: 34,
     lvl: 25,
@@ -215,9 +201,18 @@ export const RECIPES: Record<
   },
   // 28. seviye: karpuz
   karpuzsuyu: { name: 'Karpuz suyu', emoji: '🍉', needs: { karpuz: 2 }, sell: 700, xp: 30, lvl: 28, mins: 45, at: 'meyvesuyu' },
-  meyvetabagi: { name: 'Meyve tabağı', emoji: '🍓', needs: { kavun: 1, karpuz: 1, cilek: 2 }, sell: 830, xp: 34, lvl: 28, mins: 60 },
+  meyvetabagi: {
+    name: 'Meyve tabağı',
+    emoji: '🍓',
+    needs: { kavun: 1, karpuz: 1, cilek: 2 },
+    sell: 830,
+    xp: 34,
+    lvl: 28,
+    mins: 60,
+    at: 'tatli',
+  },
   // 35. seviye: ileri ürünler (uzun tarif zincirleri)
-  yaspasta: { name: 'Yaş pasta', emoji: '🎂', needs: { kek: 1, seker: 1, cilek: 2 }, sell: 950, xp: 40, lvl: 35, mins: 180, at: 'tatli' },
+  yaspasta: { name: 'Yaş pasta', emoji: '🎂', needs: { kek: 1, cilek: 2, honey: 1 }, sell: 950, xp: 40, lvl: 35, mins: 180, at: 'tatli' },
   pikniksepeti: {
     name: 'Piknik sepeti',
     emoji: '🧺',
@@ -235,7 +230,7 @@ export type ProdJob = { id: string; recipe: RecipeId; by: string; at: number; re
 // Mutfakta aynı anda kaç iş: 2 ile başlar, 8. ve 14. seviyede birer artar.
 // Seviye ödülleri (yeni ürün açılmayan seviyeler üretimi geliştirir):
 // 18: atölyelere +1 yer · 20: 4. sipariş, daha büyük siparişler · 22: atölyeler %20 hızlı · 24: özel siparişler
-// 26: mutfağa +1 ocak · 30: konserve atölyesi · 32: bütün üretim yerlerine +1 yer
+// 26: atölyelere +1 yer · 32: atölyelere +1 yer daha
 export const kitchenSlots = (level: number) =>
   2 + (level >= 8 ? 1 : 0) + (level >= 14 ? 1 : 0) + (level >= 26 ? 1 : 0) + (level >= 32 ? 1 : 0);
 export const orderSlots = (level: number) => (level >= 20 ? 4 : 3);
@@ -245,7 +240,8 @@ export const STATIONS: Record<Station, { name: string; slot: string; from: strin
   mutfak: { name: 'Mutfak', slot: 'ocak', from: 'mutfaktan', inn: 'mutfakta' },
   mandira: { name: 'Mandıra', slot: 'tekne', from: 'mandıradan', inn: 'mandırada' },
   atolye: { name: 'Dikiş atölyesi', slot: 'tezgâh', from: 'atölyeden', inn: 'atölyede' },
-  konserve: { name: 'Konserve atölyesi', slot: 'kazan', from: 'konserve atölyesinden', inn: 'konserve atölyesinde' },
+  konserve: { name: 'Reçel atölyesi', slot: 'kazan', from: 'reçel atölyesinden', inn: 'reçel atölyesinde' },
+  asci: { name: 'Aşçı mutfağı', slot: 'ocak', from: 'aşçı mutfağından', inn: 'aşçı mutfağında' },
   degirmen: { name: 'Un değirmeni', slot: 'taş', from: 'değirmenden', inn: 'değirmende' },
   firin: { name: 'Fırın', slot: 'göz', from: 'fırından', inn: 'fırında' },
   yag: { name: 'Yağ fabrikası', slot: 'pres', from: 'yağ fabrikasından', inn: 'yağ fabrikasında' },
@@ -259,9 +255,9 @@ export const stationOf = (r: RecipeId, f?: Farm): Station => {
   if (x.alt && f && hasStation(f, x.alt)) return x.alt;
   return x.at ?? 'mutfak';
 };
-// Atölyelerde 2 yer; 12, 18 ve 32. seviyelerde birer yer daha.
+// Atölyelerde 2 yer; 12, 18, 26 ve 32. seviyelerde birer yer daha. ('mutfak' yalnızca eski kayıtlardaki yarım işler için durur.)
 export const stationSlots = (st: Station, level: number) =>
-  st === 'mutfak' ? kitchenSlots(level) : 2 + (level >= 12 ? 1 : 0) + (level >= 18 ? 1 : 0) + (level >= 32 ? 1 : 0);
+  st === 'mutfak' ? kitchenSlots(level) : 2 + (level >= 12 ? 1 : 0) + (level >= 18 ? 1 : 0) + (level >= 26 ? 1 : 0) + (level >= 32 ? 1 : 0);
 export const STOCK_EMOJI: Record<string, string> = Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.emoji]));
 
 // ---------- Hediye sepeti ----------
@@ -376,13 +372,23 @@ export const DECOR: Record<
     station: true,
   },
   konserve: {
-    name: 'Konserve atölyesi',
+    name: 'Reçel atölyesi',
     sp: 'konserve',
-    cost: 2500,
-    xp: 40,
-    lvl: 30,
+    cost: 350,
+    xp: 12,
+    lvl: 4,
     w: 1.5,
-    perk: 'Reçel ve turşu burada yapılır; mutfakta yer açılır',
+    perk: 'Çilek reçeli ve turşu yapar',
+    station: true,
+  },
+  asci: {
+    name: 'Aşçı mutfağı',
+    sp: 'asci',
+    cost: 150,
+    xp: 8,
+    lvl: 2,
+    w: 1.5,
+    perk: 'Omlet, patatesli omlet, püre ve menemen pişirir',
     station: true,
   },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).

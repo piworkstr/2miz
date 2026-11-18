@@ -1430,7 +1430,9 @@ export default function GardenScreen() {
     const doneJob = jobs.find((j) => j.ready <= now);
     const nextJob = jobs.slice().sort((a, b) => a.ready - b.ready)[0];
     const free = jobs.length < stationSlots('mutfak', lvNow);
-    if (doneJob || nextJob || (can.length && free))
+    void can;
+    void free;
+    if (doneJob || nextJob)
       badges.push({
         key: 'mutfak',
         i: hr * N + hc,
@@ -1438,7 +1440,7 @@ export default function GardenScreen() {
         y: h.y - TW * 1.45,
         art: doneJob ? doneJob.recipe : nextJob ? nextJob.recipe : ART[can[0]] ? can[0] : 'bugday',
         z: zOf(hr, hc) + 420,
-        label: doneJob ? 'Hazır' : nextJob ? timeLeft(nextJob.ready - now) : 'Mutfak',
+        label: doneJob ? 'Hazır' : timeLeft((nextJob as { ready: number }).ready - now),
       });
     // Sepet tezgâhı: gelen sepet varsa "Aç", yoksa hazırlanabilecek sepet varsa "Sepet".
     const [gr, gc] = rc(GIFT_TILE);
@@ -2505,7 +2507,7 @@ function Sheet(p: SheetProps) {
             : hungryAll
               ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
               : farm.harvests < 20
-                ? 'Depoya, eve ya da çimene dokun: depo, pazar, mutfak, dükkân'
+                ? 'Depoya ya da çimene dokun: depo, pazar, atölyeler, dükkân'
                 : '';
     return (
       <>
@@ -2545,11 +2547,11 @@ function Sheet(p: SheetProps) {
           {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
           {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
           <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
-          <Round icon="restaurant" label="Mutfak" badge={kitchenReady} accent={kitchenReady > 0} onPress={p.onKitchen} />
+          {kitchenReady > 0 && <Round icon="home" label="Evde hazır" badge={kitchenReady} accent onPress={p.onKitchen} />}
           {shopTile >= 0 && (
             <Round
               icon="construct"
-              label="Atölye"
+              label="Atölyeler"
               badge={shopReady}
               accent={shopReady > 0}
               onPress={() => p.onWorkshop(shops.length > 1 ? -2 : shopTile)}
@@ -2633,8 +2635,8 @@ function Sheet(p: SheetProps) {
         <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
         {items.length === 0 ? (
           <Note>
-            Depo boş. Topladığınız ürünler burada birikir: satınca altın olur, siparişlere verilir, evdeki mutfakta tarife, sepet tezgâhında
-            partnerine armağana dönüşür.
+            Depo boş. Topladığınız ürünler burada birikir: satınca altın olur, siparişlere verilir, atölyelerde yeni ürünlere, sepet
+            tezgâhında partnerine armağana dönüşür.
           </Note>
         ) : (
           <>
@@ -2688,14 +2690,19 @@ function Sheet(p: SheetProps) {
   if (t.k === 'fixed')
     return (
       <>
-        <Head art={t.item} title="Eviniz · Mutfak" onClose={p.onClose} />
-        <Kitchen
-          farm={farm}
-          level={level}
-          now={now}
-          onCook={(recipe) => p.onStay({ a: 'cook', i, recipe })}
-          onCollect={() => p.onStay({ a: 'collectProd', i, at: 'mutfak' })}
-        />
+        <Head art={t.item} title="Eviniz" onClose={p.onClose} />
+        {/* Evde artık mutfak yok. Yalnızca eski kayıtlardan kalan (ya da atölyesi kaldırılmış) yarım işler buradan toplanır. */}
+        {stationJobs(farm, 'mutfak').length > 0 ? (
+          <Kitchen
+            farm={farm}
+            level={level}
+            now={now}
+            onCook={(recipe) => p.onStay({ a: 'cook', i, recipe })}
+            onCollect={() => p.onStay({ a: 'collectProd', i, at: 'mutfak' })}
+          />
+        ) : (
+          <Note>Yemekler aşçı mutfağında, ekmek ve kek fırında, reçel reçel atölyesinde yapılır. Atölyeleri dükkândan alabilirsin.</Note>
+        )}
         <Btn kind="soft" label="Çiftlik günlüğü" onPress={p.onLog} />
       </>
     );
@@ -2837,7 +2844,7 @@ function Sheet(p: SheetProps) {
           {t.item === 'sera'
             ? 'Çevresindeki 2 kare içindeki tarlalara ekilen ekin %25 daha çabuk büyür (yeni ekilenlerde geçerli).'
             : t.item === 'degirmen'
-              ? 'Değirmen çiftlikteyken mutfakta ekmek ve kek çift çıkar.'
+              ? 'Değirmen çiftlikteyken fırında ekmek ve kek çift çıkar.'
               : 'Bahçenizi güzelleştiriyor.'}
         </Note>
         {d.wall &&
