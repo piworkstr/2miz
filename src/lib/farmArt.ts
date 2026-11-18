@@ -67,6 +67,11 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   avokadoyagi: { src: require('../../assets/farm/avokadoyagi.webp'), h: 1.19 },
   aycicekyagi: { src: require('../../assets/farm/aycicekyagi.webp'), h: 1.099 },
   pazar: { src: require('../../assets/farm/pazar.webp'), h: 0.85 },
+  m_elma: { src: require('../../assets/farm/m_elma.webp'), h: 0.86 },
+  m_kiraz: { src: require('../../assets/farm/m_kiraz.webp'), h: 0.895 },
+  m_armut: { src: require('../../assets/farm/m_armut.webp'), h: 0.895 },
+  m_zeytin: { src: require('../../assets/farm/m_zeytin.webp'), h: 0.79 },
+  m_avokado: { src: require('../../assets/farm/m_avokado.webp'), h: 0.84 },
   // </yeni-atolyeler>
   // Atölyeler ve ürünleri
   mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },
@@ -105,3 +110,6 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   wool: { src: require('../../assets/farm/wool.webp'), h: 0.86 },
   young: { src: require('../../assets/farm/young.webp'), h: 0.68 },
 };
+
+// Depo ve pazar simgesi: meyvelerde ağacın değil meyvenin resmi (m_ önekli) kullanılır.
+export const stockArt = (k: string) => ART[`m_${k}`] ?? ART[k];

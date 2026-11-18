@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { dayKey } from '../../lib/date';
 import { farmAction, levelOf, PRICE, PRODUCT_NAME, STALL_GOODS, STALL_MAX, STOCK_EMOJI, stallPrice, type Farm } from '../../lib/farm';
@@ -17,15 +18,135 @@ import {
   unitRange,
   type Listing,
 } from '../../lib/market';
-import { useTheme } from '../../lib/useTheme';
-import { Button, Card, ErrorText, Input, Muted, T, Title } from '../ui';
+import { ART, stockArt } from '../../lib/farmArt';
 
 type Who = { coupleId: string; uid: string; name: string; partnerName: string };
-const label = (key: string, n: number) => `${STOCK_EMOJI[key] ? `${STOCK_EMOJI[key]} ` : ''}${n} ${PRODUCT_NAME[key] ?? key}`;
+const label = (key: string, n: number) => `${n} ${PRODUCT_NAME[key] ?? key}`;
+
+// Çiftliğin kendi renkleri: krem zemin, ahşap çerçeve.
+const INK = '#4A2E14';
+const MUTED = '#8A6F4A';
+const BROWN = '#9A6534';
+const CREAM = '#FFF8E8';
+const CELL = '#FBFAF6';
+const LINE = '#E5C99B';
+const SAND = '#F6D58E';
+const ROSE = '#E8516A';
+const GOLD = '#7A5A00';
+
+function Icon({ k, size }: { k: string; size: number }) {
+  const a = stockArt(k);
+  if (a) return <Image source={a.src} style={{ width: size, height: size }} resizeMode="contain" />;
+  return (
+    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: Math.round(size * 0.7), lineHeight: size, height: size, textAlign: 'center' }}>
+      {STOCK_EMOJI[k] ?? '📦'}
+    </Text>
+  );
+}
+function Coins({ n, size = 14, color = GOLD }: { n: number | string; size?: number; color?: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <Image source={ART.coin.src} style={{ width: size + 2, height: size + 2 }} resizeMode="contain" />
+      <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: size, color }}>
+        {n}
+      </Text>
+    </View>
+  );
+}
+function Heading({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 6 }}>
+      <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontWeight: '900', fontSize: 18, color: INK }}>
+        {title}
+      </Text>
+      {!!sub && (
+        <Text maxFontSizeMultiplier={1.15} style={{ fontSize: 12, color: MUTED }}>
+          {sub}
+        </Text>
+      )}
+    </View>
+  );
+}
+const Note = ({ children }: { children: ReactNode }) => (
+  <Text maxFontSizeMultiplier={1.2} style={{ color: MUTED, fontSize: 13, lineHeight: 18 }}>
+    {children}
+  </Text>
+);
+// Altın fiyatlı düğme: kum rengi; "ana" olan pembe. Yetmeyen altında soluk durur ama basılabilir (uyarı verir).
+function Pill({
+  children,
+  onPress,
+  main,
+  busy,
+  dim,
+  flex,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  main?: boolean;
+  busy?: boolean;
+  dim?: boolean;
+  flex?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      style={({ pressed }) => ({
+        flex: flex ? 1 : undefined,
+        minHeight: 40,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        backgroundColor: main ? ROSE : SAND,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: pressed || dim ? 0.6 : 1,
+      })}
+    >
+      {busy ? <ActivityIndicator color={main ? '#fff' : INK} /> : children}
+    </Pressable>
+  );
+}
+const pillText = (text: string, main?: boolean) => (
+  <Text maxFontSizeMultiplier={1.15} style={{ fontWeight: '900', fontSize: 14, color: main ? '#fff' : INK }}>
+    {text}
+  </Text>
+);
+function Stepper({ n, onChange, min, max }: { n: number; onChange: (n: number) => void; min: number; max: number }) {
+  const btn = (icon: 'remove' | 'add', d: number) => (
+    <Pressable
+      onPress={() => onChange(Math.min(max, Math.max(min, n + d)))}
+      onLongPress={() => onChange(Math.min(max, Math.max(min, n + d * 10)))}
+      hitSlop={6}
+      style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: SAND, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Ionicons name={icon} size={20} color={INK} />
+    </Pressable>
+  );
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      {btn('remove', -1)}
+      <Text maxFontSizeMultiplier={1.1} style={{ minWidth: 30, textAlign: 'center', fontWeight: '900', fontSize: 18, color: INK }}>
+        {n}
+      </Text>
+      {btn('add', 1)}
+    </View>
+  );
+}
+const row = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+  padding: 10,
+  borderRadius: 16,
+  borderWidth: 1.5,
+  borderColor: LINE,
+  backgroundColor: CELL,
+} as const;
 
 // Çiftçi pazarı: başka çiftliklerin ilanları, gezgin tüccar ve kendi tezgâhın. Depodan açılır.
 export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClose: () => void; farm: Farm; who: Who }) {
-  const t = useTheme();
+  const { width } = useWindowDimensions();
   const [tab, setTab] = useState<'al' | 'sat'>('al');
   const [list, setList] = useState<Listing[] | null>(null);
   const [mine, setMine] = useState<Listing[]>([]);
@@ -94,285 +215,392 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
   const got = farm.trader?.day === today ? farm.trader.got : [];
   const offers = traderOffers(today);
   const stock = Object.entries(farm.stock).filter(([k, n]) => n > 0 && PRICE[k]);
+  const PAD = 16;
+  const GAP = 8;
+  const cell4 = Math.floor((Math.min(width, 520) - PAD * 2 - GAP * 3) / 4);
+  const cell3 = Math.floor((Math.min(width, 520) - PAD * 2 - GAP * 2) / 3);
   const tabBtn = (id: 'al' | 'sat', text: string) => (
     <Pressable
       onPress={() => setTab(id)}
       style={{
         flex: 1,
-        paddingVertical: 10,
-        borderRadius: t.radius.pill,
+        minHeight: 42,
+        borderRadius: 21,
         alignItems: 'center',
-        backgroundColor: tab === id ? t.colors.primary : t.colors.primarySoft,
+        justifyContent: 'center',
+        backgroundColor: tab === id ? ROSE : CELL,
+        borderWidth: tab === id ? 0 : 1.5,
+        borderColor: LINE,
       }}
     >
-      <Text
-        maxFontSizeMultiplier={1.25}
-        style={{ color: tab === id ? t.colors.onPrimary : t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}
-      >
+      <Text maxFontSizeMultiplier={1.15} style={{ color: tab === id ? '#fff' : INK, fontWeight: '900', fontSize: 15 }}>
         {text}
       </Text>
     </Pressable>
   );
-  const Step = ({ icon, onPress }: { icon: 'remove' | 'add'; onPress: () => void }) => (
+  // Ürün karesi: resim, ad ve altında fiyat ya da adet.
+  const tile = (k: string, w: number, on: boolean, below: ReactNode, onPress: () => void, name?: string) => (
     <Pressable
+      key={k}
       onPress={onPress}
-      hitSlop={6}
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: t.colors.primarySoft,
+        width: w,
+        paddingVertical: 8,
+        paddingHorizontal: 2,
+        borderRadius: 14,
+        borderWidth: on ? 2.5 : 1.5,
+        borderColor: on ? ROSE : LINE,
+        backgroundColor: on ? '#FDECEF' : CELL,
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 2,
       }}
     >
-      <Ionicons name={icon} size={20} color={t.colors.primary} />
+      <Icon k={k} size={Math.min(54, w - 20)} />
+      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+        {name ?? PRODUCT_NAME[k] ?? k}
+      </Text>
+      {below}
     </Pressable>
   );
 
   return (
     <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.bg }} edges={['top', 'bottom']}>
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Title>Çiftçi pazarı</Title>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SAND }} edges={['top']}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: PAD, paddingVertical: 10 }}>
+          {ART.pazar && <Image source={ART.pazar.src} style={{ width: 96, height: 82 }} resizeMode="contain" />}
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: 24, color: INK }}>
+              Çiftçi pazarı
+            </Text>
+            {!!farm.name && (
+              <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 13, color: MUTED }}>
+                {farm.name}
+              </Text>
+            )}
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 14,
+                backgroundColor: CREAM,
+                borderWidth: 1.5,
+                borderColor: BROWN,
+              }}
+            >
+              <Coins n={farm.coins} size={15} />
             </View>
-            <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Kapat">
-              <Ionicons name="close" size={28} color={t.colors.text} />
-            </Pressable>
           </View>
-          <Muted>{`Tezgâhtan ürün al, diğer çiftliklerle alışveriş yap. Altının: ${farm.coins}`}</Muted>
+          <Pressable
+            onPress={onClose}
+            hitSlop={10}
+            accessibilityLabel="Kapat"
+            style={{
+              alignSelf: 'flex-start',
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              backgroundColor: CREAM,
+              borderWidth: 1.5,
+              borderColor: BROWN,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="close" size={20} color={INK} />
+          </Pressable>
+        </View>
+        <View style={{ height: 4, backgroundColor: BROWN }} />
+        <ScrollView
+          style={{ flex: 1, backgroundColor: CREAM }}
+          contentContainerStyle={{ padding: PAD, gap: 10, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {tabBtn('al', 'Satın al')}
-            {tabBtn('sat', `Tezgâhım (${mine.length}/${MARKET_MAX})`)}
+            {tabBtn('sat', `Tezgâhım ${mine.length}/${MARKET_MAX}`)}
           </View>
-          {!!msg && <Muted style={{ color: t.colors.primary, fontWeight: '600' }}>{msg}</Muted>}
-          {!!error && <ErrorText>{error}</ErrorText>}
+          {!!msg && (
+            <Text maxFontSizeMultiplier={1.2} style={{ color: '#3E7F22', fontWeight: '800', fontSize: 13 }}>
+              {msg}
+            </Text>
+          )}
+          {!!error && (
+            <Text maxFontSizeMultiplier={1.2} style={{ color: '#B93A55', fontWeight: '800', fontSize: 13 }}>
+              {error}
+            </Text>
+          )}
 
           {tab === 'al' ? (
             <>
-              <Muted style={{ fontWeight: '600' }}>Pazar tezgâhı · her zaman açık</Muted>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {goods.map((g) => {
-                  const on = buy?.key === g.key;
-                  return (
-                    <Pressable
-                      key={g.key}
-                      onPress={() => setBuy(on ? null : { key: g.key, n: 1 })}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderRadius: 16,
-                        borderWidth: 1.5,
-                        borderColor: on ? t.colors.primary : t.colors.border,
-                        backgroundColor: on ? t.colors.primarySoft : t.colors.card,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text maxFontSizeMultiplier={1.2} style={{ color: t.colors.text, fontWeight: '600', fontSize: 14 }}>
-                        {STOCK_EMOJI[g.key] ? `${STOCK_EMOJI[g.key]} ` : ''}
-                        {PRODUCT_NAME[g.key] ?? g.key}
-                      </Text>
-                      <Text maxFontSizeMultiplier={1.2} style={{ color: t.colors.muted, fontSize: 12 }}>
-                        {stallPrice(g.key)} altın
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <Heading title="Tezgâh" sub="her zaman açık · 2 kat fiyat" />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
+                {goods.map((g) =>
+                  tile(g.key, cell4, buy?.key === g.key, <Coins n={stallPrice(g.key)} size={12} />, () =>
+                    setBuy(buy?.key === g.key ? null : { key: g.key, n: 1 }),
+                  ),
+                )}
               </View>
               {buy ? (
-                <Card style={{ gap: 10 }}>
-                  <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>
-                    {label(buy.key, buy.n)} · depoda {farm.stock[buy.key] ?? 0}
-                  </T>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    {[-10, -1, 1, 10].map((d) => (
-                      <Pressable
-                        key={d}
-                        onPress={() => setBuy({ key: buy.key, n: Math.min(STALL_MAX, Math.max(1, buy.n + d)) })}
-                        style={{
-                          flex: 1,
-                          minHeight: 40,
-                          borderRadius: 12,
-                          backgroundColor: t.colors.primarySoft,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Text maxFontSizeMultiplier={1.2} style={{ color: t.colors.primary, fontWeight: '700', fontSize: 16 }}>
-                          {d > 0 ? `+${d}` : d}
-                        </Text>
-                      </Pressable>
-                    ))}
+                <View style={{ ...row, backgroundColor: '#fff', borderColor: BROWN, borderWidth: 2 }}>
+                  <Icon k={buy.key} size={44} />
+                  <View style={{ flex: 1 }}>
+                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                      {PRODUCT_NAME[buy.key] ?? buy.key}
+                    </Text>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                      depoda {farm.stock[buy.key] ?? 0}
+                    </Text>
                   </View>
-                  <Button
-                    label={`Satın al · ${stallPrice(buy.key, buy.n)} altın`}
+                  <Stepper n={buy.n} min={1} max={STALL_MAX} onChange={(n) => setBuy({ key: buy.key, n })} />
+                  <Pill
+                    main
                     busy={busy === 'stall'}
-                    variant={farm.coins >= stallPrice(buy.key, buy.n) ? 'primary' : 'secondary'}
+                    dim={farm.coins < stallPrice(buy.key, buy.n)}
                     onPress={() =>
                       run('stall', () => act({ a: 'stall', i: 0, key: buy.key, n: buy.n }), `${label(buy.key, buy.n)} depona eklendi.`)
                     }
-                  />
-                </Card>
+                  >
+                    <Coins n={`Al · ${stallPrice(buy.key, buy.n)}`} size={14} color="#fff" />
+                  </Pill>
+                </View>
               ) : (
-                <Muted>
-                  Ürüne dokun, adedi seç. Fiyatlar satış fiyatının iki katıdır.
+                <Note>
+                  Ürüne dokun, adedi seç (artıya basılı tutunca onar onar artar).
                   {nextGood ? ` Sıradaki ürün ${nextGood.lvl}. seviyede açılır.` : ''}
-                </Muted>
-              )}
-              <Muted style={{ fontWeight: '600', marginTop: 6 }}>Çiftliklerden</Muted>
-              {list === null ? (
-                <Muted>Pazar yükleniyor…</Muted>
-              ) : list.length ? (
-                list.map((l) => (
-                  <Card key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>{label(l.key, l.n)}</T>
-                      <Muted>{`${l.farm} · seviye ${l.lvl}`}</Muted>
-                    </View>
-                    <Button
-                      label={`${l.price} altın`}
-                      busy={busy === l.id}
-                      variant={farm.coins >= l.price ? 'primary' : 'secondary'}
-                      onPress={() => run(l.id, () => buyListing(who, l), `${label(l.key, l.n)} depona eklendi.`)}
-                    />
-                  </Card>
-                ))
-              ) : (
-                <Muted>Şu an başka çiftlikten ilan yok. İlk tezgâhı sen kur; bu arada gezgin tüccara bakabilirsin.</Muted>
+                </Note>
               )}
 
-              <Muted style={{ fontWeight: '600', marginTop: 6 }}>Gezgin tüccar · bugünün teklifleri</Muted>
-              {offers.map((o) => {
-                const done = got.includes(o.id);
-                return (
-                  <Card key={o.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: done ? 0.55 : 1 }}>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>{label(o.key, o.n)}</T>
-                      <Muted>{done ? 'Bugün alındı' : 'Günde bir kez'}</Muted>
+              <Heading title="Gezgin tüccar" sub="bugünün teklifleri" />
+              <View style={{ flexDirection: 'row', gap: GAP }}>
+                {offers.map((o) => {
+                  const done = got.includes(o.id);
+                  return (
+                    <View
+                      key={o.id}
+                      style={{
+                        width: cell3,
+                        padding: 8,
+                        borderRadius: 14,
+                        borderWidth: 1.5,
+                        borderColor: LINE,
+                        backgroundColor: done ? '#EEE4D0' : CELL,
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <View style={{ opacity: done ? 0.45 : 1 }}>
+                        <Icon k={o.key} size={54} />
+                      </View>
+                      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+                        {label(o.key, o.n)}
+                      </Text>
+                      {done ? (
+                        <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED, lineHeight: 40 }}>
+                          Bugün alındı
+                        </Text>
+                      ) : (
+                        <Pill
+                          busy={busy === o.id}
+                          dim={farm.coins < o.cost}
+                          onPress={() =>
+                            run(
+                              o.id,
+                              () => act({ a: 'trader', i: 0, key: o.key, n: o.n, cost: o.cost, offer: o.id, day: today }),
+                              `${label(o.key, o.n)} depona eklendi.`,
+                            )
+                          }
+                        >
+                          <Coins n={o.cost} size={14} />
+                        </Pill>
+                      )}
                     </View>
-                    {!done && (
-                      <Button
-                        label={`${o.cost} altın`}
-                        busy={busy === o.id}
-                        variant={farm.coins >= o.cost ? 'primary' : 'secondary'}
-                        onPress={() =>
-                          run(
-                            o.id,
-                            () => act({ a: 'trader', i: 0, key: o.key, n: o.n, cost: o.cost, offer: o.id, day: today }),
-                            `${label(o.key, o.n)} depona eklendi.`,
-                          )
-                        }
-                      />
-                    )}
-                  </Card>
-                );
-              })}
+                  );
+                })}
+              </View>
+
+              <Heading title="Diğer çiftliklerden" />
+              {list === null ? (
+                <Note>Pazar yükleniyor…</Note>
+              ) : list.length ? (
+                list.map((l) => (
+                  <View key={l.id} style={row}>
+                    <Icon k={l.key} size={44} />
+                    <View style={{ flex: 1 }}>
+                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                        {label(l.key, l.n)}
+                      </Text>
+                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
+                        {`${l.farm} · seviye ${l.lvl}`}
+                      </Text>
+                    </View>
+                    <Pill
+                      busy={busy === l.id}
+                      dim={farm.coins < l.price}
+                      onPress={() => run(l.id, () => buyListing(who, l), `${label(l.key, l.n)} depona eklendi.`)}
+                    >
+                      <Coins n={l.price} size={14} />
+                    </Pill>
+                  </View>
+                ))
+              ) : (
+                <Note>Şu an başka çiftlikten ilan yok. İlk ilanı sen koy: “Tezgâhım” sekmesinden.</Note>
+              )}
             </>
           ) : !farm.name ? (
             <>
-              <Muted>
+              <Note>
                 Pazarda gerçek adınız görünmez; ilanlarınız çiftlik adıyla çıkar. Önce çiftliğinize bir ad verin (sonra değiştirilebilir).
-              </Muted>
-              <Input value={name} onChangeText={setName} placeholder="Örn. Papatya Çiftliği" maxLength={22} />
-              <Button
-                label="Adı kaydet"
+              </Note>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Papatya Çiftliği"
+                placeholderTextColor="#B9A27E"
+                maxLength={22}
+                style={{
+                  minHeight: 48,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: LINE,
+                  backgroundColor: '#fff',
+                  paddingHorizontal: 14,
+                  fontSize: 16,
+                  color: INK,
+                }}
+              />
+              <Pill
+                main
                 busy={busy === 'name'}
                 onPress={() => run('name', () => act({ a: 'rename', i: 0, name }), 'Çiftlik adı kaydedildi.')}
-              />
+              >
+                {pillText('Adı kaydet', true)}
+              </Pill>
             </>
           ) : (
             <>
-              <Muted>{`${farm.name} · ilanlar ${MARKET_HOURS} saat açık kalır, satılmazsa depoya döner.`}</Muted>
+              <Heading title="İlanlarım" sub={`${MARKET_HOURS} saat açık kalır`} />
+              {mine.length === 0 && <Note>Henüz ilanın yok. Aşağıdan bir ürün seçip tezgâha koy; satılmazsa depoya döner.</Note>}
               {mine.map((l) => (
-                <Card key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View key={l.id} style={row}>
+                  <Icon k={l.key} size={44} />
                   <View style={{ flex: 1, gap: 2 }}>
-                    <T style={{ fontWeight: '600', fontFamily: t.fonts.button }}>{label(l.key, l.n)}</T>
-                    <Muted>{`${l.price} altın · ${Math.max(1, Math.round((l.expMs - Date.now()) / 3600000))} saat kaldı`}</Muted>
+                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                      {label(l.key, l.n)}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Coins n={l.price} size={12} />
+                      <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                        · {Math.max(1, Math.round((l.expMs - Date.now()) / 3600000))} saat kaldı
+                      </Text>
+                    </View>
                   </View>
-                  <Button
-                    label="Geri çek"
-                    variant="secondary"
-                    busy={busy === l.id}
-                    onPress={() => run(l.id, () => takeBack(who, l.id), 'İlan geri çekildi, ürün depoda.')}
-                  />
-                </Card>
+                  <Pill busy={busy === l.id} onPress={() => run(l.id, () => takeBack(who, l.id), 'İlan geri çekildi, ürün depoda.')}>
+                    {pillText('Geri çek')}
+                  </Pill>
+                </View>
               ))}
 
               {mine.length >= MARKET_MAX ? (
-                <Muted>Tezgâh dolu. Yeni ilan için birinin satılmasını bekle ya da birini geri çek.</Muted>
-              ) : sell ? (
-                (() => {
-                  const [lo, hi] = unitRange(sell.key);
-                  const have = Math.min(farm.stock[sell.key] ?? 0, MARKET_MAX_QTY);
-                  return (
-                    <Card style={{ gap: 12 }}>
-                      <T
-                        style={{ fontWeight: '600', fontFamily: t.fonts.button }}
-                      >{`${PRODUCT_NAME[sell.key]} · depoda ${farm.stock[sell.key] ?? 0}`}</T>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                        <Muted style={{ flex: 1 }}>Adet</Muted>
-                        <Step icon="remove" onPress={() => setSell({ ...sell, n: Math.max(1, sell.n - 1) })} />
-                        <T style={{ minWidth: 34, textAlign: 'center', fontWeight: '600' }}>{String(sell.n)}</T>
-                        <Step icon="add" onPress={() => setSell({ ...sell, n: Math.min(have, sell.n + 1) })} />
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                        <Muted style={{ flex: 1 }}>{`Tanesi (${lo}-${hi} altın)`}</Muted>
-                        <Step
-                          icon="remove"
-                          onPress={() =>
-                            setSell({ ...sell, unit: Math.max(lo, sell.unit - Math.max(1, Math.round(PRICE[sell.key] / 10))) })
-                          }
-                        />
-                        <T style={{ minWidth: 34, textAlign: 'center', fontWeight: '600' }}>{String(sell.unit)}</T>
-                        <Step
-                          icon="add"
-                          onPress={() =>
-                            setSell({ ...sell, unit: Math.min(hi, sell.unit + Math.max(1, Math.round(PRICE[sell.key] / 10))) })
-                          }
-                        />
-                      </View>
-                      <Muted>{`Sistem fiyatı tanesi ${PRICE[sell.key]} altın. Bu ilan satılırsa ${sell.n * sell.unit} altın kazanırsınız.`}</Muted>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        <Button
-                          style={{ flex: 1 }}
-                          label={`İlana koy · ${sell.n * sell.unit} altın`}
-                          busy={busy === 'new'}
-                          onPress={() => run('new', () => createListing(who, sell.key, sell.n, sell.unit), 'İlan tezgâhta.')}
-                        />
-                        <Button label="Vazgeç" variant="secondary" onPress={() => setSell(null)} />
-                      </View>
-                    </Card>
-                  );
-                })()
+                <Note>Tezgâh dolu. Yeni ilan için birinin satılmasını bekle ya da birini geri çek.</Note>
               ) : stock.length ? (
                 <>
-                  <Muted style={{ fontWeight: '600', marginTop: 6 }}>Depodan ilana koy</Muted>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {stock.map(([k, n]) => (
-                      <Pressable
-                        key={k}
-                        onPress={() => setSell({ key: k, n: Math.min(n, 5), unit: PRICE[k] })}
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 9,
-                          borderRadius: t.radius.pill,
-                          backgroundColor: t.colors.primarySoft,
-                        }}
-                      >
-                        <Text
-                          maxFontSizeMultiplier={1.25}
-                          style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}
-                        >
-                          {label(k, n)}
-                        </Text>
-                      </Pressable>
-                    ))}
+                  <Heading title="Depodan ilana koy" />
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
+                    {stock.map(([k, n]) =>
+                      tile(
+                        k,
+                        cell4,
+                        sell?.key === k,
+                        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: GOLD }}>
+                          ×{n}
+                        </Text>,
+                        () => setSell(sell?.key === k ? null : { key: k, n: Math.min(n, 5), unit: PRICE[k] }),
+                      ),
+                    )}
                   </View>
+                  {sell &&
+                    (() => {
+                      const [lo, hi] = unitRange(sell.key);
+                      const have = Math.min(farm.stock[sell.key] ?? 0, MARKET_MAX_QTY);
+                      const step = Math.max(1, Math.round(PRICE[sell.key] / 10));
+                      const line = (text: string, ctl: ReactNode) => (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontSize: 14, color: INK, fontWeight: '700' }}>
+                            {text}
+                          </Text>
+                          {ctl}
+                        </View>
+                      );
+                      return (
+                        <View
+                          style={{ gap: 10, padding: 12, borderRadius: 16, borderWidth: 2, borderColor: BROWN, backgroundColor: '#fff' }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <Icon k={sell.key} size={44} />
+                            <View style={{ flex: 1 }}>
+                              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                                {PRODUCT_NAME[sell.key]}
+                              </Text>
+                              <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                                depoda {farm.stock[sell.key] ?? 0} · sistem fiyatı {PRICE[sell.key]}
+                              </Text>
+                            </View>
+                          </View>
+                          {line('Adet', <Stepper n={sell.n} min={1} max={have} onChange={(n) => setSell({ ...sell, n })} />)}
+                          {line(
+                            `Tanesi (${lo}-${hi})`,
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Pressable
+                                onPress={() => setSell({ ...sell, unit: Math.max(lo, sell.unit - step) })}
+                                hitSlop={6}
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: 17,
+                                  backgroundColor: SAND,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Ionicons name="remove" size={20} color={INK} />
+                              </Pressable>
+                              <Text
+                                maxFontSizeMultiplier={1.1}
+                                style={{ minWidth: 30, textAlign: 'center', fontWeight: '900', fontSize: 18, color: INK }}
+                              >
+                                {sell.unit}
+                              </Text>
+                              <Pressable
+                                onPress={() => setSell({ ...sell, unit: Math.min(hi, sell.unit + step) })}
+                                hitSlop={6}
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: 17,
+                                  backgroundColor: SAND,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Ionicons name="add" size={20} color={INK} />
+                              </Pressable>
+                            </View>,
+                          )}
+                          <Pill
+                            main
+                            busy={busy === 'new'}
+                            onPress={() => run('new', () => createListing(who, sell.key, sell.n, sell.unit), 'İlan tezgâhta.')}
+                          >
+                            <Coins n={`İlana koy · ${sell.n * sell.unit}`} size={14} color="#fff" />
+                          </Pill>
+                        </View>
+                      );
+                    })()}
                 </>
               ) : (
-                <Muted>Depo boş. Hasat edip ya da mutfakta bir şeyler yapıp gel.</Muted>
+                <Note>Depo boş. Hasat edip ya da atölyede bir şeyler yapıp gel.</Note>
               )}
             </>
           )}

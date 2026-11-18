@@ -118,7 +118,7 @@ import { FarmMarket } from '../components/world/FarmMarket';
 import { settleMine } from '../lib/market';
 import { useFarmBonuses } from '../lib/farm';
 import type { FarmBonus } from '../lib/farmBonus';
-import { ART } from '../lib/farmArt';
+import { ART, stockArt } from '../lib/farmArt';
 import { finishScene, startScene, useOpenScene, type Scene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 
@@ -625,7 +625,7 @@ function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; 
         transform: [{ translateY: bob }],
       }}
     >
-      <Image source={ART[art].src} style={{ width: 22, height: 22 }} resizeMode="contain" />
+      <Image source={(stockArt(art) ?? ART[art]).src} style={{ width: 22, height: 22 }} resizeMode="contain" />
       {!!label && (
         <View style={{ position: 'absolute', top: 31, left: -25, width: 80, alignItems: 'center' }}>
           <Text
@@ -719,7 +719,7 @@ function FloatText({ x, y, text, art }: { x: number; y: number; text: string; ar
             justifyContent: 'center',
           }}
         >
-          <Image source={ART[art].src} style={{ width: 28, height: 28 }} resizeMode="contain" />
+          <Image source={(stockArt(art) ?? ART[art]).src} style={{ width: 28, height: 28 }} resizeMode="contain" />
         </View>
         <Text maxFontSizeMultiplier={1.0} style={label}>
           {text}
@@ -2727,7 +2727,8 @@ const GIFT_TILE = (1 + OFF) * N + 3 + OFF;
 
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
 function StockIcon({ k, w, h }: { k: string; w: number; h: number }) {
-  if (ART[k]) return <Image source={ART[k].src} style={{ width: w, height: h }} resizeMode="contain" />;
+  const a = stockArt(k);
+  if (a) return <Image source={a.src} style={{ width: w, height: h }} resizeMode="contain" />;
   return (
     <Text maxFontSizeMultiplier={1.0} style={{ fontSize: Math.round(h * 0.72), lineHeight: h, height: h }}>
       {STOCK_EMOJI[k] ?? '📦'}
