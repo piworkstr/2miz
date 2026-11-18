@@ -1162,6 +1162,15 @@ export default function GardenScreen() {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
   };
+  // Günlük görevden gelen altın çiftlik açılınca kendiliğinden alınır (ekranda ayrı düğmesi yok).
+  const bankNow = couple?.dreamBank ?? 0;
+  useEffect(() => {
+    if (!couple?.id || !uid || bankNow <= 0) return;
+    collectDreamBank(couple.id, uid, myName)
+      .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankNow > 0, couple?.id, uid]);
 
   // Çiftçi pazarı: çiftlik açılınca satılan ilanların bedeli tahsil edilir, süresi dolanlar depoya döner (tek sorgu).
   const coupleId = couple?.id;
@@ -2774,35 +2783,18 @@ function Sheet(p: SheetProps) {
         ? `${big} büyük ürün hazır · hasat günü ikinizle 🌾`
         : p.thirsty
           ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧`
-          : p.bank > 0
-            ? `Günlük görevden ${p.bank} altın geldi`
-            : hungryAll
-              ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
-              : farm.harvests < 20
-                ? 'Depoya ya da çimene dokun: depo, pazar, atölyeler, dükkân'
-                : '';
-    // Zemin yok: düğmeler iki kenarda dizilir, ortası çiftliğe açık kalır. İpucu ve toplu işler altta ortada.
+          : hungryAll
+            ? `${hungryAll} hayvan aç · kümese ya da ağıla dokun, oradan yemle`
+            : farm.harvests < 20
+              ? 'Depoya, posta kutusuna, eve ya da atölyeye dokun: hepsi oradan açılır'
+              : '';
+    // Ekranda yalnızca Dükkân düğmesi durur; depo, sipariş, atölye, günlük ve pazar çiftlikteki yerlerine dokununca açılır.
     return (
-      <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-        <View pointerEvents="box-none" style={{ alignItems: 'center', gap: 10 }}>
-          {p.bank > 0 && <Edge icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
-          {big > 0 && <Edge icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
-          <Edge icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
-          {shopTile >= 0 && (
-            <Edge icon="construct" label="Atölyeler" badge={shopReady} onPress={() => p.onWorkshop(shops.length > 1 ? -2 : shopTile)} />
-          )}
-          <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
-        </View>
-        <View pointerEvents="box-none" style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4 }}>
-          {(p.thirsty > 0 || small > 0) && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
-              {p.thirsty > 0 && <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />}
-              {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
-            </View>
-          )}
+      <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+        <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
+        <View pointerEvents="none" style={{ flex: 1, alignItems: 'center', paddingHorizontal: 6, paddingBottom: 4, marginRight: 76 }}>
           {!!hint && (
             <Text
-              pointerEvents="none"
               maxFontSizeMultiplier={1.0}
               style={{
                 backgroundColor: 'rgba(43,29,34,0.78)',
@@ -2819,18 +2811,6 @@ function Sheet(p: SheetProps) {
               {hint}
             </Text>
           )}
-        </View>
-        <View pointerEvents="box-none" style={{ alignItems: 'center', gap: 10 }}>
-          {kitchenReady > 0 && <Edge icon="home" label="Evde hazır" badge={kitchenReady} accent onPress={p.onKitchen} />}
-          <Edge icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
-          <Edge icon="book" label="Günlük" onPress={p.onLog} />
-          <Edge art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
-          {n > 0 &&
-            (weekend ? (
-              <Edge icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} big accent onPress={() => p.onScene('market')} />
-            ) : (
-              <Edge art="coin" label={`Sat ${stockValue(farm)}`} big onPress={p.onSell} />
-            ))}
         </View>
       </View>
     );
@@ -2894,6 +2874,7 @@ function Sheet(p: SheetProps) {
       .sort((a, b) => b[1] - a[1]);
     const n = stockCount(farm);
     const weekend = isWeekend(now);
+    const smallReady = p.ready - bigReady(farm, now).length;
     return (
       <>
         <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
@@ -2941,6 +2922,12 @@ function Sheet(p: SheetProps) {
               <Btn kind="soft" label="Siparişler" onPress={p.onOrders} />
             </View>
           </>
+        )}
+        {(p.thirsty > 0 || smallReady > 0) && (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {smallReady > 0 && <Btn flex label={`Hazırları topla (${smallReady})`} onPress={p.onAll} />}
+            {p.thirsty > 0 && <Btn flex kind="accent" label={`Hepsini sula (${p.thirsty})`} onPress={p.onWaterAll} />}
+          </View>
         )}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {items.length === 0 && <Btn flex kind="soft" label="Siparişler" onPress={p.onOrders} />}
