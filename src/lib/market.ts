@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, limit, orderBy, query, runTransaction, where } from 'firebase/firestore';
 import { db } from './firebase';
-import { applyAction, farmOf, farmWrite, levelOf, PRICE, type Action, type Farm } from './farm';
+import { applyAction, farmOf, farmWrite, levelOf, PRICE, unlockLvl, type Action, type Farm } from './farm';
+import { srvNow } from './serverClock';
 import type { Couple } from './session';
 
 // Çiftçi pazarı: çiftler depolarındaki ürünü ilana koyar, başka çiftler oyun altınıyla satın alır.
@@ -31,7 +32,7 @@ export const unitRange = (key: string): [number, number] => [Math.max(1, Math.ce
 
 const col = () => collection(db, 'market');
 const apply = (f: Farm, act: Action, uid: string, name: string, partnerName: string) =>
-  applyAction(f, act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, Date.now(), null);
+  applyAction(f, act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, srvNow(), null);
 
 // Başka çiftliklerin açık ilanları. Canlı dinleme yok; pazar açılınca tek okuma (en çok 60 belge).
 export async function loadMarket(coupleId: string): Promise<Listing[]> {
@@ -159,8 +160,11 @@ export async function settleMine(w: Who): Promise<{ sold: number; coins: number;
 // Pazar boş kalmasın diye her gün değişen üç teklif (bütün çiftlere aynı). Sistem fiyatının biraz üstünde satar,
 // her teklif günde bir kez alınabilir. Sunucu kaydı yoktur; günden türetilir.
 export type Offer = { id: string; key: string; n: number; cost: number };
-export function traderOffers(day: string): Offer[] {
-  const keys = Object.keys(PRICE).sort();
+// level verilirse yalnızca o seviyede açılmış ürünler teklif edilir.
+export function traderOffers(day: string, level = 99): Offer[] {
+  const keys = Object.keys(PRICE)
+    .filter((k) => unlockLvl(k) <= level)
+    .sort();
   let h = 0;
   for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const out: Offer[] = [];
@@ -171,7 +175,7 @@ export function traderOffers(day: string): Offer[] {
     if (used.has(key)) continue;
     used.add(key);
     const n = 2 + ((h >>> 8) % 5);
-    out.push({ id: `${day}_${key}`, key, n, cost: Math.round(PRICE[key] * n * 1.3) });
+    out.push({ id: `${day}_${key}`, key, n, cost: Math.round(PRICE[key] * n * 1.5) });
   }
   return out;
 }

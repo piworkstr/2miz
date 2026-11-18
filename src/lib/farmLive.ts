@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 
 import { applyAction, type Action, type Farm } from './farm';
 import { db } from './firebase';
+import { srvNow } from './serverClock';
 
 export type FarmLive = { tile: number; tool: string | null; acts: Action[]; atMs: number };
 const FRESH_MS = 100_000; // kalp atışı 45 sn'de bir; iki atış kaçarsa partner çiftlikte sayılmaz
@@ -41,10 +42,13 @@ export function usePartnerLive(coupleId: string | undefined, partnerId: string |
 export function overlayFarm(base: Farm, acts: Action[], by: string): Farm {
   if (!acts.length || !by) return base;
   let f = base;
-  const now = Date.now();
+  const now = srvNow();
   for (const act of acts) {
     const r = applyAction(f, act, by, () => '', '', now, null);
     if (typeof r !== 'string') f = r.farm;
   }
-  return f === base ? base : { ...f, log: base.log };
+  if (f === base) return base;
+  // Deneme sırasında rastgele üretilen yeni siparişler gösterilmez (kayıttaki gerçek sipariş farklı çıkar, liste titrer).
+  const known = new Set(base.orders.map((o) => o.id));
+  return { ...f, log: base.log, orders: f.orders.filter((o) => known.has(o.id)) };
 }

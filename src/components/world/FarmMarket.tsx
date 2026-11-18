@@ -213,7 +213,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
   const nextGood = STALL_GOODS.find((g) => g.lvl > level);
   const today = dayKey();
   const got = farm.trader?.day === today ? farm.trader.got : [];
-  const offers = traderOffers(today);
+  const offers = traderOffers(today, level);
   const stock = Object.entries(farm.stock).filter(([k, n]) => n > 0 && PRICE[k]);
   const PAD = 16;
   const GAP = 8;

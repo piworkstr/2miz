@@ -87,6 +87,8 @@ import {
   PAVE,
   STATIONS,
   stationJobs,
+  hasStation,
+  PRICE,
   stationOf,
   stationSlots,
   type Station,
@@ -116,6 +118,7 @@ import { logActivityCapped } from '../lib/bond';
 import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
 import { settleMine } from '../lib/market';
+import { srvNow, syncClock } from '../lib/serverClock';
 import { useFarmBonuses } from '../lib/farm';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
@@ -792,7 +795,7 @@ export default function GardenScreen() {
     if (next) setGift(next);
   }, [bonuses, gift]);
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(srvNow());
   const [sel, setSel] = useState<number | null>(null);
   const [shop, setShop] = useState<Shop>('crop');
   const [plantAll, setPlantAll] = useState(false);
@@ -908,7 +911,7 @@ export default function GardenScreen() {
   const heartsRef = useRef<(tile: number) => void>(() => {});
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const id = setInterval(() => setNow(srvNow()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -1150,6 +1153,9 @@ export default function GardenScreen() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        // Uygulama öne geldi: saat yeniden sunucuyla eşitlenir (arada telefon saati değiştirilmiş olabilir).
+        const cc = flushCtx.current;
+        if (cc.coupleId && cc.uid) syncClock(cc.coupleId, cc.uid);
         arrived.current?.();
         arrived.current = null;
         return;
@@ -1179,6 +1185,10 @@ export default function GardenScreen() {
     setSay(text);
     setTimeout(() => setSay(''), 1800);
   };
+  useEffect(() => {
+    if (couple?.id && uid) syncClock(couple.id, uid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couple?.id, uid]);
   // Günlük görevden gelen altın çiftlik açılınca kendiliğinden alınır (ekranda ayrı düğmesi yok).
   const bankNow = couple?.dreamBank ?? 0;
   useEffect(() => {
@@ -1265,7 +1275,7 @@ export default function GardenScreen() {
   function quick(job: Action) {
     if (!couple) return;
     const base = simFarm.current ?? farmRef.current;
-    const sim = applyAction(base, job, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), myName, Date.now(), null);
+    const sim = applyAction(base, job, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), myName, srvNow(), null);
     if (typeof sim === 'string') return flash(sim);
     simFarm.current = sim.farm;
     // Toplama işleri: depoya ne girdiği hemen gösterilir.
@@ -1328,7 +1338,7 @@ export default function GardenScreen() {
         // Toplama işleri: depoya ne girdiği hemen gösterilir (iş topluca kaydedilse bile). Aynı kural yerelde denenir,
         // depo farkı alınır; kural reddederse (hazır değil vb.) bir şey gösterilmez.
         if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) {
-          const sim = applyAction(farmBefore, job, uid, () => '', myName, Date.now(), null);
+          const sim = applyAction(farmBefore, job, uid, () => '', myName, srvNow(), null);
           if (typeof sim !== 'string') {
             const got = Object.entries(sim.farm.stock)
               .map(([k, n]) => [k, n - (farmBefore.stock[k] ?? 0)] as const)
@@ -1454,6 +1464,12 @@ export default function GardenScreen() {
   const lv = levelOf(farm.xp);
   const season = seasonOf(now);
   const ready = readyTiles(farm, now);
+  // Atölyelerde bitmiş iş sayısı: Topla düğmesi bunları da sayar.
+  const prodReady = (farm.prod ?? []).filter((j) => j.ready <= now && hasStation(farm, j.st ?? stationOf(j.recipe))).length;
+  const hungryNow = farm.tiles.reduce(
+    (a, x) => a + (x.k === 'building' ? x.res.filter((r) => needsFeed(r.id) && r.fed === null).length : 0),
+    0,
+  );
   const bigIds = bigReady(farm, now);
   const live = scene && scene.status === 'live' ? scene : null;
   // Hasat günü canlıyken ikisi tarlada yan yana; pazar canlıyken yığının başında.
@@ -2274,7 +2290,7 @@ export default function GardenScreen() {
                 onDepot={() => setSel(BARN_TILE)}
                 onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
                 onNote={(text) => work({ a: 'note', i: NOTE_TREE, text })}
-                ready={ready.length}
+                ready={ready.length + prodReady + hungryNow}
                 thirsty={thirsty}
                 fields={fields}
                 bank={couple.dreamBank ?? 0}
@@ -2293,13 +2309,24 @@ export default function GardenScreen() {
                 onLog={() => setShowLog(true)}
                 onMarket={() => setShowMarket(true)}
                 onKitchen={() => setSel(FIXED_ANCHOR.house[0] * N + FIXED_ANCHOR.house[1])}
-                onAll={() =>
+                onAll={() => {
                   ready.forEach((i) => {
                     const x = farm.tiles[i];
-                    if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat günüyle
+                    if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat gününe kalır (tek tek toplanabilir)
                     work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : x.k === 'building' ? 'gather' : 'collect', i });
-                  })
-                }
+                  });
+                  // Atölyelerde biten ürünler de toplanır.
+                  farm.tiles.forEach((x, i) => {
+                    if (x.k !== 'decor' || !DECOR[x.item].station) return;
+                    const st = x.item as Station;
+                    if (stationJobs(farm, st).some((j) => j.ready <= now)) work({ a: 'collectProd', i, at: st });
+                  });
+                  // Toplanan ve zaten aç olan hayvanlar yemlenir (buğday ya da altın varsa).
+                  farm.tiles.forEach((x, i) => {
+                    if (x.k !== 'building') return;
+                    if (x.res.some((r) => needsFeed(r.id) && (r.fed === null || residentReady(r, now)))) work({ a: 'feed', i });
+                  });
+                }}
                 onSell={() => work({ a: 'sell', i: PILE_TILE })}
                 onWaterAll={() =>
                   farm.tiles.forEach((x, i) => {
@@ -2726,6 +2753,71 @@ function ago(ms: number) {
 const GIFT_TILE = (1 + OFF) * N + 3 + OFF;
 
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
+// Depodaki ürünler: birine dokununca yalnızca o ürün, seçilen adet kadar satılır (malzemeler elde kalsın).
+function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key: string, n: number) => void }) {
+  const [pick, setPick] = useState<{ key: string; n: number } | null>(null);
+  const have = pick ? (items.find(([k]) => k === pick.key)?.[1] ?? 0) : 0;
+  const n = pick ? Math.min(pick.n, have) : 0;
+  const step = (d: number) => pick && setPick({ key: pick.key, n: Math.min(have, Math.max(1, n + d)) });
+  const round = (icon: 'remove' | 'add', d: number) => (
+    <Pressable
+      onPress={() => step(d)}
+      onLongPress={() => step(d * 10)}
+      hitSlop={6}
+      style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#F6D58E', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Ionicons name={icon} size={18} color={INK} />
+    </Pressable>
+  );
+  return (
+    <>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        {items.map(([k, v]) => {
+          const on = pick?.key === k;
+          return (
+            <Pressable
+              key={k}
+              onPress={() => setPick(on ? null : { key: k, n: 1 })}
+              style={{
+                width: 74,
+                alignItems: 'center',
+                paddingVertical: 6,
+                borderRadius: 14,
+                backgroundColor: on ? '#FDECEF' : '#FBFAF6',
+                borderWidth: on ? 2 : 1,
+                borderColor: on ? '#E8516A' : '#F0E2DC',
+              }}
+            >
+              <StockIcon k={k} w={44} h={40} />
+              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
+                {PRODUCT_NAME[k] ?? k}
+              </Text>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>
+                ×{v}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      {pick && have > 0 ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+            {PRODUCT_NAME[pick.key] ?? pick.key}
+          </Text>
+          {round('remove', -1)}
+          <Text maxFontSizeMultiplier={1.0} style={{ minWidth: 26, textAlign: 'center', fontWeight: '900', fontSize: 16, color: INK }}>
+            {n}
+          </Text>
+          {round('add', 1)}
+          <Btn label={`Sat · ${(PRICE[pick.key] ?? 0) * n} altın`} onPress={() => onSell(pick.key, n)} />
+        </View>
+      ) : (
+        <Note>Tek bir ürünü satmak için üstüne dokun.</Note>
+      )}
+    </>
+  );
+}
+
 function StockIcon({ k, w, h }: { k: string; w: number; h: number }) {
   const a = stockArt(k);
   if (a) return <Image source={a.src} style={{ width: w, height: h }} resizeMode="contain" />;
@@ -2743,7 +2835,17 @@ function Sheet(p: SheetProps) {
   if (p.showShop) return null; // dükkân yandan açılan ayrı bir paneldir
   if (p.showOrders === 'ws') return <Workshops farm={farm} now={now} onClose={p.onClose} onPick={p.onWorkshop} />;
   if (p.showOrders)
-    return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
+    return (
+      <Orders
+        farm={farm}
+        now={now}
+        uid={p.uid}
+        partnerName={p.partnerName}
+        onClose={p.onClose}
+        onDeliver={p.onDeliver}
+        onSkip={(id) => p.onStay({ a: 'skipOrder', i: 0, order: id })}
+      />
+    );
   if (sel === GIFT_TILE)
     return (
       <>
@@ -2807,7 +2909,7 @@ function Sheet(p: SheetProps) {
     const hint = gift
       ? `${p.partnerName} sana ${BASKETS[gift.kind].name.toLocaleLowerCase('tr-TR')} gönderdi ${BASKETS[gift.kind].emoji}`
       : big
-        ? `${big} büyük ürün hazır · hasat günü ikinizle 🌾`
+        ? `${big} büyük ürün hazır · hasat günüyle ortak hasat 🌾`
         : p.thirsty
           ? `${p.partnerName}’in ${p.thirsty} ürünü susuz 💧`
           : hungryAll
@@ -2918,30 +3020,7 @@ function Sheet(p: SheetProps) {
           </Note>
         ) : (
           <>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {items.map(([k, v]) => (
-                <View
-                  key={k}
-                  style={{
-                    width: 74,
-                    alignItems: 'center',
-                    paddingVertical: 6,
-                    borderRadius: 14,
-                    backgroundColor: '#FBFAF6',
-                    borderWidth: 1,
-                    borderColor: '#F0E2DC',
-                  }}
-                >
-                  <StockIcon k={k} w={44} h={40} />
-                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
-                    {PRODUCT_NAME[k] ?? k}
-                  </Text>
-                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>
-                    ×{v}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
+            <DepotItems items={items} onSell={(key, n) => p.onStay({ a: 'sellOne', i, key, n })} />
             <Note>
               {n} ürün · {stockValue(farm)} altın değerinde.{' '}
               {weekend ? 'Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.' : 'Hafta sonu pazarda bir buçuk kata gider.'}
@@ -2950,7 +3029,7 @@ function Sheet(p: SheetProps) {
               {weekend ? (
                 <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
               ) : (
-                <Btn flex label={`Sat · ${stockValue(farm)} altın`} onPress={p.onSell} />
+                <Btn flex label={`Hepsini sat · ${stockValue(farm)} altın`} onPress={p.onSell} />
               )}
               <Btn kind="soft" label="Siparişler" onPress={p.onOrders} />
             </View>
@@ -3033,8 +3112,12 @@ function Sheet(p: SheetProps) {
         {done ? (
           c.big ? (
             <>
-              <Note>Büyük ürün: hasat günü ikinizle olur. Biri çağırır, diğeri gelir; birlikte toplar, ortak hasat sayılır.</Note>
+              <Note>
+                Büyük ürün: hasat günüyle birlikte toplarsanız ortak hasat sayılır. Tek başına da toplayabilirsin; o zaman ortak hasat
+                sayılmaz.
+              </Note>
               <Btn kind="accent" label={`Hasat günü · ${p.partnerName}’i çağır`} onPress={() => p.onScene('harvest')} />
+              <Btn kind="soft" label="Tek başıma topla" onPress={() => p.onAct({ a: 'harvest', i })} />
             </>
           ) : (
             <>
@@ -3131,7 +3214,7 @@ function Sheet(p: SheetProps) {
           {t.item === 'sera'
             ? 'Çevresindeki 2 kare içindeki tarlalara ekilen ekin %25 daha çabuk büyür (yeni ekilenlerde geçerli).'
             : t.item === 'degirmen'
-              ? 'Değirmen çiftlikteyken fırında ekmek ve kek çift çıkar.'
+              ? 'Buğday ve mısırdan un öğütür; fırındaki ekmek, kek ve kurabiye bu undan yapılır.'
               : 'Bahçenizi güzelleştiriyor.'}
         </Note>
         {d.wall &&
@@ -3191,6 +3274,16 @@ function Sheet(p: SheetProps) {
                         ? 'aç · yemle'
                         : `${productNames(r.id)} ${timeLeft(residentReadyAt(r) - now)} sonra`}
                   </Text>
+                  <Pressable
+                    onPress={() => p.onStay({ a: 'release', i, idx: k })}
+                    hitSlop={6}
+                    accessibilityLabel={`${an.name} geri ver`}
+                    style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: '#F3EEE8' }}
+                  >
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '800', color: MUTED }}>
+                      Geri ver +{Math.floor(an.cost / 2)}
+                    </Text>
+                  </Pressable>
                 </View>
               );
             })}
@@ -3511,6 +3604,7 @@ function Orders({
   partnerName,
   onClose,
   onDeliver,
+  onSkip,
 }: {
   farm: Farm;
   now: number;
@@ -3518,6 +3612,7 @@ function Orders({
   partnerName: string;
   onClose: () => void;
   onDeliver: (id: string) => void;
+  onSkip: (id: string) => void;
 }) {
   const who = (o: Order) => (o.by.length ? o.by.map((b) => (b === uid ? 'sen' : partnerName)).join(' + ') : '');
   return (
@@ -3581,6 +3676,8 @@ function Orders({
                     <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
                       {who(o) ? `Katkı: ${who(o)}` : ''}
                     </Text>
+                    {/* Geri çevir: verilen ürünler depoya döner, yenisi 20 dakika sonra yazılır. */}
+                    {!o.packed && <Btn kind="soft" label="Geri çevir" onPress={() => onSkip(o.id)} />}
                     <Btn
                       kind={give ? 'green' : 'soft'}
                       label={

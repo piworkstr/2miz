@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { dayKey } from './date';
 import { BONUS_ITEMS, BONUS_MAX, bonusText, type FarmBonus } from './farmBonus';
+import { srvNow } from './serverClock';
 import type { Couple } from './session';
 
 // Bizim Çiftlik: çiftin ortak çiftliği (2.5D). Amaç: birlikte emek vermek ve emeğin meyvesini birlikte görmek.
@@ -11,7 +12,7 @@ import type { Couple } from './session';
 // Ortaklık: birinin ektiğini diğeri sularsa kalan süre yarıya iner ve o hasat "ortak hasat" sayılır.
 // Büyük ürünlerin (gül, ayçiçeği, bal kabağı) hasadı iki kişilik sahnedir: Hasat günü.
 // Hafta sonu pazar: tezgâhı ikiniz kurarsanız depo bir buçuk katına gider.
-// Mevsim gerçek takvimi izler: kışın ürün yavaş büyür.
+// Mevsim gerçek takvimi izler: baharda ekinler biraz hızlı büyür (kış artık yavaşlatmaz).
 // Arazi 10x10; kapalı parseller parayla değil ortak hasat sayısıyla açılır (her 10 ortak hasatta bir parsel).
 
 export const N = 22; // arazi 22x22; ortadaki 10x10 başlangıç çiftliği, çevresindeki altı sıra parayla alınan arazi (v3'te 14x14'tü)
@@ -67,20 +68,20 @@ export type DecorId =
 // 13 kurabiye · 14 kazak · 15 yağ fabrikası · 17 pamuk · 19 zeytin · 21 patates · 23 soğan · 24 avokado · 25 kavun, meyve suyu,
 // tatlı atölyesi · 28 karpuz · 35 yaş pasta, piknik sepeti
 export const CROPS: Record<CropId, { name: string; cost: number; mins: number; sell: number; xp: number; lvl: number; big?: true }> = {
-  bugday: { name: 'Buğday', cost: 2, mins: 10, sell: 6, xp: 2, lvl: 1 },
-  havuc: { name: 'Havuç', cost: 5, mins: 30, sell: 15, xp: 4, lvl: 1 },
-  domates: { name: 'Domates', cost: 8, mins: 60, sell: 25, xp: 7, lvl: 2 },
-  misir: { name: 'Mısır', cost: 12, mins: 120, sell: 40, xp: 10, lvl: 3 },
+  bugday: { name: 'Buğday', cost: 2, mins: 10, sell: 5, xp: 1, lvl: 1 },
+  havuc: { name: 'Havuç', cost: 5, mins: 30, sell: 15, xp: 3, lvl: 1 },
+  domates: { name: 'Domates', cost: 8, mins: 60, sell: 28, xp: 7, lvl: 2 },
+  misir: { name: 'Mısır', cost: 12, mins: 120, sell: 54, xp: 14, lvl: 3 },
   gul: { name: 'Aşk gülü', cost: 30, mins: 180, sell: 110, xp: 30, lvl: 4, big: true },
-  cilek: { name: 'Çilek', cost: 20, mins: 180, sell: 65, xp: 14, lvl: 5 },
-  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 240, sell: 90, xp: 20, lvl: 8, big: true },
-  kabak: { name: 'Bal kabağı', cost: 40, mins: 300, sell: 140, xp: 26, lvl: 12, big: true },
+  cilek: { name: 'Çilek', cost: 20, mins: 180, sell: 86, xp: 22, lvl: 5 },
+  aycicegi: { name: 'Ayçiçeği', cost: 25, mins: 240, sell: 115, xp: 32, lvl: 8, big: true },
+  kabak: { name: 'Bal kabağı', cost: 40, mins: 300, sell: 155, xp: 42, lvl: 12, big: true },
   // 17–28. seviye: her yeni ürün eskilerle birleşip yeni tarifler açar (RECIPES). Aradaki seviyeler üretimi geliştirir.
-  pamuk: { name: 'Pamuk', cost: 45, mins: 240, sell: 150, xp: 28, lvl: 17 },
-  patates: { name: 'Patates', cost: 55, mins: 300, sell: 185, xp: 32, lvl: 21 },
-  sogan: { name: 'Soğan', cost: 60, mins: 330, sell: 205, xp: 35, lvl: 23 },
-  kavun: { name: 'Kavun', cost: 70, mins: 360, sell: 240, xp: 40, lvl: 25 },
-  karpuz: { name: 'Karpuz', cost: 80, mins: 420, sell: 280, xp: 45, lvl: 28 },
+  pamuk: { name: 'Pamuk', cost: 45, mins: 240, sell: 150, xp: 34, lvl: 17 },
+  patates: { name: 'Patates', cost: 55, mins: 300, sell: 185, xp: 45, lvl: 21 },
+  sogan: { name: 'Soğan', cost: 60, mins: 330, sell: 205, xp: 52, lvl: 23 },
+  kavun: { name: 'Kavun', cost: 70, mins: 360, sell: 240, xp: 60, lvl: 25 },
+  karpuz: { name: 'Karpuz', cost: 80, mins: 420, sell: 280, xp: 74, lvl: 28 },
 };
 
 // Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
@@ -97,10 +98,16 @@ export const ANIMALS: Record<
 > = {
   tavuk: { name: 'Tavuk', products: ['egg'], cost: 60, mins: 90, xp: 3, lvl: 2, w: 0.6 },
   koyun: { name: 'Koyun', products: ['wool', 'milk'], cost: 150, mins: 150, xp: 5, lvl: 4, w: 0.78 },
-  inek: { name: 'İnek', products: ['milk'], cost: 200, mins: 180, xp: 6, lvl: 6, w: 0.95 },
+  inek: { name: 'İnek', products: ['milk', 'milk'], cost: 200, mins: 180, xp: 6, lvl: 6, w: 0.95 },
   ari: { name: 'Arı kovanı', products: ['honey'], cost: 300, mins: 240, xp: 8, lvl: 9, w: 0.72 },
 };
-export const productNames = (a: AnimalId) => ANIMALS[a].products.map((k) => PRODUCTS[k].name.toLocaleLowerCase('tr-TR')).join(' ve ');
+export const productNames = (a: AnimalId) =>
+  [...new Set(ANIMALS[a].products)]
+    .map((k) => {
+      const n = ANIMALS[a].products.filter((x) => x === k).length;
+      return `${n > 1 ? `${n} ` : ''}${PRODUCTS[k].name.toLocaleLowerCase('tr-TR')}`;
+    })
+    .join(' ve ');
 export const productValue = (a: AnimalId) => ANIMALS[a].products.reduce((s, k) => s + PRODUCTS[k].sell, 0);
 
 // ---------- Mutfak: tarifler ----------
@@ -154,11 +161,11 @@ export const RECIPES: Record<
   // mins: üretim süresi. Üretim anında değildir: işe konur, süre dolunca mutfaktan toplanır.
   // Un zinciri: buğday → değirmende un → fırında ekmek. Fırın ve değirmen 2. seviyede, ucuz.
   bugdayunu: { name: 'Buğday unu', emoji: '🌾', needs: { bugday: 3 }, sell: 22, xp: 2, lvl: 2, mins: 5, at: 'degirmen' },
-  misirunu: { name: 'Mısır unu', emoji: '🌽', needs: { misir: 2 }, sell: 100, xp: 6, lvl: 4, mins: 15, at: 'degirmen' },
+  misirunu: { name: 'Mısır unu', emoji: '🌽', needs: { misir: 2 }, sell: 135, xp: 6, lvl: 4, mins: 15, at: 'degirmen' },
   ekmek: { name: 'Ekmek', emoji: '🍞', needs: { bugdayunu: 1 }, sell: 30, xp: 4, lvl: 2, mins: 15, at: 'firin' },
-  misirekmegi: { name: 'Mısır ekmeği', emoji: '🍞', needs: { misirunu: 1, milk: 1 }, sell: 190, xp: 12, lvl: 5, mins: 40, at: 'firin' },
+  misirekmegi: { name: 'Mısır ekmeği', emoji: '🍞', needs: { misirunu: 1, milk: 1 }, sell: 240, xp: 12, lvl: 5, mins: 40, at: 'firin' },
   // Yağ fabrikası (20): ayçiçeği tarladan, zeytin ve avokado ağaçtan gelir.
-  aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 240, xp: 16, lvl: 15, mins: 60, at: 'yag' },
+  aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 300, xp: 16, lvl: 15, mins: 60, at: 'yag' },
   zeytinyagi: { name: 'Zeytinyağı', emoji: '🫒', needs: { zeytin: 3 }, sell: 430, xp: 22, lvl: 19, mins: 90, at: 'yag' },
   avokadoyagi: { name: 'Avokado yağı', emoji: '🥑', needs: { avokado: 3 }, sell: 590, xp: 28, lvl: 24, mins: 120, at: 'yag' },
   // Evde mutfak yoktur: yemekler aşçı mutfağında, kek fırında, reçel reçel atölyesinde, ballı süt mandırada yapılır.
@@ -170,7 +177,7 @@ export const RECIPES: Record<
   kazak: { name: 'Kazak', emoji: '🧶', needs: { wool: 4 }, sell: 270, xp: 18, lvl: 14, mins: 150, at: 'atolye' },
   kek: { name: 'Kek', emoji: '🍰', needs: { egg: 2, milk: 1, bugdayunu: 1 }, sell: 140, xp: 14, lvl: 6, mins: 60, at: 'firin' },
   // alt: o atölye çiftlikteyse tarif oraya taşınır (mutfakta yer açılır); yoksa mutfakta yapılır.
-  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 290, xp: 16, lvl: 7, mins: 120, at: 'konserve' },
+  recel: { name: 'Çilek reçeli', emoji: '🍓', needs: { cilek: 3 }, sell: 350, xp: 16, lvl: 7, mins: 120, at: 'konserve' },
   ballisut: { name: 'Ballı süt', emoji: '🥛', needs: { honey: 1, milk: 1 }, sell: 190, xp: 18, lvl: 10, mins: 45, at: 'mandira' },
   // 17. seviye: pamuk
   kumas: { name: 'Kumaş', emoji: '🧵', needs: { pamuk: 3 }, sell: 560, xp: 20, lvl: 17, mins: 90, at: 'atolye' },
@@ -292,7 +299,7 @@ export const BASKETS: Record<
     points: 10,
   },
   piknik: {
-    name: 'Piknik sepeti',
+    name: 'Kır sepeti',
     emoji: '🥪',
     art: 'sepet_dolu',
     needs: { ekmek: 1, peynir: 1, havuc: 2 },
@@ -348,12 +355,12 @@ export const TREES: Record<
     w: number;
   }
 > = {
-  elma: { name: 'Elma ağacı', fruit: 'Elma', cost: 200, first: 180, mins: 90, yieldN: 3, sell: 30, xp: 6, lvl: 3, w: 1.15 },
-  kiraz: { name: 'Kiraz ağacı', fruit: 'Kiraz', cost: 320, first: 240, mins: 120, yieldN: 3, sell: 45, xp: 9, lvl: 6, w: 1.15 },
-  armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 300, mins: 150, yieldN: 3, sell: 60, xp: 12, lvl: 11, w: 1.15 },
+  elma: { name: 'Elma ağacı', fruit: 'Elma', cost: 200, first: 180, mins: 135, yieldN: 3, sell: 30, xp: 6, lvl: 3, w: 1.15 },
+  kiraz: { name: 'Kiraz ağacı', fruit: 'Kiraz', cost: 320, first: 240, mins: 180, yieldN: 3, sell: 45, xp: 9, lvl: 6, w: 1.15 },
+  armut: { name: 'Armut ağacı', fruit: 'Armut', cost: 450, first: 300, mins: 225, yieldN: 3, sell: 60, xp: 12, lvl: 11, w: 1.15 },
   // Yağ fabrikasının hammaddeleri
-  zeytin: { name: 'Zeytin ağacı', fruit: 'Zeytin', cost: 900, first: 360, mins: 180, yieldN: 3, sell: 110, xp: 16, lvl: 19, w: 1.2 },
-  avokado: { name: 'Avokado ağacı', fruit: 'Avokado', cost: 1200, first: 420, mins: 240, yieldN: 3, sell: 150, xp: 20, lvl: 24, w: 1.2 },
+  zeytin: { name: 'Zeytin ağacı', fruit: 'Zeytin', cost: 900, first: 360, mins: 270, yieldN: 3, sell: 110, xp: 16, lvl: 19, w: 1.2 },
+  avokado: { name: 'Avokado ağacı', fruit: 'Avokado', cost: 1200, first: 420, mins: 360, yieldN: 3, sell: 150, xp: 20, lvl: 24, w: 1.2 },
 };
 
 export const DECOR: Record<
@@ -424,7 +431,7 @@ export const DECOR: Record<
   golet: { name: 'Gölet', sp: 'golet', cost: 150, xp: 6, lvl: 3, w: 1.3 },
   salincak: { name: 'Salıncak', sp: 'salincak', cost: 180, xp: 7, lvl: 4, w: 1.15 },
   cardak: { name: 'Çardak', sp: 'cardak', cost: 400, xp: 14, lvl: 6, w: 1.4 },
-  // İşe yarayan yapılar: sera çevresindeki (2 kare) ekinleri hızlandırır; değirmen varken ekmek ve kek çift çıkar.
+  // İşe yarayan yapılar: sera çevresindeki (2 kare) ekinleri hızlandırır.
   sera: { name: 'Sera', sp: 'sera', cost: 500, xp: 16, lvl: 4, w: 1.3, perk: 'Yakın ekin %25 hızlı' },
   degirmen: {
     name: 'Un değirmeni',
@@ -433,7 +440,7 @@ export const DECOR: Record<
     xp: 8,
     lvl: 2,
     w: 1.2,
-    perk: 'Buğday ve mısır unu üretir; ekmek ve kek çift çıkar',
+    perk: 'Buğday ve mısır unu üretir',
     station: true,
   },
   firin: {
@@ -532,6 +539,8 @@ export type Farm = {
   prod?: ProdJob[]; // mutfakta üretimdeki işler
   name?: string; // çiftçi pazarında görünen çiftlik adı (çiftin gerçek adı görünmez)
   trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
+  // Kurma tecrübesi yalnız ilk kez verilir: her tür için bugüne dek aynı anda en çok kaç tane durduğu (al-kaldır döngüsü tecrübe basmasın).
+  dx?: Record<string, number>;
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -587,10 +596,8 @@ export function newFarm(): Farm {
 export function farmOf(couple: Couple | null | undefined): Farm {
   // Süreler kısaltılmadan önce ekilmiş ekinler eski (uzun) süresini beklemesin: en çok yeni sürenin kış katı kadar.
   const capCrops = (tiles: Tile[]): Tile[] => {
-    const late = (t: Tile) => t.k === 'crop' && !!CROPS[t.crop] && t.ready - t.at > CROPS[t.crop].mins * MIN * 1.5;
-    return tiles.some(late)
-      ? tiles.map((t) => (t.k === 'crop' && late(t) ? { ...t, ready: t.at + CROPS[t.crop].mins * MIN * 1.5 } : t))
-      : tiles;
+    const late = (t: Tile) => t.k === 'crop' && !!CROPS[t.crop] && t.ready - t.at > CROPS[t.crop].mins * MIN * 1.02;
+    return tiles.some(late) ? tiles.map((t) => (t.k === 'crop' && late(t) ? { ...t, ready: t.at + CROPS[t.crop].mins * MIN } : t)) : tiles;
   };
   const fill = (f: Farm): Farm => ({
     ...f,
@@ -633,7 +640,11 @@ export const isOuter = (i: number) => {
   return r < OFF || c < OFF || r >= OFF + INNER || c >= OFF + INNER;
 };
 // Dış arazi fiyatı: her parselde artar.
-export const outerPrice = (f: Farm) => 250 + 150 * (f.outer ?? 0);
+// Altın birikiyor; arazi ilerledikçe belirgin pahalanır (0: 300 · 5: 3.050 · 10: 8.300 · 20: 26.300).
+export const outerPrice = (f: Farm) => {
+  const n = f.outer ?? 0;
+  return 300 + 300 * n + 50 * n * n;
+};
 
 export const levelStart = (l: number) => 15 * l * (l - 1);
 export function levelOf(xp: number) {
@@ -675,8 +686,8 @@ export function seasonOf(now = Date.now()): Season {
   return m === 11 || m < 2 ? 'kis' : m < 5 ? 'bahar' : m < 8 ? 'yaz' : 'guz';
 }
 export const SEASON_NAME: Record<Season, string> = { kis: 'Kış', bahar: 'Bahar', yaz: 'Yaz', guz: 'Güz' };
-// Kışın ürün yavaş büyür, baharda biraz hızlı.
-export const growFactor = (s: Season) => (s === 'kis' ? 1.5 : s === 'bahar' ? 0.85 : 1);
+// Kış artık yavaşlatmaz (hiçbir ürün 7 saati geçmesin); baharda ekinler biraz hızlı büyür.
+export const growFactor = (s: Season) => (s === 'bahar' ? 0.9 : 1);
 export const isWeekend = (now = Date.now()) => [0, 6].includes(new Date(now).getDay());
 
 // ---------- Depo ----------
@@ -708,6 +719,13 @@ export const STALL_GOODS: { key: string; lvl: number }[] = [
   })),
   ...Object.entries(TREES).map(([key, v]) => ({ key, lvl: v.lvl })),
 ].sort((a, b) => a.lvl - b.lvl);
+// Bir ürünün açıldığı seviye (ekin, hayvan ürünü, meyve ya da tarif).
+export const unlockLvl = (key: string): number =>
+  CROPS[key as CropId]?.lvl ??
+  TREES[key as TreeId]?.lvl ??
+  RECIPES[key as RecipeId]?.lvl ??
+  STALL_GOODS.find((g) => g.key === key)?.lvl ??
+  1;
 export const stallPrice = (key: string, n = 1) => (PRICE[key] ?? 0) * STALL_MULT * n;
 export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
 export const stockValue = (f: Farm, bonus = 1) =>
@@ -758,7 +776,8 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
     items,
     given: {},
     by: [],
-    coins: Math.round(value * 1.4 * (special ? 2 : 1)),
+    // Özel sipariş: tecrübe iki kat, altın %40 fazla (toplam 1,96 kat; tezgâh fiyatının altında kalır).
+    coins: Math.round(value * 1.4 * (special ? 1.4 : 1)),
     xp: (5 * picks.length + 3 * qty) * (special ? 2 : 1),
     ...(special ? { special: true } : {}),
     openAt,
@@ -832,6 +851,9 @@ export type Action =
   | { a: 'trader'; i: number; key: string; n: number; cost: number; offer: string; day: string } // gezgin tüccardan alım
   | { a: 'stall'; i: number; key: string; n: number } // pazar tezgâhından alım
   | { a: 'rename'; i: number; name: string } // çiftlik adı
+  | { a: 'sellOne'; i: number; key: string; n: number } // depodan tek ürün sat
+  | { a: 'release'; i: number; idx: number } // binadaki hayvanı geri ver (yarı fiyat)
+  | { a: 'skipOrder'; i: number; order: string } // siparişi geri çevir; yenisi biraz sonra yazılır
   | { a: 'bloom'; i: number; all?: boolean } // çit/duvarın dibine çiçek ek ya da çiçekleri kaldır
   | { a: 'animal'; i: number; item: AnimalId }
   | { a: 'tree'; i: number; item: TreeId }
@@ -873,7 +895,8 @@ const emptyOk = (t: Tile) => t.k === 'grass';
 // Sera: çevresindeki SERA_RANGE kare içindeki tarlalara ekilen ekin daha çabuk büyür.
 export const SERA_RANGE = 2;
 export const SERA_FACTOR = 0.75;
-export const MILL_RECIPES: string[] = ['ekmek', 'kek'];
+// Eskiden değirmen ekmek ve keki çift çıkarırdı; un zinciri gelince kaldırıldı (liste boş).
+export const MILL_RECIPES: string[] = [];
 // Bir malzemenin nereden geldiği (tarif panelinde eksik malzemenin yanında yazar).
 export function sourceOf(k: string, f?: Farm): string {
   if (CROPS[k as CropId]) return 'tarlaya ekilir';
@@ -933,6 +956,18 @@ export function applyAction(
     }
   };
   let points: number | undefined;
+  // Kurma tecrübesi: bu türden çiftlikte hiç bu kadar olmadıysa verilir. count: kurulduktan sonraki adet.
+  const firstXp = (key: string, count: number, xp: number) => {
+    const dx = { ...(f.dx ?? {}) };
+    // Eski kayıtlarda sayaç yok: o türün şu anki adedi (kurulmadan önceki) başlangıç sayılır.
+    const seen = dx[key] ?? count - 1;
+    if (count > seen) {
+      f.xp += xp;
+      dx[key] = count;
+    } else dx[key] = seen;
+    f.dx = dx;
+  };
+  const countOf = (pred: (x: Tile) => boolean) => f.tiles.filter(pred).length;
   const put = (k: string, n = 1) => (f.stock[k] = (f.stock[k] ?? 0) + n);
   fillOrders(f, now);
   const t = f.tiles[act.i];
@@ -953,7 +988,7 @@ export function applyAction(
       const sera = nearDecor(f, act.i, 'sera', SERA_RANGE);
       ready = now + Math.round(c.mins * MIN * growFactor(season) * (sera ? SERA_FACTOR : 1));
       f.tiles[act.i] = { k: 'crop', crop: act.crop, by: uid, at: now, ready };
-      text = `${name} ${c.name.toLowerCase()} ekti${sera ? ' (sera yanında hızlı büyür)' : season === 'kis' ? ' (kışın yavaş büyür)' : ''}`;
+      text = `${name} ${c.name.toLowerCase()} ekti${sera ? ' (sera yanında hızlı büyür)' : ''}`;
       break;
     }
     case 'water': {
@@ -970,7 +1005,6 @@ export function applyAction(
       if (t.k !== 'crop') return 'Hasat edilecek ürün yok.';
       if (!cropReady(t, now)) return 'Henüz olmadı.';
       const c = CROPS[t.crop];
-      if (c.big) return `${c.name} hasat günüyle toplanır: partnerini çağır.`;
       f.xp += c.xp;
       put(t.crop);
       if (t.watered) f.harvests += 1; // biri ekti, diğeri suladı: ortak hasat
@@ -992,8 +1026,12 @@ export function applyAction(
       if (t.k !== 'grass') return 'Burası çimen değil.';
       if (f.coins < TILL) return 'Yeterli altının yok.';
       f.coins -= TILL;
-      f.xp += 1;
       f.tiles[act.i] = { k: 'soil' };
+      firstXp(
+        '_soil',
+        countOf((x) => x.k === 'soil' || x.k === 'crop'),
+        1,
+      );
       text = `${name} yeni tarla sürdü`;
       break;
     }
@@ -1086,8 +1124,12 @@ export function applyAction(
         return `Çiftlikte zaten bir ${d.name.toLocaleLowerCase('tr-TR')} var.`;
       if (f.coins < d.cost) return 'Yeterli altının yok.';
       f.coins -= d.cost;
-      f.xp += d.xp;
       f.tiles[act.i] = { k: 'decor', item: act.item };
+      firstXp(
+        act.item,
+        countOf((x) => x.k === 'decor' && x.item === act.item),
+        d.xp,
+      );
       text = `${name} bahçeye ${d.name.toLowerCase()} koydu`;
       break;
     }
@@ -1174,8 +1216,12 @@ export function applyAction(
       if (lv < tr.lvl) return `${tr.name} ${tr.lvl}. seviyede açılır.`;
       if (f.coins < tr.cost) return 'Yeterli altının yok.';
       f.coins -= tr.cost;
-      f.xp += 2;
       f.tiles[act.i] = { k: 'tree', item: act.item, at: now, last: now };
+      firstXp(
+        act.item,
+        countOf((x) => x.k === 'tree' && x.item === act.item),
+        2,
+      );
       ready = now + tr.first * MIN;
       text = `${name} ${tr.name.toLowerCase()} dikti 🌳`;
       break;
@@ -1196,7 +1242,6 @@ export function applyAction(
       if (lv < b.lvl) return `${b.name} ${b.lvl}. seviyede açılır.`;
       if (f.coins < b.cost) return 'Yeterli altının yok.';
       f.coins -= b.cost;
-      f.xp += 5;
       // Çimende başıboş duran uygun hayvanlar binaya taşınır.
       const res: Resident[] = [];
       f.tiles.forEach((x, j) => {
@@ -1206,6 +1251,11 @@ export function applyAction(
         }
       });
       f.tiles[act.i] = { k: 'building', item: act.item, res };
+      firstXp(
+        act.item,
+        countOf((x) => x.k === 'building' && x.item === act.item),
+        5,
+      );
       text = `${name} ${b.name.toLowerCase()} kurdu${res.length ? `; ${res.length} hayvan içeri taşındı` : ''} 🏡`;
       break;
     }
@@ -1284,6 +1334,38 @@ export function applyAction(
       text = market ? `Pazar günü: ${n} ürün tezgâhta ${gained} altına gitti 🧺` : `${name} ${n} ürünü ${gained} altına sattı`;
       break;
     }
+    case 'sellOne': {
+      const n = Math.floor(act.n);
+      const have = f.stock[act.key] ?? 0;
+      if (!(n >= 1) || have < n || !PRICE[act.key]) return 'Depoda o kadar yok.';
+      gained = PRICE[act.key] * n;
+      f.coins += gained;
+      take({ [act.key]: n });
+      text = `${name} ${n} ${(PRODUCT_NAME[act.key] ?? 'ürün').toLocaleLowerCase('tr-TR')} sattı: +${gained} altın`;
+      break;
+    }
+    case 'release': {
+      if (t.k !== 'building') return 'Burada hayvan yok.';
+      const r = t.res[act.idx];
+      if (!r) return 'O hayvan artık burada değil.';
+      gained = Math.floor(ANIMALS[r.id].cost / 2);
+      f.coins += gained;
+      f.tiles[act.i] = { ...t, res: t.res.filter((_, j) => j !== act.idx) };
+      text = `${name} bir ${ANIMALS[r.id].name.toLocaleLowerCase('tr-TR')} geri verdi: +${gained} altın`;
+      break;
+    }
+    case 'skipOrder': {
+      const k = f.orders.findIndex((o) => o.id === act.order);
+      if (k < 0) return 'Bu sipariş artık yok.';
+      const o = f.orders[k];
+      if (o.packed) return `${orderWho(o)} girişte bekliyor; önce teslim et.`;
+      if (o.openAt > now) return 'Bu sipariş henüz açılmadı.';
+      // Verilmiş ürünler depoya döner.
+      for (const [key, n] of Object.entries(o.given)) if (n > 0) put(key, n);
+      f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
+      text = `${name}, ${orderWho(o)} siparişini geri çevirdi`;
+      break;
+    }
     case 'deliver': {
       const k = f.orders.findIndex((o) => o.id === act.order);
       if (k < 0) return 'Bu sipariş artık yok.';
@@ -1336,7 +1418,7 @@ export function applyAction(
         return `${STATIONS[st].name} dolu. Önce hazır olanları toplayın ya da bitmesini bekleyin.`;
       if (!hasAll(f, r.needs)) return `${r.name} için depoda ${needsText(r.needs)} gerek.`;
       take(r.needs);
-      // Değirmen unu bollaştırır: ekmek ve kek çift çıkar.
+      // MILL_RECIPES artık boş: her tarif tek çıkar.
       const n = MILL_RECIPES.includes(act.recipe) && f.tiles.some((x) => x.k === 'decor' && x.item === 'degirmen') ? 2 : 1;
       // 22. seviyeden sonra atölyeler (mutfak hariç) %20 hızlı çalışır.
       const dur = r.mins * MIN * (st !== 'mutfak' && lv >= WORKSHOP_FAST_LVL ? 0.8 : 1);
@@ -1419,7 +1501,8 @@ export function applyAction(
     }
   }
   // Pazar işleri bir kareye bağlı değil; avatar yerinde kalır.
-  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'rename'].includes(act.a)) f.pos[uid] = restNear(f, act.i);
+  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'rename', 'sellOne', 'skipOrder'].includes(act.a))
+    f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
   return { farm: f, text, gained, ready, points };
 }
@@ -1446,7 +1529,7 @@ export async function farmAction(coupleId: string, uid: string, name: string, pa
       uid,
       (by) => (by === uid ? 'kendi' : `${partnerName}’in`),
       name,
-      Date.now(),
+      srvNow(),
       live,
     );
     if (typeof r !== 'string') tx.update(ref, { ...farmWrite(r.farm), ...(r.points ? { points: increment(r.points) } : {}) });
@@ -1468,7 +1551,7 @@ export async function farmFlush(coupleId: string, uid: string, name: string, par
     let points = 0;
     let done = 0;
     for (const act of acts) {
-      const r = applyAction(farm, act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, Date.now(), null);
+      const r = applyAction(farm, act, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), name, srvNow(), null);
       if (typeof r === 'string') continue;
       farm = r.farm;
       points += r.points ?? 0;
