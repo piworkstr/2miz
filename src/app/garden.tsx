@@ -790,7 +790,8 @@ export default function GardenScreen() {
   const [plantAll, setPlantAll] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
-  const [showOrders, setShowOrders] = useState(false);
+  // true: sipariş defteri · 'ws': atölye listesi (ikisi de aynı alt tabelada açılır)
+  const [showOrders, setShowOrders] = useState<boolean | 'ws'>(false);
   const [showShop, setShowShop] = useState(false);
   const [placing, setPlacing] = useState<Placing | null>(null);
   const placingRef = useRef<Placing | null>(null);
@@ -2006,8 +2007,15 @@ export default function GardenScreen() {
               }}
               onOrders={() => setShowOrders(true)}
               onWorkshop={(tile) => {
-                if (tile >= 0) setSel(tile);
-                else {
+                // -2: atölye listesi · -1: dükkânın atölye sekmesi · diğer: o atölyenin paneli
+                if (tile === -2) {
+                  setSel(null);
+                  setShowOrders('ws');
+                } else if (tile >= 0) {
+                  setShowOrders(false);
+                  setSel(tile);
+                } else {
+                  setShowOrders(false);
                   setShop('workshop');
                   setShowShop(true);
                 }
@@ -2095,7 +2103,7 @@ type SheetProps = {
   plantAll: boolean;
   setPlantAll: (v: boolean) => void;
   showLog: boolean;
-  showOrders: boolean;
+  showOrders: boolean | 'ws';
   showShop: boolean;
   onShop: () => void;
   onPlace: (pl: Placing) => void;
@@ -2423,6 +2431,7 @@ function Sheet(p: SheetProps) {
         onAct={p.onAct}
       />
     );
+  if (p.showOrders === 'ws') return <Workshops farm={farm} now={now} onClose={p.onClose} onPick={p.onWorkshop} />;
   if (p.showOrders)
     return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
   if (sel === GIFT_TILE)
@@ -2538,7 +2547,13 @@ function Sheet(p: SheetProps) {
           <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           <Round icon="restaurant" label="Mutfak" badge={kitchenReady} accent={kitchenReady > 0} onPress={p.onKitchen} />
           {shopTile >= 0 && (
-            <Round icon="construct" label="Atölye" badge={shopReady} accent={shopReady > 0} onPress={() => p.onWorkshop(shopTile)} />
+            <Round
+              icon="construct"
+              label="Atölye"
+              badge={shopReady}
+              accent={shopReady > 0}
+              onPress={() => p.onWorkshop(shops.length > 1 ? -2 : shopTile)}
+            />
           )}
           <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
           {n > 0 &&
@@ -3016,6 +3031,7 @@ function ShopPanel({
             : (Object.keys(DECOR) as DecorId[])
                 // Atölyeler kendi sekmesinde durur; süslerin arasında aranmaz.
                 .filter((id) => !DECOR[id].hidden && !!DECOR[id].station === (shop === 'workshop'))
+                .sort((x, y) => (shop === 'workshop' ? DECOR[x].lvl - DECOR[y].lvl : 0))
                 .map((id) => ({
                   id,
                   wall: DECOR[id].wall,
@@ -3181,6 +3197,54 @@ function Orders({
 
 // Not Ağacı: evin yanındaki ağaç. Kısa notlar; yalnız ikiniz görürsünüz.
 // Mutfak: depodaki ürünlerden tarif işe konur, süresi dolunca buradan toplanır. Aynı anda birkaç iş (seviyeyle artar).
+// Atölye listesi: kurulu atölyeler ve durumları; dokununca o atölyenin üretim paneli açılır.
+function Workshops({ farm, now, onClose, onPick }: { farm: Farm; now: number; onClose: () => void; onPick: (tile: number) => void }) {
+  const level = levelOf(farm.xp).level;
+  const rows = farm.tiles
+    .map((x, k) => (x.k === 'decor' && DECOR[x.item].station ? { k, st: x.item as Station } : null))
+    .filter((x): x is { k: number; st: Station } => !!x)
+    .map((x) => {
+      const jobs = stationJobs(farm, x.st);
+      const ready = jobs.filter((j) => j.ready <= now).length;
+      const next = jobs.filter((j) => j.ready > now).sort((a, b) => a.ready - b.ready)[0];
+      return { ...x, jobs: jobs.length, ready, next, slots: stationSlots(x.st, level) };
+    })
+    .sort((a, b) => b.ready - a.ready);
+  return (
+    <>
+      <Head title="Atölyeler" onClose={onClose} />
+      <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
+        {rows.map((r) => (
+          <Pressable
+            key={r.k}
+            onPress={() => onPick(r.k)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6EFE6', borderRadius: 14, padding: 10 }}
+          >
+            <StockIcon k={r.st} w={40} h={36} />
+            <View style={{ flex: 1 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 14, color: INK }}>
+                {STATIONS[r.st].name}
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.0}
+                style={{ fontSize: 12, color: r.ready ? GREEN : MUTED, fontWeight: r.ready ? '800' : '400' }}
+              >
+                {r.ready
+                  ? `${r.ready} ürün hazır, topla`
+                  : r.next
+                    ? `Üretimde · ${timeLeft(r.next.ready - now)} sonra hazır`
+                    : `Boş · ${r.slots} ${STATIONS[r.st].slot}`}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={MUTED} />
+          </Pressable>
+        ))}
+      </ScrollView>
+      <Btn kind="soft" label="Yeni atölye al" onPress={() => onPick(-1)} />
+    </>
+  );
+}
+
 function Kitchen({
   farm,
   level,

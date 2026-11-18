@@ -54,6 +54,20 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   meyvetabagi: { src: require('../../assets/farm/meyvetabagi.webp'), h: 0.635 },
   yaspasta: { src: require('../../assets/farm/yaspasta.webp'), h: 1.058 },
   pikniksepeti: { src: require('../../assets/farm/pikniksepeti.webp'), h: 0.850 },
+  // <yeni-atolyeler>
+  firin: { src: require('../../assets/farm/firin.webp'), h: 0.713 },
+  yag: { src: require('../../assets/farm/yag.webp'), h: 0.707 },
+  meyvesuyu: { src: require('../../assets/farm/meyvesuyu.webp'), h: 0.774 },
+  tatli: { src: require('../../assets/farm/tatli.webp'), h: 0.707 },
+  zeytin: { src: require('../../assets/farm/zeytin.webp'), h: 1.005 },
+  avokado: { src: require('../../assets/farm/avokado.webp'), h: 0.998 },
+  bugdayunu: { src: require('../../assets/farm/bugdayunu.webp'), h: 0.975 },
+  misirunu: { src: require('../../assets/farm/misirunu.webp'), h: 0.955 },
+  misirekmegi: { src: require('../../assets/farm/misirekmegi.webp'), h: 0.625 },
+  zeytinyagi: { src: require('../../assets/farm/zeytinyagi.webp'), h: 1.342 },
+  avokadoyagi: { src: require('../../assets/farm/avokadoyagi.webp'), h: 1.190 },
+  aycicekyagi: { src: require('../../assets/farm/aycicekyagi.webp'), h: 1.099 },
+  // </yeni-atolyeler>
   // Atölyeler ve ürünleri
   mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },
   tereyagi: { src: require('../../assets/farm/tereyagi.webp'), h: 0.62 },
