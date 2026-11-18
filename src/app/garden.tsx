@@ -163,7 +163,8 @@ function tileAt(px: number, py: number) {
 // Bütün arazi (satılıklar dahil) ve evin çatısı ekrana sığsın.
 // Manzara: tabaka resmin ortasındaki açıklığa oturur. Resimde açıklık 1280×720'de x 429–957, y 200–514 (merkez 693,357).
 // Açıklık tabakadan %10 geniş olsun diye ölçek: 640·1.1 / 528.
-const BG_K = (N * TW * 1.1) / 528;
+// Manzara eski 22x22 araziye göre ölçeklidir: arazi 28x28'e büyüdü, çevredeki üç sıra artık resimdeki çayırın üstüne uzanır.
+const BG_K = (22 * TW * 1.1) / 528;
 const BG = (() => {
   const c = center((N - 1) / 2, (N - 1) / 2);
   return { x: c.x - 693 * BG_K, y: c.y - 357 * BG_K, w: 1280 * BG_K, h: 720 * BG_K };
@@ -178,7 +179,7 @@ const BOUNDS = {
   y0: center(OFF, OFF).y - TH / 2 - TW * 1.7,
   y1: center(OFF + INNER - 1, OFF + INNER - 1).y + TH / 2 + TW * 0.4,
 };
-// Bütün arazi (22x22): sürükleme buraya kadar
+// Bütün arazi (28x28): sürükleme buraya kadar
 const FULL = {
   x0: center(N - 1, 0).x - TW / 2,
   x1: center(0, N - 1).x + TW / 2,
@@ -350,26 +351,11 @@ const facesOf = (id: string) => {
   return v;
 };
 
-const SCENERY: Spr[] = (() => {
-  const L = center(N - 1, 0);
-  const R = center(0, N - 1);
-  const T = center(0, 0);
-  const B = center(N - 1, N - 1);
-  const btm = B.y + TH / 2;
-  const s = (art: string, x: number, y: number, w: number, z: number, k: number): Spr => ({ key: `sc${k}`, art, x, y, w, z });
-  return [
-    { key: 'mail', art: 'posta', x: MAIL.x, y: MAIL.y, w: MAIL.w, z: MAIL.z },
-    { key: 'stall', art: 'pazar', x: STALL.x, y: STALL.y, w: STALL.w, z: STALL.z },
-    s('tree', T.x - TW * 1.4, T.y + TW * 0.1, TW * 1.3, 1, 1),
-    s('tree', T.x + TW * 1.6, T.y - TW * 0.3, TW * 1.1, 1, 2),
-    s('tree', L.x - TW * 0.9, L.y - TW * 0.2, TW * 1.4, 1, 3),
-    s('tree', R.x + TW * 0.9, R.y - TW * 0.1, TW * 1.5, 1, 4),
-    s('tree', L.x - TW * 0.2, L.y + TW * 1.0, TW * 1.2, 2000, 5),
-    s('tree', R.x + TW * 0.3, R.y + TW * 1.1, TW * 1.2, 2000, 6),
-    s('fence', L.x + TW * 2.6, btm - TW * 0.6, TW * 0.9, 2000, 7),
-    s('fence', L.x + TW * 3.4, btm - TW * 0.2, TW * 0.9, 2000, 8),
-  ];
-})();
+// Çevredeki süs ağaçları ve çitler kaldırıldı (manzarayla uyuşmuyordu); yalnızca posta kutusu ve pazar tezgâhı sabit durur.
+const SCENERY: Spr[] = [
+  { key: 'mail', art: 'posta', x: MAIL.x, y: MAIL.y, w: MAIL.w, z: MAIL.z },
+  { key: 'stall', art: 'pazar', x: STALL.x, y: STALL.y, w: STALL.w, z: STALL.z },
+];
 
 function SpriteImg({ s }: { s: Spr }) {
   const a = ART[s.art];
@@ -501,13 +487,6 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
     const { x, y } = center(r, c);
     return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
   };
-  const L = center(N - 1, 0);
-  const B = center(N - 1, N - 1);
-  const R = center(0, N - 1);
-  const btm = B.y + TH / 2;
-  const D = 18;
-  const lx = L.x - TW / 2;
-  const rx = R.x + TW / 2;
   // sel arazinin dışına düşebilir (ör. sürüklenen binanın çatısından tutulduğunda): o zaman vurgu yok.
   const hiTiles = sel === null || !f.tiles[sel] ? [] : f.tiles[sel].k === 'locked' ? parcelTiles(f, sel) : [sel];
   return (
@@ -518,10 +497,9 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
         </Pattern>
       </Defs>
       {/* Tabakanın altına yumuşak gölge: manzaraya oturur */}
-      <Ellipse cx={B.x} cy={btm + D - 2} rx={TW * N * 0.4} ry={TW * N * 0.08} fill="rgba(40,60,20,0.18)" />
-      <Polygon points={`${lx},${L.y} ${B.x},${btm} ${B.x},${btm + D} ${lx},${L.y + D}`} fill="#8B5E34" />
-      <Polygon points={`${B.x},${btm} ${rx},${R.y} ${rx},${R.y + D} ${B.x},${btm + D}`} fill="#6E4625" />
+      {/* Tabaka (kalın ahşap kenar) yok: çiftlik manzaranın çayırına oturur. Satın alınmamış dış arazi çizilmez, resim görünür. */}
       {f.tiles.map((t, i) => {
+        if (t.k === 'locked' && isOuter(i)) return null;
         const [r, c] = rc(i);
         const g =
           season === 'kis'
@@ -581,6 +559,13 @@ function Signs({ f }: { f: Farm }) {
     const p = parcelOf(i);
     groups.set(p, [...(groups.get(p) ?? []), i]);
   });
+  // Dış arazide yalnızca çiftliğe komşu parsellerde tabela durur (manzara tabelayla dolmasın); uzaktakiler de dokununca alınır.
+  const open = (j: number) => !!f.tiles[j] && f.tiles[j].k !== 'locked';
+  const near = (i: number) => {
+    const [r, c] = rc(i);
+    return (r > 0 && open(i - N)) || (r < N - 1 && open(i + N)) || (c > 0 && open(i - 1)) || (c < N - 1 && open(i + 1));
+  };
+  for (const [p, ids] of [...groups.entries()]) if (isOuter(ids[0]) && !ids.some(near)) groups.delete(p);
   return (
     <>
       {[...groups.entries()].map(([p, ids]) => {
@@ -985,7 +970,7 @@ export default function GardenScreen() {
   // İki parmakla yakınlaştırma (fotoğraf gibi): parmakların ortasındaki nokta yerinde kalır.
   const pinch = useRef<{ d0: number; z0: number; wx: number; wy: number } | null>(null);
   const MAX_ZOOM = 4;
-  // 1 = iç çiftlik ekrana sığar; daha küçüğü uzaklaşır ve bütün araziyi (22x22) gösterir.
+  // 1 = iç çiftlik ekrana sığar; daha küçüğü uzaklaşır ve bütün araziyi gösterir.
   // Manzara resmi ekranı her zaman kaplasın (üstte ve altta boşluk kalmasın): uzaklaşma buna göre sınırlanır.
   const MIN_ZOOM = Math.max(INNER / N, box.h && fit ? (box.h * 1.02) / (BG.h * fit) : INNER / N);
   const minZoomRef = useRef(MIN_ZOOM);

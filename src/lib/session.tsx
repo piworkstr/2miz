@@ -66,6 +66,7 @@ export type Couple = {
   printOrder?: string; // açık baskı siparişi; doluyken yönetim paneli albüm fotoğraflarını görebilir
   gameUse?: { day: string; n: number }; // ücretsizde günlük oyun hakkı
   delReq?: Record<string, import('./delreq').DelReq>; // ortak albümlerde bekleyen silme istekleri
+  farm5?: unknown; // çiftlik (28x28)
   farm4?: unknown; // çiftlik (22x22); eski sürümler farm/farmKeep alanlarını kullanır
   farmKeep?: unknown; // çiftliğin v3 yedeği (eski sürüm üstüne yazarsa buradan döner)
 };

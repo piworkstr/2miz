@@ -72,7 +72,7 @@ export async function joinScene(coupleId: string, sceneId: string, uid: string, 
     const couple = c.data() as Couple & { sceneCount?: number };
     tx.update(ref, { status: 'live', joinedBy: uid, joinedAt: Date.now(), reward: reward.coins ?? 0 });
     const upd: Record<string, unknown> = { sceneCount: (couple.sceneCount ?? 0) + 1 };
-    if (reward.coins && (couple.farm || couple.farm4)) {
+    if (reward.coins && (couple.farm || couple.farm4 || couple.farm5)) {
       const f = farmOf(couple);
       Object.assign(upd, farmWrite({ ...f, coins: f.coins + reward.coins }));
     }

@@ -15,7 +15,7 @@ import type { Couple } from './session';
 // Mevsim gerçek takvimi izler: baharda ekinler biraz hızlı büyür (kış artık yavaşlatmaz).
 // Arazi 10x10; kapalı parseller parayla değil ortak hasat sayısıyla açılır (her 10 ortak hasatta bir parsel).
 
-export const N = 22; // arazi 22x22; ortadaki 10x10 başlangıç çiftliği, çevresindeki altı sıra parayla alınan arazi (v3'te 14x14'tü)
+export const N = 28; // arazi 28x28: ortadaki 10x10 başlangıç çiftliği, çevresi parayla alınan yabani arazi (v4'te 22x22, v3'te 14x14'tü)
 export const INNER = 10;
 export const OFF = (N - INNER) / 2;
 export const MIN = 60_000;
@@ -558,7 +558,8 @@ export const TOOLS_ON: ToolId[] = ['balta'];
 // Bir dış arazi karesinde ne yetiştiği kare numarasından türetilir (kayıt gerekmez; herkes aynısını görür).
 export function wildAt(i: number): WildId | null {
   const h = (Math.imul(i + 17, 2654435761) >>> 0) % 100;
-  return h < 13 ? 'mese' : h < 21 ? 'hus' : h < 27 ? 'sogut' : h < 35 ? 'cali' : null;
+  // 'mese' (eski yuvarlak ağaç çizimi) şimdilik üretilmiyor; yeni yabani ağaç çizimleri gelince açılacak.
+  return h < 14 ? 'hus' : h < 24 ? 'sogut' : h < 32 ? 'cali' : null;
 }
 
 export type FarmLog = { by: string; text: string; at: number };
@@ -590,7 +591,7 @@ export const ORDER_REFILL = 20 * MIN;
 // pos: herkesin en son çalıştığı kare; partnerin avatarı orada durur.
 // stock: depo (ürün adı → adet); harvests: ortak hasat sayısı (arazi bununla açılır).
 export type Farm = {
-  v: 2 | 3 | 4; // 2: 10x10, 3: 14x14, 4: 22x22
+  v: 2 | 3 | 4 | 5; // 2: 10x10, 3: 14x14, 4: 22x22, 5: 28x28
   coins: number;
   xp: number;
   bought: number; // ortak hasatla açılan iç parseller
@@ -669,7 +670,7 @@ export function newFarm(): Farm {
       if (ch === 'F') t = { k: 'decor', item: 'cesme' };
       tiles.push(t);
     }
-  return { v: 4, coins: 100, xp: 0, bought: 0, outer: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
+  return { v: 5, coins: 100, xp: 0, bought: 0, outer: 0, tiles, log: [], pos: {}, stock: {}, harvests: 0, orders: [], notes: [] };
 }
 
 // Eski (5x5) bahçe kaydı varsa yeni çiftlikle başlanır.
@@ -688,18 +689,20 @@ export function farmOf(couple: Couple | null | undefined): Farm {
     orders: f.orders ?? [],
     notes: f.notes ?? [],
   });
-  // v4 (22x22) ayrı bir alanda durur: farm4. Eski sürümdeki bir telefon bu alanı tanımaz ve dokunmaz; kendi v3 kaydına
-  // (farm, farmKeep) yazmaya devam eder. Böylece iki telefon farklı sürümdeyken büyük çiftliğin üstüne yazılamaz.
+  // Her arazi boyutu ayrı bir alanda durur (v5: farm5, v4: farm4). Eski sürümdeki bir telefon yeni alanı tanımaz ve dokunmaz;
+  // kendi alanına yazmaya devam eder. Böylece iki telefon farklı sürümdeyken büyük çiftliğin üstüne yazılamaz.
+  const f5 = couple?.farm5 as Farm | undefined;
+  if (f5?.v === 5 && Array.isArray(f5.tiles) && f5.tiles.length === N * N) return fill(f5);
+  // İlk açılış: önceki kayıttan (v4 22x22, v3 14x14 ya da v2 10x10) büyütülür; ilk işlemde farm5 olarak kaydedilir.
   const f4 = couple?.farm4 as Farm | undefined;
-  if (f4?.v === 4 && Array.isArray(f4.tiles) && f4.tiles.length === N * N) return fill(f4);
-  // İlk açılış: eski kayıttan (v3 14x14 ya da v2 10x10) büyütülür; ilk işlemde farm4 olarak kaydedilir.
+  if (f4?.v === 4 && Array.isArray(f4.tiles) && f4.tiles.length === 22 * 22) return grow(fill(f4), 22);
   let f = couple?.farm as Farm | undefined;
   const keep = couple?.farmKeep as Farm | undefined;
   if (keep?.v === 3 && (!f || f.v !== 3)) f = keep;
   if (!f || (f.v !== 2 && f.v !== 3)) return newFarm();
   return grow(fill(f), f.v === 3 ? 14 : 10);
 }
-export const farmWrite = (farm: Farm) => ({ farm4: clean({ ...farm, v: 4 as const }) });
+export const farmWrite = (farm: Farm) => ({ farm5: clean({ ...farm, v: 5 as const }) });
 
 // Eski kare düzenini (old x old) yeni arazinin ortasına taşır; çevresi satılık arazi olur. Kare numaraları ve
 // avatarların yerleri yeni düzene çevrilir. Ortadaki 10x10 hep aynı yerde kalır (iki düzende de ortalanmış).
@@ -712,7 +715,16 @@ function grow(f: Farm, old: number): Farm {
   });
   const pos: Record<string, number> = {};
   for (const [k, v] of Object.entries(f.pos)) pos[k] = v >= 0 && v < old * old ? map(v) : (N * N) >> 1;
-  return { ...f, v: 4, outer: f.outer ?? 0, tiles, pos };
+  // Taşınmış Not Ağacı ve sepet tezgâhının kare numaraları da yeni düzene çevrilir.
+  const spot = (v: number | undefined) => (v !== undefined && v >= 0 && v < old * old ? map(v) : undefined);
+  const out: Farm = { ...f, v: 5, outer: f.outer ?? 0, tiles, pos };
+  const na = spot(f.noteAt);
+  const gs = spot(f.giftSpot);
+  if (na !== undefined) out.noteAt = na;
+  else delete out.noteAt;
+  if (gs !== undefined) out.giftSpot = gs;
+  else delete out.giftSpot;
+  return out;
 }
 
 export const isOuter = (i: number) => {
@@ -753,7 +765,9 @@ export function restNear(f: Farm, i: number): number {
     }
   return best;
 }
-export const parcelOf = (i: number) => `${Math.floor(Math.floor(i / N) / 2)}-${Math.floor((i % N) / 2)}`;
+// Parseller 2x2'dir ve iç çiftliğin köşesine hizalıdır (arazi büyüyünce eski parseller bölünmesin diye OFF'un tekliği eklenir).
+const P0 = OFF % 2;
+export const parcelOf = (i: number) => `${Math.floor((Math.floor(i / N) + P0) / 2)}-${Math.floor(((i % N) + P0) / 2)}`;
 export const parcelTiles = (f: Farm, i: number) =>
   f.tiles.map((t, j) => (t.k === 'locked' && parcelOf(j) === parcelOf(i) ? j : -1)).filter((j) => j >= 0);
 // Bir sonraki parsel için gereken ortak hasat sayısı.
