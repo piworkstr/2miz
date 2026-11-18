@@ -25,7 +25,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, LinearGradient, Path, Pattern, Polygon, Rect, Stop } from 'react-native-svg';
 import { Avatar } from '../components/Avatar';
 import { ScenePanel, type SceneMeta } from '../components/world/ScenePanel';
-import { GlassCircle } from '../components/Glass';
 import { WorldChar } from '../components/world/WorldChar';
 import {
   ANIMALS,
@@ -810,7 +809,7 @@ export default function GardenScreen() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState('');
   // Sürüklenen tohum: ekran konumu (pencereye göre) ve bu sürüklemede ekilen kareler.
-  const [seed, setSeed] = useState<{ crop: CropId; x: number; y: number } | null>(null);
+  const [seed, setSeed] = useState<{ it: DragItem; x: number; y: number } | null>(null);
   const seedApi = useRef<SeedDragApi | null>(null);
   const seedDone = useRef(new Set<number>());
   const seedCoins = useRef(0);
@@ -1364,33 +1363,58 @@ export default function GardenScreen() {
     const c = cam.current;
     return tileAt((px - rootOff.current.x - c.tx) / c.s, (py - SEED_UP - rootOff.current.y - c.ty) / c.s);
   };
+  // Sürüklenen şeyin konabileceği kare mi?
+  const dragFits = (it: DragItem, i: number) => {
+    const tl = farm.tiles[i];
+    if (!tl) return false;
+    if (it.a.a === 'plant') return tl.k === 'soil';
+    if (it.a.a === 'adopt') {
+      const need = buildingFor(it.a.item);
+      return tl.k === 'building' && tl.item === need && tl.res.length < BUILDINGS[need].cap;
+    }
+    return tl.k === 'grass';
+  };
+  // Tohum ve çit "boyanır": parmak üstünden geçtikçe konur. Diğerleri bırakınca bir kez konur.
+  const dragPaints = (it: DragItem) => it.a.a === 'plant' || (it.a.a === 'decor' && !!DECOR[it.a.item].wall);
   seedApi.current = {
-    start: (crop, px, py) => {
+    start: (it, px, py) => {
       rootRef.current?.measureInWindow((x: number, y: number) => (rootOff.current = { x, y }));
       seedDone.current = new Set();
       seedCoins.current = farm.coins;
       Haptics.selectionAsync().catch(() => {});
-      setSeed({ crop, x: px, y: py });
+      setSeed({ it, x: px, y: py });
     },
     move: (px, py) => {
       if (!seed) return;
       setSeed({ ...seed, x: px, y: py });
+      if (!dragPaints(seed.it)) return;
       const i = seedTileAt(px, py);
-      if (i < 0 || seedDone.current.has(i) || farm.tiles[i]?.k !== 'soil') return;
-      if (seedCoins.current < CROPS[seed.crop].cost) {
+      if (i < 0 || seedDone.current.has(i) || !dragFits(seed.it, i)) return;
+      if (seedCoins.current < seed.it.cost) {
         if (!seedDone.current.has(-1)) flash('Altın yetmiyor');
         seedDone.current.add(-1);
         return;
       }
       seedDone.current.add(i);
-      seedCoins.current -= CROPS[seed.crop].cost;
+      seedCoins.current -= seed.it.cost;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      work({ a: 'plant', i, crop: seed.crop });
+      work({ ...seed.it.a, i } as Action);
     },
     end: () => {
-      const planted = [...seedDone.current].some((i) => i >= 0);
+      const cur = seed;
+      let done = [...seedDone.current].some((i) => i >= 0);
       setSeed(null);
-      if (planted) {
+      if (cur && !dragPaints(cur.it)) {
+        const i = seedTileAt(cur.x, cur.y);
+        if (i >= 0 && dragFits(cur.it, i)) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          work({ ...cur.it.a, i } as Action);
+          done = true;
+        } else if (i >= 0) {
+          flash(cur.it.a.a === 'adopt' ? 'Hayvanı boş yeri olan binasına bırak' : 'Boş bir çimene bırak');
+        }
+      }
+      if (done) {
         setSel(null);
         setShowShop(false);
         setPlantAll(false);
@@ -1398,7 +1422,7 @@ export default function GardenScreen() {
     },
   };
   const seedHit = seed ? seedTileAt(seed.x, seed.y) : -1;
-  const seedTarget = seedHit >= 0 && farm.tiles[seedHit]?.k === 'soil' ? seedHit : null;
+  const seedTarget = seed && seedHit >= 0 && dragFits(seed.it, seedHit) ? seedHit : null;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
   const liftBarn = !!lift && farm.tiles[lift.from]?.k === 'fixed';
   const farmView = lift
@@ -1990,21 +2014,38 @@ export default function GardenScreen() {
       )}
 
       {/* alt bölüm: zemin yok. Bir şey seçiliyse ahşap tabela, yoksa oyun düğmeleri. */}
-      {seed && (
-        <Image
-          pointerEvents="none"
-          source={ART[seed.crop].src}
-          resizeMode="contain"
-          style={{
-            position: 'absolute',
-            left: seed.x - rootOff.current.x - 32,
-            top: seed.y - rootOff.current.y - SEED_UP - 44,
-            width: 64,
-            height: 64,
-            zIndex: 50,
-          }}
-        />
-      )}
+      {seed &&
+        (ART[seed.it.art] ? (
+          <Image
+            pointerEvents="none"
+            source={ART[seed.it.art].src}
+            resizeMode="contain"
+            style={{
+              position: 'absolute',
+              left: seed.x - rootOff.current.x - 34,
+              top: seed.y - rootOff.current.y - SEED_UP - 48,
+              width: 68,
+              height: 68,
+              zIndex: 50,
+            }}
+          />
+        ) : (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: seed.x - rootOff.current.x - 16,
+              top: seed.y - rootOff.current.y - SEED_UP - 16,
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: '#9A6534',
+              borderWidth: 3,
+              borderColor: '#FFF8E8',
+              zIndex: 50,
+            }}
+          />
+        ))}
       <SeedDrag.Provider value={seedApi}>
         {/* Tohum sürüklenirken tabela görünmez olur ama sökülmez: parmak hareketi listedeki tohuma bağlı. */}
         <View
@@ -2022,7 +2063,7 @@ export default function GardenScreen() {
           <View
             pointerEvents="box-none"
             style={
-              scene || sel !== null || showLog || showOrders || showShop
+              scene || sel !== null || showLog || showOrders
                 ? {
                     backgroundColor: 'rgba(255,248,232,0.96)',
                     borderRadius: 20,
@@ -2147,6 +2188,28 @@ export default function GardenScreen() {
             )}
           </View>
         </View>
+        {showShop && !scene && (
+          <ShopPanel
+            farm={farm}
+            level={lv.level}
+            shop={shop}
+            setShop={setShop}
+            width={Math.min(244, Math.round(box.w * 0.58))}
+            top={insets.top + 104}
+            bottom={insets.bottom + 10}
+            hidden={!!seed}
+            onClose={() => setShowShop(false)}
+            onPlace={(pl) => {
+              setPlacing(pl);
+              setShowShop(false);
+              setSel(null);
+            }}
+            onAct={(a) => {
+              work(a);
+              setShowShop(false);
+            }}
+          />
+        )}
       </SeedDrag.Provider>
       {couple && user && (
         <FarmMarket
@@ -2297,13 +2360,14 @@ function Quick({
   );
 }
 
-function Round({
+// Kenar düğmesi: krem zeminli, ahşap çerçeveli yuvarlak düğme; adı altında yazar.
+function Edge({
   icon,
   art,
   label,
   badge,
   accent,
-  off,
+  big,
   onPress,
 }: {
   icon?: React.ComponentProps<typeof Ionicons>['name'];
@@ -2311,57 +2375,80 @@ function Round({
   label: string;
   badge?: number;
   accent?: boolean;
-  off?: boolean;
+  big?: boolean;
   onPress: () => void;
 }) {
-  const tint = accent ? '#E8516A' : '#3E7F22';
+  const d = big ? 62 : 52;
   return (
-    <View style={{ alignItems: 'center', width: 64 }}>
-      <GlassCircle size={54} tint={tint} active={accent} onPress={onPress} disabled={off} accessibilityLabel={label}>
-        {art && ART[art] ? (
-          <Image source={ART[art].src} style={{ width: 32, height: 30 }} resizeMode="contain" />
-        ) : (
-          <Ionicons name={icon ?? 'ellipse'} size={26} color={accent ? '#fff' : '#1F4D0C'} />
-        )}
-        {!!badge && (
+    <Pressable onPress={onPress} accessibilityLabel={label} hitSlop={4} style={{ alignItems: 'center', width: 76 }}>
+      {({ pressed }) => (
+        <>
           <View
             style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              minWidth: 22,
-              height: 22,
-              borderRadius: 11,
-              paddingHorizontal: 5,
-              backgroundColor: '#FFD23F',
-              borderWidth: 2,
-              borderColor: '#fff',
+              width: d,
+              height: d,
+              borderRadius: d / 2,
+              backgroundColor: accent ? '#E8516A' : '#FFF8E8',
+              borderWidth: 3,
+              borderColor: accent ? '#B93A55' : '#9A6534',
               alignItems: 'center',
               justifyContent: 'center',
+              transform: [{ scale: pressed ? 0.93 : 1 }],
+              shadowColor: '#3A2A10',
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              shadowOffset: { width: 0, height: 3 },
+              elevation: 5,
             }}
           >
-            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: '#5A3E00' }}>
-              {badge}
-            </Text>
+            {art && ART[art] ? (
+              <Image source={ART[art].src} style={{ width: d * 0.6, height: d * 0.56 }} resizeMode="contain" />
+            ) : (
+              <Ionicons name={icon ?? 'ellipse'} size={d * 0.46} color={accent ? '#fff' : '#7A4A1C'} />
+            )}
+            {!!badge && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -6,
+                  minWidth: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  paddingHorizontal: 5,
+                  backgroundColor: accent ? '#FFD23F' : '#E8516A',
+                  borderWidth: 2,
+                  borderColor: '#fff',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: accent ? '#5A3E00' : '#fff' }}>
+                  {badge}
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-      </GlassCircle>
-      <Text
-        maxFontSizeMultiplier={1.0}
-        numberOfLines={1}
-        style={{
-          marginTop: 3,
-          fontWeight: '800',
-          fontSize: 11,
-          color: '#fff',
-          textShadowColor: 'rgba(0,0,0,0.6)',
-          textShadowRadius: 3,
-          textShadowOffset: { width: 0, height: 1 },
-        }}
-      >
-        {label}
-      </Text>
-    </View>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            numberOfLines={2}
+            style={{
+              marginTop: 3,
+              fontWeight: '900',
+              fontSize: 11,
+              lineHeight: 13,
+              color: '#fff',
+              textAlign: 'center',
+              textShadowColor: 'rgba(30,50,25,0.9)',
+              textShadowRadius: 3,
+              textShadowOffset: { width: 0, height: 1 },
+            }}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }
 
@@ -2403,29 +2490,37 @@ type Item = {
   sub: string;
   a: Action;
 };
-// Tohum sürükleme: listedeki tohum yukarı çekilince parmağı izler, üstünden geçtiği boş tarlalara ekilir.
-type SeedDragApi = { start: (crop: CropId, px: number, py: number) => void; move: (px: number, py: number) => void; end: () => void };
+// Sürükle-bırak: listedeki şey çekilince parmağı izler. Tohum ve çit geçtiği her uygun kareye konur;
+// bina, ağaç, atölye ve süs bırakıldığı kareye, hayvan bırakıldığı (ya da boş yeri olan) binaya gider.
+type DragItem = { a: Action; art: string; cost: number };
+type SeedDragApi = { start: (it: DragItem, px: number, py: number) => void; move: (px: number, py: number) => void; end: () => void };
 const SeedDrag = createContext<RefObject<SeedDragApi | null> | null>(null);
+const DRAGGABLE = ['plant', 'build', 'tree', 'decor', 'adopt'];
 
-function SeedChip({ crop, children }: { crop: CropId | null; children: ReactNode }) {
+// dir: liste yatay kayıyorsa yukarı, dikey kayıyorsa sağa çekiş sürüklemeyi başlatır (kaydırmayla karışmasın).
+function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 'right'; children: ReactNode }) {
   const api = useContext(SeedDrag);
-  const cropRef = useRef(crop);
-  cropRef.current = crop;
+  const ref = useRef(item);
+  ref.current = item;
   const pr = useMemo(
     () =>
       PanResponder.create({
-        // Yatay kaydırma listede kalır; yukarı doğru çekiş tohumu kaldırır.
-        onMoveShouldSetPanResponderCapture: (_e, g) => !!cropRef.current && !!api?.current && g.dy < -10 && Math.abs(g.dy) > Math.abs(g.dx),
+        onMoveShouldSetPanResponderCapture: (_e, g) =>
+          !!ref.current &&
+          !!api?.current &&
+          (dir === 'up' ? g.dy < -10 && Math.abs(g.dy) > Math.abs(g.dx) : g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy)),
         onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: (e) => api?.current?.start(cropRef.current!, e.nativeEvent.pageX, e.nativeEvent.pageY),
+        onPanResponderGrant: (e) => api?.current?.start(ref.current!, e.nativeEvent.pageX, e.nativeEvent.pageY),
         onPanResponderMove: (e) => api?.current?.move(e.nativeEvent.pageX, e.nativeEvent.pageY),
         onPanResponderRelease: () => api?.current?.end(),
         onPanResponderTerminate: () => api?.current?.end(),
       }),
-    [api],
+    [api, dir],
   );
   return <View {...pr.panHandlers}>{children}</View>;
 }
+const dragOf = (it: Item, off: boolean): DragItem | null =>
+  !off && DRAGGABLE.includes(it.a.a) ? { a: it.a, art: it.art, cost: it.cost } : null;
 
 function Items({ list, level, coins, onPick }: { list: Item[]; level: number; coins: number; onPick: (a: Action) => void }) {
   return (
@@ -2433,7 +2528,7 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
       {list.map((it) => {
         const off = level < it.lvl || coins < it.cost;
         return (
-          <SeedChip key={it.id} crop={!off && it.a.a === 'plant' ? it.a.crop : null}>
+          <SeedChip key={it.id} dir="up" item={dragOf(it, off)}>
             <Pressable
               disabled={off}
               onPress={() => onPick(it.a)}
@@ -2472,33 +2567,6 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
   );
 }
 
-function Tabs({ tabs, value, onChange, extra }: { tabs: [Shop, string][]; value: Shop; onChange: (s: Shop) => void; extra?: ReactNode }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 6 }}>
-      {tabs.map(([k, l]) => (
-        <Pressable
-          key={k}
-          onPress={() => onChange(k)}
-          style={{
-            flex: 1,
-            paddingVertical: 7,
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: value === k ? GREEN : '#F0E2DC',
-            backgroundColor: value === k ? GREEN : '#fff',
-            alignItems: 'center',
-          }}
-        >
-          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: value === k ? '#fff' : INK }}>
-            {l}
-          </Text>
-        </Pressable>
-      ))}
-      {extra}
-    </View>
-  );
-}
-
 function ago(ms: number) {
   const m = Math.floor(ms / MIN);
   if (m < 1) return 'şimdi';
@@ -2524,19 +2592,7 @@ function Sheet(p: SheetProps) {
   const { farm, sel, now } = p;
   const level = levelOf(farm.xp).level;
 
-  if (p.showShop)
-    return (
-      <ShopPanel
-        farm={farm}
-        now={now}
-        level={level}
-        shop={p.shop}
-        setShop={p.setShop}
-        onClose={p.onClose}
-        onPlace={p.onPlace}
-        onAct={p.onAct}
-      />
-    );
+  if (p.showShop) return null; // dükkân yandan açılan ayrı bir paneldir
   if (p.showOrders === 'ws') return <Workshops farm={farm} now={now} onClose={p.onClose} onPick={p.onWorkshop} />;
   if (p.showOrders)
     return <Orders farm={farm} now={now} uid={p.uid} partnerName={p.partnerName} onClose={p.onClose} onDeliver={p.onDeliver} />;
@@ -2613,17 +2669,35 @@ function Sheet(p: SheetProps) {
               : farm.harvests < 20
                 ? 'Depoya ya da çimene dokun: depo, pazar, atölyeler, dükkân'
                 : '';
+    // Zemin yok: düğmeler iki kenarda dizilir, ortası çiftliğe açık kalır. İpucu ve toplu işler altta ortada.
     return (
-      <>
-        {!!hint && (
-          <View pointerEvents="none" style={{ alignItems: 'center' }}>
+      <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <View pointerEvents="box-none" style={{ alignItems: 'center', gap: 10 }}>
+          {p.bank > 0 && <Edge icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
+          {big > 0 && <Edge icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
+          <Edge icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
+          {shopTile >= 0 && (
+            <Edge icon="construct" label="Atölyeler" badge={shopReady} onPress={() => p.onWorkshop(shops.length > 1 ? -2 : shopTile)} />
+          )}
+          <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
+        </View>
+        <View pointerEvents="box-none" style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4 }}>
+          {(p.thirsty > 0 || small > 0) && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+              {p.thirsty > 0 && <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />}
+              {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
+            </View>
+          )}
+          {!!hint && (
             <Text
+              pointerEvents="none"
               maxFontSizeMultiplier={1.0}
               style={{
                 backgroundColor: 'rgba(43,29,34,0.78)',
                 color: '#fff',
                 fontWeight: '700',
                 fontSize: 12,
+                textAlign: 'center',
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 14,
@@ -2632,47 +2706,21 @@ function Sheet(p: SheetProps) {
             >
               {hint}
             </Text>
-          </View>
-        )}
-        {/* Sula ve Topla menünün üstünde; yalnızca iş varken görünür. */}
-        {(p.thirsty > 0 || small > 0) && (
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
-            {p.thirsty > 0 && <Quick icon="water" label="Hepsini sula" count={p.thirsty} onPress={p.onWaterAll} />}
-            {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
-          </View>
-        )}
-        {/* Alt menü: her şey buradan da açılır (çiftlikteki depo, ev ve tezgâha dokunmak da aynı yere götürür). */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginHorizontal: -10 }}
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-end', gap: 10, paddingHorizontal: 10 }}
-        >
-          {p.bank > 0 && <Round icon="gift" label={`${p.bank} al`} accent onPress={p.onBank} />}
-          {big > 0 && <Round icon="people" label="Hasat günü" accent onPress={() => p.onScene('harvest')} />}
-          <Round art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
-          {kitchenReady > 0 && <Round icon="home" label="Evde hazır" badge={kitchenReady} accent onPress={p.onKitchen} />}
-          {shopTile >= 0 && (
-            <Round
-              icon="construct"
-              label="Atölyeler"
-              badge={shopReady}
-              accent={shopReady > 0}
-              onPress={() => p.onWorkshop(shops.length > 1 ? -2 : shopTile)}
-            />
           )}
-          <Round icon="receipt" label="Sipariş" badge={deliverable} onPress={p.onOrders} />
+        </View>
+        <View pointerEvents="box-none" style={{ alignItems: 'center', gap: 10 }}>
+          {kitchenReady > 0 && <Edge icon="home" label="Evde hazır" badge={kitchenReady} accent onPress={p.onKitchen} />}
+          <Edge icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
+          <Edge icon="book" label="Günlük" onPress={p.onLog} />
+          <Edge art="barn" label={n > 0 ? `Depo ${n}` : 'Depo'} onPress={p.onDepot} />
           {n > 0 &&
             (weekend ? (
-              <Round icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} accent onPress={() => p.onScene('market')} />
+              <Edge icon="storefront" label={`Pazar ${stockValue(farm, MARKET_BONUS)}`} big accent onPress={() => p.onScene('market')} />
             ) : (
-              <Round art="coin" label={`Sat ${stockValue(farm)}`} onPress={p.onSell} />
+              <Edge art="coin" label={`Sat ${stockValue(farm)}`} big onPress={p.onSell} />
             ))}
-          <Round icon="swap-horizontal" label="Çiftçi pazarı" onPress={p.onMarket} />
-          <Round icon="cart" label="Dükkân" onPress={p.onShop} />
-          <Round icon="book" label="Günlük" onPress={p.onLog} />
-        </ScrollView>
-      </>
+        </View>
+      </View>
     );
   }
 
@@ -3081,21 +3129,37 @@ function Sheet(p: SheetProps) {
 }
 
 // Dükkân: tohum, hayvan, bina, ağaç, süs. Yere konacaklar seçilince yerleştirme moduna geçilir.
+const SHOP_TABS: { id: Shop; art: string; title: string }[] = [
+  { id: 'crop', art: 'misir', title: 'Tarla ürünleri' },
+  { id: 'animal', art: 'tavuk', title: 'Hayvanlar' },
+  { id: 'building', art: 'kumes', title: 'Hayvan evleri' },
+  { id: 'workshop', art: 'firin', title: 'Atölyeler' },
+  { id: 'tree', art: 'elma', title: 'Ağaçlar' },
+  { id: 'decor', art: 'fountain', title: 'Süsler' },
+];
+
+// Dükkân: soldan açılan panel. Kategoriler sağ kenarda resimli sekme; ürünler iki sütun, sağa sürüklenip yere bırakılır.
 function ShopPanel({
   farm,
-  now,
   level,
   shop,
   setShop,
+  width,
+  top,
+  bottom,
+  hidden,
   onClose,
   onPlace,
   onAct,
 }: {
   farm: Farm;
-  now: number;
   level: number;
   shop: Shop;
   setShop: (s: Shop) => void;
+  width: number;
+  top: number;
+  bottom: number;
+  hidden: boolean;
   onClose: () => void;
   onPlace: (pl: Placing) => void;
   onAct: (a: Action) => void;
@@ -3170,34 +3234,139 @@ function ShopPanel({
       return onAct({ a: 'adopt', i: -1, item: a.item }); // kural metni: "önce bina kur"
     }
   };
+  // Sahip olunan sayı: atölyeden bir tane olur (alınmışsa kapalı); hayvan evleri kaç tane kurulduysa.
+  const owned = (it: Item) =>
+    it.a.a === 'decor' && DECOR[it.a.item].station
+      ? farm.tiles.filter((x) => x.k === 'decor' && x.item === it.id).length
+      : it.a.a === 'build'
+        ? farm.tiles.filter((x) => x.k === 'building' && x.item === it.id).length
+        : 0;
+  const cell = (width - 6 - 16 - 8) / 2;
+  const tab = SHOP_TABS.find((x) => x.id === shop) ?? SHOP_TABS[0];
   return (
-    <>
-      <Head title="Dükkân" onClose={onClose} />
-      <Tabs
-        tabs={[
-          ['crop', 'Tohum'],
-          ['animal', 'Hayvan'],
-          ['building', 'Bina'],
-          ['workshop', 'Atölye'],
-          ['tree', 'Ağaç'],
-          ['decor', 'Süs'],
-        ]}
-        value={shop}
-        onChange={setShop}
-      />
-      <Items list={list} level={level} coins={farm.coins} onPick={pick} />
-      <Note>
-        {shop === 'crop'
-          ? soil
-            ? 'Tohumu seç, sonra boş tarlaya dokun.'
-            : 'Boş tarla yok: çimene dokunup tarla sür.'
-          : shop === 'animal'
-            ? 'Hayvan binasında yaşar: kümes, ağıl ya da kovan. Önce binayı kur.'
-            : shop === 'workshop'
-              ? 'Atölyeyi seç, boş bir çimene koy. Sonra üstüne dokunup üretime başla. Her atölyeden bir tane olur.'
-              : 'Seç, sonra boş bir çimene dokun.'}
-      </Note>
-    </>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 8, top, bottom, width: width + 48, opacity: hidden ? 0 : 1 }}>
+      <View style={{ position: 'absolute', left: width - 3, top: 52, gap: 5 }}>
+        {SHOP_TABS.map((x) => {
+          const on = x.id === shop;
+          return (
+            <Pressable
+              key={x.id}
+              onPress={() => setShop(x.id)}
+              accessibilityLabel={x.title}
+              style={{
+                width: on ? 48 : 44,
+                height: 46,
+                borderTopRightRadius: 12,
+                borderBottomRightRadius: 12,
+                borderWidth: 3,
+                borderLeftWidth: 0,
+                borderColor: '#9A6534',
+                backgroundColor: on ? '#FFF8E8' : '#E9C480',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {ART[x.art] && <Image source={ART[x.art].src} style={{ width: 32, height: 30 }} resizeMode="contain" />}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View
+        style={{
+          width,
+          flex: 1,
+          backgroundColor: 'rgba(255,248,232,0.97)',
+          borderRadius: 20,
+          borderWidth: 3,
+          borderColor: '#9A6534',
+          padding: 8,
+          gap: 8,
+          shadowColor: '#3A2A10',
+          shadowOpacity: 0.3,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+        }}
+      >
+        <Head title={tab.title} onClose={onClose} />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {list.map((it) => {
+            const have = owned(it);
+            const full = have > 0 && it.a.a === 'decor';
+            const locked = level < it.lvl;
+            const off = locked || full || farm.coins < it.cost;
+            return (
+              <SeedChip key={it.id} dir="right" item={dragOf(it, off)}>
+                <Pressable
+                  disabled={off}
+                  onPress={() => pick(it.a)}
+                  style={({ pressed }) => ({
+                    width: cell,
+                    paddingVertical: 6,
+                    paddingHorizontal: 3,
+                    borderRadius: 14,
+                    borderWidth: 1.5,
+                    borderColor: pressed ? GREEN : '#E5C99B',
+                    backgroundColor: locked ? '#EEE4D0' : '#FBFAF6',
+                    alignItems: 'center',
+                  })}
+                >
+                  <View style={{ height: 54, justifyContent: 'center', opacity: off ? 0.45 : 1 }}>
+                    {it.wall ? (
+                      <Wall kind={it.wall} mask={0} scale={0.62} flowers={it.flowers} />
+                    ) : ART[it.art] ? (
+                      <Image source={ART[it.art].src} style={{ width: 64, height: 54 }} resizeMode="contain" />
+                    ) : null}
+                  </View>
+                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+                    {it.name}
+                  </Text>
+                  {locked ? (
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: '#8A6F4A' }}>
+                      Seviye {it.lvl}
+                    </Text>
+                  ) : full ? (
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: '#3E7F22' }}>
+                      1/1 · kuruldu
+                    </Text>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <Image source={ART.coin.src} style={{ width: 14, height: 14 }} resizeMode="contain" />
+                      <Text
+                        maxFontSizeMultiplier={1.0}
+                        style={{ fontWeight: '900', fontSize: 12, color: farm.coins < it.cost ? '#B93A55' : '#7A5A00' }}
+                      >
+                        {it.cost}
+                      </Text>
+                    </View>
+                  )}
+                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+                    {it.sub}
+                  </Text>
+                  {have > 0 && !full && (
+                    <Text
+                      maxFontSizeMultiplier={1.0}
+                      style={{ position: 'absolute', top: 4, left: 6, fontWeight: '900', fontSize: 11, color: '#7A4A1C' }}
+                    >
+                      ×{have}
+                    </Text>
+                  )}
+                </Pressable>
+              </SeedChip>
+            );
+          })}
+        </ScrollView>
+        <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 11, lineHeight: 15, textAlign: 'center' }}>
+          {shop === 'crop'
+            ? soil
+              ? 'Sağa sürükle, tarlaların üstünden geçir'
+              : 'Boş tarla yok: çimene dokunup tarla sür'
+            : shop === 'animal'
+              ? 'Sürükleyip kümese, ağıla ya da kovana bırak'
+              : 'Sağa sürükle, boş çimene bırak'}
+        </Text>
+      </View>
+    </View>
   );
 }
 

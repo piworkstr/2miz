@@ -136,8 +136,8 @@ const FARM_STEPS: Step[] = [
     art: <Farm items={['bugday', 'havuc']} />,
     title: ['Ek ve sula', 'Plant and water'],
     body: [
-      'Boş tarlaya dokun, tohumu seç. Sulayınca daha hızlı büyür. Hazır olunca üstüne dokunup topla.',
-      'Tap an empty field and pick a seed. Watering speeds it up. Tap again to harvest when it is ready.',
+      'Dükkândan tohumu sürükleyip tarlaların üstünden geçir ya da boş tarlaya dokunup tohumu seç. Sulayınca daha hızlı büyür; hazır olunca dokunup topla.',
+      'Drag a seed from the shop across your fields, or tap an empty field and pick one. Watering speeds it up; tap to harvest when ready.',
     ],
   },
   {
