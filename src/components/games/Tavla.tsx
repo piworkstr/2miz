@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Image, PanResponder, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Polygon, Rect, Stop } from 'react-native-svg';
 import { botTavla, commitTavla, partnerJoined, rollTavla, sideOf, type GameProps } from '../../lib/games';
@@ -13,15 +13,21 @@ import { BAR, diceOf, flipMove, legalMoves, OFF, pipCount, play, toView, type Mo
 import { useTheme } from '../../lib/useTheme';
 import { Done, ResultHeader, useFinishOnce } from './shared';
 
-// Tavla: deri kutulu, keçe zeminli tahta. Gidilecek yer gösterilmez; oyuncu pulu sürükler ya da pula sonra haneye dokunur.
+// Tavla: uygulamanın renklerinde tahta — gül rengi çerçeve, krem zemin (ortasında silik logo), pembe ve gül taşlar.
+// Tavla: Gidilecek yer gösterilmez; oyuncu pulu sürükler ya da pula sonra haneye dokunur.
 // Tur telefonda oynanır; oynanacak hamle kalmayınca 1,5 sn sonra kendiliğinden kaydedilir (geri al iptal eder). Partnerin hamleleri pul pul kayarak görünür.
 
-const CREAM = ['#FFF9EA', '#EFE3C6', '#D6C39C'];
-const BROWN = ['#8E4A33', '#6A3022', '#4A1D14'];
-const FELT = '#8A5A3B';
-const LEATHER = '#5A2332';
-const POINT_DARK = '#5A2332';
-const POINT_LIGHT = '#EEE4CC';
+// Taşlar logodaki iki ton: benimki açık pembe, rakibinki gül. Sıra: [iç halka, dolgu, kenar].
+// (Adlar eski tahtadan kaldı: CREAM = benim taşım, BROWN = rakibin taşı.)
+const CREAM = ['#FBC8D0', '#F7A1AE', '#E07F92'];
+const BROWN = ['#F0778B', '#E8516A', '#B8324B'];
+const ROSE = '#E8516A';
+const INK = '#4A1D2B';
+const LEATHER = '#B93A55';
+// Haneler bilerek nötr: pembe ve gül taşlar üstlerinde kaybolmasın.
+const POINT_DARK = '#E7CFC6';
+const POINT_LIGHT = '#F6E3DC';
+const LOGO = require('../../../assets/splash-icon.png');
 
 type Geo = {
   W: number;
@@ -154,11 +160,12 @@ function Checker({ x, y, d, mine, lift, dim }: { x: number; y: number; d: number
           height: s * 0.66,
           borderRadius: s,
           borderWidth: 1.5,
-          borderColor: mine ? 'rgba(185,160,115,0.55)' : 'rgba(0,0,0,0.25)',
+          borderColor: mine ? 'rgba(224,127,146,0.5)' : 'rgba(184,50,75,0.45)',
           backgroundColor: c[0],
-          opacity: 0.55,
+          opacity: 0.7,
         }}
       />
+      <Ionicons name="heart" size={s * 0.34} color={mine ? '#FFFFFF' : '#FFE3E6'} style={{ position: 'absolute' }} />
     </View>
   );
 }
@@ -174,20 +181,20 @@ function Die({ n, mine, used }: { n: number; mine: boolean; used?: boolean }) {
         padding: 3,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        backgroundColor: mine ? '#FBF6E9' : '#62291D',
-        borderWidth: mine ? 0 : 1.5,
-        borderColor: '#F3E6C9', // rakibin koyu zarı koyu zeminde kaybolmasın
+        backgroundColor: mine ? '#FFFFFF' : ROSE,
+        borderWidth: 1.5,
+        borderColor: mine ? '#F3C2C9' : '#FFE3E6',
         opacity: used ? 0.35 : 1,
         shadowColor: '#000',
-        shadowOpacity: 0.45,
+        shadowOpacity: 0.25,
         shadowRadius: 3,
-        shadowOffset: { width: 0, height: 3 },
+        shadowOffset: { width: 0, height: 2 },
         elevation: 4,
       }}
     >
       {Array.from({ length: 9 }, (_, k) => (
         <View key={k} style={{ width: '33.3%', height: '33.3%', alignItems: 'center', justifyContent: 'center' }}>
-          {PIPS[n].includes(k) && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: mine ? '#3A1D14' : '#F3E6C9' }} />}
+          {PIPS[n].includes(k) && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: mine ? ROSE : '#FFFFFF' }} />}
         </View>
       ))}
     </View>
@@ -211,7 +218,7 @@ function BoardArt({ g }: { g: Geo }) {
         key={`ts${k}`}
         points={`${hx + 3.5},${f + 1} ${hx + pw - 3.5},${f + 1} ${hx + pw / 2},${f + ptLen - 6}`}
         fill="none"
-        stroke={dark ? '#C9A97A' : '#8E6A55'}
+        stroke={dark ? '#D2ADA2' : '#E6CCC3'}
         strokeWidth={0.8}
         strokeDasharray="2 1.6"
       />,
@@ -224,52 +231,64 @@ function BoardArt({ g }: { g: Geo }) {
         key={`bs${k}`}
         points={`${hx + 3.5},${H - f - 1} ${hx + pw - 3.5},${H - f - 1} ${hx + pw / 2},${H - f - ptLen + 6}`}
         fill="none"
-        stroke={dark ? '#8E6A55' : '#C9A97A'}
+        stroke={dark ? '#E6CCC3' : '#D2ADA2'}
         strokeWidth={0.8}
         strokeDasharray="2 1.6"
       />,
     );
   }
+  // Zeminde silik logo: iki yarının ortasında.
+  const ls = Math.min(half * 0.62, H * 0.3);
   return (
-    <Svg width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }}>
-      <Defs>
-        <LinearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#93623F" />
-          <Stop offset="1" stopColor="#7E5135" />
-        </LinearGradient>
-      </Defs>
-      <Rect x={0} y={0} width={W} height={H} rx={10} fill={LEATHER} />
-      <Rect x={L0} y={f} width={half} height={H - 2 * f} rx={3} fill="url(#felt)" />
-      <Rect x={R0} y={f} width={half} height={H - 2 * f} rx={3} fill="url(#felt)" />
-      {pts}
-      <Rect x={barX} y={0} width={bar} height={H} fill="#4A1B28" />
-      <Rect x={barX + 3} y={H * 0.3} width={bar - 6} height={H * 0.4} rx={3} fill="#B07A52" />
-      <Rect
-        x={barX + 5}
-        y={H * 0.3 + 2}
-        width={bar - 10}
-        height={H * 0.4 - 4}
-        rx={2}
-        fill="none"
-        stroke="#E9D3AF"
-        strokeWidth={0.8}
-        strokeDasharray="2 1.6"
-      />
-      <Rect x={trayX} y={f} width={tray} height={H / 2 - f - 3} rx={3} fill="#7A4A31" />
-      <Rect x={trayX} y={H / 2 + 3} width={tray} height={H / 2 - f - 3} rx={3} fill="#7A4A31" />
-      <Rect
-        x={3.5}
-        y={3.5}
-        width={W - 7}
-        height={H - 7}
-        rx={7}
-        fill="none"
-        stroke="#E9D3AF"
-        strokeWidth={0.9}
-        strokeDasharray="3 2"
-        opacity={0.7}
-      />
-    </Svg>
+    <>
+      <Svg width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }}>
+        <Defs>
+          <LinearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#FFF6EE" />
+            <Stop offset="1" stopColor="#FDEDE7" />
+          </LinearGradient>
+        </Defs>
+        <Rect x={0} y={0} width={W} height={H} rx={10} fill={LEATHER} />
+        <Rect x={L0} y={f} width={half} height={H - 2 * f} rx={3} fill="url(#felt)" />
+        <Rect x={R0} y={f} width={half} height={H - 2 * f} rx={3} fill="url(#felt)" />
+        {pts}
+        <Rect x={barX} y={0} width={bar} height={H} fill="#9E2F48" />
+        <Rect x={barX + 3} y={H * 0.3} width={bar - 6} height={H * 0.4} rx={3} fill="#B93A55" />
+        <Rect
+          x={barX + 5}
+          y={H * 0.3 + 2}
+          width={bar - 10}
+          height={H * 0.4 - 4}
+          rx={2}
+          fill="none"
+          stroke="#FFE3E6"
+          strokeWidth={0.8}
+          strokeDasharray="2 1.6"
+        />
+        <Rect x={trayX} y={f} width={tray} height={H / 2 - f - 3} rx={3} fill="#9E2F48" />
+        <Rect x={trayX} y={H / 2 + 3} width={tray} height={H / 2 - f - 3} rx={3} fill="#9E2F48" />
+        <Rect
+          x={3.5}
+          y={3.5}
+          width={W - 7}
+          height={H - 7}
+          rx={7}
+          fill="none"
+          stroke="#FFE3E6"
+          strokeWidth={0.9}
+          strokeDasharray="3 2"
+          opacity={0.7}
+        />
+      </Svg>
+      {[L0, R0].map((x0) => (
+        <Image
+          key={x0}
+          source={LOGO}
+          resizeMode="contain"
+          style={{ position: 'absolute', left: x0 + half / 2 - ls / 2, top: H / 2 - ls / 2, width: ls, height: ls, opacity: 0.22 }}
+        />
+      ))}
+    </>
   );
 }
 
@@ -619,8 +638,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             height: g.d,
             borderRadius: g.d / 2,
             borderWidth: 2,
-            borderColor: '#FFD27A',
-            backgroundColor: 'rgba(255,210,122,0.28)',
+            borderColor: ROSE,
+            backgroundColor: 'rgba(232,81,106,0.2)',
           }}
         />,
       );
@@ -705,8 +724,8 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
                 maxFontSizeMultiplier={1.0}
                 style={{
                   maxWidth: g.W * 0.8,
-                  backgroundColor: 'rgba(30,14,9,0.92)',
-                  color: '#FFE08A',
+                  backgroundColor: 'rgba(122,42,63,0.94)',
+                  color: '#FFE3E6',
                   fontWeight: '800',
                   fontSize: 16,
                   textAlign: 'center',
@@ -726,10 +745,10 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
   );
 
   const table = (children: React.ReactNode) => (
-    <View style={{ borderRadius: 18, padding: 8, gap: 10, backgroundColor: '#9A5B32', overflow: 'hidden', alignSelf: 'center' }}>
+    <View style={{ borderRadius: 18, padding: 8, gap: 10, backgroundColor: '#FBD3D8', overflow: 'hidden', alignSelf: 'center' }}>
       <Svg style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} width="100%" height="100%">
         {Array.from({ length: 30 }, (_, k) => (
-          <Rect key={k} x={k * 16} y={0} width={k % 3 === 0 ? 9 : 5} height={2000} fill={k % 2 ? '#A4653A' : '#8F5330'} opacity={0.6} />
+          <Rect key={k} x={k * 16} y={0} width={k % 3 === 0 ? 9 : 5} height={2000} fill={k % 2 ? '#FCE0E3' : '#F9C6CD'} opacity={0.6} />
         ))}
       </Svg>
       {children}
@@ -771,15 +790,11 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
             : `Kalan zar: ${dice.join(', ')}`);
 
   const who = (mine: boolean) => (
-    <View style={{ backgroundColor: 'rgba(43,20,14,0.5)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 }}>
-      <Text
-        maxFontSizeMultiplier={1.0}
-        numberOfLines={1}
-        style={{ color: mine === myTurn ? '#FFD27A' : '#FFF6E6', fontWeight: '800', fontSize: 14 }}
-      >
-        {mine ? '⚪ Sen' : `🟤 ${solo ? 'Usta' : partnerName}`}
+    <View style={{ backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 }}>
+      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ color: mine === myTurn ? ROSE : INK, fontWeight: '800', fontSize: 14 }}>
+        {mine ? '🩷 Sen' : `❤️ ${solo ? 'Usta' : partnerName}`}
       </Text>
-      <Text maxFontSizeMultiplier={1.0} style={{ color: '#FFF6E6', fontSize: 12, opacity: 0.85 }}>
+      <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontSize: 12, opacity: 0.75 }}>
         {mine ? pipCount(view) : oppPip} pip · {wins[mine ? uid : partnerId] ?? 0} galibiyet
       </Text>
     </View>
@@ -792,18 +807,18 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         borderRadius: 14,
         paddingVertical: 12,
         alignItems: 'center',
-        backgroundColor: primary ? '#FFD27A' : 'rgba(255,246,230,0.16)',
+        backgroundColor: primary ? ROSE : 'rgba(232,81,106,0.14)',
         opacity: pressed || busy ? 0.6 : 1,
       })}
     >
-      <Text maxFontSizeMultiplier={1.0} style={{ color: primary ? '#3A1D10' : '#FFF6E6', fontWeight: '800', fontSize: 15 }}>
+      <Text maxFontSizeMultiplier={1.0} style={{ color: primary ? '#FFFFFF' : '#B8324B', fontWeight: '800', fontSize: 15 }}>
         {label}
       </Text>
     </Pressable>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#3A1D10' }}>
+    <View style={{ flex: 1, backgroundColor: '#FFF8F3' }}>
       <View
         style={{
           position: 'absolute',
@@ -824,9 +839,9 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
         <View style={{ width: PANEL, alignSelf: 'stretch', gap: 8, paddingVertical: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Pressable onPress={() => (onExit ? onExit() : router.back())} hitSlop={12}>
-              <Ionicons name="close" size={26} color="#FFF6E6" />
+              <Ionicons name="close" size={26} color={INK} />
             </Pressable>
-            <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFF6E6', fontWeight: '800', fontSize: 16 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: INK, fontWeight: '800', fontSize: 16 }}>
               Tavla
             </Text>
             <Pressable
@@ -837,19 +852,19 @@ export function Tavla({ game, coupleId, uid, partnerId, partnerName, myName, onE
                 setMute(!mute);
               }}
             >
-              <Ionicons name={mute ? 'volume-mute-outline' : 'volume-high-outline'} size={22} color="#FFF6E6" />
+              <Ionicons name={mute ? 'volume-mute-outline' : 'volume-high-outline'} size={22} color={INK} />
             </Pressable>
-            <CallButton where="tavla" color="#FFF6E6" />
+            <CallButton where="tavla" color={INK} />
           </View>
           {who(false)}
           <View style={{ flex: 1, justifyContent: 'center', gap: 8 }}>
-            <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', fontWeight: '700', fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: INK, fontWeight: '700', fontSize: 13 }}>
               {status}
             </Text>
             {myTurn && !rolled && !animating && seenKey === turnKey && pbtn('Zar at', roll, true)}
             {myTurn && rolled && !animating && hist.length > 0 && !busy && pbtn(countdown ? 'Geri al (1,5 sn)' : 'Geri al', undo)}
             {solo && (
-              <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: '#FFF6E6', opacity: 0.6, fontSize: 10 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ textAlign: 'center', color: INK, opacity: 0.6, fontSize: 10 }}>
                 {partnerName} katılınca Usta’nın yerine geçer
               </Text>
             )}

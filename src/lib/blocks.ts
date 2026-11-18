@@ -229,9 +229,9 @@ export const SHAPES: { cells: Cells; w: number }[] = [
   ).map((cells) => ({ cells, w: 1 })),
 ];
 
-// Koyu zemin üstünde sakin, neon kenarlıklı küpler (dolgu rengi; kenar rengi EDGE'de).
-export const COLORS = ['#B23A42', '#C77A3A', '#B8961C', '#1F7A3A', '#1C7A8A', '#2F57C9', '#8C3FC9', '#2E8A42'];
-export const EDGE = ['#FF7A82', '#FFB36B', '#FFE066', '#5FD37A', '#5FD9EA', '#7FA2FF', '#D08CFF', '#7FE09A'];
+// Logo tonlarında sekiz renk (dolgu; kenar rengi EDGE'de): gül, pembe, mercan, şeftali, böğürtlen, leylak, mürdüm, şeker pembesi.
+export const COLORS = ['#E8516A', '#F7A1AE', '#F28B6B', '#F3B562', '#C7577E', '#B592D8', '#8E3A59', '#F27FA5'];
+export const EDGE = ['#C2364F', '#E07F92', '#D46D4E', '#D99A45', '#A33F63', '#9373BE', '#6E2943', '#D45F87'];
 
 export type Piece = { s: number; col: number } | null; // col: COLORS indeksi
 

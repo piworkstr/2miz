@@ -25,12 +25,15 @@ import { useFinishOnce } from './shared';
 // Birlikte Blok: Block Blast oynanışı. Parçayı alttan sürükleyip tahtaya bırakırsın; sürüklerken gölgesi ve
 // dolacak satırlar görünür. Sen üç parçanı koyunca sıradaki set partnere geçer. Tahta ve puan ortak.
 
-const BG = '#2B2560';
-const CELL_BG = '#231E55';
-const GOLD = '#FFD23F';
+// Uygulamanın renkleri: krem zemin, gül rengi vurgu, kalpli taşlar. (GOLD adı eski temadan kaldı: vurgu rengi.)
+const BG = '#FFF8F3';
+const CELL_BG = '#FFF6EE';
+const GOLD = '#E8516A';
+const INK = '#4A1D2B';
+const SOFT = 'rgba(74,29,43,0.6)';
 const PRAISE = ['', 'Güzel!', 'Harika!', 'Muhteşem!', 'İnanılmaz!'];
 
-// Küp: koyu dolgu, parlak neon kenar, hafif iç ışık.
+// Küp: logo tonunda dolgu, bir ton koyu kenar, üstte hafif ışık ve ortada beyaz kalp.
 function Cube({ size, col, radius = 6 }: { size: number; col: number; radius?: number }) {
   const bw = Math.max(1.5, size * 0.07);
   return (
@@ -42,11 +45,9 @@ function Cube({ size, col, radius = 6 }: { size: number; col: number; radius?: n
         backgroundColor: COLORS[col],
         borderWidth: bw,
         borderColor: EDGE[col],
-        shadowColor: EDGE[col],
-        shadowOpacity: 0.55,
-        shadowRadius: size * 0.18,
-        shadowOffset: { width: 0, height: 0 },
         overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <View
@@ -56,10 +57,11 @@ function Cube({ size, col, radius = 6 }: { size: number; col: number; radius?: n
           right: bw,
           top: bw,
           height: Math.max(2, size * 0.16),
-          backgroundColor: 'rgba(255,255,255,0.14)',
-          borderRadius: 2,
+          backgroundColor: 'rgba(255,255,255,0.22)',
+          borderRadius: 3,
         }}
       />
+      <Ionicons name="heart" size={Math.max(7, size * 0.48)} color="rgba(255,255,255,0.92)" />
     </View>
   );
 }
@@ -230,9 +232,9 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable onPress={() => (onExit ? onExit() : router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
-          <Ionicons name="close" size={26} color="#fff" />
+          <Ionicons name="close" size={26} color={INK} />
         </Pressable>
-        <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>
+        <Text maxFontSizeMultiplier={1.1} style={{ color: INK, fontSize: 17, fontWeight: '700' }}>
           Birlikte Blok
         </Text>
       </View>
@@ -241,15 +243,12 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Ionicons name="trophy" size={22} color={GOLD} />
-          <Text
-            maxFontSizeMultiplier={1.1}
-            style={{ color: GOLD, fontSize: 22, fontWeight: '900', textShadowColor: 'rgba(255,210,63,0.7)', textShadowRadius: 10 }}
-          >
+          <Text maxFontSizeMultiplier={1.1} style={{ color: GOLD, fontSize: 22, fontWeight: '900' }}>
             {best}
           </Text>
         </View>
         <View style={{ flex: 1 }} />
-        <CallButton where="blocks" color="#fff" />
+        <CallButton where="blocks" color={INK} />
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <View style={{ flexDirection: 'row', gap: 4 }}>
             <View style={{ opacity: myTurn ? 1 : 0.4, borderWidth: 2, borderColor: myTurn ? GOLD : 'transparent', borderRadius: 18 }}>
@@ -266,7 +265,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
               <Avatar p={partnerProfile} name={partnerName} size={30} showMood={false} />
             </View>
           </View>
-          <Text maxFontSizeMultiplier={1.1} style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '700' }}>
+          <Text maxFontSizeMultiplier={1.1} style={{ color: SOFT, fontSize: 11, fontWeight: '700' }}>
             {b.over ? 'Oyun bitti' : myTurn ? 'Senin setin' : `${partnerName} oynuyor…`}
           </Text>
         </View>
@@ -280,12 +279,9 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
             height: 56,
             borderRadius: 10,
             borderWidth: 3,
-            borderColor: '#E24BFF',
+            borderColor: '#F7A1AE',
             transform: [{ rotate: '45deg' }],
-            shadowColor: '#E24BFF',
-            shadowOpacity: 0.8,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 0 },
+            opacity: 0.6,
           }}
         />
         <Text
@@ -295,9 +291,6 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
             fontSize: 48,
             fontWeight: '900',
             letterSpacing: 1,
-            textShadowColor: 'rgba(255,170,0,0.8)',
-            textShadowRadius: 14,
-            textShadowOffset: { width: 0, height: 2 },
           }}
         >
           {shown.score}
@@ -314,13 +307,9 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
           height: boardPx,
           padding: PAD,
           borderRadius: 14,
-          backgroundColor: '#1B1748',
-          borderWidth: 3,
-          borderColor: '#3D8BFF',
-          shadowColor: '#3D8BFF',
-          shadowOpacity: 0.6,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 0 },
+          backgroundColor: '#FBE4E2',
+          borderWidth: 2,
+          borderColor: '#F7A1AE',
         }}
       >
         {shown.board.map((v, i) => {
@@ -339,16 +328,16 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
                 width: cell,
                 height: cell,
                 borderRadius: 6,
-                backgroundColor: clr ? '#fff' : v ? 'transparent' : g && drag ? COLORS[drag.p.col] : CELL_BG,
+                backgroundColor: clr ? '#F7A1AE' : v ? 'transparent' : g && drag ? COLORS[drag.p.col] : CELL_BG,
                 opacity: g && !v ? 0.55 : 1,
                 borderWidth: glow ? 2 : g && !v && drag ? 1.5 : lastCells.has(i) ? 1.5 : 1,
                 borderColor: glow
-                  ? '#fff'
+                  ? GOLD
                   : g && !v && drag
                     ? EDGE[drag.p.col]
                     : lastCells.has(i)
-                      ? 'rgba(255,255,255,0.6)'
-                      : 'rgba(255,255,255,0.05)',
+                      ? 'rgba(232,81,106,0.7)'
+                      : 'rgba(232,81,106,0.08)',
               }}
             >
               {v > 0 && !clr && <Cube size={cell} col={v - 1} />}
@@ -365,8 +354,6 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
           fontSize: 20,
           fontWeight: '900',
           minHeight: 26,
-          textShadowColor: 'rgba(255,170,0,0.7)',
-          textShadowRadius: 10,
         }}
       >
         {flash}
@@ -389,7 +376,7 @@ export function Blocks({ game, coupleId, uid, partnerId, partnerName, myName, on
         })}
       </View>
 
-      <Text maxFontSizeMultiplier={1.1} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>
+      <Text maxFontSizeMultiplier={1.1} style={{ textAlign: 'center', color: SOFT, fontSize: 11 }}>
         {myTurn ? `3 parçanı koyunca set ${partnerName}’a geçer` : ' '}
       </Text>
 
@@ -426,36 +413,33 @@ function GameOver({ score, best }: { score: number; best: number }) {
         left: 24,
         right: 24,
         top: '38%',
-        backgroundColor: '#1B1748',
+        backgroundColor: '#FFFFFF',
         borderRadius: 18,
         borderWidth: 2,
-        borderColor: '#E24BFF',
+        borderColor: '#F7A1AE',
         padding: 18,
         alignItems: 'center',
         gap: 6,
         transform: [{ scale: v }],
         elevation: 10,
-        shadowColor: '#E24BFF',
-        shadowOpacity: 0.6,
+        shadowColor: '#E8516A',
+        shadowOpacity: 0.25,
         shadowRadius: 18,
         shadowOffset: { width: 0, height: 0 },
       }}
     >
-      <Text
-        maxFontSizeMultiplier={1.1}
-        style={{ fontSize: 48, fontWeight: '900', color: GOLD, textShadowColor: 'rgba(255,170,0,0.8)', textShadowRadius: 14 }}
-      >
+      <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 48, fontWeight: '900', color: GOLD }}>
         {score}
       </Text>
-      <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontWeight: '700' }}>
+      <Text maxFontSizeMultiplier={1.1} style={{ color: INK, fontWeight: '700' }}>
         {score >= best ? 'Yeni çift rekorunuz!' : `Rekorunuz ${best}`}
       </Text>
-      <Text maxFontSizeMultiplier={1.1} style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+      <Text maxFontSizeMultiplier={1.1} style={{ color: SOFT, fontSize: 12 }}>
         Günün ilk oyunuysa ikinize de +10 puan
       </Text>
       <Pressable
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        style={{ marginTop: 6, backgroundColor: '#3D8BFF', borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10 }}
+        style={{ marginTop: 6, backgroundColor: '#E8516A', borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10 }}
       >
         <Text maxFontSizeMultiplier={1.1} style={{ color: '#fff', fontWeight: '800' }}>
           Bitir
