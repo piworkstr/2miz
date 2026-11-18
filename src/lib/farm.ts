@@ -156,7 +156,7 @@ export const RECIPES: Record<
   aycicekyagi: { name: 'Ayçiçek yağı', emoji: '🌻', needs: { aycicegi: 2 }, sell: 240, xp: 16, lvl: 20, mins: 90, at: 'yag' },
   zeytinyagi: { name: 'Zeytinyağı', emoji: '🫒', needs: { zeytin: 3 }, sell: 430, xp: 22, lvl: 20, mins: 120, at: 'yag' },
   avokadoyagi: { name: 'Avokado yağı', emoji: '🥑', needs: { avokado: 3 }, sell: 590, xp: 28, lvl: 24, mins: 150, at: 'yag' },
-  // Evde mutfak yoktur: yemekler aşçı mutfağında, kek fırında, reçel ve turşu reçel atölyesinde, ballı süt mandırada yapılır.
+  // Evde mutfak yoktur: yemekler aşçı mutfağında, kek fırında, reçel reçel atölyesinde, ballı süt mandırada yapılır.
   omlet: { name: 'Omlet', emoji: '🍳', needs: { egg: 2, domates: 1 }, sell: 90, xp: 8, lvl: 2, mins: 45, at: 'asci' },
   // Süt ürünleri mandırada, yün işleri dikiş atölyesinde yapılır (at). Yeri çiftlikte yoksa o tarif görünmez.
   peynir: { name: 'Peynir', emoji: '🧀', needs: { milk: 2 }, sell: 135, xp: 10, lvl: 5, mins: 120, at: 'mandira' },
@@ -186,7 +186,7 @@ export const RECIPES: Record<
   pure: { name: 'Patates püresi', emoji: '🥣', needs: { patates: 2, tereyagi: 1 }, sell: 570, xp: 24, lvl: 21, mins: 75, at: 'asci' },
   // 23. seviye: soğan
   menemen: { name: 'Menemen', emoji: '🍳', needs: { domates: 2, sogan: 1, egg: 2 }, sell: 370, xp: 20, lvl: 23, mins: 45, at: 'asci' },
-  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, at: 'konserve' },
+  tursu: { name: 'Turşu', emoji: '🥒', needs: { sogan: 2, havuc: 3 }, sell: 580, xp: 26, lvl: 23, mins: 180, at: 'asci' },
   // 25. seviye: kavun
   kavunsuyu: { name: 'Kavun suyu', emoji: '🍹', needs: { kavun: 2 }, sell: 600, xp: 26, lvl: 25, mins: 45, at: 'meyvesuyu' },
   kavuntatli: {
@@ -378,7 +378,7 @@ export const DECOR: Record<
     xp: 12,
     lvl: 4,
     w: 1.5,
-    perk: 'Çilek reçeli ve turşu yapar',
+    perk: 'Çilek reçeli yapar',
     station: true,
   },
   asci: {
@@ -388,7 +388,7 @@ export const DECOR: Record<
     xp: 8,
     lvl: 2,
     w: 1.5,
-    perk: 'Omlet, patatesli omlet, püre ve menemen pişirir',
+    perk: 'Omlet, patatesli omlet, püre, menemen ve turşu yapar',
     station: true,
   },
   // Çit ve taş duvar komşu parçalarla kendiliğinden birleşir (çizim: wallArt.ts).

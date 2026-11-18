@@ -52,7 +52,7 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   meyvetabagi: { src: require('../../assets/farm/meyvetabagi.webp'), h: 0.635 },
   yaspasta: { src: require('../../assets/farm/yaspasta.webp'), h: 1.058 },
   pikniksepeti: { src: require('../../assets/farm/pikniksepeti.webp'), h: 0.850 },
-  asci: { src: require('../../assets/farm/asci.webp'), h: 0.578 },
+  asci: { src: require('../../assets/farm/asci.webp'), h: 0.561 },
   // <yeni-atolyeler>
   firin: { src: require('../../assets/farm/firin.webp'), h: 0.713 },
   yag: { src: require('../../assets/farm/yag.webp'), h: 0.707 },
