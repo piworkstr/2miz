@@ -41,7 +41,7 @@ import {
   farmFlush,
   farmOf,
   barnTile,
-  FIXED_ANCHOR,
+  houseTile,
   pileTile,
   isWeekend,
   levelOf,
@@ -195,7 +195,7 @@ type Placing =
   | { a: 'decor'; item: DecorId }
   | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
   | { a: 'pave' } // patika döşe: kapatılana kadar her dokunuş bir kare döşer
-  | { a: 'moveBarn' }; // depoyu (2x2) taşı
+  | { a: 'moveBarn'; what?: 'house' }; // depoyu ya da evi (2x2) taşı
 type Spr = {
   key: string;
   art: string;
@@ -233,6 +233,7 @@ const PENS: Partial<Record<string, { sw: number; sh: number; slots: [number, num
 
 function sprites(f: Farm, now: number): Spr[] {
   const barnAt = barnTile(f);
+  const houseAt = houseTile(f);
   const out: Spr[] = [];
   f.tiles.forEach((t, i) => {
     const [r, c] = rc(i);
@@ -285,7 +286,7 @@ function sprites(f: Farm, now: number): Spr[] {
     }
     if (i === GIFT_TILE && ART.sepet) out.push({ key: 'sepet', art: 'sepet', ...up, y: up.y + TH * 0.2, w: TW * 0.95 });
     if (t.k === 'fixed') {
-      const [ar, ac] = t.item === 'barn' ? rc(barnAt) : FIXED_ANCHOR.house;
+      const [ar, ac] = rc(t.item === 'barn' ? barnAt : houseAt);
       if (r === ar && c === ac) {
         const a = center(ar, ac);
         const back = center(ar - 1, ac - 1);
@@ -863,6 +864,7 @@ export default function GardenScreen() {
     setMine((m) => (m.some((x) => x.sent) ? m.filter((x) => !x.sent) : m));
   }, [couple]);
   const BARN_TILE = barnTile(farm); // depo taşınabilir: yeri kayıttan gelir
+  const HOUSE_TILE = houseTile(farm); // ev de taşınabilir
   const PILE_TILE = pileTile(farm); // deponun önü
   const uid = user?.uid ?? '';
   const myName = profile?.name ?? 'Ben';
@@ -1561,12 +1563,13 @@ export default function GardenScreen() {
   const seedHit = seed ? seedTileAt(seed.x, seed.y) : -1;
   const seedTarget = seed && seedHit >= 0 && dragFits(seed.it, seedHit) ? seedHit : null;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
-  const liftBarn = !!lift && farm.tiles[lift.from]?.k === 'fixed';
+  const liftSrc = lift ? farm.tiles[lift.from] : undefined;
+  const liftFixed = liftSrc?.k === 'fixed' ? liftSrc.item : null; // depo ya da ev: dört karesi birden kalkar
   const farmView = lift
     ? {
         ...farm,
         tiles: farm.tiles.map((t, j) =>
-          j === lift.from || (liftBarn && t.k === 'fixed' && t.item === 'barn') ? ({ k: 'grass' } as Tile) : t,
+          j === lift.from || (liftFixed && t.k === 'fixed' && t.item === liftFixed) ? ({ k: 'grass' } as Tile) : t,
         ),
       }
     : farm;
@@ -1581,7 +1584,7 @@ export default function GardenScreen() {
       if (sp.wall) continue; // çit/duvar kendi karesinden seçilir
       const k = farm.tiles[i]?.k;
       const tl = farm.tiles[i];
-      const barn = tl?.k === 'fixed' && tl.item === 'barn';
+      const barn = tl?.k === 'fixed';
       if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && !barn) continue;
       const a = ART[sp.art];
       if (!a) continue;
@@ -1632,7 +1635,7 @@ export default function GardenScreen() {
     const can = (Object.keys(RECIPES) as RecipeId[]).filter(
       (id) => stationOf(id, farm) === 'mutfak' && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
     );
-    const [hr, hc] = FIXED_ANCHOR.house;
+    const [hr, hc] = rc(HOUSE_TILE);
     const h = center(hr, hc);
     const hb = center(hr - 1, hc - 1);
     // Mutfak rozeti: hazır ürün varsa "Hazır", üretim sürüyorsa kalan süre, boş ocak ve malzeme varsa "Mutfak".
@@ -1771,7 +1774,7 @@ export default function GardenScreen() {
         tl.k === 'soil' ||
         tl.k === 'crop' ||
         tl.k === 'path' ||
-        (tl.k === 'fixed' && tl.item === 'barn'))
+        tl.k === 'fixed')
     );
   };
   liftDropRef.current = (from, to) => {
@@ -1782,7 +1785,11 @@ export default function GardenScreen() {
     }
     setSel(null);
     const src = farm.tiles[from];
-    work(src?.k === 'fixed' && src.item === 'barn' ? { a: 'moveBarn', i: to } : { a: 'move', i: to, from });
+    work(
+      src?.k === 'fixed'
+        ? { a: 'moveBarn', i: to, ...(src.item === 'house' ? { what: 'house' as const } : {}) }
+        : { a: 'move', i: to, from },
+    );
   };
   placeRef.current = (i: number) => {
     const pl = placingRef.current;
@@ -2069,7 +2076,7 @@ export default function GardenScreen() {
                     : placing.a === 'move'
                       ? 'Taşı: boş bir çimene dokun'
                       : placing.a === 'moveBarn'
-                        ? 'Depo: 2×2 boş çimenin ön köşesine dokun'
+                        ? `${placing.what === 'house' ? 'Ev' : 'Depo'}: 2×2 boş çimenin ön köşesine dokun`
                         : 'Boş bir çimene dokun'}
             </Text>
             <Ionicons name="close-circle" size={18} color="#fff" />
@@ -2308,7 +2315,7 @@ export default function GardenScreen() {
                 }}
                 onLog={() => setShowLog(true)}
                 onMarket={() => setShowMarket(true)}
-                onKitchen={() => setSel(FIXED_ANCHOR.house[0] * N + FIXED_ANCHOR.house[1])}
+                onKitchen={() => setSel(HOUSE_TILE)}
                 onAll={() => {
                   ready.forEach((i) => {
                     const x = farm.tiles[i];
@@ -3067,6 +3074,8 @@ function Sheet(p: SheetProps) {
           <Note>Yemekler aşçı mutfağında, ekmek ve kek fırında, reçel reçel atölyesinde yapılır. Atölyeleri dükkândan alabilirsin.</Note>
         )}
         <Btn kind="soft" label="Çiftlik günlüğü" onPress={p.onLog} />
+        <Btn kind="soft" label="Evi taşı · sonra 2×2 boş çimene dokun" onPress={() => p.onPlace({ a: 'moveBarn', what: 'house' })} />
+        <Note>Basılı tutup sürükleyerek de taşıyabilirsin.</Note>
       </>
     );
   if (t.k === 'soil') {

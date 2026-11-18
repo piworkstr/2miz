@@ -565,6 +565,14 @@ export function barnTile(f: Farm): number {
   });
   return at >= 0 ? at : FIXED_ANCHOR.barn[0] * N + FIXED_ANCHOR.barn[1];
 }
+// Ev de taşınabilir: ön köşesi (2x2'nin sağ alt karesi) kayıttan bulunur.
+export function houseTile(f: Farm): number {
+  let at = -1;
+  f.tiles.forEach((t, i) => {
+    if (t.k === 'fixed' && t.item === 'house') at = i;
+  });
+  return at >= 0 ? at : FIXED_ANCHOR.house[0] * N + FIXED_ANCHOR.house[1];
+}
 // Deponun önü: satış ve sipariş tesliminde avatarın durduğu kare (deponun sol alt çaprazı; arazi dışına taşarsa deponun kendisi).
 export function pileTile(f: Farm): number {
   const b = barnTile(f);
@@ -884,7 +892,7 @@ export type Action =
   // Not Ağacı'na not.
   | { a: 'note'; i: number; text: string }
   // Depoyu (2x2) taşı: i, yeni yerin ön köşesi (sağ alt kare); dört karenin de boş çimen olması gerekir.
-  | { a: 'moveBarn'; i: number }
+  | { a: 'moveBarn'; i: number; what?: 'house' } // what: 'house' ise ev taşınır
   // Öpücük: i, partnerin yanındaki kare; avatar oraya yürür ve iki ekranda da kalpler uçar.
   | { a: 'kiss'; i: number };
 
@@ -1473,16 +1481,19 @@ export function applyAction(
       break;
     }
     case 'moveBarn': {
+      // Depo ya da ev (2x2): yeni yerin dört karesi boş çimen (ya da yapının kendi kareleri) olmalı.
+      const item = act.what === 'house' ? 'house' : 'barn';
+      const label = item === 'house' ? 'Ev' : 'Depo';
       const r0 = Math.floor(act.i / N);
       const c0 = act.i % N;
-      const isBarn = (x: Tile | undefined) => !!x && x.k === 'fixed' && x.item === 'barn';
+      const isIt = (x: Tile | undefined) => !!x && x.k === 'fixed' && x.item === item;
       const cells = [act.i, act.i - 1, act.i - N, act.i - N - 1];
-      if (r0 < 1 || c0 < 1 || !cells.every((j) => f.tiles[j]?.k === 'grass' || isBarn(f.tiles[j])))
-        return 'Depo için yan yana 2×2 boş çimen gerekir.';
-      if (act.i === barnTile(f)) return 'Depo zaten orada.';
-      f.tiles = f.tiles.map((x) => (isBarn(x) ? ({ k: 'grass' } as Tile) : x));
-      for (const j of cells) f.tiles[j] = { k: 'fixed', item: 'barn' };
-      text = `${name} depoyu taşıdı`;
+      if (r0 < 1 || c0 < 1 || !cells.every((j) => f.tiles[j]?.k === 'grass' || isIt(f.tiles[j])))
+        return `${label} için yan yana 2×2 boş çimen gerekir.`;
+      if (act.i === (item === 'house' ? houseTile(f) : barnTile(f))) return `${label} zaten orada.`;
+      f.tiles = f.tiles.map((x) => (isIt(x) ? ({ k: 'grass' } as Tile) : x));
+      for (const j of cells) f.tiles[j] = { k: 'fixed', item };
+      text = `${name} ${item === 'house' ? 'evi' : 'depoyu'} taşıdı`;
       break;
     }
     case 'kiss': {
