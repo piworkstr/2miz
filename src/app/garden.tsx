@@ -36,6 +36,10 @@ import {
   CROPS,
   cropReady,
   DECOR,
+  WILD,
+  TOOLS,
+  toolsOf,
+  wildAt,
   collectDreamBank,
   farmAction,
   farmFlush,
@@ -250,6 +254,13 @@ function sprites(f: Farm, now: number): Spr[] {
       out.push({ key: `s${i}`, art: cropReady(t, now) ? t.crop : p < 0.35 ? 'sprout' : 'young', ...base });
     }
     if (t.k === 'animal') out.push({ key: `s${i}`, art: t.item, ...up, w: TW * ANIMALS[t.item].w });
+    // Yabani arazi: satılık dış arazide ne yetişiyorsa görünür (boşlukta durmasın); satın alınınca aynı ağaç ve kayalar
+    // temizlenmeyi bekler.
+    const wild = t.k === 'wild' ? t.item : t.k === 'locked' && isOuter(i) ? wildAt(i) : null;
+    if (wild) {
+      const w = WILD[wild];
+      out.push({ key: t.k === 'wild' ? `s${i}` : `w${i}`, art: ART[w.art] ? w.art : w.alt, ...up, w: TW * w.w });
+    }
     if (t.k === 'tree') out.push({ key: `s${i}`, art: ART[t.item] ? t.item : 'tree', ...up, w: TW * TREES[t.item].w });
     if (t.k === 'building') {
       const bw = TW * BUILDINGS[t.item].w;
@@ -525,7 +536,7 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
       })}
       {f.tiles.map((t, i) => {
         const [r, c] = rc(i);
-        if (t.k === 'locked') return <Polygon key={`h${i}`} points={pts(r, c)} fill="url(#hatch)" opacity={0.45} />;
+        if (t.k === 'locked') return isOuter(i) ? null : <Polygon key={`h${i}`} points={pts(r, c)} fill="url(#hatch)" opacity={0.45} />;
         if (t.k === 'grass' && season === 'bahar' && i % 3 === 0) {
           const { x, y } = center(r, c);
           return (
@@ -1610,7 +1621,7 @@ export default function GardenScreen() {
       const k = farm.tiles[i]?.k;
       const tl = farm.tiles[i];
       const barn = tl?.k === 'fixed';
-      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && !barn && i !== GIFT_TILE) continue;
+      if (k !== 'tree' && k !== 'building' && k !== 'decor' && k !== 'animal' && k !== 'wild' && !barn && i !== GIFT_TILE) continue;
       const a = ART[sp.art];
       if (!a) continue;
       const h = sp.w * a.h;
@@ -2992,6 +3003,25 @@ function Sheet(p: SheetProps) {
 
   const i = sel;
   const t: Tile = farm.tiles[i];
+  if (t.k === 'wild') {
+    const w = WILD[t.item];
+    const tl = TOOLS[w.tool];
+    const have = toolsOf(farm);
+    return (
+      <>
+        <Head art={ART[w.art] ? w.art : w.alt} title={w.name} onClose={p.onClose} />
+        <Note>
+          {w.tool === 'balta' ? 'Baltayla kesince' : 'Kazmayla kırınca'} burası boş çimen olur. Elinde {have[w.tool]}{' '}
+          {tl.name.toLocaleLowerCase('tr-TR')} var; çiftçi pazarında satılır, bazı siparişler de ödül olarak verir.
+        </Note>
+        {have[w.tool] > 0 ? (
+          <Btn label={`${tl.verb} · +${w.xp} tecrübe`} onPress={() => p.onAct({ a: 'chop', i })} />
+        ) : (
+          <Btn kind="accent" label={`${tl.name} yok · çiftçi pazarından al (${tl.cost} altın)`} onPress={p.onMarket} />
+        )}
+      </>
+    );
+  }
   if (t.k === 'locked' && isOuter(i)) {
     const price = outerPrice(farm);
     const ok = farm.coins >= price;
@@ -2999,8 +3029,8 @@ function Sheet(p: SheetProps) {
       <>
         <Head title="Satılık arazi" onClose={p.onClose} />
         <Note>
-          Çiftliğin çevresinde {parcelTiles(farm, i).length} karelik arazi. Satın alınca çimen olur; tarla sürer, ağaç diker, bina
-          kurarsınız. Her yeni arazi biraz daha pahalı.
+          Çiftliğin çevresinde {parcelTiles(farm, i).length} karelik yabani arazi. Satın alınca sizin olur; üstündeki ağaç ve çalıları
+          baltayla kesip tarla sürer, ağaç diker, bina kurarsınız. Her yeni arazi biraz daha pahalı.
         </Note>
         <Btn
           label={ok ? `Satın al · ${price} altın` : `${price} altın (${price - farm.coins} eksik)`}
@@ -3695,7 +3725,7 @@ function Orders({
                       {o.special ? ' · özel sipariş ⭐' : ''}
                     </Text>
                     <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
-                      +{o.coins} altın · +{o.xp} tecrübe
+                      +{o.coins} altın · +{o.xp} tecrübe{o.tool ? ` · +1 ${TOOLS[o.tool].name.toLocaleLowerCase('tr-TR')}` : ''}
                     </Text>
                   </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>

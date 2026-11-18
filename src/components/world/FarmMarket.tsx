@@ -4,7 +4,22 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { dayKey } from '../../lib/date';
-import { farmAction, levelOf, PRICE, PRODUCT_NAME, STALL_GOODS, STALL_MAX, STOCK_EMOJI, stallPrice, type Farm } from '../../lib/farm';
+import {
+  farmAction,
+  TOOL_MAX,
+  TOOLS,
+  TOOLS_ON,
+  toolsOf,
+  type ToolId,
+  levelOf,
+  PRICE,
+  PRODUCT_NAME,
+  STALL_GOODS,
+  STALL_MAX,
+  STOCK_EMOJI,
+  stallPrice,
+  type Farm,
+} from '../../lib/farm';
 import {
   buyListing,
   createListing,
@@ -37,6 +52,12 @@ const GOLD = '#7A5A00';
 function Icon({ k, size }: { k: string; size: number }) {
   const a = stockArt(k);
   if (a) return <Image source={a.src} style={{ width: size, height: size }} resizeMode="contain" />;
+  if (k === 'balta' || k === 'kazma')
+    return (
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={k === 'balta' ? 'hammer' : 'construct'} size={Math.round(size * 0.7)} color={BROWN} />
+      </View>
+    );
   return (
     <Text maxFontSizeMultiplier={1.0} style={{ fontSize: Math.round(size * 0.7), lineHeight: size, height: size, textAlign: 'center' }}>
       {STOCK_EMOJI[k] ?? '📦'}
@@ -156,6 +177,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
   const [name, setName] = useState('');
   const [sell, setSell] = useState<{ key: string; n: number; unit: number } | null>(null);
   const [buy, setBuy] = useState<{ key: string; n: number } | null>(null);
+  const [tool, setTool] = useState<{ key: ToolId; n: number } | null>(null);
 
   async function refresh() {
     setError('');
@@ -370,6 +392,53 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                   Ürüne dokun, adedi seç (artıya basılı tutunca onar onar artar).
                   {nextGood ? ` Sıradaki ürün ${nextGood.lvl}. seviyede açılır.` : ''}
                 </Note>
+              )}
+
+              <Heading title="Aletler" sub="yabani araziyi temizlemek için" />
+              <View style={{ flexDirection: 'row', gap: GAP }}>
+                {TOOLS_ON.map((k) =>
+                  tile(
+                    k,
+                    cell3,
+                    tool?.key === k,
+                    <>
+                      <Coins n={TOOLS[k].cost} size={12} />
+                      <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: MUTED }}>
+                        elinde {toolsOf(farm)[k]}
+                      </Text>
+                    </>,
+                    () => setTool(tool?.key === k ? null : { key: k, n: 1 }),
+                    TOOLS[k].name,
+                  ),
+                )}
+              </View>
+              {tool && (
+                <View style={{ ...row, backgroundColor: '#fff', borderColor: BROWN, borderWidth: 2 }}>
+                  <Icon k={tool.key} size={44} />
+                  <View style={{ flex: 1 }}>
+                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                      {TOOLS[tool.key].name}
+                    </Text>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                      {tool.key === 'balta' ? 'yabani ağaç ve çalıları keser' : 'kaya ve taşları kırar'}
+                    </Text>
+                  </View>
+                  <Stepper n={tool.n} min={1} max={TOOL_MAX} onChange={(n) => setTool({ key: tool.key, n })} />
+                  <Pill
+                    main
+                    busy={busy === 'tool'}
+                    dim={farm.coins < TOOLS[tool.key].cost * tool.n}
+                    onPress={() =>
+                      run(
+                        'tool',
+                        () => act({ a: 'tool', i: 0, key: tool.key, n: tool.n }),
+                        `${tool.n} ${TOOLS[tool.key].name.toLocaleLowerCase('tr-TR')} alındı.`,
+                      )
+                    }
+                  >
+                    <Coins n={`Al · ${TOOLS[tool.key].cost * tool.n}`} size={14} color="#fff" />
+                  </Pill>
+                </View>
               )}
 
               <Heading title="Gezgin tüccar" sub="bugünün teklifleri" />

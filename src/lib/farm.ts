@@ -520,6 +520,7 @@ export const DECOR: Record<
 
 export type Tile =
   | { k: 'locked' }
+  | { k: 'wild'; item: WildId } // satın alınan dış arazide kalan yabani ağaç/çalı/kaya: aletle temizlenir
   | { k: 'grass' }
   | { k: 'path' }
   | { k: 'soil' }
@@ -529,6 +530,36 @@ export type Tile =
   | { k: 'tree'; item: TreeId; at: number; last: number } // at: dikim; last: son hasat (ilk hasat at + first)
   | { k: 'building'; item: BuildingId; res: Resident[] }
   | { k: 'decor'; item: DecorId };
+
+// ---------- Yabani arazi ----------
+// Çiftliğin çevresindeki satılık arazi boş değil, yabanidir: üstünde ağaç, çalı, kütük ve kaya durur.
+// Arazi satın alınınca bunlar yerinde kalır; ağaç, çalı ve kütük baltayla, kayalar kazmayla temizlenir.
+export type WildId = 'mese' | 'hus' | 'sogut' | 'cali' | 'kutuk' | 'kaya' | 'tas';
+export type ToolId = 'balta' | 'kazma';
+// art yoksa alt kullanılır. Kaya, taş ve kütük çizimleri henüz yok; wildAt şimdilik yalnızca ağaç ve çalı üretir.
+export const WILD: Record<WildId, { name: string; art: string; alt: string; tool: ToolId; w: number; xp: number }> = {
+  mese: { name: 'Yabani ağaç', art: 'y_mese', alt: 'tree', tool: 'balta', w: 1.25, xp: 4 },
+  hus: { name: 'Yabani çam', art: 'y_hus', alt: 'sus_cam', tool: 'balta', w: 1.0, xp: 4 },
+  sogut: { name: 'Yabani söğüt', art: 'y_sogut', alt: 'sus_sogut', tool: 'balta', w: 1.3, xp: 4 },
+  cali: { name: 'Yabani gül çalısı', art: 'y_cali', alt: 'sus_gulcali', tool: 'balta', w: 0.85, xp: 3 },
+  kutuk: { name: 'Kütük', art: 'y_kutuk', alt: 'hay', tool: 'balta', w: 0.7, xp: 3 },
+  kaya: { name: 'Kaya', art: 'y_kaya', alt: 'well', tool: 'kazma', w: 0.95, xp: 5 },
+  tas: { name: 'Taş yığını', art: 'y_tas', alt: 'well', tool: 'kazma', w: 0.8, xp: 4 },
+};
+export const TOOLS: Record<ToolId, { name: string; art: string; cost: number; verb: string }> = {
+  balta: { name: 'Balta', art: 'balta', cost: 120, verb: 'Baltayla kes' },
+  kazma: { name: 'Kazma', art: 'kazma', cost: 150, verb: 'Kazmayla kır' },
+};
+export const TOOL_MAX = 20; // tek seferde alınabilecek en çok alet
+// Her çiftlik birkaç aletle başlar.
+export const toolsOf = (f: Farm): Record<ToolId, number> => ({ balta: 3, kazma: 0, ...(f.tools ?? {}) });
+// Şu an kullanılan aletler (kazma, kaya çizimleri gelince açılacak).
+export const TOOLS_ON: ToolId[] = ['balta'];
+// Bir dış arazi karesinde ne yetiştiği kare numarasından türetilir (kayıt gerekmez; herkes aynısını görür).
+export function wildAt(i: number): WildId | null {
+  const h = (Math.imul(i + 17, 2654435761) >>> 0) % 100;
+  return h < 13 ? 'mese' : h < 21 ? 'hus' : h < 27 ? 'sogut' : h < 35 ? 'cali' : null;
+}
 
 export type FarmLog = { by: string; text: string; at: number };
 // Kasaba siparişi: 1–3 ürün; depodan teslim edilir, ikisi de katkı yaparsa ortak hasat sayılır.
@@ -542,6 +573,7 @@ export type Order = {
   openAt: number; // bu zamandan önce görünmez (tamamlanan siparişin yerine 20 dk sonra yenisi)
   who?: string; // siparişi veren (kurgusal) çift; eski siparişlerde yok, kimlikten türetilir
   special?: boolean; // özel sipariş: ödülü iki katı
+  tool?: ToolId; // bu sipariş ödül olarak bir alet de verir
   packed?: number; // ürünlerin hepsi ayrıldı: çift girişte bekliyor, ödül elden teslimde (handover) verilir
 };
 // Not Ağacı: evin yanındaki ağaç; ikiniz kısa notlar bırakırsınız.
@@ -578,6 +610,7 @@ export type Farm = {
   trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
   // Kurma tecrübesi yalnız ilk kez verilir: her tür için bugüne dek aynı anda en çok kaç tane durduğu (al-kaldır döngüsü tecrübe basmasın).
   dx?: Record<string, number>;
+  tools?: Partial<Record<ToolId, number>>; // balta ve kazma (yabani araziyi temizlemek için)
   noteAt?: number; // Not Ağacı taşındıysa yeni karesi
   giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
 };
@@ -827,6 +860,8 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
     coins: Math.round(value * 1.4 * (special ? 1.4 : 1)),
     xp: (5 * picks.length + 3 * qty) * (special ? 2 : 1),
     ...(special ? { special: true } : {}),
+    // Her dört siparişten biri ödül olarak bir balta da verir.
+    ...(Math.random() < 0.25 ? { tool: 'balta' as ToolId } : {}),
     openAt,
     who: `${ORDER_WOMEN[Math.floor(Math.random() * ORDER_WOMEN.length)]} ve ${ORDER_MEN[Math.floor(Math.random() * ORDER_MEN.length)]}`,
   };
@@ -898,6 +933,8 @@ export type Action =
   | { a: 'trader'; i: number; key: string; n: number; cost: number; offer: string; day: string } // gezgin tüccardan alım
   | { a: 'stall'; i: number; key: string; n: number } // pazar tezgâhından alım
   | { a: 'rename'; i: number; name: string } // çiftlik adı
+  | { a: 'chop'; i: number } // yabani ağaç/çalı/kayayı aletle temizle
+  | { a: 'tool'; i: number; key: ToolId; n: number } // pazardan balta/kazma al
   | { a: 'sellOne'; i: number; key: string; n: number } // depodan tek ürün sat
   | { a: 'release'; i: number; idx: number } // binadaki hayvanı geri ver (yarı fiyat)
   | { a: 'skipOrder'; i: number; order: string } // siparişi geri çevir; yenisi biraz sonra yazılır
@@ -1189,7 +1226,10 @@ export function applyAction(
         f.coins -= price;
         f.outer = (f.outer ?? 0) + 1;
         const ids = parcelTiles(f0, act.i);
-        ids.forEach((j) => (f.tiles[j] = { k: 'grass' }));
+        ids.forEach((j) => {
+          const w = wildAt(j);
+          f.tiles[j] = w ? { k: 'wild', item: w } : { k: 'grass' };
+        });
         f.xp += 8;
         text = `${name} yeni arazi satın aldı: ${ids.length} kare 🌿`;
         break;
@@ -1391,6 +1431,28 @@ export function applyAction(
       text = market ? `Pazar günü: ${n} ürün tezgâhta ${gained} altına gitti 🧺` : `${name} ${n} ürünü ${gained} altına sattı`;
       break;
     }
+    case 'chop': {
+      if (t.k !== 'wild') return 'Burada temizlenecek bir şey yok.';
+      const w = WILD[t.item];
+      const have = toolsOf(f);
+      if (have[w.tool] < 1) return `${TOOLS[w.tool].name} kalmadı; çiftçi pazarından alabilirsin.`;
+      f.tools = { ...have, [w.tool]: have[w.tool] - 1 };
+      f.xp += w.xp;
+      f.tiles[act.i] = { k: 'grass' };
+      text = `${name} ${w.name.toLocaleLowerCase('tr-TR')} temizledi`;
+      break;
+    }
+    case 'tool': {
+      const tl = TOOLS[act.key];
+      const n = Math.floor(act.n);
+      if (!tl || !TOOLS_ON.includes(act.key) || !(n >= 1 && n <= TOOL_MAX)) return 'Böyle bir alet yok.';
+      const cost = tl.cost * n;
+      if (f.coins < cost) return 'Yeterli altının yok.';
+      f.coins -= cost;
+      f.tools = { ...toolsOf(f), [act.key]: toolsOf(f)[act.key] + n };
+      text = `${name} pazardan ${n} ${tl.name.toLocaleLowerCase('tr-TR')} aldı (${cost} altın)`;
+      break;
+    }
     case 'sellOne': {
       const n = Math.floor(act.n);
       const have = f.stock[act.key] ?? 0;
@@ -1458,10 +1520,11 @@ export function applyAction(
       f.coins += o.coins;
       f.xp += o.xp;
       gained = o.coins;
+      if (o.tool) f.tools = { ...toolsOf(f), [o.tool]: toolsOf(f)[o.tool] + 1 };
       const both = o.by.length >= 2;
       if (both) f.harvests += 1;
       f.orders[k] = makeOrder(f, now, now + ORDER_REFILL);
-      text = `${name}, ${orderWho(o)} siparişini teslim etti: +${o.coins} altın${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
+      text = `${name}, ${orderWho(o)} siparişini teslim etti: +${o.coins} altın${o.tool ? ` ve 1 ${TOOLS[o.tool].name.toLocaleLowerCase('tr-TR')}` : ''}${both ? ' · ikiniz katkı verdiniz, ortak hasat sayıldı 💛' : ''}`;
       break;
     }
     case 'cook': {
@@ -1561,7 +1624,7 @@ export function applyAction(
     }
   }
   // Pazar işleri bir kareye bağlı değil; avatar yerinde kalır.
-  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'rename', 'sellOne', 'skipOrder'].includes(act.a))
+  if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'tool', 'rename', 'sellOne', 'skipOrder'].includes(act.a))
     f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
   return { farm: f, text, gained, ready, points };
