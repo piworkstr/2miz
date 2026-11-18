@@ -2519,9 +2519,9 @@ function Quick({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        minWidth: 140,
+        minWidth: 112,
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
         paddingVertical: 10,
         borderRadius: 22,
         borderWidth: 2,
@@ -2956,12 +2956,12 @@ function Sheet(p: SheetProps) {
     return (
       <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
-        <View
-          pointerEvents="box-none"
-          style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4, marginRight: 76 }}
-        >
-          {/* Tek seferde toplama: yalnızca toplanacak bir şey varken görünür. */}
-          {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
+        <View pointerEvents="box-none" style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4 }}>
+          {/* Toplu sulama ve toplama hep ekranda durur; yapılacak iş yokken soluk görünür. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+            <Quick icon="water" label="Sula" count={p.thirsty} onPress={p.onWaterAll} />
+            <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />
+          </View>
           {!!hint && (
             <Text
               pointerEvents="none"
