@@ -975,7 +975,27 @@ export default function GardenScreen() {
   const pinch = useRef<{ d0: number; z0: number; wx: number; wy: number } | null>(null);
   const MAX_ZOOM = 4;
   // 1 = iç çiftlik ekrana sığar; daha küçüğü uzaklaşır ve bütün araziyi (22x22) gösterir.
-  const MIN_ZOOM = INNER / N;
+  // Manzara resmi ekranı her zaman kaplasın (üstte ve altta boşluk kalmasın): uzaklaşma buna göre sınırlanır.
+  const MIN_ZOOM = Math.max(INNER / N, box.h && fit ? (box.h * 1.02) / (BG.h * fit) : INNER / N);
+  const minZoomRef = useRef(MIN_ZOOM);
+  minZoomRef.current = MIN_ZOOM;
+  // Kaydırma da manzaranın kenarında durur: resmin dışı (boş gök ya da düz zemin) görünmez.
+  const boxRef = useRef(box);
+  boxRef.current = box;
+  const clampPan = (x: number, y: number, sc: number) => {
+    const c = cam.current;
+    const b = boxRef.current;
+    const xMin = b.w - (BG.x + BG.w) * sc - c.ox + c.cx * sc;
+    const xMax = -BG.x * sc - c.ox + c.cx * sc;
+    const yMin = b.h - (BG.y + BG.h) * sc - c.oy + c.cy * sc;
+    const yMax = -BG.y * sc - c.oy + c.cy * sc;
+    return {
+      x: xMin > xMax ? (xMin + xMax) / 2 : Math.min(xMax, Math.max(xMin, x)),
+      y: yMin > yMax ? (yMin + yMax) / 2 : Math.min(yMax, Math.max(yMin, y)),
+    };
+  };
+  const clampRef = useRef(clampPan);
+  clampRef.current = clampPan;
   // Tek dokunuşla iş: rozete ya da tek işi belli olan kareye dokununca sormadan yapılır (her render'da yenilenir).
   const quickRef = useRef<(wx: number, wy: number) => boolean>(() => false);
   const kissRef = useRef<(wx: number, wy: number) => boolean>(() => false);
@@ -1033,11 +1053,11 @@ export default function GardenScreen() {
               pinch.current = { d0: d, z0: c.zoom, wx: (mx - c.tx) / c.s, wy: (my - c.ty) / c.s };
               return;
             }
-            const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, (pinch.current.z0 * d) / pinch.current.d0));
+            const z = Math.min(MAX_ZOOM, Math.max(minZoomRef.current, (pinch.current.z0 * d) / pinch.current.d0));
             const s2 = c.fit * z;
             setZoom(z);
             if (z === 1 && Math.abs(c.pan.x) + Math.abs(c.pan.y) < 1) setPan({ x: 0, y: 0 });
-            else setPan({ x: mx - c.ox - (pinch.current.wx - c.cx) * s2, y: my - c.oy - (pinch.current.wy - c.cy) * s2 });
+            else setPan(clampRef.current(mx - c.ox - (pinch.current.wx - c.cx) * s2, my - c.oy - (pinch.current.wy - c.cy) * s2, s2));
             return;
           }
           if (pinch.current) return; // iki parmaktan tek parmağa düşünce sürükleme başlamasın
@@ -1047,7 +1067,7 @@ export default function GardenScreen() {
             const c = cam.current;
             const x = Math.min((c.cx - FULL.x0) * c.s, Math.max((c.cx - FULL.x1) * c.s, drag.current.x + g.dx));
             const y = Math.min((c.cy - FULL.y0) * c.s, Math.max((c.cy - FULL.y1) * c.s, drag.current.y + g.dy));
-            setPan({ x, y });
+            setPan(clampRef.current(x, y, c.s));
           }
         },
         onPanResponderRelease: (e) => {
