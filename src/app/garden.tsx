@@ -2792,9 +2792,15 @@ function Sheet(p: SheetProps) {
     return (
       <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
         <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
-        <View pointerEvents="none" style={{ flex: 1, alignItems: 'center', paddingHorizontal: 6, paddingBottom: 4, marginRight: 76 }}>
+        <View
+          pointerEvents="box-none"
+          style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4, marginRight: 76 }}
+        >
+          {/* Tek seferde toplama: yalnızca toplanacak bir şey varken görünür. */}
+          {small > 0 && <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />}
           {!!hint && (
             <Text
+              pointerEvents="none"
               maxFontSizeMultiplier={1.0}
               style={{
                 backgroundColor: 'rgba(43,29,34,0.78)',
