@@ -61,7 +61,6 @@ function Cube({ size, col, radius = 6 }: { size: number; col: number; radius?: n
           borderRadius: 3,
         }}
       />
-      <Ionicons name="heart" size={Math.max(7, size * 0.48)} color="rgba(255,255,255,0.92)" />
     </View>
   );
 }

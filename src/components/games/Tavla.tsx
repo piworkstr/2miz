@@ -165,7 +165,6 @@ function Checker({ x, y, d, mine, lift, dim }: { x: number; y: number; d: number
           opacity: 0.7,
         }}
       />
-      <Ionicons name="heart" size={s * 0.34} color={mine ? '#FFFFFF' : '#FFE3E6'} style={{ position: 'absolute' }} />
     </View>
   );
 }
