@@ -197,7 +197,7 @@ export function StationPop({
   const half = R * Math.sin((Math.min(180, tot) / 2) * (Math.PI / 180)) + B / 2 + 6;
   const cardW = Math.min(310, box.w - 20);
   const cx = Math.min(box.w - Math.max(half, cardW / 2) - 4, Math.max(Math.max(half, cardW / 2) + 4, sx));
-  const cy = Math.min(box.h - bottom - 236, Math.max(top + R + B / 2 + 6, sy));
+  const cy = Math.min(box.h - bottom - 290, Math.max(top + R + B / 2 + 6, sy));
   const pos = list.map((_id, k) => {
     const a = (-90 - tot / 2 + k * step) * (Math.PI / 180);
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
