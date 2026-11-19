@@ -605,6 +605,7 @@ export type Farm = {
   giftAt?: Record<string, number>; // kişi başı son sepet gönderme zamanı
   kiss?: { by: string; at: number }; // son öpücük (iki ekranda kalp efekti için)
   prod?: ProdJob[]; // mutfakta üretimdeki işler
+  xm?: number; // seviye eğrisi değişmeden önce kazanılmış tecrübe (bkz. xpOf)
   name?: string; // çiftçi pazarında görünen çiftlik adı (çiftin gerçek adı görünmez)
   trader?: { day: string; got: string[] }; // gezgin tüccardan bugün alınan teklifler
   // Kurma tecrübesi yalnız ilk kez verilir: her tür için bugüne dek aynı anda en çok kaç tane durduğu (al-kaldır döngüsü tecrübe basmasın).
@@ -742,12 +743,36 @@ export const outerPrice = (f: Farm) => {
   return 300 + 300 * n + 50 * n * n;
 };
 
-export const levelStart = (l: number) => 15 * l * (l - 1);
+// Seviye eğrisi. İlk 20 seviye hızlıdır (oyuna ısınma): 15·l·(l−1). Sonrasında her seviye bir öncekinden %9 pahalıdır;
+// büyük çiftlikler günde binlerce tecrübe topladığı için düz eğride bir haftada 60. seviyeye çıkılıyordu.
+// Yeni eğride (günde ~8.000 tecrübeyle bile) 50. seviye ~11 gün, 60 ~26 gün, 70 ~2 ay, 80 ~5 ay sürer.
+const OLD_START = (l: number) => 15 * l * (l - 1);
+const CURVE_FROM = 20;
+const CURVE_STEP = 600; // 20→21 eski eğrideki bedel; eğri buradan kesintisiz devam eder
+const CURVE_GROW = 1.09;
+export const levelStart = (l: number) =>
+  l <= CURVE_FROM
+    ? OLD_START(l)
+    : Math.round(OLD_START(CURVE_FROM) + (CURVE_STEP * (Math.pow(CURVE_GROW, l - CURVE_FROM) - 1)) / (CURVE_GROW - 1));
 export function levelOf(xp: number) {
   let l = 1;
   while (xp >= levelStart(l + 1)) l++;
   return { level: l, from: levelStart(l), to: levelStart(l + 1) };
 }
+// Eğri değişmeden önce kazanılmış tecrübe (f.xm) eski seviyesini korur: kimsenin seviyesi düşmez. O tecrübe yeni eğride
+// aynı seviyenin aynı yüzdesine çevrilir; sonradan kazanılan tecrübe yeni (yavaş) eğriyle sayılır.
+// xm yoksa çiftlik henüz yeni sürümle yazılmamıştır: bütün tecrübesi eski sayılır.
+const legacyXp = (x: number) => {
+  if (x < OLD_START(CURVE_FROM)) return x;
+  let l = CURVE_FROM;
+  while (x >= OLD_START(l + 1)) l++;
+  const p = (x - OLD_START(l)) / (OLD_START(l + 1) - OLD_START(l));
+  return Math.round(levelStart(l) + p * (levelStart(l + 1) - levelStart(l)));
+};
+export const xpOf = (f: { xp: number; xm?: number }) => {
+  const xm = Math.min(f.xm ?? f.xp, f.xp);
+  return legacyXp(xm) + (f.xp - xm);
+};
 
 export const rc = (i: number) => [Math.floor(i / N), i % N] as const;
 // İş bitince karakter tarlanın içinde kalmaz: en yakın yol (yoksa çim) karesine çekilir.
@@ -897,7 +922,7 @@ export const orderWho = (o: Order) => {
 };
 // Çiftin şu an üretebildiği ürünlerden rastgele bir sipariş. Ödül: ham değerin 1,4 katı altın; her kalem 5 + her adet 3 tecrübe.
 export function makeOrder(f: Farm, now: number, openAt = now): Order {
-  const lv = levelOf(f.xp).level;
+  const lv = levelOf(xpOf(f)).level;
   const pool: string[] = (Object.keys(CROPS) as CropId[]).filter((c) => CROPS[c].lvl <= lv && !CROPS[c].big);
   for (const t of f.tiles) {
     if (t.k === 'animal') for (const k of ANIMALS[t.item].products) if (!pool.includes(k)) pool.push(k);
@@ -971,7 +996,7 @@ export const weekEnd = (now: number) => {
 export function bigOrderOf(f: Farm, now: number): BigOrder {
   const week = weekKey(now);
   if (f.big?.week === week) return f.big;
-  const lv = levelOf(f.xp).level;
+  const lv = levelOf(xpOf(f)).level;
   const cand = (Object.keys(CROPS) as CropId[])
     .filter((k) => CROPS[k].lvl <= lv)
     .sort((a, b) => hashOf(week + a) - hashOf(week + b))
@@ -994,7 +1019,7 @@ export const bigCanGive = (f: Farm, o: BigOrder) => Object.entries(bigLeft(o)).r
 
 // Pano hep ORDER_SLOTS sipariş tutar; eksikse üretilir.
 export function fillOrders(f: Farm, now: number) {
-  const slots = orderSlots(levelOf(f.xp).level);
+  const slots = orderSlots(levelOf(xpOf(f)).level);
   while (f.orders.length < slots) f.orders.push(makeOrder(f, now));
 }
 export const notesToday = (f: Farm, uid: string, now = Date.now()) =>
@@ -1154,6 +1179,7 @@ export function applyAction(
 ): Result | string {
   const f: Farm = {
     ...f0,
+    xm: f0.xm ?? f0.xp,
     tiles: [...f0.tiles],
     log: [...f0.log],
     pos: { ...f0.pos },
@@ -1192,7 +1218,7 @@ export function applyAction(
   // Depo sınırı: dolu depoya yeni ürün girmez (tek işlem sınırı aşabilir; hasat yarım kalmaz).
   if (FILLS_DEPOT.includes(act.a) && depotUsed(f) >= depotCap(f))
     return `Depo dolu (${depotUsed(f)}/${depotCap(f)}). Bir şeyler sat, siparişe ver ya da depoyu büyüt.`;
-  const lv = levelOf(f.xp).level;
+  const lv = levelOf(xpOf(f)).level;
   let text = '';
   let gained = 0;
   let ready: number | undefined;
@@ -1236,7 +1262,7 @@ export function applyAction(
         f.tools = { ...toolsOf(f), [tool]: toolsOf(f)[tool] + 1 };
         drop = { art: tool, text: `+1 ${TOOLS[tool].name}` };
       } else if (roll < DROP_TOOL + DROP_COINS) {
-        const n = 8 + 2 * levelOf(f.xp).level;
+        const n = 8 + 2 * levelOf(xpOf(f)).level;
         f.coins += n;
         drop = { art: 'coin', text: `+${n} altın` };
       }
@@ -1319,7 +1345,7 @@ export function applyAction(
       const good = STALL_GOODS.find((g) => g.key === act.key);
       const n = Math.floor(act.n);
       if (!good || !(n >= 1 && n <= STALL_MAX)) return 'Bu ürün tezgâhta yok.';
-      if (levelOf(f.xp).level < good.lvl) return `Bu ürün ${good.lvl}. seviyede açılır.`;
+      if (levelOf(xpOf(f)).level < good.lvl) return `Bu ürün ${good.lvl}. seviyede açılır.`;
       const cost = stallPrice(act.key, n);
       if (f.coins < cost) return 'Yeterli altının yok.';
       f.coins -= cost;

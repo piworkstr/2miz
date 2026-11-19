@@ -3,7 +3,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, ImageBackground, Pressable, Text, View } from 'react-native';
-import { farmOf, farmSummary, levelOf, stockCount } from '../lib/farm';
+import { farmOf, farmSummary, levelOf,
+  xpOf, stockCount } from '../lib/farm';
 import { ART } from '../lib/farmArt';
 import { useOpenScene } from '../lib/scenes';
 import { useL } from '../lib/i18n';
@@ -91,8 +92,8 @@ export function GardenCard() {
               style={{ color: '#fff', fontWeight: '800', fontSize: 13, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}
             >
               {l(
-                `Seviye ${levelOf(farm.xp).level} · ${farm.harvests} ortak hasat · ${farm.coins} altın`,
-                `Level ${levelOf(farm.xp).level} · ${farm.harvests} shared harvests · ${farm.coins} gold`,
+                `Seviye ${levelOf(xpOf(farm)).level} · ${farm.harvests} ortak hasat · ${farm.coins} altın`,
+                `Level ${levelOf(xpOf(farm)).level} · ${farm.harvests} shared harvests · ${farm.coins} gold`,
               )}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

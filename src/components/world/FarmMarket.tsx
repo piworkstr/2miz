@@ -14,6 +14,7 @@ import {
   toolsOf,
   type ToolId,
   levelOf,
+  xpOf,
   PRICE,
   PRODUCT_NAME,
   STALL_GOODS,
@@ -233,7 +234,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
     return typeof r === 'string' ? r : null;
   };
 
-  const level = levelOf(farm.xp).level;
+  const level = levelOf(xpOf(farm)).level;
   const goods = STALL_GOODS.filter((g) => g.lvl <= level);
   const nextGood = STALL_GOODS.find((g) => g.lvl > level);
   const today = dayKey();

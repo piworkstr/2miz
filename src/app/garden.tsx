@@ -61,6 +61,7 @@ import {
   pileTile,
   isWeekend,
   levelOf,
+  xpOf,
   MARKET_BONUS,
   MIN,
   N,
@@ -1736,7 +1737,7 @@ export default function GardenScreen() {
   }
 
   // Seviye atlandıysa kutlama açılır (çiftlik ilk yüklendiğinde değil; yalnız ekran açıkken artınca).
-  const lvNow = couple ? levelOf(farm.xp).level : null;
+  const lvNow = couple ? levelOf(xpOf(farm)).level : null;
   useEffect(() => {
     if (lvNow == null) return;
     if (lvSeen.current != null && lvNow > lvSeen.current) {
@@ -1768,7 +1769,7 @@ export default function GardenScreen() {
 
   if (!user || !couple || !partnerId) return null;
 
-  const lv = levelOf(farm.xp);
+  const lv = levelOf(xpOf(farm));
   const season = seasonOf(now);
   const ready = readyTiles(farm, now);
   // Atölyelerde bitmiş iş sayısı: Topla düğmesi bunları da sayar.
@@ -2010,7 +2011,7 @@ export default function GardenScreen() {
   }
   {
     // Ev: mutfak. Yapılabilecek bir tarif varsa rozet çıkar.
-    const lvNow = levelOf(farm.xp).level;
+    const lvNow = levelOf(xpOf(farm)).level;
     const can = (Object.keys(RECIPES) as RecipeId[]).filter(
       (id) => stationOf(id, farm) === 'mutfak' && RECIPES[id].lvl <= lvNow && hasAll(farm, RECIPES[id].needs),
     );
@@ -2089,7 +2090,7 @@ export default function GardenScreen() {
     if (tl.k === 'decor' && DECOR[tl.item].station) {
       // Atölye rozeti: hazır ürün varsa "Hazır", üretim sürüyorsa kalan süre, boşsa ve malzeme varsa atölyenin adı.
       const st = tl.item as Station;
-      const lvNow = levelOf(farm.xp).level;
+      const lvNow = levelOf(xpOf(farm)).level;
       const js = stationJobs(farm, st);
       const dj = js.find((j) => j.ready <= now);
       const nj = js.slice().sort((a, b) => a.ready - b.ready)[0];
@@ -2416,7 +2417,7 @@ export default function GardenScreen() {
                 <GText size={14} style={{ textAlign: 'center', lineHeight: 17 }}>
                   {farm.name || 'Çiftliğe ad ver'}
                 </GText>
-                <WoodBar value={(farm.xp - lv.from) / Math.max(1, lv.to - lv.from)} height={12} style={{ alignSelf: 'stretch' }} />
+                <WoodBar value={(xpOf(farm) - lv.from) / Math.max(1, lv.to - lv.from)} height={12} style={{ alignSelf: 'stretch' }} />
               </View>
             </Plaque>
           </Pressable>
@@ -2450,7 +2451,7 @@ export default function GardenScreen() {
           }}
         />
       )}
-      {lvCard && <LevelCard level={lvCard.level} up={lvCard.up} xp={farm.xp} onClose={() => setLvCard(null)} />}
+      {lvCard && <LevelCard level={lvCard.level} up={lvCard.up} xp={xpOf(farm)} onClose={() => setLvCard(null)} />}
       {placing && (
         <View style={{ position: 'absolute', left: 0, right: 0, top: insets.top + 96, alignItems: 'center', zIndex: 30 }}>
           <Pressable
@@ -3798,7 +3799,7 @@ function StockIcon({ k, w, h }: { k: string; w: number; h: number }) {
 
 function Sheet(p: SheetProps) {
   const { farm, sel, now } = p;
-  const level = levelOf(farm.xp).level;
+  const level = levelOf(xpOf(farm)).level;
 
   if (p.showShop) return null; // dükkân yandan açılan ayrı bir paneldir
   if (p.showOrders === 'ws') return <Workshops farm={farm} now={now} onClose={p.onClose} onPick={p.onWorkshop} />;
@@ -4802,7 +4803,7 @@ function Orders({
 // Mutfak: depodaki ürünlerden tarif işe konur, süresi dolunca buradan toplanır. Aynı anda birkaç iş (seviyeyle artar).
 // Atölye listesi: kurulu atölyeler ve durumları; dokununca o atölyenin üretim paneli açılır.
 function Workshops({ farm, now, onClose, onPick }: { farm: Farm; now: number; onClose: () => void; onPick: (tile: number) => void }) {
-  const level = levelOf(farm.xp).level;
+  const level = levelOf(xpOf(farm)).level;
   const rows = farm.tiles
     .map((x, k) => (x.k === 'decor' && DECOR[x.item].station ? { k, st: x.item as Station } : null))
     .filter((x): x is { k: number; st: Station } => !!x)

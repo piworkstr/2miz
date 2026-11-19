@@ -6,7 +6,7 @@ import { DreamBoard } from '../components/DreamBoard';
 import { Card, Muted, Screen, T } from '../components/ui';
 import { DART } from '../lib/dreamArt';
 import { bay, BAYS, BOATS, homeOf, HOUSE_LV, houseLevel, seaOf } from '../lib/dreams';
-import { farmOf, farmSummary, levelOf } from '../lib/farm';
+import { farmOf, farmSummary, levelOf, xpOf } from '../lib/farm';
 import { ART } from '../lib/farmArt';
 import { useOpenScene } from '../lib/scenes';
 import { useSession } from '../lib/session';
@@ -110,7 +110,7 @@ export default function DreamsScreen() {
         '#8BC34F',
         'Bizim Çiftlik',
         'Ekin, birbirinizin ektiğini sulayın, hasadı birlikte kaldırın.',
-        `Seviye ${levelOf(farm.xp).level} · ${sum.fields} tarla${sum.ready ? ` · ${sum.ready} hazır` : ''}`,
+        `Seviye ${levelOf(xpOf(farm)).level} · ${sum.fields} tarla${sum.ready ? ` · ${sum.ready} hazır` : ''}`,
         waitLine(openFarm, 'hasada'),
       )}
       {WORLDS_OPEN && (

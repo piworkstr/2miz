@@ -1,7 +1,8 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { useEffect, useRef, useState } from 'react';
 import { db } from './firebase';
-import { levelOf, newFarm, type Farm } from './farm';
+import { levelOf,
+  xpOf, newFarm, type Farm } from './farm';
 
 // Çiftlik ziyareti: her çiftliğin herkese açık, salt okunur bir kopyası farmPublic/{çift} belgesinde durur.
 // Kopyada yalnızca görünen şeyler vardır (kareler, çiftlik adı, köpeğin adı, seviye); altın, depo, siparişler,
@@ -27,7 +28,7 @@ const sig = (f: Farm) => {
   const add = (x: string) => {
     for (let i = 0; i < x.length; i++) h = (h * 31 + x.charCodeAt(i)) | 0;
   };
-  add(`${f.name}|${f.dog}|${levelOf(f.xp).level}|${f.giftSpot}|${f.noteAt}`);
+  add(`${f.name}|${f.dog}|${levelOf(xpOf(f)).level}|${f.giftSpot}|${f.noteAt}`);
   f.tiles.forEach((t) => add(t.k === 'crop' ? `c${t.crop}` : `${t.k}${'item' in t ? String(t.item) : ''}`));
   return String(h);
 };
@@ -53,7 +54,7 @@ export function usePublishFarm(coupleId: string | undefined, farm: Farm | null) 
     last.current = { at: Date.now(), sig: s };
     await setDoc(pubRef(coupleId), {
       name: f.name,
-      lvl: levelOf(f.xp).level,
+      lvl: levelOf(xpOf(f)).level,
       ...(f.dog ? { dog: f.dog } : {}),
       at: Date.now(),
       tiles: f.tiles,

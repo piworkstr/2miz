@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, limit, orderBy, query, runTransaction, where } from 'firebase/firestore';
 import { db } from './firebase';
-import { applyAction, farmOf, farmWrite, levelOf, PRICE, unlockLvl, type Action, type Farm } from './farm';
+import { applyAction, farmOf, farmWrite, levelOf,
+  xpOf, PRICE, unlockLvl, type Action, type Farm } from './farm';
 import { srvNow } from './serverClock';
 import type { Couple } from './session';
 
@@ -68,7 +69,7 @@ export async function createListing(w: Who, key: string, n: number, unit: number
     tx.set(lRef, {
       seller: w.coupleId,
       farm: farm.name,
-      lvl: levelOf(farm.xp).level,
+      lvl: levelOf(xpOf(farm)).level,
       key,
       n,
       price: unit * n,
