@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { trDate } from '../lib/date';
 import { router } from 'expo-router';
 import { Image, Pressable, Text, View, type ImageSourcePropType } from 'react-native';
 import { Avatar } from '../components/Avatar';
@@ -9,11 +8,12 @@ import { DART } from '../lib/dreamArt';
 import { bay, BAYS, BOATS, homeOf, HOUSE_LV, houseLevel, seaOf } from '../lib/dreams';
 import { farmOf, farmSummary, levelOf } from '../lib/farm';
 import { ART } from '../lib/farmArt';
-import { useOpenScene, usePages } from '../lib/scenes';
+import { useOpenScene } from '../lib/scenes';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 
-// Hayalimiz: çiftin gerçek hayali, hedef yılı ve hayal dünyaları. Altın dünyalarda ortak.
+// Hayalimiz: ortak hayal panosu ve hayal dünyaları. Hayal defteri (sahne sayfaları) dünyalar açılana kadar gizli.
+// Eski açıklama: çiftin gerçek hayali, hedef yılı ve hayal dünyaları. Altın dünyalarda ortak.
 // Mavi Yolculuk ve Sahilde Ev yayında kapalı; üzerinde çalışılıp en iyi hâliyle açılacak.
 const WORLDS_OPEN = false;
 // Her dünyada yapılan şeyler gerçek hayatta yapılabilecek şeylerdir; birlikte yaşanan her sahne hayal defterine bir sayfa olur.
@@ -23,14 +23,12 @@ export default function DreamsScreen() {
   const openSea = useOpenScene(couple?.id, 'sea');
   const openHome = useOpenScene(couple?.id, 'home');
   const openFarm = useOpenScene(couple?.id, 'farm');
-  const pages = usePages(couple?.id, 3);
   if (!user || !couple) return null;
 
   const farm = farmOf(couple);
   const sea = seaOf(couple);
   const home = homeOf(couple);
   const sum = farmSummary(farm, user.uid);
-  const scenes = couple.sceneCount ?? 0;
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const waitLine = (s: { by: string } | null | undefined, who: string) =>
@@ -139,35 +137,6 @@ export default function DreamsScreen() {
           )}
         </>
       )}
-      <Pressable onPress={() => router.push('/dream/book')}>
-        <Card style={{ gap: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <T style={{ flex: 1, fontWeight: '700', fontSize: 16 }}>Hayal defteri</T>
-            <Muted style={{ fontSize: 12 }}>{scenes} sahne</Muted>
-            <Ionicons name="chevron-forward" size={18} color={t.colors.muted} />
-          </View>
-          {pages && pages.length > 0 ? (
-            pages.map((p) => (
-              <Muted key={p.id} style={{ fontSize: 13 }}>
-                {trDate(new Date(p.startedAt), { month: 'short' })} · {p.place}
-                {p.question ? ` · “${p.question}”` : ''}
-              </Muted>
-            ))
-          ) : (
-            <Muted style={{ fontSize: 12, lineHeight: 17 }}>
-              Birlikte yaşadığınız her sahne (bir gün batımı, bir mangal akşamı) burada bir sayfa olur; baskı albüme de girer.
-            </Muted>
-          )}
-        </Card>
-      </Pressable>
-
-      <View style={{ gap: 2, paddingHorizontal: 4 }}>
-        <T style={{ fontWeight: '700', fontSize: 13 }}>Nasıl ilerler?</T>
-        <Muted style={{ fontSize: 12, lineHeight: 17 }}>
-          Günlük görevi ikiniz de yapınca altın kumbaraya düşer; çiftlikte “Al” ile toplarsınız. Tekne ve ev parayla değil birliktelikle
-          büyür: sahneler tekneyi, huzur evi büyütür. Sahneler günün saatine bağlıdır; biri çağırır, diğeri gelir.
-        </Muted>
-      </View>
     </Screen>
   );
 }
