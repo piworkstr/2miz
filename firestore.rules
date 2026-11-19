@@ -227,6 +227,16 @@ service cloud.firestore {
         allow write: if isMember(coupleId) && request.auth.uid == uid;
       }
 
+      // Ortak hayal panosu: iki üye de hayal ekler, düzenler, siler. Başlık zorunlu; fotoğraflar küçültülmüş gelir.
+      match /dreams/{dreamId} {
+        allow read, delete: if isMember(coupleId);
+        allow create, update: if isMember(coupleId)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 240
+          && request.resource.data.get('photo', '').size() < 400000
+          && request.resource.data.get('donePhoto', '').size() < 400000;
+      }
+
       // Seyahat albümleri: iki üye de seyahat açar, fotoğraf ekler, not yazar ve silebilir.
       match /trips/{tripId} {
         allow read, write: if isMember(coupleId);

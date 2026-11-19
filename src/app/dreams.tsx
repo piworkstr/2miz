@@ -1,16 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { trDate } from '../lib/date';
 import { router } from 'expo-router';
-import { doc, updateDoc } from 'firebase/firestore';
-import { useState } from 'react';
-import { Image, Pressable, Text, TextInput, View, type ImageSourcePropType } from 'react-native';
+import { Image, Pressable, Text, View, type ImageSourcePropType } from 'react-native';
 import { Avatar } from '../components/Avatar';
+import { DreamBoard } from '../components/DreamBoard';
 import { Card, Muted, Screen, T } from '../components/ui';
 import { DART } from '../lib/dreamArt';
 import { bay, BAYS, BOATS, homeOf, HOUSE_LV, houseLevel, seaOf } from '../lib/dreams';
 import { farmOf, farmSummary, levelOf } from '../lib/farm';
 import { ART } from '../lib/farmArt';
-import { db } from '../lib/firebase';
 import { useOpenScene, usePages } from '../lib/scenes';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
@@ -22,9 +20,6 @@ const WORLDS_OPEN = false;
 export default function DreamsScreen() {
   const t = useTheme();
   const { user, couple, profile, partnerProfile, partnerName } = useSession();
-  const [edit, setEdit] = useState(false);
-  const [text, setText] = useState('');
-  const [year, setYear] = useState('');
   const openSea = useOpenScene(couple?.id, 'sea');
   const openHome = useOpenScene(couple?.id, 'home');
   const openFarm = useOpenScene(couple?.id, 'farm');
@@ -35,19 +30,9 @@ export default function DreamsScreen() {
   const sea = seaOf(couple);
   const home = homeOf(couple);
   const sum = farmSummary(farm, user.uid);
-  const note = couple.dreamNote?.trim();
   const scenes = couple.sceneCount ?? 0;
-  const thisYear = new Date().getFullYear();
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  async function save() {
-    const y = parseInt(year, 10);
-    await updateDoc(doc(db, 'couples', couple!.id), {
-      dreamNote: text.trim().slice(0, 240),
-      dreamYear: Number.isFinite(y) && y >= thisYear && y < thisYear + 60 ? y : null,
-    }).catch(() => {});
-    setEdit(false);
-  }
   const waitLine = (s: { by: string } | null | undefined, who: string) =>
     s ? (s.by === user!.uid ? `${partnerName} bekleniyor…` : `${partnerName} seni ${who} çağırıyor 💛`) : null;
 
@@ -119,79 +104,7 @@ export default function DreamsScreen() {
         </View>
       </View>
 
-      <Card style={{ gap: 6 }}>
-        <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.6, color: t.colors.primary }}>
-          GERÇEK HAYALİMİZ
-        </Text>
-        {edit ? (
-          <>
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              multiline
-              maxLength={240}
-              placeholder="Örn. Emekli olunca küçük bir motor yat alıp koy koy gezeceğiz."
-              placeholderTextColor={t.colors.muted}
-              style={{
-                minHeight: 70,
-                color: t.colors.text,
-                fontSize: 15,
-                borderWidth: 1,
-                borderColor: t.colors.border,
-                borderRadius: 10,
-                padding: 10,
-              }}
-            />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Muted style={{ fontSize: 13 }}>Hedef yıl</Muted>
-              <TextInput
-                value={year}
-                onChangeText={setYear}
-                keyboardType="number-pad"
-                maxLength={4}
-                placeholder={String(thisYear + 10)}
-                placeholderTextColor={t.colors.muted}
-                style={{
-                  width: 80,
-                  color: t.colors.text,
-                  fontSize: 15,
-                  borderWidth: 1,
-                  borderColor: t.colors.border,
-                  borderRadius: 10,
-                  padding: 8,
-                }}
-              />
-              <View style={{ flex: 1 }} />
-              <Pressable
-                onPress={save}
-                style={{ backgroundColor: t.colors.primary, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 }}
-              >
-                <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '700' }}>
-                  Kaydet
-                </Text>
-              </Pressable>
-            </View>
-          </>
-        ) : (
-          <Pressable
-            onPress={() => {
-              setText(note ?? '');
-              setYear(couple.dreamYear ? String(couple.dreamYear) : '');
-              setEdit(true);
-            }}
-          >
-            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: t.fonts.note, fontSize: 24, lineHeight: 28, color: t.colors.text }}>
-              {note ? `“${note}”` : 'Birlikte hayal ettiğiniz hayatı buraya yazın. İkiniz de görürsünüz.'}
-            </Text>
-            <Muted style={{ fontSize: 12 }}>
-              {couple.dreamYear ? `Hedef ${couple.dreamYear} · ${Math.max(0, couple.dreamYear - thisYear)} yıl kaldı · ` : ''}
-              <Text maxFontSizeMultiplier={1.25} style={{ textDecorationLine: 'underline' }}>
-                {note ? 'Düzenle' : 'Yaz'}
-              </Text>
-            </Muted>
-          </Pressable>
-        )}
-      </Card>
+      <DreamBoard couple={couple} uid={user.uid} />
 
       {world(
         '/garden',
