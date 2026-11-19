@@ -121,13 +121,11 @@ service cloud.firestore {
     }
 
     // Çiftlikte kaba hile sınırı: tek yazmada altın en çok 300.000, tecrübe en çok 50.000 artabilir ve çiftlik silinemez.
+    // Karşılaştırma tabanı: önceki farm5; yoksa (ilk geçiş) farm4; o da yoksa boş çiftlik.
     // (Sunucu yok; bu, altını bir anda milyonlara çıkarmayı keser. İnce hileleri kesmez.)
-    function farmStepOk(after, before) {
-      return (after == null && before == null)
-        || (after != null && before == null)
-        || (after != null && before != null
-            && after.get('coins', 0) - before.get('coins', 0) <= 300000
-            && after.get('xp', 0) - before.get('xp', 0) <= 50000);
+    function farmStepOk(after, base) {
+      return after.get('coins', 0) - base.get('coins', 0) <= 300000
+        && after.get('xp', 0) - base.get('xp', 0) <= 50000;
     }
 
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
@@ -146,7 +144,9 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members
         && request.resource.data.members == resource.data.members
         && request.resource.data.get('plus', null) == resource.data.get('plus', null)
-        && farmStepOk(request.resource.data.get('farm5', null), resource.data.get('farm5', null));
+        && (('farm5' in request.resource.data) || !('farm5' in resource.data))
+        && (!('farm5' in request.resource.data)
+            || farmStepOk(request.resource.data.farm5, resource.data.get('farm5', resource.data.get('farm4', {}))));
       // Hesap silinirken çift belgesi de silinir.
       allow delete: if signedIn() && request.auth.uid in resource.data.members;
 
