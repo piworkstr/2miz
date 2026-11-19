@@ -183,7 +183,9 @@ export function WorldChar({
           width: 60,
           height: total,
           alignItems: 'center',
-          transform: [{ translateY: jump }, { scaleX: flip ? -1 : 1 }],
+          // Karakter binalara göre iri duruyordu: ayak noktası sabit kalacak biçimde %80'e küçültülür.
+          transformOrigin: 'center bottom',
+          transform: [{ translateY: jump }, { scaleX: flip ? -1 : 1 }, { scale: 0.8 }],
         }}
       >
         {/* gövde: ayaklar (x, y) noktasında */}

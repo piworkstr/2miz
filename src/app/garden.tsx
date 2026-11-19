@@ -153,7 +153,19 @@ import {
   weekEnd,
   type Unlock,
 } from '../lib/farm';
-import { Bubble, CREAM, GText, LevelBadge, Plaque, RoundButton, WoodBar, WoodButton } from '../components/world/FarmUI';
+import {
+  Bubble,
+  CREAM,
+  GText,
+  LevelBadge,
+  Plaque,
+  RoundButton,
+  WOOD_INK,
+  WoodBar,
+  WoodButton,
+  WoodPanel,
+} from '../components/world/FarmUI';
+import { UI } from '../lib/farmUiArt';
 import { usePublishFarm, useVisitors } from '../lib/farmVisit';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
@@ -2569,26 +2581,7 @@ export default function GardenScreen() {
             opacity: seed ? 0 : 1,
           }}
         >
-          <View
-            pointerEvents="box-none"
-            style={
-              scene || sel !== null || showLog || showOrders
-                ? {
-                    backgroundColor: 'rgba(255,248,232,0.96)',
-                    borderRadius: 20,
-                    borderWidth: 3,
-                    borderColor: '#9A6534',
-                    padding: 12,
-                    gap: 10,
-                    shadowColor: '#3A2A10',
-                    shadowOpacity: 0.3,
-                    shadowRadius: 10,
-                    shadowOffset: { width: 0, height: 4 },
-                    elevation: 8,
-                  }
-                : { gap: 8 }
-            }
-          >
+          <PanelShell on={!!(scene || sel !== null || showLog || showOrders)}>
             {scene ? (
               <ScenePanel
                 scene={scene}
@@ -2706,7 +2699,7 @@ export default function GardenScreen() {
                 }}
               />
             )}
-          </View>
+          </PanelShell>
         </View>
         {showShop && !scene && (
           <ShopPanel
@@ -2921,6 +2914,24 @@ export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string;
         </View>
       </View>
     </View>
+  );
+}
+
+// Alt panelin kabuğu: bir şey seçiliyken ahşap çerçeveli parşömen, değilken düz (yalnız alt düğmeler).
+function PanelShell({ on, children }: { on: boolean; children: ReactNode }) {
+  if (!on)
+    return (
+      <View pointerEvents="box-none" style={{ gap: 8 }}>
+        {children}
+      </View>
+    );
+  return (
+    <WoodPanel
+      cap={30}
+      style={{ shadowColor: '#3A2A10', shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8 }}
+    >
+      <View style={{ gap: 10 }}>{children}</View>
+    </WoodPanel>
   );
 }
 
@@ -3179,26 +3190,17 @@ function Btn({
   disabled?: boolean;
   flex?: boolean;
 }) {
-  const bg = kind === 'green' ? GREEN : kind === 'accent' ? '#E8516A' : '#F3EEE8';
+  // Yeşil: asıl iş. Kırmızı: ödül ve dikkat. Ahşap: ikincil işler. Uzun yazılar küçülür.
   return (
-    <Pressable
+    <WoodButton
+      kind={kind === 'green' ? 'green' : kind === 'accent' ? 'red' : 'wood'}
+      label={label}
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => ({
-        flex: flex ? 1 : undefined,
-        minHeight: 46,
-        borderRadius: 23,
-        paddingHorizontal: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bg,
-        opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
-      })}
-    >
-      <Text maxFontSizeMultiplier={1.0} style={{ color: kind === 'soft' ? INK : '#fff', fontWeight: '800', fontSize: 15 }}>
-        {label}
-      </Text>
-    </Pressable>
+      height={48}
+      size={label.length > 30 ? 12 : label.length > 20 ? 14 : 16}
+      style={{ flex: flex ? 1 : undefined }}
+    />
   );
 }
 
@@ -3448,17 +3450,12 @@ function Edge({
 function Head({ art, title, onClose }: { art?: string; title: string; onClose: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      {art && ART[art] && <Image source={ART[art].src} style={{ width: 34, height: 30 }} resizeMode="contain" />}
-      <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '900', fontSize: 17, color: INK }}>
+      {art && ART[art] && <Image source={ART[art].src} style={{ width: 38, height: 34 }} resizeMode="contain" />}
+      <GText size={20} style={{ flex: 1 }}>
         {title}
-      </Text>
-      <Pressable
-        onPress={onClose}
-        accessibilityLabel="Kapat"
-        hitSlop={8}
-        style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#F3EEE8', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Ionicons name="close" size={18} color={INK} />
+      </GText>
+      <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={10} style={{ marginRight: -6, marginTop: -6 }}>
+        <Image source={UI.close.src} style={{ width: 36, height: 36 }} />
       </Pressable>
     </View>
   );
@@ -3608,15 +3605,7 @@ function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onCla
             Depo {used}/{cap}
             {full ? ' · dolu' : ''}
           </Text>
-          <View style={{ height: 7, borderRadius: 4, backgroundColor: '#EFE3CF', overflow: 'hidden' }}>
-            <View
-              style={{
-                width: `${Math.min(100, Math.round((used / cap) * 100))}%`,
-                height: 7,
-                backgroundColor: full ? '#C0392B' : '#6DB33F',
-              }}
-            />
-          </View>
+          <WoodBar value={used / cap} height={16} style={{ alignSelf: 'stretch' }} />
         </View>
         <Btn kind={farm.coins >= cost ? 'green' : 'soft'} label={`Büyüt · ${cost}`} onPress={onUp} />
       </View>
@@ -3686,23 +3675,17 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
             <Pressable
               key={k}
               onPress={() => setPick(on ? null : { key: k, n: 1 })}
-              style={{
-                width: 74,
-                alignItems: 'center',
-                paddingVertical: 6,
-                borderRadius: 14,
-                backgroundColor: on ? '#FDECEF' : '#FBFAF6',
-                borderWidth: on ? 2 : 1,
-                borderColor: on ? '#E8516A' : '#F0E2DC',
-              }}
+              accessibilityLabel={`${PRODUCT_NAME[k] ?? k}, ${v} adet`}
+              style={{ width: 70, height: 62, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}
             >
-              <StockIcon k={k} w={44} h={40} />
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 11, color: INK }}>
-                {PRODUCT_NAME[k] ?? k}
-              </Text>
-              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: '#7A5A00' }}>
-                ×{v}
-              </Text>
+              <Image source={UI.slot.src} style={{ position: 'absolute', width: 70, height: 62 }} resizeMode="stretch" />
+              {on && (
+                <View style={{ position: 'absolute', width: 70, height: 62, borderRadius: 14, borderWidth: 3, borderColor: '#E8516A' }} />
+              )}
+              <StockIcon k={k} w={40} h={36} />
+              <GText light size={13} style={{ position: 'absolute', right: 7, bottom: 2 }}>
+                {v}
+              </GText>
             </Pressable>
           );
         })}
@@ -3720,7 +3703,7 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
           <Btn label={`Sat · ${(PRICE[pick.key] ?? 0) * n} altın`} onPress={() => onSell(pick.key, n)} />
         </View>
       ) : (
-        <Note>Tek bir ürünü satmak için üstüne dokun.</Note>
+        <Note>Satmak için ürüne dokun.</Note>
       )}
     </>
   );
@@ -3986,8 +3969,9 @@ function Sheet(p: SheetProps) {
           <>
             <DepotItems items={items} onSell={(key, n) => p.onStay({ a: 'sellOne', i, key, n })} />
             <Note>
-              {n} ürün · {stockValue(farm)} altın değerinde.{' '}
-              {weekend ? 'Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.' : 'Hafta sonu pazarda bir buçuk kata gider.'}
+              {weekend
+                ? 'Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.'
+                : `${n} ürün · ${stockValue(farm).toLocaleString('tr-TR')} altın değerinde`}
             </Note>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {weekend ? (
@@ -4659,11 +4643,7 @@ function Orders({
   return (
     <>
       <Head title="Sipariş defteri" onClose={onClose} />
-      <Note>
-        Siparişi teslim edince sahibi çift girişe gelir; yanlarına gidip dokununca ürünleri verirsiniz, altın ve tecrübe o an kazanılır.
-        İkiniz de katkı verirseniz ortak hasat sayılır.
-      </Note>
-      <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ gap: 8 }}>
         <BigOrderCard farm={farm} now={now} uid={uid} partnerName={partnerName} onGive={onBig} />
         {farm.orders.length === 0 && <Note>İlk işinizden sonra deftere sipariş yazılmaya başlar.</Note>}
         {farm.orders.map((o) => {
@@ -4827,29 +4807,20 @@ function Kitchen({
           return (
             <View
               key={k}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                paddingVertical: 6,
-                borderRadius: 14,
-                backgroundColor: done ? '#E9F6DF' : '#FBFAF6',
-                borderWidth: 1,
-                borderColor: done ? GREEN : '#F0E2DC',
-                minHeight: 74,
-                justifyContent: 'center',
-              }}
+              style={{ flex: 1, maxWidth: 62, aspectRatio: UI.slot.w / UI.slot.h, alignItems: 'center', justifyContent: 'center' }}
             >
-              {j ? (
+              <Image
+                source={UI.slot.src}
+                style={{ position: 'absolute', width: '100%', height: '100%', opacity: j ? 1 : 0.6 }}
+                resizeMode="stretch"
+              />
+              {j && (
                 <>
-                  <StockIcon k={j.recipe} w={34} h={32} />
-                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 11, color: done ? GREEN : INK }}>
+                  <StockIcon k={j.recipe} w={30} h={28} />
+                  <GText size={10} color={done ? '#3F7A1E' : WOOD_INK} style={{ lineHeight: 12 }}>
                     {done ? 'Hazır' : timeLeft(j.ready - now)}
-                  </Text>
+                  </GText>
                 </>
-              ) : (
-                <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: MUTED }}>
-                  Boş {STATIONS[station].slot}
-                </Text>
               )}
             </View>
           );
@@ -4858,11 +4829,7 @@ function Kitchen({
       {ready > 0 ? (
         <Btn kind="accent" label={`Hazır olanları topla (${ready})`} onPress={onCollect} />
       ) : (
-        <Note>
-          {jobs.length
-            ? 'Üretim sürüyor. Süre dolunca buradan toplarsın; ürün depoya girer.'
-            : 'Depodaki ürünlerden bir ürün seç; süresi dolunca buradan toplanır. Daha pahalıya satılır, siparişlerde istenir.'}
-        </Note>
+        !jobs.length && <Note>Bir tarif seç; süresi dolunca buradan toplanır.</Note>
       )}
       <ScrollView style={{ maxHeight: 200 }} contentContainerStyle={{ gap: 8 }}>
         {(Object.keys(RECIPES) as RecipeId[])

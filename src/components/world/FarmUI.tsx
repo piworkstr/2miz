@@ -106,7 +106,7 @@ export function WoodButton({
       accessibilityState={{ disabled: !!disabled }}
       hitSlop={4}
       style={({ pressed }) => [
-        { opacity: disabled ? 0.55 : 1, transform: [{ translateY: pressed ? 2 : 0 }, { scale: pressed ? 0.97 : 1 }] },
+        { opacity: disabled ? 0.72 : 1, transform: [{ translateY: pressed ? 2 : 0 }, { scale: pressed ? 0.97 : 1 }] },
         style,
       ]}
     >
