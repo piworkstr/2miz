@@ -108,6 +108,28 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // Çiftlik ziyareti: çiftliğin herkese açık, salt okunur görünümü (kareler, ad, seviye). Yalnızca sahibi yazar ve siler.
+    match /farmPublic/{coupleId} {
+      allow read: if signedIn();
+      allow write: if isMember(coupleId);
+      // Ziyaret izi: ziyaret eden çift kendi adına tek kayıt bırakır; listeyi yalnızca çiftliğin sahibi görür.
+      match /visits/{visitorId} {
+        allow create, update: if isMember(visitorId)
+          && request.resource.data.name is string && request.resource.data.name.size() <= 22;
+        allow read: if isMember(coupleId);
+      }
+    }
+
+    // Çiftlikte kaba hile sınırı: tek yazmada altın en çok 300.000, tecrübe en çok 50.000 artabilir ve çiftlik silinemez.
+    // (Sunucu yok; bu, altını bir anda milyonlara çıkarmayı keser. İnce hileleri kesmez.)
+    function farmStepOk(after, before) {
+      return (after == null && before == null)
+        || (after != null && before == null)
+        || (after != null && before != null
+            && after.get('coins', 0) - before.get('coins', 0) <= 300000
+            && after.get('xp', 0) - before.get('xp', 0) <= 50000);
+    }
+
     // Çift belgesi: sadece iki üye görebilir ve güncelleyebilir.
     match /couples/{coupleId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
@@ -123,7 +145,8 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.auth.uid in resource.data.members
         && request.resource.data.members == resource.data.members
-        && request.resource.data.get('plus', null) == resource.data.get('plus', null);
+        && request.resource.data.get('plus', null) == resource.data.get('plus', null)
+        && farmStepOk(request.resource.data.get('farm5', null), resource.data.get('farm5', null));
       // Hesap silinirken çift belgesi de silinir.
       allow delete: if signedIn() && request.auth.uid in resource.data.members;
 

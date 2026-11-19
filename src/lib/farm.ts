@@ -613,6 +613,7 @@ export type Farm = {
   noteAt?: number; // Not Ağacı taşındıysa yeni karesi
   giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
   dog?: string; // çiftlik köpeğinin adı
+  closed?: boolean; // ziyarete kapalı (varsayılan: açık)
   seen?: Record<string, 1>; // koleksiyon: en az bir kez elde edilen ürünler
   colClaim?: number; // koleksiyonda alınan ödül basamağı sayısı
   depotUp?: number; // depo büyütme sayısı
@@ -1058,6 +1059,7 @@ export type Action =
   | { a: 'chop'; i: number } // yabani ağaç/çalı/kayayı aletle temizle
   | { a: 'tool'; i: number; key: ToolId; n: number } // pazardan balta/kazma al
   | { a: 'depotUp'; i: number } // depoyu büyüt
+  | { a: 'visitOpen'; i: number; open: boolean } // çiftlik ziyarete açık/kapalı
   | { a: 'colClaim'; i: number } // koleksiyon ödülünü al
   | { a: 'sellOne'; i: number; key: string; n: number } // depodan tek ürün sat
   | { a: 'release'; i: number; idx: number } // binadaki hayvanı geri ver (yarı fiyat)
@@ -1593,6 +1595,11 @@ export function applyAction(
       f.xp += w.xp;
       f.tiles[act.i] = { k: 'grass' };
       text = `${name} ${w.name.toLocaleLowerCase('tr-TR')} temizledi`;
+      break;
+    }
+    case 'visitOpen': {
+      f.closed = !act.open;
+      text = act.open ? `${name} çiftliği ziyarete açtı` : `${name} çiftliği ziyarete kapattı`;
       break;
     }
     case 'depotUp': {

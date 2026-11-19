@@ -153,6 +153,7 @@ import {
   weekEnd,
   type Unlock,
 } from '../lib/farm';
+import { usePublishFarm, useVisitors } from '../lib/farmVisit';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
@@ -1386,7 +1387,7 @@ export default function GardenScreen() {
         while (paceQ.current.length) {
           const next = paceQ.current.shift()!;
           const far =
-            !['skipOrder', 'bigGive', 'rename', 'nameDog', 'depotUp', 'colClaim'].includes(next.a) &&
+            !['skipOrder', 'bigGive', 'rename', 'nameDog', 'depotUp', 'colClaim', 'visitOpen'].includes(next.a) &&
             next.i >= 0 &&
             next.i < N * N &&
             next.i !== myTileRef.current;
@@ -1623,6 +1624,9 @@ export default function GardenScreen() {
     }
     lvSeen.current = lvNow;
   }, [lvNow]);
+
+  // Ziyaret için herkese açık kopya (yalnızca görünüm; altın, depo ve notlar yok).
+  usePublishFarm(couple?.id, couple ? farm : null);
 
   // Partner eski sürümdeyse (22x22 araziye yazmaya devam ediyorsa) yaptıkları bu çiftliğe yansımaz: bir kez uyar.
   const staleWarned = useRef(false);
@@ -2328,6 +2332,9 @@ export default function GardenScreen() {
         <NameCard
           farmName={farm.name ?? ''}
           dogName={farm.dog ?? ''}
+          coupleId={couple.id}
+          open={!farm.closed}
+          onOpen={(v) => work({ a: 'visitOpen', i: 0, open: v })}
           mute={mute}
           onMute={() => {
             setSfxMuted(!mute);
@@ -2786,10 +2793,144 @@ type SheetProps = {
   onStay: (a: Action) => void; // paneli kapatmadan iş ver (mutfak)
 };
 
+// Ziyaret: başka bir çiftliğin salt okunur görünümü. Sürükleyerek gezilir, iki parmakla yakınlaşılır; hiçbir şeye dokunulamaz.
+export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [cam, setCam] = useState<{ x: number; y: number; s: number } | null>(null);
+  const camRef = useRef(cam);
+  camRef.current = cam;
+  const boxRef = useRef(box);
+  boxRef.current = box;
+  const now = Date.now();
+  const season = seasonOf(now);
+  const list = useMemo(() => [...SCENERY, ...sprites(farm, Date.now())].sort((a, b) => a.z - b.z), [farm]);
+  // Manzara ekranı hep kaplar: ölçek ve kaydırma buna göre sınırlanır.
+  const minS = (b: { w: number; h: number }) => Math.max(b.w / BG.w, b.h / BG.h) * 1.01;
+  const clamp = (x: number, y: number, sc: number, b: { w: number; h: number }) => ({
+    x: Math.min(-BG.x * sc, Math.max(b.w - (BG.x + BG.w) * sc, x)),
+    y: Math.min(-BG.y * sc, Math.max(b.h - (BG.y + BG.h) * sc, y)),
+    s: sc,
+  });
+  useEffect(() => {
+    if (!box.w || cam) return;
+    // Başlangıç: ortadaki çiftlik ekrana sığacak kadar yakın.
+    const sc = Math.max(minS(box), Math.min(box.w / (BOUNDS.x1 - BOUNDS.x0), (box.h - 160) / (BOUNDS.y1 - BOUNDS.y0)) * 0.8);
+    const cx = (BOUNDS.x0 + BOUNDS.x1) / 2;
+    const cy = (BOUNDS.y0 + BOUNDS.y1) / 2;
+    setCam(clamp(box.w / 2 - cx * sc, box.h / 2 - cy * sc, sc, box));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [box.w, box.h]);
+  const g = useRef({ x: 0, y: 0, cx: 0, cy: 0, s: 1, d: 0 });
+  const pr = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (e) => {
+          const c = camRef.current;
+          if (!c) return;
+          const t = e.nativeEvent.touches;
+          g.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, cx: c.x, cy: c.y, s: c.s, d: 0 };
+          if (t.length >= 2) g.current.d = Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
+        },
+        onPanResponderMove: (e) => {
+          const c = camRef.current;
+          const b = boxRef.current;
+          if (!c) return;
+          const t = e.nativeEvent.touches;
+          if (t.length >= 2) {
+            const d = Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
+            const mx = (t[0].pageX + t[1].pageX) / 2;
+            const my = (t[0].pageY + t[1].pageY) / 2;
+            if (!g.current.d) {
+              g.current = { x: mx, y: my, cx: c.x, cy: c.y, s: c.s, d };
+              return;
+            }
+            // Parmakların ortasındaki nokta yerinde kalır.
+            const sc = Math.min(3, Math.max(minS(b), (g.current.s * d) / g.current.d));
+            const wx = (g.current.x - g.current.cx) / g.current.s;
+            const wy = (g.current.y - g.current.cy) / g.current.s;
+            setCam(clamp(mx - wx * sc, my - wy * sc, sc, b));
+          } else if (t.length === 1) {
+            if (g.current.d) {
+              // iki parmaktan teke düşüldü: sürüklemeyi buradan başlat
+              g.current = { x: t[0].pageX, y: t[0].pageY, cx: c.x, cy: c.y, s: c.s, d: 0 };
+              return;
+            }
+            setCam(clamp(g.current.cx + (t[0].pageX - g.current.x), g.current.cy + (t[0].pageY - g.current.y), c.s, b));
+          }
+        },
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  return (
+    <View
+      style={{ flex: 1, backgroundColor: FAR, overflow: 'hidden' }}
+      onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      {...pr.panHandlers}
+    >
+      {cam && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: WW,
+            height: WH,
+            transformOrigin: 'left top',
+            transform: [{ translateX: cam.x }, { translateY: cam.y }, { scale: cam.s }],
+          }}
+        >
+          <Image source={ART.manzara.src} style={{ position: 'absolute', left: BG.x, top: BG.y, width: BG.w, height: BG.h }} />
+          <Ground f={farm} sel={null} season={season} />
+          {list.map((sp) => (
+            <SpriteImg key={sp.key} s={sp} />
+          ))}
+          <Dog name={farm.dog} />
+        </View>
+      )}
+      <View
+        pointerEvents="box-none"
+        style={{ position: 'absolute', left: 10, right: 10, top: insets.top + 6, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+      >
+        <Pressable
+          onPress={onClose}
+          hitSlop={10}
+          accessibilityLabel="Ziyareti bitir"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255,255,255,0.92)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="chevron-back" size={22} color={INK} />
+        </Pressable>
+        <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 }}>
+          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+            {title}
+          </Text>
+          <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 11, color: MUTED }}>
+            Ziyaret · sürükleyerek gez, iki parmakla yaklaş
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // Çiftliğin ve köpeğin adı: üstteki ad rozetinden ya da köpeğe dokununca açılır.
 function NameCard({
   farmName,
   dogName,
+  coupleId,
+  open,
+  onOpen,
   mute,
   onMute,
   onClose,
@@ -2797,6 +2938,9 @@ function NameCard({
 }: {
   farmName: string;
   dogName: string;
+  coupleId: string;
+  open: boolean;
+  onOpen: (v: boolean) => void;
   mute: boolean;
   onMute: () => void;
   onClose: () => void;
@@ -2804,6 +2948,8 @@ function NameCard({
 }) {
   const [fn, setFn] = useState(farmName);
   const [dn, setDn] = useState(dogName);
+  const [isOpen, setIsOpen] = useState(open);
+  const visitors = useVisitors(coupleId, true);
   const badFarm = fn.trim().length > 0 && fn.trim().length < 3;
   const badDog = dn.trim().length > 0 && dn.trim().length < 2;
   const input = {
@@ -2853,6 +2999,32 @@ function NameCard({
           </View>
           <TextInput value={dn} onChangeText={setDn} placeholder="Karabaş" placeholderTextColor="#B9A27E" maxLength={14} style={input} />
           {badDog && <Text style={{ color: '#C0392B', fontSize: 12 }}>En az 2 harf olmalı.</Text>}
+          <Pressable
+            onPress={() => {
+              setIsOpen(!isOpen);
+              onOpen(!isOpen);
+            }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}
+          >
+            <Ionicons name={isOpen ? 'eye-outline' : 'eye-off-outline'} size={20} color={INK} />
+            <View style={{ flex: 1 }}>
+              <Text style={label}>Çiftlik ziyarete açık</Text>
+              <Text style={{ color: MUTED, fontSize: 12 }}>
+                Başka çiftler çiftliğinizin görünümünü gezebilir. Altın, depo ve notlarınız görünmez.
+              </Text>
+            </View>
+            <Text style={{ fontWeight: '800', color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
+          </Pressable>
+          {isOpen && !!visitors?.length && (
+            <Text style={{ color: MUTED, fontSize: 12 }}>
+              Son uğrayanlar:{' '}
+              {visitors
+                .slice(0, 4)
+                .map((v) => v.name)
+                .join(', ')}
+              {visitors.length > 4 ? ` ve ${visitors.length - 4} çiftlik daha` : ''}
+            </Text>
+          )}
           <Pressable onPress={onMute} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
             <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={20} color={INK} />
             <Text style={[label, { flex: 1 }]}>Oyun sesleri</Text>

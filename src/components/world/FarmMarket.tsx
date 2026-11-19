@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+import { useNeighbors } from '../../lib/farmVisit';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -178,6 +180,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
   const [sell, setSell] = useState<{ key: string; n: number; unit: number } | null>(null);
   const [buy, setBuy] = useState<{ key: string; n: number } | null>(null);
   const [tool, setTool] = useState<{ key: ToolId; n: number } | null>(null);
+  const neighbors = useNeighbors(who.coupleId, open);
 
   async function refresh() {
     setError('');
@@ -515,6 +518,37 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                 ))
               ) : (
                 <Note>Şu an başka çiftlikten ilan yok. İlk ilanı sen koy: “Tezgâhım” sekmesinden.</Note>
+              )}
+
+              <Heading title="Komşu çiftlikler" sub="Bir çiftliğe dokun, gez" />
+              {neighbors === null ? (
+                <Note>Komşular yükleniyor…</Note>
+              ) : neighbors.length ? (
+                neighbors.map((n) => (
+                  <Pressable
+                    key={n.id}
+                    onPress={() => {
+                      onClose();
+                      router.push(`/visit/${n.id}`);
+                    }}
+                    style={row}
+                  >
+                    <Icon k="barn" size={44} />
+                    <View style={{ flex: 1 }}>
+                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                        {n.name}
+                      </Text>
+                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
+                        {`seviye ${n.lvl}${n.dog ? ` · köpeği ${n.dog}` : ''}`}
+                      </Text>
+                    </View>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800', fontSize: 13, color: '#4E8E2A' }}>
+                      Ziyaret et
+                    </Text>
+                  </Pressable>
+                ))
+              ) : (
+                <Note>Henüz ziyarete açık başka çiftlik yok.</Note>
               )}
             </>
           ) : !farm.name ? (

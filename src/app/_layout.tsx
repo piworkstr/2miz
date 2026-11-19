@@ -80,6 +80,7 @@ function RootNavigator() {
           <Stack.Screen name="wheel" />
           {/* Dünya ekranlarında parmakla gezinme var; kenardan kaydırma geri gitmesin. Geri düğmesi ekranda. */}
           <Stack.Screen name="garden" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="visit/[id]" options={{ gestureEnabled: false }} />
           <Stack.Screen name="dreams" />
           <Stack.Screen name="dream/sea" options={{ gestureEnabled: false }} />
           <Stack.Screen name="dream/house" options={{ gestureEnabled: false }} />
