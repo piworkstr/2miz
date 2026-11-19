@@ -7,6 +7,7 @@ import { saveDatePhoto } from '../lib/photos';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
+import { DateProgram } from './DatePlanner';
 import { SelfieCamera } from './SelfieCamera';
 import { Button, Card, Display, ErrorText, Input, Muted, T } from './ui';
 
@@ -121,6 +122,7 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
               key={d.id}
               plan={d}
               uid={uid}
+              coupleId={couple.id}
               busy={busy === d.id}
               onConfirm={() => run(d.id, () => confirmDate(couple.id, d.id))}
               onCancel={() => cancelDate(couple.id, d.id)}
@@ -135,12 +137,14 @@ export function DateCard({ mode }: { mode: 'banner' | 'planner' }) {
 function UpcomingRow({
   plan,
   uid,
+  coupleId,
   busy,
   onConfirm,
   onCancel,
 }: {
   plan: DatePlan;
   uid: string;
+  coupleId: string;
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -165,7 +169,14 @@ function UpcomingRow({
           </Pressable>
         )}
       </View>
-      {!!plan.what && <Muted style={{ fontSize: 13 }}>{plan.what}</Muted>}
+      {plan.steps?.length ? (
+        <>
+          {!!plan.title && <Muted style={{ fontSize: 13 }}>{plan.title}</Muted>}
+          <DateProgram plan={plan} coupleId={coupleId} />
+        </>
+      ) : (
+        !!plan.what && <Muted style={{ fontSize: 13 }}>{plan.what}</Muted>
+      )}
       {plan.status === 'proposed' && !needsMyOk && <Muted style={{ fontSize: 13 }}>{t.copy.date.waiting(partnerName)}</Muted>}
       {needsMyOk && <Button label={t.copy.date.confirm} onPress={onConfirm} busy={busy} />}
     </View>
@@ -214,6 +225,12 @@ function DateToday({ plan, coupleId, uid }: { plan: DatePlan; coupleId: string; 
         </Text>
       </View>
       <Display style={{ color: on }}>{t.copy.date.today}</Display>
+      {!!plan.steps?.length && (
+        <View style={{ backgroundColor: t.colors.card, borderRadius: Math.min(t.radius.card, 14), padding: 14, gap: 8 }}>
+          <T style={{ fontWeight: '700' }}>{plan.title ?? 'Bugünün programı'}</T>
+          <DateProgram plan={plan} coupleId={coupleId} checkable />
+        </View>
+      )}
 
       {plan.selfie ? (
         <View style={{ backgroundColor: t.colors.card, borderRadius: Math.min(t.radius.card, 14), padding: 14, gap: 4 }}>

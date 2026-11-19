@@ -1,5 +1,7 @@
 import { logUse } from './usage';
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
@@ -28,6 +30,13 @@ export type DatePlan = {
   cat?: import('./events').EventCat; // etkinliğin türü: takvimde nokta yerine simge (konser, tiyatro, sinema…)
   fromEvent?: boolean; // date bu etkinlik için açıldı (iptalinde date de silinir); yoksa var olan date'e not eklenmiştir
   what?: string; // ne yapılacak: şehir etkinliğinden planlandıysa etkinliğin adı, saati ve mekanı
+  // Date planlayıcıdan geldiyse adım adım program:
+  title?: string;
+  steps?: import('./datePlan').Step[];
+  start?: number; // başlangıç (gün içi dakika)
+  total?: number; // yaklaşık tutar (TL)
+  seed?: number; // soru adımının soruları bundan türetilir
+  done?: number[]; // date günü işaretlenen adımlar
 };
 
 function datesCol(coupleId: string) {
@@ -86,6 +95,25 @@ export async function unplanDateFor(coupleId: string, plan: DatePlan) {
   const ref = doc(datesCol(coupleId), plan.id);
   if (plan.fromEvent || plan.status === 'proposed') return deleteDoc(ref);
   await updateDoc(ref, { what: deleteField(), cat: deleteField() });
+}
+
+// Date planlayıcının planını bir güne yazar: o gün date yoksa öneri açar, varsa durumunu bozmadan programı ekler.
+export async function planDateWith(
+  coupleId: string,
+  key: string,
+  uid: string,
+  plan: import('./datePlan').Plan,
+  title: string,
+  what: string,
+) {
+  const ref = doc(datesCol(coupleId), key);
+  const fields = { what, title, steps: plan.steps, start: plan.start, total: plan.total, seed: plan.seed, done: [] };
+  if ((await getDoc(ref)).exists()) return updateDoc(ref, fields);
+  await setDoc(ref, { status: 'proposed', by: uid, instant: false, selfie: null, ...fields, createdAt: serverTimestamp() });
+  logUse(coupleId, 'date');
+}
+export async function toggleDateStep(coupleId: string, key: string, index: number, on: boolean) {
+  await updateDoc(doc(datesCol(coupleId), key), { done: on ? arrayUnion(index) : arrayRemove(index) });
 }
 
 export async function confirmDate(coupleId: string, key: string) {

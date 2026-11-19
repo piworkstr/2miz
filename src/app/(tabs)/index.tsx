@@ -18,6 +18,7 @@ import { WeekStrip } from '../../components/home/WeekStrip';
 import { bondOf, scheduleRiskReminder } from '../../lib/bond';
 import { CoupleInfoCard, daysTogether } from '../../components/CoupleInfoCard';
 import { DateCard } from '../../components/DateCard';
+import { DatePlanner } from '../../components/DatePlanner';
 import { Polaroid } from '../../components/Polaroid';
 import { SelfieCamera } from '../../components/SelfieCamera';
 import { SpecialDays } from '../../components/SpecialDays';
@@ -135,9 +136,12 @@ export default function Today() {
       <View style={{ paddingHorizontal: 18, paddingTop: 22, gap: 14 }}>
         {panel === 'play' && <BoredCard />}
         {panel === 'date' && (
-          <Card>
-            <DateCard mode="planner" />
-          </Card>
+          <>
+            <Card>
+              <DateCard mode="planner" />
+            </Card>
+            <DatePlanner />
+          </>
         )}
 
         {!profile?.avatar && (
