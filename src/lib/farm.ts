@@ -612,6 +612,7 @@ export type Farm = {
   tools?: Partial<Record<ToolId, number>>; // balta ve kazma (yabani araziyi temizlemek için)
   noteAt?: number; // Not Ağacı taşındıysa yeni karesi
   giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
+  big?: BigOrder; // haftalık büyük sipariş (ilk katkıda kaydedilir)
 };
 
 // H ev, B ahır (2x2), p yol, g çimen, s tarla, T ağaç, d çiçeklik, F çeşme, L satılık arazi
@@ -907,6 +908,56 @@ export const orderDone = (o: Order) => Object.entries(o.items).every(([k, q]) =>
 export const orderLeft = (o: Order) => Object.fromEntries(Object.entries(o.items).map(([k, q]) => [k, Math.max(0, q - (o.given[k] ?? 0))]));
 // Depodan bu siparişe verilebilecek adet (kısmi teslim olur).
 export const canGive = (f: Farm, o: Order) => Object.entries(orderLeft(o)).reduce((a, [k, q]) => a + Math.min(q, f.stock[k] ?? 0), 0);
+// ---------- Haftalık büyük sipariş ----------
+// Her pazartesi kasaba pazarından büyük bir sipariş gelir: çok miktarda birkaç ekin. İkiniz hafta boyunca birlikte doldurursunuz;
+// tamamlanınca ödül o an verilir. İkiniz de katkı verdiyseniz altın %25 fazla olur ve iki ortak hasat sayılır.
+export type BigOrder = {
+  week: string; // haftanın pazartesi günü
+  items: Record<string, number>;
+  given: Record<string, number>;
+  by: Record<string, number>; // kişi → verdiği adet
+  coins: number;
+  xp: number;
+  done?: number;
+};
+export const BIG_BOTH = 1.25;
+const monday = (now: number) => {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+};
+export const weekKey = (now: number) => dayKey(monday(now));
+export const weekEnd = (now: number) => {
+  const d = monday(now);
+  d.setDate(d.getDate() + 7);
+  return d.getTime();
+};
+// Bu haftanın siparişi: kayıtlıysa o, değilse seviyeye göre haftadan türetilir (iki telefonda aynı çıkar).
+export function bigOrderOf(f: Farm, now: number): BigOrder {
+  const week = weekKey(now);
+  if (f.big?.week === week) return f.big;
+  const lv = levelOf(f.xp).level;
+  const cand = (Object.keys(CROPS) as CropId[])
+    .filter((k) => CROPS[k].lvl <= lv)
+    .sort((a, b) => hashOf(week + a) - hashOf(week + b))
+    .slice(0, lv >= 8 ? 4 : 3);
+  const items: Record<string, number> = {};
+  let value = 0;
+  let xp = 20;
+  for (const k of cand) {
+    const c = CROPS[k];
+    const q = Math.max(6, Math.min(36, Math.round(360 / c.mins))) + Math.min(lv, 10);
+    items[k] = q;
+    value += c.sell * q;
+    xp += c.xp * q;
+  }
+  return { week, items, given: {}, by: {}, coins: Math.round(value * 1.6), xp: Math.round(xp * 1.5) };
+}
+export const bigLeft = (o: BigOrder) =>
+  Object.fromEntries(Object.entries(o.items).map(([k, q]) => [k, Math.max(0, q - (o.given[k] ?? 0))]));
+export const bigCanGive = (f: Farm, o: BigOrder) => Object.entries(bigLeft(o)).reduce((a, [k, q]) => a + Math.min(q, f.stock[k] ?? 0), 0);
+
 // Pano hep ORDER_SLOTS sipariş tutar; eksikse üretilir.
 export function fillOrders(f: Farm, now: number) {
   const slots = orderSlots(levelOf(f.xp).level);
@@ -994,6 +1045,7 @@ export type Action =
   | { a: 'sell'; i: number; scene?: string }
   // Siparişe depodan teslim (kısmi olabilir); tamamlanınca ödül, ikisi de katkı yaptıysa ortak hasat.
   | { a: 'deliver'; i: number; order: string }
+  | { a: 'bigGive'; i: number } // haftalık büyük siparişe depodan ürün ver
   | { a: 'handover'; i: number; order: string }
   // Mutfak: depodaki ürünlerden tarif yap.
   | { a: 'cook'; i: number; recipe: RecipeId }
@@ -1562,6 +1614,36 @@ export function applyAction(
         const left = Object.values(orderLeft(o)).reduce((a, b) => a + b, 0);
         text = `${name} siparişe ${moved} ürün verdi; ${left} ürün kaldı`;
       }
+      break;
+    }
+    case 'bigGive': {
+      const b0 = bigOrderOf(f, now);
+      if (b0.done) return 'Bu haftanın büyük siparişi tamamlandı; yenisi pazartesi gelir.';
+      const o: BigOrder = { ...b0, given: { ...b0.given }, by: { ...b0.by } };
+      let moved = 0;
+      for (const [key, left] of Object.entries(bigLeft(o))) {
+        const n = Math.min(left, f.stock[key] ?? 0);
+        if (n <= 0) continue;
+        f.stock[key] = (f.stock[key] ?? 0) - n;
+        if (f.stock[key] <= 0) delete f.stock[key];
+        o.given[key] = (o.given[key] ?? 0) + n;
+        moved += n;
+      }
+      if (!moved) return 'Depoda büyük siparişe uygun ürün yok.';
+      o.by[uid] = (o.by[uid] ?? 0) + moved;
+      const left = Object.values(bigLeft(o)).reduce((a, b) => a + b, 0);
+      if (left === 0) {
+        const both = Object.keys(o.by).length >= 2;
+        const coins = Math.round(o.coins * (both ? BIG_BOTH : 1));
+        f.coins += coins;
+        f.xp += o.xp;
+        gained = coins;
+        f.tools = { ...toolsOf(f), balta: toolsOf(f).balta + 2, kazma: toolsOf(f).kazma + 1 };
+        if (both) f.harvests += 2;
+        o.done = now;
+        text = `${name} haftalık büyük siparişi tamamladı: +${coins} altın, 2 balta, 1 kazma${both ? ' · birlikte doldurdunuz 💛' : ''}`;
+      } else text = `${name} büyük siparişe ${moved} ürün verdi; ${left} ürün kaldı`;
+      f.big = o;
       break;
     }
     case 'handover': {

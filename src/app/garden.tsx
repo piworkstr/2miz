@@ -137,7 +137,7 @@ import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
 import { settleMine } from '../lib/market';
 import { srvNow, syncClock } from '../lib/serverClock';
-import { nextUnlockLevel, unlocksAt, useFarmBonuses, type Unlock } from '../lib/farm';
+import { BIG_BOTH, bigCanGive, bigLeft, bigOrderOf, nextUnlockLevel, unlocksAt, useFarmBonuses, weekEnd, type Unlock } from '../lib/farm';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
@@ -1338,7 +1338,7 @@ export default function GardenScreen() {
       try {
         while (paceQ.current.length) {
           const next = paceQ.current.shift()!;
-          const far = next.i >= 0 && next.i < N * N && next.i !== myTileRef.current;
+          const far = !['skipOrder', 'bigGive'].includes(next.a) && next.i >= 0 && next.i < N * N && next.i !== myTileRef.current;
           if (far) void walkTo(next.i);
           const left = paceQ.current.length;
           await sleep(!far ? 120 : left > 20 ? 150 : left > 6 ? 230 : 340);
@@ -1368,6 +1368,10 @@ export default function GardenScreen() {
           setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
         }, idx * 350);
       });
+    }
+    if (job.a === 'bigGive') {
+      flash(sim.gained ? `Büyük sipariş tamamlandı: +${sim.gained} altın, 2 balta, 1 kazma 🎉` : 'Ürünler büyük siparişe verildi');
+      if (sim.gained) sfx('altin');
     }
     if (sim.drop) {
       const d = sim.drop;
@@ -3374,6 +3378,7 @@ function Sheet(p: SheetProps) {
         onClose={p.onClose}
         onDeliver={p.onDeliver}
         onSkip={(id) => p.onStay({ a: 'skipOrder', i: 0, order: id })}
+        onBig={() => p.onStay({ a: 'bigGive', i: 0 })}
       />
     );
   const GIFT_TILE = giftTile(farm);
@@ -4158,6 +4163,79 @@ function ShopPanel({
   );
 }
 
+// Haftalık büyük sipariş: ikisinin birlikte doldurduğu, pazartesi yenilenen büyük hedef.
+function BigOrderCard({
+  farm,
+  now,
+  uid,
+  partnerName,
+  onGive,
+}: {
+  farm: Farm;
+  now: number;
+  uid: string;
+  partnerName: string;
+  onGive: () => void;
+}) {
+  const o = bigOrderOf(farm, now);
+  const left = bigLeft(o);
+  const give = bigCanGive(farm, o);
+  const total = Object.values(o.items).reduce((a, b) => a + b, 0);
+  const got = total - Object.values(left).reduce((a, b) => a + b, 0);
+  const ms = weekEnd(now) - now;
+  const days = Math.floor(ms / 86_400_000);
+  const rest = days >= 1 ? `${days} gün` : timeLeft(ms);
+  const mine = o.by[uid] ?? 0;
+  const theirs = Object.entries(o.by).reduce((a, [k, n]) => (k === uid ? a : a + n), 0);
+  return (
+    <View style={{ borderWidth: 2, borderColor: '#E9C46A', backgroundColor: '#FFF9E8', borderRadius: 16, padding: 10, gap: 7 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Image source={ART.pazar.src} style={{ width: 34, height: 34 }} resizeMode="contain" />
+        <View style={{ flex: 1 }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: INK }}>
+            Haftalık büyük sipariş
+          </Text>
+          <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 11 }}>
+            {o.done ? 'Tamamlandı · yenisi pazartesi gelir' : `Kasaba pazarı için · ${rest} kaldı`}
+          </Text>
+        </View>
+        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 13, color: o.done ? GREEN : INK }}>
+          {got}/{total}
+        </Text>
+      </View>
+      <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F1E3B8', overflow: 'hidden' }}>
+        <View style={{ width: `${Math.round((got / Math.max(1, total)) * 100)}%`, height: 8, backgroundColor: '#6DB33F' }} />
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        {Object.entries(o.items).map(([k, q]) => (
+          <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <StockIcon k={k} w={22} h={22} />
+            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
+              {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
+            </Text>
+            {left[k] > 0 && !o.done && (
+              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}>
+                · depoda {farm.stock[k] ?? 0}
+              </Text>
+            )}
+          </View>
+        ))}
+      </View>
+      <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
+        Ödül: +{o.coins} altın · +{o.xp} tecrübe · 2 balta · 1 kazma. İkiniz de katkı verirseniz altın +%{Math.round((BIG_BOTH - 1) * 100)}.
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
+          {mine || theirs ? `Katkı: sen ${mine} · ${partnerName} ${theirs}` : 'Henüz katkı yok'}
+        </Text>
+        {!o.done && (
+          <Btn kind={give ? 'green' : 'soft'} label={give ? `Depodakini ver (${give})` : 'Depoda yok'} onPress={onGive} disabled={!give} />
+        )}
+      </View>
+    </View>
+  );
+}
+
 // Sipariş defteri: kasabadaki çiftlerin 3 açık siparişi; depodan teslim edilir, ikisi de katkı verirse ortak hasat sayılır.
 // Sipariş tamamlanınca sahibi çift posta kutusuna almaya gelir.
 function Orders({
@@ -4168,6 +4246,7 @@ function Orders({
   onClose,
   onDeliver,
   onSkip,
+  onBig,
 }: {
   farm: Farm;
   now: number;
@@ -4176,6 +4255,7 @@ function Orders({
   onClose: () => void;
   onDeliver: (id: string) => void;
   onSkip: (id: string) => void;
+  onBig: () => void;
 }) {
   const who = (o: Order) => (o.by.length ? o.by.map((b) => (b === uid ? 'sen' : partnerName)).join(' + ') : '');
   return (
@@ -4185,7 +4265,8 @@ function Orders({
         Siparişi teslim edince sahibi çift girişe gelir; yanlarına gidip dokununca ürünleri verirsiniz, altın ve tecrübe o an kazanılır.
         İkiniz de katkı verirseniz ortak hasat sayılır.
       </Note>
-      <ScrollView style={{ maxHeight: 230 }} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
+        <BigOrderCard farm={farm} now={now} uid={uid} partnerName={partnerName} onGive={onBig} />
         {farm.orders.length === 0 && <Note>İlk işinizden sonra deftere sipariş yazılmaya başlar.</Note>}
         {farm.orders.map((o) => {
           const open = o.openAt <= now;
