@@ -153,6 +153,7 @@ import {
   weekEnd,
   type Unlock,
 } from '../lib/farm';
+import { Bubble, CREAM, GText, LevelBadge, Plaque, RoundButton, WoodBar, WoodButton } from '../components/world/FarmUI';
 import { usePublishFarm, useVisitors } from '../lib/farmVisit';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
@@ -240,6 +241,7 @@ type Spr = {
   w: number;
   z: number;
   o?: number;
+  flip?: boolean; // yatay çevrilmiş (yabani ağaç ve kayalarda çeşitlilik)
   wall?: { kind: WallKind; mask: number; flowers?: boolean };
 };
 
@@ -290,7 +292,15 @@ function sprites(f: Farm, now: number): Spr[] {
     const wild = t.k === 'wild' ? t.item : t.k === 'locked' && isOuter(i) ? wildAt(i) : null;
     if (wild) {
       const w = WILD[wild];
-      out.push({ key: t.k === 'wild' ? `s${i}` : `w${i}`, art: ART[w.art] ? w.art : w.alt, ...up, w: TW * w.w });
+      // Aynı iki ağaç kopya gibi durmasın: kareye göre sabit bir boy (%82–%118) ve yön.
+      const v = (i * 2654435761) >>> 0;
+      out.push({
+        key: t.k === 'wild' ? `s${i}` : `w${i}`,
+        art: ART[w.art] ? w.art : w.alt,
+        ...up,
+        w: TW * w.w * (0.82 + ((v >>> 8) % 37) / 100),
+        flip: (v >>> 4) % 2 === 1,
+      });
     }
     if (t.k === 'tree') out.push({ key: `s${i}`, art: ART[t.item] ? t.item : 'tree', ...up, w: TW * TREES[t.item].w });
     if (t.k === 'building') {
@@ -403,7 +413,16 @@ const SpriteImg = memo(function SpriteImg({ s }: { s: Spr }) {
   return (
     <Image
       source={a.src}
-      style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
+      style={{
+        position: 'absolute',
+        left: s.x - s.w / 2,
+        top: s.y - h,
+        width: s.w,
+        height: h,
+        zIndex: Math.floor(s.z),
+        opacity: s.o ?? 1,
+        transform: s.flip ? [{ scaleX: -1 }] : undefined,
+      }}
     />
   );
 });
@@ -539,8 +558,30 @@ const Ground = memo(function Ground({ f, sel, season }: { f: Farm; sel: number |
               ? ['#B3C65B', '#A9BC52', '#8E9F45', '#869841']
               : ['#93CB57', '#8BC34F', '#74A146', '#6E9A42'];
         const fill = t.k === 'path' ? '#D9CDB4' : t.k === 'locked' ? g[(r + c) % 2 ? 2 : 3] : g[(r + c) % 2 ? 0 : 1];
+        // Çim kareleri yarı saydam: manzaranın boyalı çayırı alttan görünür, çiftlik "yapıştırma" durmaz.
+        // Açık arazinin kenarındaki kareler daha da soluktur: kenar keskin bitmez.
+        const edge =
+          t.k === 'grass' &&
+          [
+            [r - 1, c],
+            [r + 1, c],
+            [r, c - 1],
+            [r, c + 1],
+          ].some(([rr, cc]) => {
+            if (rr < 0 || cc < 0 || rr >= N || cc >= N) return true;
+            const j = rr * N + cc;
+            return f.tiles[j].k === 'locked' && isOuter(j);
+          });
+        const op = t.k === 'grass' ? (edge ? 0.3 : 0.6) : 1;
         return (
-          <Polygon key={i} points={pts(r, c)} fill={fill} stroke={t.k === 'path' ? '#C9BC9F' : 'rgba(255,255,255,0.08)'} strokeWidth={1} />
+          <Polygon
+            key={i}
+            points={pts(r, c)}
+            fill={fill}
+            fillOpacity={op}
+            stroke={t.k === 'path' ? '#C9BC9F' : 'rgba(255,255,255,0.06)'}
+            strokeWidth={1}
+          />
         );
       })}
       {f.tiles.map((t, i) => {
@@ -641,30 +682,30 @@ function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; 
       pointerEvents="none"
       style={{
         position: 'absolute',
-        left: x - 15,
-        top: y - 15,
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: '#fff',
+        left: x - 19,
+        top: y - 22,
+        width: 38,
         alignItems: 'center',
-        justifyContent: 'center',
         zIndex: z,
-        shadowColor: '#000',
-        shadowOpacity: 0.25,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
         transform: [{ translateY: bob }],
       }}
     >
-      <Image source={(stockArt(art) ?? ART[art]).src} style={{ width: 22, height: 22 }} resizeMode="contain" />
+      <Bubble size={38}>
+        <Image source={(stockArt(art) ?? ART[art]).src} style={{ width: 23, height: 23 }} resizeMode="contain" />
+      </Bubble>
       {!!label && (
-        <View style={{ position: 'absolute', top: 31, left: -25, width: 80, alignItems: 'center' }}>
+        <View style={{ position: 'absolute', top: 35, left: -21, width: 80, alignItems: 'center' }}>
           <Text
             maxFontSizeMultiplier={1.0}
             style={{
-              backgroundColor: label === 'Yemle' ? '#B4521E' : label === 'Aç' ? '#E8516A' : '#2E7D4F',
+              backgroundColor:
+                label === 'Yemle'
+                  ? '#B4521E'
+                  : label === 'Aç'
+                    ? '#E8516A'
+                    : label === 'Hazır' || label === 'Topla'
+                      ? '#4E8E2A'
+                      : 'rgba(74,44,20,0.82)',
               color: '#fff',
               fontWeight: '800',
               fontSize: 10,
@@ -1925,7 +1966,7 @@ export default function GardenScreen() {
         y: gp.y - TW * 0.95,
         art: ART.sepet ? 'sepet' : 'coin',
         z: zOf(gr, gc) + 420,
-        label: incoming ? 'Aç' : 'Sepet',
+        label: incoming ? 'Aç' : undefined,
       });
   }
   // Hazırlanmış siparişlerin çiftleri girişte bekler. Bu oturumda yeni hazırlananlar yoldan yürüyerek gelir;
@@ -1942,8 +1983,7 @@ export default function GardenScreen() {
   {
     // Posta kutusu: verilebilecek sipariş varsa rozet çıkar.
     const giv = farm.orders.filter((o) => o.openAt <= now && canGive(farm, o) > 0).length;
-    if (giv)
-      badges.push({ key: 'siparis', i: -1, x: MAIL.x, y: MAIL.y - TW * 1.5, art: 'sepet_dolu', z: MAIL.z + 400, n: giv, label: 'Sipariş' });
+    if (giv) badges.push({ key: 'siparis', i: -1, x: MAIL.x, y: MAIL.y - TW * 1.5, art: 'sepet_dolu', z: MAIL.z + 400, n: giv });
   }
   badges.push({
     key: 'pazar',
@@ -1952,7 +1992,6 @@ export default function GardenScreen() {
     y: STALL.y - STALL.w * 0.85 - TW * 0.1,
     art: 'coin',
     z: STALL.z + 400,
-    label: 'Çiftçi pazarı',
   });
   farm.tiles.forEach((tl, i) => {
     const [r, c] = rc(i);
@@ -1984,7 +2023,7 @@ export default function GardenScreen() {
           y: y - TW * 1.45,
           art: dj ? dj.recipe : nj ? nj.recipe : can[0],
           z,
-          label: dj ? 'Hazır' : nj ? timeLeft(nj.ready - now) : STATIONS[st].name,
+          label: dj ? 'Hazır' : nj ? timeLeft(nj.ready - now) : undefined,
         });
     }
     if (tl.k === 'building') {
@@ -2183,7 +2222,7 @@ export default function GardenScreen() {
           {ghost.map((sp) => (
             <SpriteImg key={`g${sp.key}`} s={sp} />
           ))}
-          <Signs f={farm} />
+          {zoom < 0.8 && <Signs f={farm} />}
           {badges.map((b) => (
             <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} n={b.n} label={b.label} />
           ))}
@@ -2270,62 +2309,42 @@ export default function GardenScreen() {
       )}
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} {...pr.panHandlers} />
 
-      {/* üst bilgi */}
-      <View style={{ position: 'absolute', left: 10, right: 10, top: insets.top + 4, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable
-          onPress={close}
-          hitSlop={10}
-          accessibilityLabel="Geri"
-          style={[pill, { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={INK} />
-        </Pressable>
-        <Pressable
-          onPress={() => setLvCard({ level: lv.level, up: false })}
-          accessibilityLabel={`Seviye ${lv.level}, sırada ne açılacak`}
-          style={[pill, { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 3, paddingRight: 10 }]}
-        >
-          <Avatar p={profile} name={myName} size={30} showMood={false} />
-          <View>
-            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
-              Seviye {lv.level}
-            </Text>
-            <View style={{ width: 70, height: 6, borderRadius: 3, backgroundColor: '#EADFD8', overflow: 'hidden' }}>
-              <View
-                style={{ width: `${Math.round(((farm.xp - lv.from) / (lv.to - lv.from)) * 100)}%`, height: 6, backgroundColor: '#6DB33F' }}
-              />
-            </View>
-          </View>
-        </Pressable>
-        <Pressable
-          onPress={() => setNaming(true)}
-          accessibilityLabel="Çiftlik ayarları: çiftliğin ve köpeğin adı, sesler"
-          style={[
-            pill,
-            { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, height: 36, paddingHorizontal: 8 },
-          ]}
-        >
-          <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flexShrink: 1, fontWeight: '800', fontSize: 13, color: INK }}>
-            {farm.name || 'Çiftliğe ad ver'}
-          </Text>
-          <Ionicons name="pencil" size={12} color={MUTED} />
-        </Pressable>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4,
-            backgroundColor: '#FFF3C4',
-            borderRadius: 999,
-            paddingVertical: 4,
-            paddingLeft: 4,
-            paddingRight: 10,
-          }}
-        >
-          <Image source={ART.coin.src} style={{ width: 24, height: 21 }} />
-          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', color: '#7A5A00', fontSize: 15 }}>
-            {farm.coins}
-          </Text>
+      {/* üst bilgi: ahşap levhalar. Seviye rozeti (sırada ne açılacak), çiftlik adı + tecrübe (ayarlar), altın. */}
+      <View style={{ position: 'absolute', left: 8, right: 8, top: insets.top + 2, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <RoundButton size={42} label="Geri" onPress={close}>
+          <Ionicons name="chevron-back" size={24} color={CREAM} style={{ marginLeft: -2 }} />
+        </RoundButton>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable
+            onPress={() => setLvCard({ level: lv.level, up: false })}
+            accessibilityLabel={`Seviye ${lv.level}, sırada ne açılacak`}
+            hitSlop={6}
+            style={{ zIndex: 2 }}
+          >
+            <LevelBadge level={lv.level} size={54} />
+          </Pressable>
+          <Pressable
+            onPress={() => setNaming(true)}
+            accessibilityLabel="Çiftlik ayarları: çiftliğin ve köpeğin adı, sesler"
+            style={{ flex: 1, marginLeft: -16 }}
+          >
+            <Plaque height={46} style={{ alignSelf: 'stretch' }}>
+              <View style={{ alignSelf: 'stretch', paddingLeft: 10, gap: 1 }}>
+                <GText size={14} style={{ textAlign: 'center', lineHeight: 17 }}>
+                  {farm.name || 'Çiftliğe ad ver'}
+                </GText>
+                <WoodBar value={(farm.xp - lv.from) / Math.max(1, lv.to - lv.from)} height={12} style={{ alignSelf: 'stretch' }} />
+              </View>
+            </Plaque>
+          </Pressable>
+        </View>
+        <View>
+          <Plaque height={46} style={{ minWidth: 104, marginLeft: 14 }}>
+            <GText size={16} style={{ paddingLeft: 16 }}>
+              {farm.coins.toLocaleString('tr-TR')}
+            </GText>
+          </Plaque>
+          <Image source={ART.coin.src} style={{ position: 'absolute', left: 0, top: 6, width: 38, height: 33 }} />
         </View>
       </View>
       {naming && (
@@ -2409,37 +2428,18 @@ export default function GardenScreen() {
           </Pressable>
         </View>
       )}
-      <View pointerEvents="none" style={{ position: 'absolute', left: 10, top: insets.top + 52 }}>
-        <Text
-          maxFontSizeMultiplier={1.0}
-          style={[pill, { fontWeight: '800', fontSize: 11, color: INK, paddingHorizontal: 10, paddingVertical: 5, overflow: 'hidden' }]}
-        >
-          {SEASON_NAME[season]}
-          {season === 'kis' ? ' · ürünler yavaş' : ''} · {farm.harvests} ortak hasat
-        </Text>
-      </View>
       {zoom !== 1 && (
-        <Pressable
-          accessibilityLabel="Çiftliğe dön"
+        <RoundButton
+          size={40}
+          label="Çiftliğe dön"
           onPress={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          style={[
-            pill,
-            {
-              position: 'absolute',
-              right: 10,
-              top: insets.top + 52,
-              width: 36,
-              height: 36,
-              alignItems: 'center',
-              justifyContent: 'center',
-            },
-          ]}
+          style={{ position: 'absolute', right: 10, top: insets.top + 54 }}
         >
-          <Ionicons name="contract-outline" size={20} color={INK} />
-        </Pressable>
+          <Ionicons name="contract-outline" size={20} color={CREAM} />
+        </RoundButton>
       )}
       {!!toast && (
         <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 52, left: 56, right: 56, alignItems: 'center' }}>
@@ -3202,57 +3202,6 @@ function Btn({
   );
 }
 
-// Yuvarlak cam oyun düğmesi: arkası bulanık, renk tonlu; altında kısa etiket, köşede sayı rozeti.
-// Menünün üstündeki sabit düğme: iş varsa yeşil ve sayılı, yoksa soluk ve basılamaz.
-function Quick({
-  icon,
-  label,
-  count,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  count: number;
-  onPress: () => void;
-}) {
-  const on = count > 0;
-  return (
-    <Pressable
-      disabled={!on}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !on }}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        minWidth: 112,
-        justifyContent: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 22,
-        borderWidth: 2,
-        borderColor: on ? '#fff' : 'rgba(255,255,255,0.5)',
-        backgroundColor: on ? (pressed ? '#2F6A16' : '#3E7F22') : 'rgba(60,60,60,0.55)',
-        opacity: on ? 1 : 0.75,
-        transform: [{ scale: pressed ? 0.96 : 1 }],
-        shadowColor: '#000',
-        shadowOpacity: on ? 0.25 : 0,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: on ? 4 : 0,
-      })}
-    >
-      <Ionicons name={icon} size={20} color={on ? '#fff' : 'rgba(255,255,255,0.6)'} />
-      <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: on ? '#fff' : 'rgba(255,255,255,0.6)' }}>
-        {label}
-        {on ? ` (${count})` : ''}
-      </Text>
-    </Pressable>
-  );
-}
-
 // Karenin yanında açılan balon. Tohumlar ve aletler buradan tarlaların üstüne sürüklenir; dokunulursa yalnızca bu kareye uygulanır.
 function ToolPop({
   farm,
@@ -3888,12 +3837,35 @@ function Sheet(p: SheetProps) {
     // Ekranda yalnızca Dükkân düğmesi durur; depo, sipariş, atölye, günlük ve pazar çiftlikteki yerlerine dokununca açılır.
     return (
       <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-        <Edge icon="cart" label="Dükkân" big accent onPress={p.onShop} />
+        <View style={{ alignItems: 'center', width: 84 }}>
+          <RoundButton size={78} label="Dükkân" onPress={p.onShop}>
+            <Image source={ART.pazar.src} style={{ width: 56, height: 48 }} resizeMode="contain" />
+          </RoundButton>
+          <GText light size={14} style={{ marginTop: -2 }}>
+            Dükkân
+          </GText>
+        </View>
         <View pointerEvents="box-none" style={{ flex: 1, alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingBottom: 4 }}>
           {/* Toplu sulama ve toplama hep ekranda durur; yapılacak iş yokken soluk görünür. */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
-            <Quick icon="water" label="Sula" count={p.thirsty} onPress={p.onWaterAll} />
-            <Quick icon="basket" label="Topla" count={small} onPress={p.onAll} />
+            <WoodButton
+              kind="wood"
+              label="Sula"
+              icon={<Ionicons name="water" size={20} color="#8FD3F4" />}
+              count={p.thirsty}
+              disabled={p.thirsty <= 0}
+              onPress={p.onWaterAll}
+              style={{ minWidth: 116 }}
+            />
+            <WoodButton
+              kind="green"
+              label="Topla"
+              art="sepet_dolu"
+              count={small}
+              disabled={small <= 0}
+              onPress={p.onAll}
+              style={{ minWidth: 124 }}
+            />
           </View>
           {!!hint && (
             <Text

@@ -1,5 +1,5 @@
 import { useAutoUpdate } from '../lib/autoUpdate';
-import { Baloo2_500Medium, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
+import { Baloo2_500Medium, Baloo2_700Bold, Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2';
 import { Caveat_500Medium, Caveat_700Bold, useFonts } from '@expo-google-fonts/caveat';
 import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { Stack } from 'expo-router';
@@ -110,6 +110,7 @@ export default function RootLayout() {
     Oswald_500Medium,
     Baloo2_500Medium,
     Baloo2_700Bold,
+    Baloo2_800ExtraBold,
   });
   if (!fontsLoaded) return <Loading />;
 
