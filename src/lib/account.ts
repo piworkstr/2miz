@@ -1,4 +1,11 @@
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendEmailVerification,
+  updatePassword,
+  verifyBeforeUpdateEmail,
+} from 'firebase/auth';
 import { collection, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
@@ -59,4 +66,52 @@ export async function deleteAccount(password: string, coupleId: string | null) {
   if (coupleId) await wipeCouple(coupleId);
   await deleteDoc(doc(db, 'users', user.uid));
   await deleteUser(user);
+}
+
+// ---- E-posta doğrulama, e-posta ve şifre değiştirme ----
+const me = () => {
+  const user = auth.currentUser;
+  if (!user || !user.email) throw new Error('no-session');
+  return user;
+};
+const reauth = (password: string) => {
+  const user = me();
+  return reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email!, password));
+};
+// Firebase'in gönderdiği e-postalar uygulama dilinde gitsin.
+export const setAuthLang = (lang: 'tr' | 'en') => {
+  auth.languageCode = lang;
+};
+export async function sendVerify() {
+  await sendEmailVerification(me());
+}
+// Kullanıcı bağlantıya tıkladıktan sonra durumu yeniler; doğrulandıysa true.
+export async function refreshVerified(): Promise<boolean> {
+  const user = me();
+  await user.reload();
+  return !!auth.currentUser?.emailVerified;
+}
+// Yeni adrese doğrulama bağlantısı gider; tıklanınca e-posta değişir (yanlış yazılan adres hesabı kilitlemez).
+export async function changeEmail(password: string, newEmail: string) {
+  await reauth(password);
+  await verifyBeforeUpdateEmail(me(), newEmail.trim());
+}
+export async function changePassword(password: string, next: string) {
+  await reauth(password);
+  await updatePassword(me(), next);
+}
+// Firebase hata kodlarını okunur cümleye çevirir.
+export function authError(e: unknown, lang: 'tr' | 'en' = 'tr'): string {
+  const code = (e as { code?: string })?.code ?? '';
+  const tr = lang === 'tr';
+  if (code.includes('wrong-password') || code.includes('invalid-credential'))
+    return tr ? 'Mevcut şifren yanlış.' : 'Your current password is wrong.';
+  if (code.includes('email-already-in-use'))
+    return tr ? 'Bu e-posta başka bir hesapta kullanılıyor.' : 'This email is already used by another account.';
+  if (code.includes('invalid-email')) return tr ? 'E-posta adresi geçerli görünmüyor.' : 'That email address looks invalid.';
+  if (code.includes('weak-password')) return tr ? 'Yeni şifre en az 6 karakter olmalı.' : 'The new password must be at least 6 characters.';
+  if (code.includes('too-many-requests'))
+    return tr ? 'Çok fazla deneme yapıldı. Biraz bekleyip yeniden dene.' : 'Too many attempts. Wait a bit and try again.';
+  if (code.includes('network')) return tr ? 'Bağlantı yok. İnternetini kontrol et.' : 'No connection. Check your internet.';
+  return tr ? 'İşlem yapılamadı. Yeniden dene.' : 'That didn’t work. Try again.';
 }

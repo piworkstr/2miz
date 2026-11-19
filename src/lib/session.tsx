@@ -22,6 +22,7 @@ export type Profile = {
   mood?: { key: import('./avatar').MoodKey; atMs: number } | null;
   hints?: Record<string, boolean>; // "Anladım" denen ipuçları; ünlem bir daha çıkmaz
   lang?: 'tr' | 'en'; // uygulama dili (src/lib/i18n.tsx)
+  notifOff?: string[]; // kapatılan bildirim türleri (src/lib/push.ts PUSH_TYPES)
 };
 
 export type Couple = {

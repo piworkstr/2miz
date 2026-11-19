@@ -23,6 +23,7 @@ import {
 } from '../lib/datePlan';
 import { nextDays, planDateWith, toggleDateStep, useUpcomingDates, type DatePlan } from '../lib/dates';
 import { usePartners, type Partner } from '../lib/perks';
+import { notifyPartner } from '../lib/push';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, ErrorText, Muted, T } from './ui';
@@ -33,8 +34,10 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 // mevcut date önerisine dönüşür (partner onaylar) ve date günü adımlar işaretlenir.
 export function DatePlanner() {
   const t = useTheme();
-  const { user, couple, partnerName } = useSession();
-  const partners = usePartners();
+  const { user, couple, partnerName, partnerId, profile } = useSession();
+  const all = usePartners();
+  // Kampanyalar: çiftin şehrindeki mekanlar önce; şehir seçilmemişse hepsi.
+  const partners = sameCity(all ?? [], couple?.city);
   const dates = useUpcomingDates(couple?.id);
   const [budget, setBudget] = useState(1000);
   const [custom, setCustom] = useState<string | null>(null); // null: hazır tutarlardan biri seçili
@@ -142,7 +145,7 @@ export function DatePlanner() {
             steps={plan.steps}
             start={plan.start}
             seed={plan.seed}
-            partners={partners ?? []}
+            partners={partners}
             onSwap={(i) => setPlan(swapStep(plan, i, Date.now() % 2147483647))}
           />
           <Muted style={{ fontSize: 12 }}>Tutarlar iki kişi için yaklaşık değerdir; saatler öneridir.</Muted>
@@ -165,6 +168,13 @@ export function DatePlanner() {
                         setError('');
                         try {
                           await planDateWith(couple.id, d.key, user.uid, plan, planTitle(plan.type, plan.dur), planSummary(plan));
+                          if (partnerId)
+                            void notifyPartner(
+                              partnerId,
+                              `${profile?.name ?? 'Partnerin'} bir date planladı 💛`,
+                              `${prettyDate(d.key)} · ${planTitle(plan.type, plan.dur)}`,
+                              { type: 'date', url: '/' },
+                            );
                           setAdded(
                             has
                               ? `${prettyDate(d.key)} günündeki date’e program eklendi.`
@@ -207,6 +217,10 @@ export function DatePlanner() {
     </Card>
   );
 }
+
+// Çiftin şehrindeki mekanlar (şehir yoksa ya da o şehirde mekan yoksa boş: başka şehrin kampanyası gösterilmez).
+export const sameCity = (list: Partner[], city?: string | null) =>
+  city ? list.filter((p) => p.city.trim().toLocaleLowerCase('tr-TR') === city.trim().toLocaleLowerCase('tr-TR')) : list;
 
 // Programın adımları: saat, ad, süre ve tutar. onSwap varsa adım değiştirilebilir; onToggle varsa işaretlenebilir.
 export function StepList({
@@ -311,7 +325,8 @@ export function StepList({
 
 // Planlanmış bir date'in programı (yaklaşan listede salt okunur, date günü işaretlenebilir).
 export function DateProgram({ plan, coupleId, checkable }: { plan: DatePlan; coupleId: string; checkable?: boolean }) {
-  const partners = usePartners();
+  const { couple } = useSession();
+  const partners = sameCity(usePartners() ?? [], couple?.city);
   const [open, setOpen] = useState(!!checkable);
   const t = useTheme();
   if (!plan.steps?.length) return null;
@@ -329,7 +344,7 @@ export function DateProgram({ plan, coupleId, checkable }: { plan: DatePlan; cou
           steps={plan.steps}
           start={plan.start ?? 14 * 60}
           seed={plan.seed}
-          partners={partners ?? []}
+          partners={partners}
           done={checkable ? (plan.done ?? []) : undefined}
           onToggle={checkable ? (i, on) => void toggleDateStep(coupleId, plan.id, i, on).catch(() => {}) : undefined}
         />

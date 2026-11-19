@@ -1,3 +1,4 @@
+import { AccountCard, NotifCard } from '../../components/AccountCard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
@@ -80,6 +81,8 @@ export default function Profile() {
       <PersonaCard />
       <LanguageCard />
       <GuideCard />
+      <NotifCard />
+      <AccountCard />
       <FeedbackCard />
       <PlusCard />
 

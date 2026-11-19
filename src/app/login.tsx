@@ -1,4 +1,10 @@
-import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -68,6 +74,9 @@ export default function Login() {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(cred.user, { displayName: name.trim() });
+        // Doğrulama e-postası: gitmezse kayıt engellenmez, Profil'den yeniden gönderilebilir.
+        auth.languageCode = lang;
+        sendEmailVerification(cred.user).catch(() => {});
         await setDoc(doc(db, 'users', cred.user.uid), {
           name: name.trim(),
           birthDate,

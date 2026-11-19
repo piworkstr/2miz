@@ -13,7 +13,7 @@ export const DATE_TYPES: Record<DateType, { label: string; icon: string }> = {
 export const DATE_DURS: Record<DateDur, { label: string; mins: number; start: number; steps: [number, number] }> = {
   short: { label: '1-2 saat', mins: 110, start: 18 * 60, steps: [4, 4] },
   half: { label: 'Yarım gün', mins: 240, start: 14 * 60, steps: [5, 6] },
-  full: { label: 'Tam gün', mins: 480, start: 10 * 60 + 30, steps: [7, 8] },
+  full: { label: 'Tam gün', mins: 480, start: 10 * 60 + 30, steps: [8, 9] },
 };
 export const BUDGETS = [500, 1000, 2000];
 
@@ -30,6 +30,7 @@ type Act = {
   long?: true; // yalnız yarım gün ve tam günde
   morn?: true; // sabah işi: yalnız tam günde (10:30 başlar)
   eve?: true; // akşam işi: yarım günde (14:00-18:00) çıkmaz
+  warm?: true; // sıcak hava işi: kasım-mart arasında çıkmaz
 };
 const R: DateType = 'romantik';
 const E: DateType = 'eglenceli';
@@ -73,7 +74,7 @@ const POOL: Act[] = [
     types: [M],
     slot: ['start', 'mid'],
   },
-  { id: 'scooter', name: 'Scooter kiralayıp tur atmak', mins: 40, cost: 300, types: [M, E], slot: ['start', 'mid'] },
+  { id: 'scooter', name: 'Scooter kiralayıp tur atmak', mins: 40, cost: 300, types: [M, E], slot: ['start', 'mid'], warm: true },
   { id: 'yazitura', name: 'Yazı turayla yön seçip yürümeye başlamak', mins: 20, cost: 0, types: [E, M], slot: ['start'] },
   { id: 'atistirma', name: 'Markette birbirinize sürpriz atıştırmalık seçmek', mins: 25, cost: 200, types: [E], slot: ['start'] },
   { id: 'milkshake', name: 'Milkshake ya da bubble tea içmek', mins: 30, cost: 350, types: [E], slot: ['start', 'mid'], cat: 'kafe' },
@@ -92,7 +93,7 @@ const POOL: Act[] = [
   { id: 'vapur', name: 'Vapur ya da tekne turu', mins: 60, cost: 200, types: [R, S, M], slot: ['mid'] },
   { id: 'atolye', name: 'Seramik ya da resim atölyesi', mins: 120, cost: 1500, types: [R, S], slot: ['mid'], long: true },
   { id: 'spa', name: 'Hamam ya da masaj', mins: 90, cost: 2000, types: [S, R], slot: ['mid'], long: true },
-  { id: 'piknik', name: 'Marketten alışveriş yapıp piknik', mins: 90, cost: 400, types: [R, S], slot: ['mid'], long: true },
+  { id: 'piknik', name: 'Marketten alışveriş yapıp piknik', mins: 90, cost: 400, types: [R, S], slot: ['mid'], long: true, warm: true },
   { id: 'cicek', name: 'Çiçekçiden birbirinize bir dal çiçek seçmek', mins: 20, cost: 200, types: [R], slot: ['mid'] },
   { id: 'at', name: 'At binmek', mins: 45, cost: 900, types: [M, R], slot: ['mid'] },
   // --- orta: eğlenceli ---
@@ -106,19 +107,19 @@ const POOL: Act[] = [
   { id: 'bilardo', name: 'Bilardo ya da langırt oynamak', mins: 45, cost: 300, types: [E], slot: ['mid'], cat: 'eglence' },
   { id: 'karaoke', name: 'Karaokede şarkı söylemek', mins: 60, cost: 600, types: [E], slot: ['mid', 'end'], cat: 'eglence', eve: true },
   { id: 'paten', name: 'Buz pateni ya da paten', mins: 60, cost: 600, types: [E, M], slot: ['mid'] },
-  { id: 'ucurtma', name: 'Uçurtma uçurmak', mins: 45, cost: 150, types: [E], slot: ['mid'] },
+  { id: 'ucurtma', name: 'Uçurtma uçurmak', mins: 45, cost: 150, types: [E], slot: ['mid'], warm: true },
   { id: 'trambolin', name: 'Trambolin parkında zıplamak', mins: 60, cost: 700, types: [E, M], slot: ['mid'], cat: 'eglence' },
   { id: 'yemekkursu', name: 'Birlikte yemek atölyesi', mins: 150, cost: 2000, types: [R, E], slot: ['mid'], long: true },
   { id: 'tatli', name: 'Tatlı yemek', mins: 40, cost: 350, types: [R, S, E], slot: ['mid', 'end'], cat: 'tatli' },
-  { id: 'dondurma', name: 'Dondurma alıp yürümek', mins: 30, cost: 200, types: [E, R, S], slot: ['mid', 'end'], cat: 'tatli' },
+  { id: 'dondurma', name: 'Dondurma alıp yürümek', mins: 30, cost: 200, types: [E, R, S], slot: ['mid', 'end'], cat: 'tatli', warm: true },
   // --- orta: macera ---
   { id: 'eskisokak', name: 'Eski sokaklarda kaybolmak', mins: 60, cost: 0, types: [M, R], slot: ['mid'] },
   { id: 'kesif', name: 'Haritasız keşif: her köşede yazı turayla yön seçmek', mins: 45, cost: 0, types: [M, E], slot: ['mid'] },
   { id: 'tepe', name: 'Yakındaki bir tepeye tırmanmak', mins: 60, cost: 0, types: [M], slot: ['mid'] },
   { id: 'ilk', name: 'İkinizin de hiç yapmadığı bir şeyi denemek', mins: 45, cost: 300, types: [M], slot: ['mid'] },
-  { id: 'bisiklet', name: 'Bisiklet kiralayıp tur atmak', mins: 75, cost: 300, types: [M, E], slot: ['mid'] },
+  { id: 'bisiklet', name: 'Bisiklet kiralayıp tur atmak', mins: 75, cost: 300, types: [M, E], slot: ['mid'], warm: true },
   { id: 'okculuk', name: 'Okçuluk denemek', mins: 45, cost: 500, types: [M, E], slot: ['mid'] },
-  { id: 'kano', name: 'Kano ya da deniz bisikleti', mins: 60, cost: 600, types: [M], slot: ['mid'] },
+  { id: 'kano', name: 'Kano ya da deniz bisikleti', mins: 60, cost: 600, types: [M], slot: ['mid'], warm: true },
   { id: 'tirmanis', name: 'Tırmanış duvarı denemek', mins: 75, cost: 800, types: [M], slot: ['mid'] },
   { id: 'macerapark', name: 'Macera parkında ip parkuru', mins: 90, cost: 800, types: [M], slot: ['mid'] },
   { id: 'lazer', name: 'Lazer tag ya da paintball', mins: 60, cost: 900, types: [M, E], slot: ['mid'], cat: 'eglence' },
@@ -141,12 +142,12 @@ const POOL: Act[] = [
   { id: 'sikyemek', name: 'Şık bir restoranda akşam yemeği', mins: 110, cost: 2600, types: [R], slot: ['end'], cat: 'restoran', eve: true },
   { id: 'yenimutfak', name: 'Hiç denemediğiniz bir mutfaktan yemek', mins: 75, cost: 1100, types: [M, E], slot: ['end'], cat: 'restoran' },
   { id: 'durum', name: 'Dürüm ya da tost yiyip yürümek', mins: 35, cost: 350, types: [E, M], slot: ['end', 'mid'] },
-  { id: 'balik', name: 'Sahilde balık ekmek', mins: 40, cost: 400, types: [M, E, R], slot: ['end', 'mid'] },
-  { id: 'ates', name: 'Ateş yakıp mangal yapmak', mins: 90, cost: 500, types: [M], slot: ['end'], long: true },
+  { id: 'balik', name: 'Sahilde balık ekmek', mins: 40, cost: 400, types: [M, E, R], slot: ['end', 'mid'], warm: true },
+  { id: 'ates', name: 'Ateş yakıp mangal yapmak', mins: 90, cost: 500, types: [M], slot: ['end'], long: true, warm: true },
   { id: 'evyemek', name: 'Evde birlikte yemek yapmak', mins: 90, cost: 450, types: [R, S], slot: ['end'] },
   { id: 'corba', name: 'Sıcak bir çorba içip eve yürümek', mins: 40, cost: 300, types: [S], slot: ['end'] },
   { id: 'evfilm', name: 'Evde film gecesi ve patlamış mısır', mins: 120, cost: 150, types: [S, R], slot: ['end'], long: true, eve: true },
-  { id: 'yildiz', name: 'Yıldızları izlemek', mins: 40, cost: 0, types: [R, M, S], slot: ['end'], eve: true },
+  { id: 'yildiz', name: 'Yıldızları izlemek', mins: 40, cost: 0, types: [R, M, S], slot: ['end'], eve: true, warm: true },
   { id: 'sahilcay', name: 'Sahilde çay içip sohbet', mins: 45, cost: 150, types: [R, S], slot: ['end', 'mid'] },
   { id: 'canli', name: 'Canlı müzik dinlemek', mins: 90, cost: 900, types: [E, R], slot: ['end'], cat: 'eglence', eve: true },
   { id: 'gecesurus', name: 'Gece şehir ışıklarını izlemek', mins: 45, cost: 100, types: [M, R], slot: ['end'], eve: true },
@@ -202,10 +203,14 @@ const toStep = (a: Act): Step => ({
   ...(a.cat ? { cat: a.cat } : {}),
   ...(a.kind ? { k: a.kind } : {}),
 });
+// Kasım-mart: açık havada üşüten işler (kano, piknik, dondurma…) çıkmaz.
+const isCold = (now: number) => [10, 11, 0, 1, 2].includes(new Date(now).getMonth());
+let cold = isCold(Date.now());
 const fits = (a: Act, type: DateType, dur: DateDur) =>
-  a.types.includes(type) && (dur !== 'short' || !a.long) && (dur === 'full' || !a.morn) && (dur !== 'half' || !a.eve);
+  a.types.includes(type) && (dur !== 'short' || !a.long) && (dur === 'full' || !a.morn) && (dur !== 'half' || !a.eve) && !(cold && a.warm);
 
-export function makePlan(type: DateType, dur: DateDur, budget: number, seed: number): Plan {
+export function makePlan(type: DateType, dur: DateDur, budget: number, seed: number, now: number = Date.now()): Plan {
+  cold = isCold(now);
   const r = rng(seed);
   const D = DATE_DURS[dur];
   const count = D.steps[0] + Math.floor(r() * (D.steps[1] - D.steps[0] + 1));

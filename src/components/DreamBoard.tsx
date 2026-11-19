@@ -22,7 +22,8 @@ import {
   useDreams,
   type Dream,
 } from '../lib/board';
-import type { Couple } from '../lib/session';
+import { notifyPartner } from '../lib/push';
+import { useSession, type Couple } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted } from './ui';
 
@@ -249,6 +250,11 @@ function DreamEditor({
   onSay: (s: string) => void;
 }) {
   const t = useTheme();
+  const { partnerId, profile } = useSession();
+  const tell = (title: string, body: string) => {
+    if (partnerId) void notifyPartner(partnerId, title, body, { type: 'dream', url: '/dreams' });
+  };
+  const myName = profile?.name ?? 'Partnerin';
   const thisYear = new Date().getFullYear();
   const [title, setTitle] = useState(dream?.title ?? '');
   const [photo, setPhoto] = useState<string | undefined>(dream?.photo);
@@ -286,7 +292,10 @@ function DreamEditor({
     if (!yearOk) return setError(`Hedef yılı ${thisYear} ile ${thisYear + 60} arasında olmalı.`);
     run('save', async () => {
       if (dream) await editDream(coupleId, dream.id, input());
-      else await addDream(coupleId, uid, input());
+      else {
+        await addDream(coupleId, uid, input());
+        tell(`${myName} panoya bir hayal ekledi ✨`, title.trim());
+      }
       onClose();
     });
   };
@@ -475,6 +484,7 @@ function DreamEditor({
                   onPress={() =>
                     run('done', async () => {
                       const first = await completeDream(coupleId, dream);
+                      tell(`${myName} bir hayali gerçekleşti olarak işaretledi 🎉`, dream.title);
                       onSay(first ? `Tebrikler! Çiftlik kumbarasına ${DREAM_COINS} altın eklendi.` : 'Gerçekleşti olarak işaretlendi.');
                       onClose();
                     })
@@ -495,6 +505,7 @@ function DreamEditor({
                       const b = await pickPhoto();
                       if (!b) return;
                       const first = await completeDream(coupleId, dream, b);
+                      tell(`${myName} bir hayali gerçekleşti olarak işaretledi 🎉`, dream.title);
                       onSay(first ? `Tebrikler! Çiftlik kumbarasına ${DREAM_COINS} altın eklendi.` : 'Gerçekleşti olarak işaretlendi.');
                       onClose();
                     })

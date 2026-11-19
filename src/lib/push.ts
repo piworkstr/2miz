@@ -11,7 +11,44 @@ import { db } from './firebase';
 // Şimdilik sunucumuz yok: gönderen telefon, partnerin cihaz anahtarına doğrudan bildirim yollar.
 // Uygulama büyüyünce bu iş Firebase Functions'a taşınır (bkz. YOL_HARITASI.md).
 
-export type PushData = { url: string; type: 'message' | 'game' | 'trip' | 'wheel' | 'mood' };
+export type PushType = 'message' | 'game' | 'trip' | 'wheel' | 'mood' | 'dream' | 'date';
+export type PushData = { url: string; type: PushType };
+
+// Profil > Bildirimler'de kapatılabilen türler. Kapalı türler users/{uid}.notifOff içinde durur; gönderen telefon
+// bildirimi yollamadan önce alıcının bu listesine bakar (sunucu yok).
+export const PUSH_TYPES: { id: PushType; tr: string; en: string; hintTr: string; hintEn: string }[] = [
+  {
+    id: 'message',
+    tr: 'Mesajlar',
+    en: 'Messages',
+    hintTr: 'Sohbet, sesli mesaj, tepki, ortak takvim',
+    hintEn: 'Chat, voice notes, reactions, shared calendar',
+  },
+  { id: 'game', tr: 'Oyunlar', en: 'Games', hintTr: 'Oyun daveti ve “sıra sende”', hintEn: 'Game invites and “your turn”' },
+  {
+    id: 'wheel',
+    tr: 'Çark ve bonus görev',
+    en: 'Wheel and bonus tasks',
+    hintTr: 'Partnerin çarkı çevirince',
+    hintEn: 'When your partner spins the wheel',
+  },
+  { id: 'mood', tr: 'Ruh hâli', en: 'Mood', hintTr: 'Partnerin ruh hâlini değiştirince', hintEn: 'When your partner changes their mood' },
+  {
+    id: 'trip',
+    tr: 'Albüm ve seyahat',
+    en: 'Album and trips',
+    hintTr: 'Yeni fotoğraf, silme isteği',
+    hintEn: 'New photos, delete requests',
+  },
+  { id: 'dream', tr: 'Hayal panosu', en: 'Dream board', hintTr: 'Yeni hayal, gerçekleşen hayal', hintEn: 'New and completed dreams' },
+  {
+    id: 'date',
+    tr: 'Date önerileri',
+    en: 'Date proposals',
+    hintTr: 'Partnerin date planlayınca',
+    hintEn: 'When your partner plans a date',
+  },
+];
 
 // Sohbet ekranı açıkken yeni mesaj bildirimi üstte çıkmasın (WhatsApp gibi).
 let chatOpen = false;
@@ -76,17 +113,20 @@ export function usePushSetup(uid: string | undefined) {
   }, []);
 }
 
-const tokens = new Map<string, string | null>();
+// Alıcının cihaz anahtarı ve kapattığı türler; 5 dakikada bir yenilenir (ayar değişince çok beklemesin).
+const tokens = new Map<string, { to: string | null; off: string[]; at: number }>();
 
 // Partnere bildirim gönderir. Başarısız olursa sessizce geçer; asıl işlem (mesaj vb.) zaten kaydedildi.
 export async function notifyPartner(partnerId: string, title: string, body: string, data: PushData) {
   if (data.url === '/garden') return; // çiftlik hiçbir koşulda bildirim göndermez
   try {
-    if (!tokens.has(partnerId)) {
-      const s = await getDoc(doc(db, 'users', partnerId));
-      tokens.set(partnerId, (s.data() as { pushToken?: string } | undefined)?.pushToken ?? null);
+    const hit = tokens.get(partnerId);
+    if (!hit || Date.now() - hit.at > 5 * 60_000) {
+      const d = (await getDoc(doc(db, 'users', partnerId))).data() as { pushToken?: string; notifOff?: string[] } | undefined;
+      tokens.set(partnerId, { to: d?.pushToken ?? null, off: d?.notifOff ?? [], at: Date.now() });
     }
-    const to = tokens.get(partnerId);
+    const { to, off } = tokens.get(partnerId)!;
+    if (off.includes(data.type)) return; // alıcı bu türü kapatmış
     if (!to) {
       tokens.delete(partnerId); // partner izni sonradan verebilir; bir dahakine yeniden bakılır
       return;

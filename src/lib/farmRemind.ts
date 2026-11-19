@@ -59,7 +59,12 @@ export function farmReminders(f: Farm, now: number): { id: string; at: number; t
     const kinds = [...new Set(crops.map((t) => CROPS[t.crop].name.toLowerCase()))];
     const what = kinds.length > 2 ? `${kinds.slice(0, 2).join(', ')} ve diğerleri` : kinds.join(' ve ');
     if (at - now > 2 * MIN && at - now < 2 * DAY)
-      out.push({ id: 'farm-crop', at, title: '🌾 Ekinlerin hazır', body: `Tarladaki ${what} olgunlaştı, toplanmayı bekliyor.` });
+      out.push({
+        id: 'farm-crop',
+        at,
+        title: '🌾 Ekinlerin hazır',
+        body: `Tarladaki ${what} olgunlaştı. Partnerin toplamadıysa seni bekliyor.`,
+      });
   }
   const jobs = (f.prod ?? []).filter((j) => j.ready > now);
   if (jobs.length) {
@@ -70,7 +75,7 @@ export function farmReminders(f: Farm, now: number): { id: string; at: number; t
         id: 'farm-prod',
         at,
         title: '🍞 Üretim bitti',
-        body: `${names.slice(0, 2).join(' ve ') || 'Ürünlerin'} hazır, almayı unutma.`,
+        body: `${names.slice(0, 2).join(' ve ') || 'Ürünlerin'} hazır. Partnerin almadıysa seni bekliyor.`,
       });
   }
   return out;
