@@ -1,8 +1,8 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { useEffect, useRef, useState } from 'react';
 import { db } from './firebase';
-import { levelOf,
-  xpOf, newFarm, type Farm } from './farm';
+import { levelOf, xpOf, newFarm, type Farm } from './farm';
+import type { Profile } from './session';
 
 // Çiftlik ziyareti: her çiftliğin herkese açık, salt okunur bir kopyası farmPublic/{çift} belgesinde durur.
 // Kopyada yalnızca görünen şeyler vardır (kareler, çiftlik adı, köpeğin adı, seviye); altın, depo, siparişler,
@@ -16,7 +16,10 @@ export type PublicFarm = {
   tiles: Farm['tiles'];
   giftSpot?: number;
   noteAt?: number;
+  chars?: PublicChar[];
 };
+// Çiftliğin sahiplerinin görünüşü (yalnız karakter çizimi ve cinsiyet; ad, fotoğraf ya da başka bilgi yoktur).
+export type PublicChar = Pick<Profile, 'gender' | 'avatar'>;
 export type Visit = { id: string; name: string; at: number };
 
 const pubRef = (coupleId: string) => doc(db, 'farmPublic', coupleId);
@@ -34,10 +37,17 @@ const sig = (f: Farm) => {
 };
 
 // Çiftlik açıkken görünüm değiştikçe kopyayı günceller; ekrandan çıkarken son hâlini yazar.
-export function usePublishFarm(coupleId: string | undefined, farm: Farm | null) {
+export function usePublishFarm(coupleId: string | undefined, farm: Farm | null, chars?: (Profile | null | undefined)[]) {
   const last = useRef({ at: 0, sig: '' });
   const latest = useRef(farm);
   latest.current = farm;
+  // Firestore tanımsız alan kabul etmez: görünüş JSON'dan geçirilerek sadeleştirilir.
+  const looks: PublicChar[] = (chars ?? [])
+    .filter((c): c is Profile => !!c)
+    .map((c) => JSON.parse(JSON.stringify({ gender: c.gender ?? null, avatar: c.avatar ?? null })) as PublicChar);
+  const looksKey = JSON.stringify(looks);
+  const looksRef = useRef(looks);
+  looksRef.current = looks;
   const write = async (force: boolean) => {
     const f = latest.current;
     if (!coupleId || !f) return;
@@ -48,7 +58,7 @@ export function usePublishFarm(coupleId: string | undefined, farm: Farm | null) 
       }
       return;
     }
-    const s = sig(f);
+    const s = sig(f) + looksKey.length + looksKey.slice(-24);
     if (s === last.current.sig) return;
     if (!force && Date.now() - last.current.at < MIN_GAP) return;
     last.current = { at: Date.now(), sig: s };
@@ -57,7 +67,8 @@ export function usePublishFarm(coupleId: string | undefined, farm: Farm | null) 
       lvl: levelOf(xpOf(f)).level,
       ...(f.dog ? { dog: f.dog } : {}),
       at: Date.now(),
-      tiles: f.tiles,
+      tiles: JSON.parse(JSON.stringify(f.tiles)),
+      ...(looksRef.current.length ? { chars: looksRef.current } : {}),
       ...(f.giftSpot !== undefined ? { giftSpot: f.giftSpot } : {}),
       ...(f.noteAt !== undefined ? { noteAt: f.noteAt } : {}),
     }).catch(() => {});
@@ -109,7 +120,7 @@ export function useNeighbors(myCoupleId: string | undefined, on: boolean) {
 }
 
 // Ziyaret edilen çiftlik: görünümü çizmek için boş bir çiftliğin üstüne açık kopya bindirilir.
-export async function loadPublicFarm(id: string): Promise<{ farm: Farm; name: string; lvl: number } | null> {
+export async function loadPublicFarm(id: string): Promise<{ farm: Farm; name: string; lvl: number; chars: PublicChar[] } | null> {
   const s = await getDoc(pubRef(id));
   if (!s.exists()) return null;
   const x = s.data() as PublicFarm;
@@ -118,6 +129,7 @@ export async function loadPublicFarm(id: string): Promise<{ farm: Farm; name: st
   return {
     name: x.name,
     lvl: x.lvl,
+    chars: Array.isArray(x.chars) ? x.chars.slice(0, 2) : [],
     farm: { ...base, tiles: x.tiles, name: x.name, dog: x.dog, giftSpot: x.giftSpot, noteAt: x.noteAt },
   };
 }

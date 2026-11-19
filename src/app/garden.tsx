@@ -136,7 +136,8 @@ import type { Profile } from '../lib/session';
 import { logActivityCapped } from '../lib/bond';
 import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
-import { settleMine } from '../lib/market';
+import { StationPop } from '../components/world/StationPop';
+import { buyListing, loadMine, settleMine, type Listing } from '../lib/market';
 import { srvNow, syncClock } from '../lib/serverClock';
 import {
   COLLECTION,
@@ -167,7 +168,7 @@ import {
   WoodPanel,
 } from '../components/world/FarmUI';
 import { UI } from '../lib/farmUiArt';
-import { usePublishFarm, useVisitors } from '../lib/farmVisit';
+import { usePublishFarm, useVisitors, type PublicChar } from '../lib/farmVisit';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
@@ -1372,6 +1373,20 @@ export default function GardenScreen() {
   simFarm.current = null;
   const farmRef = useRef(farm);
   farmRef.current = farm;
+  // Atölye seçilince (listeden ya da rozetten) makine ekranın kenarında ya da dışında kalmışsa kamera ona kayar:
+  // ürünler makinenin çevresinde açıldığı için makinenin görünmesi gerekir.
+  useEffect(() => {
+    if (sel === null) return;
+    const t = farmRef.current.tiles[sel];
+    if (!(t?.k === 'decor' && DECOR[t.item].station)) return;
+    const c = cam.current;
+    const at = center(...rc(sel));
+    const sx = at.x * c.s + c.tx;
+    const sy = at.y * c.s + c.ty;
+    if (sx > 110 && sx < box.w - 110 && sy > insets.top + 270 && sy < box.h - insets.bottom - 290) return;
+    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * c.s, box.h * 0.45 - c.oy + (c.cy - at.y) * c.s, c.s));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel]);
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
   // Bekleyen işler o anda animasyonsuz, tek yazmayla kaydedilir. Geri dönünce yarıda kalmış yürüyüş serbest bırakılır.
   const flushCtx = useRef({ coupleId: couple?.id, uid, myName, partnerName });
@@ -1749,7 +1764,7 @@ export default function GardenScreen() {
   }, [lvNow]);
 
   // Ziyaret için herkese açık kopya (yalnızca görünüm; altın, depo ve notlar yok).
-  usePublishFarm(couple?.id, couple ? farm : null);
+  usePublishFarm(couple?.id, couple ? farm : null, [profile, partnerProfile]);
 
   // Partner eski sürümdeyse (22x22 araziye yazmaya devam ediyorsa) yaptıkları bu çiftliğe yansımaz: bir kez uyar.
   const staleWarned = useRef(false);
@@ -1925,6 +1940,20 @@ export default function GardenScreen() {
         setPop(null);
       }
     },
+  };
+  // Atölye seçiliyse pencere açılmaz: ürünler makinenin çevresinde, çiftliğin içinde açılır (StationPop).
+  const selTile = sel !== null ? farm.tiles[sel] : undefined;
+  const stSel = sel !== null && !scene && !showLog && !showOrders && !showShop && selTile?.k === 'decor' && !!DECOR[selTile.item].station;
+  const panelOn = !!(scene || (sel !== null && !stSel) || showLog || showOrders) && !showShop;
+  // Boş çimen ve patika küçük, bağlamsal bir seçimdir: pencere açılmaz, altta ince bir panelle kalır (çiftlik görünür).
+  const lightSel = !scene && !showLog && !showOrders && (selTile?.k === 'grass' || selTile?.k === 'path');
+  const panelMid = panelOn && !lightSel;
+  const closePanels = () => {
+    setSel(null);
+    setShowLog(false);
+    setShowOrders(false);
+    setShowShop(false);
+    setPlantAll(false);
   };
   // Balonun karesi değiştiyse (ekildi, toplandı, kaldırıldı) balon kapanır; sürükleme sırasında dokunulmaz.
   const popTile = pop ? farm.tiles[pop.i] : undefined;
@@ -2640,139 +2669,210 @@ export default function GardenScreen() {
               </View>
             );
           })()}
-        {/* Tohum sürüklenirken tabela görünmez olur ama sökülmez: parmak hareketi listedeki tohuma bağlı. */}
-        <View
-          pointerEvents="box-none"
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: kbLift,
-            padding: 10,
-            paddingBottom: kbLift ? 8 : insets.bottom + 8,
-            opacity: seed ? 0 : 1,
-          }}
-        >
-          <PanelShell on={!!(scene || sel !== null || showLog || showOrders)}>
-            {scene ? (
-              <ScenePanel
-                scene={scene}
-                meta={FARM_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
-                coupleId={couple.id}
-                uid={uid}
-                partnerId={partnerId}
-                partnerName={partnerName}
-                profile={profile}
-                partnerProfile={partnerProfile}
-                onJoined={() => {
-                  doScene(scene);
-                }}
-                extra={
-                  live && ((live.kind === 'harvest' && bigIds.length > 0) || (live.kind === 'market' && stockCount(farm) > 0)) ? (
-                    <Btn
-                      label={
-                        live.kind === 'harvest'
-                          ? `Birlikte topla (${bigIds.length})`
-                          : `Tezgâhı aç · ${stockValue(farm, MARKET_BONUS)} altın`
-                      }
-                      onPress={() => doScene(live)}
-                    />
-                  ) : null
-                }
-              />
-            ) : (
-              <Sheet
-                farm={(seed && seedFarm.current) || farm}
-                sel={sel}
+        {stSel &&
+          (() => {
+            const c = cam.current;
+            const at = center(...rc(sel));
+            return (
+              <StationPop
+                farm={farm}
+                i={sel}
                 now={now}
-                uid={uid}
-                partnerName={partnerName}
-                shop={shop}
-                setShop={setShop}
-                plantAll={plantAll}
-                setPlantAll={setPlantAll}
-                showLog={showLog}
-                showOrders={showOrders}
-                showShop={showShop}
-                onShop={() => setShowShop(true)}
-                onPlace={(pl) => {
-                  setPlacing(pl);
-                  setShowShop(false);
+                level={lv.level}
+                sx={at.x * c.s + c.tx}
+                sy={(at.y - TW * 0.42) * c.s + c.ty}
+                box={box}
+                top={insets.top + 96}
+                bottom={insets.bottom + 8}
+                onCook={(recipe) => work({ a: 'cook', i: sel, recipe })}
+                onCollect={() => work({ a: 'collectProd', i: sel, at: (farm.tiles[sel] as { item: string }).item as Station })}
+                onRemove={() => {
+                  work({ a: 'remove', i: sel });
                   setSel(null);
                 }}
-                onOrders={() => setShowOrders(true)}
-                onWorkshop={(tile) => {
-                  // -2: atölye listesi · -1: dükkânın atölye sekmesi · diğer: o atölyenin paneli
-                  if (tile === -2) {
-                    setSel(null);
-                    setShowOrders('ws');
-                  } else if (tile >= 0) {
-                    setShowOrders(false);
-                    setSel(tile);
-                  } else {
-                    setShowOrders(false);
-                    setShop('workshop');
-                    setShowShop(true);
-                  }
-                }}
-                onDepot={() => setSel(BARN_TILE)}
-                onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
-                onNote={(text) => work({ a: 'note', i: NOTE_TILE, text })}
-                ready={ready.length + prodReady + hungryNow}
-                thirsty={thirsty}
-                fields={fields}
-                bank={couple.dreamBank ?? 0}
-                onBank={() =>
-                  collectDreamBank(couple.id, uid, myName)
-                    .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
-                    .catch(() => {})
-                }
-                onClose={() => {
-                  setSel(null);
-                  setShowLog(false);
-                  setShowOrders(false);
-                  setShowShop(false);
-                  setPlantAll(false);
-                }}
-                onLog={() => setShowLog(true)}
-                onMarket={() => setShowMarket(true)}
-                onKitchen={() => setSel(HOUSE_TILE)}
-                onAll={() => {
-                  ready.forEach((i) => {
-                    const x = farm.tiles[i];
-                    if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat gününe kalır (tek tek toplanabilir)
-                    work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : x.k === 'building' ? 'gather' : 'collect', i });
-                  });
-                  // Atölyelerde biten ürünler de toplanır.
-                  farm.tiles.forEach((x, i) => {
-                    if (x.k !== 'decor' || !DECOR[x.item].station) return;
-                    const st = x.item as Station;
-                    if (stationJobs(farm, st).some((j) => j.ready <= now)) work({ a: 'collectProd', i, at: st });
-                  });
-                  // Toplanan ve zaten aç olan hayvanlar yemlenir (buğday ya da altın varsa).
-                  farm.tiles.forEach((x, i) => {
-                    if (x.k !== 'building') return;
-                    if (x.res.some((r) => needsFeed(r.id) && (r.fed === null || residentReady(r, now)))) work({ a: 'feed', i });
-                  });
-                }}
-                onSell={() => work({ a: 'sell', i: PILE_TILE })}
-                onWaterAll={() =>
-                  farm.tiles.forEach((x, i) => {
-                    if (x.k === 'crop' && x.by !== uid && !x.watered && !cropReady(x, now)) work({ a: 'water', i });
-                  })
-                }
-                onScene={begin}
-                onStay={(a) => work(a)}
-                onAct={(a, all) => {
-                  if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
-                  else work(a);
-                  setSel(null);
-                  setPlantAll(false);
-                }}
+                onClose={() => setSel(null)}
               />
-            )}
-          </PanelShell>
+            );
+          })()}
+        {/* Pencereler ekranın ortasında, arkası karartılmış açılır; karartıya dokununca kapanır.
+            Tohum sürüklenirken pencere görünmez olur ama sökülmez: parmak hareketi listedeki tohuma bağlı. */}
+        <View
+          pointerEvents={panelMid ? 'auto' : 'box-none'}
+          style={
+            panelMid
+              ? {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  justifyContent: 'center',
+                  paddingHorizontal: 12,
+                  paddingTop: insets.top + 12,
+                  paddingBottom: kbLift ? kbLift + 8 : insets.bottom + 12,
+                  backgroundColor: 'rgba(24,14,4,0.52)',
+                  opacity: seed ? 0 : 1,
+                  zIndex: 45,
+                }
+              : {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: kbLift,
+                  padding: 10,
+                  paddingBottom: kbLift ? 8 : insets.bottom + 8,
+                  opacity: seed ? 0 : 1,
+                }
+          }
+        >
+          {panelMid && !scene && (
+            <Pressable
+              accessibilityLabel="Pencereyi kapat"
+              onPress={closePanels}
+              style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            />
+          )}
+          <View pointerEvents="box-none" style={panelMid ? { width: '100%', maxWidth: 460, alignSelf: 'center' } : undefined}>
+            <PanelShell on={panelOn}>
+              {scene ? (
+                <ScenePanel
+                  scene={scene}
+                  meta={FARM_SCENES[scene.kind] ?? { title: scene.kind, verb: '' }}
+                  coupleId={couple.id}
+                  uid={uid}
+                  partnerId={partnerId}
+                  partnerName={partnerName}
+                  profile={profile}
+                  partnerProfile={partnerProfile}
+                  onJoined={() => {
+                    doScene(scene);
+                  }}
+                  extra={
+                    live && ((live.kind === 'harvest' && bigIds.length > 0) || (live.kind === 'market' && stockCount(farm) > 0)) ? (
+                      <Btn
+                        label={
+                          live.kind === 'harvest'
+                            ? `Birlikte topla (${bigIds.length})`
+                            : `Tezgâhı aç · ${stockValue(farm, MARKET_BONUS)} altın`
+                        }
+                        onPress={() => doScene(live)}
+                      />
+                    ) : null
+                  }
+                />
+              ) : stSel ? null : (
+                <Sheet
+                  farm={(seed && seedFarm.current) || farm}
+                  sel={sel}
+                  now={now}
+                  uid={uid}
+                  partnerName={partnerName}
+                  shop={shop}
+                  setShop={setShop}
+                  plantAll={plantAll}
+                  setPlantAll={setPlantAll}
+                  showLog={showLog}
+                  showOrders={showOrders}
+                  showShop={showShop}
+                  onShop={() => setShowShop(true)}
+                  onPlace={(pl) => {
+                    setPlacing(pl);
+                    setShowShop(false);
+                    setSel(null);
+                  }}
+                  onOrders={() => setShowOrders(true)}
+                  onWorkshop={(tile) => {
+                    // -2: atölye listesi · -1: dükkânın atölye sekmesi · diğer: o atölyenin paneli
+                    if (tile === -2) {
+                      setSel(null);
+                      setShowOrders('ws');
+                    } else if (tile >= 0) {
+                      setShowOrders(false);
+                      setSel(tile);
+                    } else {
+                      setShowOrders(false);
+                      setShop('workshop');
+                      setShowShop(true);
+                    }
+                  }}
+                  onDepot={() => setSel(BARN_TILE)}
+                  onDeliver={(id) => work({ a: 'deliver', i: PILE_TILE, order: id })}
+                  onNote={(text) => work({ a: 'note', i: NOTE_TILE, text })}
+                  ready={ready.length + prodReady + hungryNow}
+                  thirsty={thirsty}
+                  fields={fields}
+                  bank={couple.dreamBank ?? 0}
+                  onBank={() =>
+                    collectDreamBank(couple.id, uid, myName)
+                      .then((n) => n && flash(`+${n} altın kumbaradan geldi`))
+                      .catch(() => {})
+                  }
+                  onClose={closePanels}
+                  onLog={() => setShowLog(true)}
+                  onMarket={() => setShowMarket(true)}
+                  onKitchen={() => setSel(HOUSE_TILE)}
+                  onAll={() => {
+                    ready.forEach((i) => {
+                      const x = farm.tiles[i];
+                      if (x.k === 'crop' && CROPS[x.crop].big) return; // büyük ürün hasat gününe kalır (tek tek toplanabilir)
+                      work({ a: x.k === 'crop' ? 'harvest' : x.k === 'tree' ? 'pick' : x.k === 'building' ? 'gather' : 'collect', i });
+                    });
+                    // Atölyelerde biten ürünler de toplanır.
+                    farm.tiles.forEach((x, i) => {
+                      if (x.k !== 'decor' || !DECOR[x.item].station) return;
+                      const st = x.item as Station;
+                      if (stationJobs(farm, st).some((j) => j.ready <= now)) work({ a: 'collectProd', i, at: st });
+                    });
+                    // Toplanan ve zaten aç olan hayvanlar yemlenir (buğday ya da altın varsa).
+                    farm.tiles.forEach((x, i) => {
+                      if (x.k !== 'building') return;
+                      if (x.res.some((r) => needsFeed(r.id) && (r.fed === null || residentReady(r, now)))) work({ a: 'feed', i });
+                    });
+                  }}
+                  onSell={() => work({ a: 'sell', i: PILE_TILE })}
+                  onWaterAll={() =>
+                    farm.tiles.forEach((x, i) => {
+                      if (x.k === 'crop' && x.by !== uid && !x.watered && !cropReady(x, now)) work({ a: 'water', i });
+                    })
+                  }
+                  onScene={begin}
+                  onStay={(a) => work(a)}
+                  onAct={(a, all) => {
+                    if (all && a.a === 'plant') farm.tiles.forEach((x, i) => x.k === 'soil' && work({ ...a, i }));
+                    else work(a);
+                    setSel(null);
+                    setPlantAll(false);
+                  }}
+                />
+              )}
+            </PanelShell>
+          </View>
         </View>
+        {/* Pencere açıkken karakterin konuşma balonu karartının altında kalır: ileti üstte de gösterilir. */}
+        {panelMid && !!say && (
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', top: insets.top + 10, left: 20, right: 20, alignItems: 'center', zIndex: 60 }}
+          >
+            <Text
+              maxFontSizeMultiplier={1.0}
+              numberOfLines={3}
+              style={{
+                backgroundColor: 'rgba(43,29,34,0.94)',
+                color: '#fff',
+                fontWeight: '800',
+                fontSize: 13,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 16,
+                overflow: 'hidden',
+                textAlign: 'center',
+              }}
+            >
+              {say}
+            </Text>
+          </View>
+        )}
         {showShop && !scene && (
           <ShopPanel
             farm={(seed && seedFarm.current) || farm}
@@ -2859,8 +2959,68 @@ type SheetProps = {
 };
 
 // Ziyaret: başka bir çiftliğin salt okunur görünümü. Sürükleyerek gezilir, iki parmakla yakınlaşılır; hiçbir şeye dokunulamaz.
-export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string; onClose: () => void }) {
+export function FarmVisit({
+  farm,
+  title,
+  onClose,
+  chars = [],
+  hostId,
+  who,
+  coins,
+}: {
+  farm: Farm;
+  title: string;
+  onClose: () => void;
+  chars?: PublicChar[];
+  hostId?: string;
+  who?: { coupleId: string; uid: string; name: string; partnerName: string };
+  coins?: number;
+}) {
   const insets = useSafeAreaInsets();
+  // Ev sahibinin tezgâhı: pazara koydukları ürünler burada görünür ve oyun altınıyla satın alınır.
+  const [stall, setStall] = useState<Listing[] | null>(null);
+  const [showStall, setShowStall] = useState(false);
+  const [buying, setBuying] = useState<string | null>(null);
+  const [msg, setMsg] = useState('');
+  const loadStall = () => {
+    if (!hostId) return;
+    loadMine(hostId)
+      .then((l) => setStall(l.filter((x) => x.status === 'open' && x.expMs > Date.now())))
+      .catch(() => setStall([]));
+  };
+  useEffect(() => {
+    loadStall();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hostId]);
+  const tell = (t: string) => {
+    setMsg(t);
+    setTimeout(() => setMsg(''), 2600);
+  };
+  const buy = async (l: Listing) => {
+    if (!who || buying) return;
+    setBuying(l.id);
+    try {
+      const err = await buyListing(who, l);
+      if (err) tell(err);
+      else {
+        sfx('altin');
+        tell(`${l.n} ${PRODUCT_NAME[l.key] ?? l.key} depona geldi`);
+        setStall((cur) => (cur ?? []).filter((x) => x.id !== l.id));
+      }
+    } catch {
+      tell('Olmadı, tekrar dene');
+    } finally {
+      setBuying(null);
+      loadStall();
+    }
+  };
+  const tapRef = useRef<(wx: number, wy: number) => void>(() => {});
+  tapRef.current = (wx, wy) => {
+    if (stallHit(wx, wy)) setShowStall(true);
+  };
+  // Ev sahipleri evlerinin önünde yan yana durur.
+  const hostTile = restNear(farm, houseTile(farm) + N);
+  const hostAt = [stand(hostTile, chars.length > 1 ? -1.75 : 0), stand(hostTile, 1.75)];
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [cam, setCam] = useState<{ x: number; y: number; s: number } | null>(null);
   const camRef = useRef(cam);
@@ -2926,6 +3086,11 @@ export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string;
             setCam(clamp(g.current.cx + (t[0].pageX - g.current.x), g.current.cy + (t[0].pageY - g.current.y), c.s, b));
           }
         },
+        onPanResponderRelease: (e, gs) => {
+          const c = camRef.current;
+          if (!c || g.current.d || Math.hypot(gs.dx, gs.dy) > 8) return;
+          tapRef.current((e.nativeEvent.locationX - c.x) / c.s, (e.nativeEvent.locationY - c.y) / c.s);
+        },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -2955,6 +3120,113 @@ export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string;
             <SpriteImg key={sp.key} s={sp} />
           ))}
           <Dog name={farm.dog} />
+          {chars.slice(0, 2).map((ch, k) => (
+            <WorldChar key={k} profile={ch as Profile} name="" x={hostAt[k].x} y={hostAt[k].y} z={hostAt[k].z} />
+          ))}
+          {!!stall?.length && <Badge x={STALL.x} y={STALL.y - STALL.w * 0.95} art="sepet_dolu" z={9000} n={stall.length} />}
+        </View>
+      )}
+      {/* Tezgâh düğmesi: ev sahibinin satışa koyduğu ürünler */}
+      {hostId && (
+        <View
+          pointerEvents="box-none"
+          style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 14, alignItems: 'center' }}
+        >
+          <WoodButton
+            kind={stall?.length ? 'green' : 'wood'}
+            label={stall === null ? 'Tezgâh…' : stall.length ? 'Tezgâhtan alışveriş yap' : 'Tezgâh boş'}
+            art="pazar"
+            count={stall?.length ?? 0}
+            onPress={() => setShowStall(true)}
+            style={{ minWidth: 230 }}
+          />
+        </View>
+      )}
+      {showStall && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            paddingHorizontal: 12,
+            backgroundColor: 'rgba(24,14,4,0.52)',
+          }}
+        >
+          <Pressable
+            accessibilityLabel="Tezgâhı kapat"
+            onPress={() => setShowStall(false)}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
+          <View style={{ width: '100%', maxWidth: 440, alignSelf: 'center' }}>
+            <WoodPanel cap={30}>
+              <View style={{ gap: 10 }}>
+                <Head art="pazar" title={`${farm.name ?? 'Komşu'} · tezgâh`} onClose={() => setShowStall(false)} />
+                {coins !== undefined && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <Image source={ART.coin.src} style={{ width: 18, height: 18 }} resizeMode="contain" />
+                    <GText size={14}>{`Altının: ${coins}`}</GText>
+                  </View>
+                )}
+                {stall === null ? (
+                  <Note>Tezgâh yükleniyor…</Note>
+                ) : stall.length === 0 ? (
+                  <Note>
+                    Bu çiftliğin tezgâhında şu an ürün yok. Çiftler ürünlerini kendi çiftliklerindeki pazar tezgâhından “Tezgâhım”
+                    sekmesiyle satışa koyar; sen de koyarsan onlar seni ziyaret edince alabilir.
+                  </Note>
+                ) : (
+                  <ScrollView style={{ maxHeight: 330 }} contentContainerStyle={{ gap: 8 }}>
+                    {stall.map((l) => {
+                      const poor = coins !== undefined && coins < l.price;
+                      return (
+                        <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 50, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                            <Image source={UI.slot.src} style={{ position: 'absolute', width: 50, height: 44 }} resizeMode="stretch" />
+                            <StockIcon k={l.key} w={30} h={28} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <GText size={15}>{`${l.n} ${PRODUCT_NAME[l.key] ?? l.key}`}</GText>
+                            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED, fontWeight: '700' }}>
+                              {`${l.price} altın · tanesi ${Math.round((l.price / l.n) * 10) / 10}`}
+                            </Text>
+                          </View>
+                          <Btn
+                            kind={poor ? 'soft' : 'green'}
+                            label={buying === l.id ? '…' : poor ? 'Altın yetmiyor' : `Al · ${l.price}`}
+                            disabled={poor || !!buying || !who}
+                            onPress={() => void buy(l)}
+                          />
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+            </WoodPanel>
+          </View>
+        </View>
+      )}
+      {!!msg && (
+        <View pointerEvents="none" style={{ position: 'absolute', left: 20, right: 20, top: insets.top + 64, alignItems: 'center' }}>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            style={{
+              backgroundColor: 'rgba(43,29,34,0.94)',
+              color: '#fff',
+              fontWeight: '800',
+              fontSize: 13,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 16,
+              overflow: 'hidden',
+              textAlign: 'center',
+            }}
+          >
+            {msg}
+          </Text>
         </View>
       )}
       <View
@@ -2981,7 +3253,7 @@ export function FarmVisit({ farm, title, onClose }: { farm: Farm; title: string;
             {title}
           </Text>
           <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 11, color: MUTED }}>
-            Ziyaret · sürükleyerek gez, iki parmakla yaklaş
+            Ziyaret · sürükleyerek gez, tezgâha dokunup alışveriş yap
           </Text>
         </View>
       </View>
