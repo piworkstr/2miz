@@ -612,6 +612,7 @@ export type Farm = {
   tools?: Partial<Record<ToolId, number>>; // balta ve kazma (yabani araziyi temizlemek için)
   noteAt?: number; // Not Ağacı taşındıysa yeni karesi
   giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
+  dog?: string; // çiftlik köpeğinin adı
   big?: BigOrder; // haftalık büyük sipariş (ilk katkıda kaydedilir)
 };
 
@@ -1021,6 +1022,7 @@ export type Action =
   | { a: 'trader'; i: number; key: string; n: number; cost: number; offer: string; day: string } // gezgin tüccardan alım
   | { a: 'stall'; i: number; key: string; n: number } // pazar tezgâhından alım
   | { a: 'rename'; i: number; name: string } // çiftlik adı
+  | { a: 'nameDog'; i: number; name: string } // köpeğin adı
   | { a: 'chop'; i: number } // yabani ağaç/çalı/kayayı aletle temizle
   | { a: 'tool'; i: number; key: ToolId; n: number } // pazardan balta/kazma al
   | { a: 'sellOne'; i: number; key: string; n: number } // depodan tek ürün sat
@@ -1288,6 +1290,13 @@ export function applyAction(
       if (nm.length < 3) return 'Çiftlik adı en az 3 harf olmalı.';
       f.name = nm;
       text = `${name} çiftliğe ad verdi: ${nm}`;
+      break;
+    }
+    case 'nameDog': {
+      const nm = act.name.trim().slice(0, 14);
+      if (nm.length < 2) return 'Köpeğin adı en az 2 harf olmalı.';
+      f.dog = nm;
+      text = `${name} köpeğe ad verdi: ${nm}`;
       break;
     }
     case 'pave': {

@@ -753,8 +753,12 @@ function FloatText({ x, y, text, art }: { x: number; y: number; text: string; ar
   );
 }
 
-const DOG_SPOTS = [22, 21, 12, 23, 34, 26, 2, 46].map((i) => center(...rc(i)));
-function Dog() {
+// Köpeğin gezdiği kareler: ortadaki başlangıç çiftliğinin (10x10) içinde.
+const DOG_SPOTS = [22, 21, 12, 23, 34, 26, 2, 46].map((i) => center(Math.floor(i / 10) + OFF, (i % 10) + OFF));
+// Köpeğin şu an gittiği yer (dokunma isabeti için).
+const dogAt = { ...DOG_SPOTS[0] };
+const dogHit = (wx: number, wy: number) => Math.abs(wx - dogAt.x) < TW * 0.5 && wy < dogAt.y + TW * 0.25 && wy > dogAt.y - TW * 0.9;
+function Dog({ name }: { name?: string }) {
   const pos = useRef(new Animated.ValueXY(DOG_SPOTS[0])).current;
   const [flip, setFlip] = useState(false);
   const [z, setZ] = useState(50);
@@ -765,6 +769,8 @@ function Dog() {
       k = (k + 1 + Math.floor(Math.random() * 3)) % DOG_SPOTS.length;
       const to = DOG_SPOTS[k];
       setFlip(to.x < last.x);
+      dogAt.x = to.x;
+      dogAt.y = to.y;
       setZ(Math.round(((to.y - OY) / (TH / 2)) * 10) + 7);
       Animated.timing(pos, { toValue: to, duration: 1600, easing: Easing.linear, useNativeDriver: true }).start();
       last = to;
@@ -788,6 +794,26 @@ function Dog() {
           transform: [{ scaleX: flip ? -1 : 1 }],
         }}
       />
+      {!!name && (
+        <View style={{ position: 'absolute', left: -60, width: 120, top: -w * 1.2 - 18, alignItems: 'center' }}>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            numberOfLines={1}
+            style={{
+              fontSize: 11,
+              fontWeight: '800',
+              color: '#fff',
+              backgroundColor: 'rgba(43,29,34,0.55)',
+              borderRadius: 8,
+              paddingHorizontal: 6,
+              paddingVertical: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {name}
+          </Text>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -856,6 +882,7 @@ export default function GardenScreen() {
   const [lvCard, setLvCard] = useState<{ level: number; up: boolean } | null>(null);
   const lvSeen = useRef<number | null>(null);
   const [mute, setMute] = useState(sfxMuted());
+  const [naming, setNaming] = useState(false);
   const [tool, setTool] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string; art?: string }[]>([]);
   // Teslim alan çift: sipariş tamamlanınca yoldan posta kutusuna yürür, sepeti alır, döner.
@@ -1126,6 +1153,11 @@ export default function GardenScreen() {
             setShowOrders(true);
             return;
           }
+          // Köpek: ad verme ekranı açılır.
+          if (dogHit(wx, wy)) {
+            setNaming(true);
+            return;
+          }
           // Pazar tezgâhı: çiftçi pazarı açılır.
           if (stallHit(wx, wy)) {
             setSel(null);
@@ -1338,7 +1370,11 @@ export default function GardenScreen() {
       try {
         while (paceQ.current.length) {
           const next = paceQ.current.shift()!;
-          const far = !['skipOrder', 'bigGive'].includes(next.a) && next.i >= 0 && next.i < N * N && next.i !== myTileRef.current;
+          const far =
+            !['skipOrder', 'bigGive', 'rename', 'nameDog'].includes(next.a) &&
+            next.i >= 0 &&
+            next.i < N * N &&
+            next.i !== myTileRef.current;
           if (far) void walkTo(next.i);
           const left = paceQ.current.length;
           await sleep(!far ? 120 : left > 20 ? 150 : left > 6 ? 230 : 340);
@@ -2116,7 +2152,7 @@ export default function GardenScreen() {
           {badges.map((b) => (
             <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} n={b.n} label={b.label} />
           ))}
-          <Dog />
+          <Dog name={farm.dog} />
           <WorldChar
             profile={partnerProfile}
             name={partnerName}
@@ -2226,17 +2262,18 @@ export default function GardenScreen() {
             </View>
           </View>
         </Pressable>
-        <View style={{ flex: 1 }} />
         <Pressable
-          onPress={() => {
-            setSfxMuted(!mute);
-            setMute(!mute);
-          }}
-          hitSlop={8}
-          accessibilityLabel={mute ? 'Sesi aç' : 'Sesi kapat'}
-          style={[pill, { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }]}
+          onPress={() => setNaming(true)}
+          accessibilityLabel="Çiftlik ayarları: çiftliğin ve köpeğin adı, sesler"
+          style={[
+            pill,
+            { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, height: 36, paddingHorizontal: 8 },
+          ]}
         >
-          <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={19} color={INK} />
+          <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flexShrink: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+            {farm.name || 'Çiftliğe ad ver'}
+          </Text>
+          <Ionicons name="pencil" size={12} color={MUTED} />
         </Pressable>
         <View
           style={{
@@ -2256,6 +2293,23 @@ export default function GardenScreen() {
           </Text>
         </View>
       </View>
+      {naming && (
+        <NameCard
+          farmName={farm.name ?? ''}
+          dogName={farm.dog ?? ''}
+          mute={mute}
+          onMute={() => {
+            setSfxMuted(!mute);
+            setMute(!mute);
+          }}
+          onClose={() => setNaming(false)}
+          onSave={(fn, dn) => {
+            if (fn.trim() && fn.trim() !== (farm.name ?? '')) work({ a: 'rename', i: 0, name: fn });
+            if (dn.trim() && dn.trim() !== (farm.dog ?? '')) work({ a: 'nameDog', i: 0, name: dn });
+            setNaming(false);
+          }}
+        />
+      )}
       {lvCard && <LevelCard level={lvCard.level} up={lvCard.up} xp={farm.xp} onClose={() => setLvCard(null)} />}
       {placing && (
         <View style={{ position: 'absolute', left: 0, right: 0, top: insets.top + 96, alignItems: 'center', zIndex: 30 }}>
@@ -2700,6 +2754,106 @@ type SheetProps = {
   onAct: (a: Action, all?: boolean) => void;
   onStay: (a: Action) => void; // paneli kapatmadan iş ver (mutfak)
 };
+
+// Çiftliğin ve köpeğin adı: üstteki ad rozetinden ya da köpeğe dokununca açılır.
+function NameCard({
+  farmName,
+  dogName,
+  mute,
+  onMute,
+  onClose,
+  onSave,
+}: {
+  farmName: string;
+  dogName: string;
+  mute: boolean;
+  onMute: () => void;
+  onClose: () => void;
+  onSave: (farm: string, dog: string) => void;
+}) {
+  const [fn, setFn] = useState(farmName);
+  const [dn, setDn] = useState(dogName);
+  const badFarm = fn.trim().length > 0 && fn.trim().length < 3;
+  const badDog = dn.trim().length > 0 && dn.trim().length < 2;
+  const input = {
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#EADFD8',
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: INK,
+  };
+  const label = { fontWeight: '800' as const, color: INK, fontSize: 13 };
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        onPress={onClose}
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(30,20,10,0.55)',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          padding: 20,
+          paddingTop: 110,
+        }}
+      >
+        <Pressable
+          onPress={() => {}}
+          style={{ width: '100%', maxWidth: 380, backgroundColor: '#FFFDF8', borderRadius: 24, padding: 16, gap: 10 }}
+        >
+          <Text style={{ fontWeight: '900', fontSize: 18, color: INK, textAlign: 'center' }}>Çiftlik ayarları</Text>
+          <Text style={label}>Çiftliğin adı</Text>
+          <TextInput
+            value={fn}
+            onChangeText={setFn}
+            placeholder="Papatya Çiftliği"
+            placeholderTextColor="#B9A27E"
+            maxLength={22}
+            style={input}
+          />
+          <Text style={{ color: badFarm ? '#C0392B' : MUTED, fontSize: 12 }}>
+            {badFarm ? 'En az 3 harf olmalı.' : 'Pazarda ilanlarınız bu adla görünür; gerçek adınız görünmez.'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Image source={ART.dog.src} style={{ width: 26, height: 26 * ART.dog.h }} resizeMode="contain" />
+            <Text style={label}>Köpeğin adı</Text>
+          </View>
+          <TextInput value={dn} onChangeText={setDn} placeholder="Karabaş" placeholderTextColor="#B9A27E" maxLength={14} style={input} />
+          {badDog && <Text style={{ color: '#C0392B', fontSize: 12 }}>En az 2 harf olmalı.</Text>}
+          <Pressable onPress={onMute} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
+            <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={20} color={INK} />
+            <Text style={[label, { flex: 1 }]}>Oyun sesleri</Text>
+            <Text style={{ fontWeight: '800', color: mute ? MUTED : '#4E8E2A' }}>{mute ? 'Kapalı' : 'Açık'}</Text>
+          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+            <Pressable
+              onPress={onClose}
+              style={{ flex: 1, backgroundColor: '#F1E8E2', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontWeight: '800', color: INK }}>Vazgeç</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onSave(fn, dn)}
+              disabled={badFarm || badDog}
+              style={{
+                flex: 1,
+                backgroundColor: '#6DB33F',
+                borderRadius: 14,
+                paddingVertical: 12,
+                alignItems: 'center',
+                opacity: badFarm || badDog ? 0.5 : 1,
+              }}
+            >
+              <Text style={{ fontWeight: '900', color: '#fff' }}>Kaydet</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
 
 // Seviye ekranı: yeni seviyede açılanlar ve sıradaki seviyede açılacaklar.
 function UnlockGrid({ list, dim }: { list: Unlock[]; dim?: boolean }) {
