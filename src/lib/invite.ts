@@ -3,7 +3,7 @@ import type { Lang } from './i18n';
 
 // Partner beklerken kullanılan küçük yerel kayıtlar (telefon başına): davet kodu, son gönderim, önceden yazılan kupon.
 // Uygulama mağazada yayınlanınca buraya mağaza bağlantısı yazılır; boşken davet mesajına bağlantı satırı eklenmez.
-export const INVITE_URL = '';
+export const INVITE_URL = 'https://testflight.apple.com/join/pyEsWDFD';
 
 export type InviteState = { code: string; sentAt?: number };
 const inviteKey = (uid: string) => `biriz.invite.${uid}`;
