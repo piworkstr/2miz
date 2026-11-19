@@ -1573,10 +1573,33 @@ export default function GardenScreen() {
   const thirsty = farm.tiles.filter((x) => x.k === 'crop' && x.by === partnerId && !x.watered && !cropReady(x, now)).length;
   const fields = farm.tiles.filter((x) => x.k === 'soil' || x.k === 'crop').length;
   // Tohum parmağın biraz üstünde gezer; hedef kare tohumun altındaki karedir (parmak tarlayı kapatmasın).
-  const SEED_UP = 46;
-  const seedTileAt = (px: number, py: number) => {
+  // Sürüklenen şeyin resmi parmağın üstünde, tam hedef noktasına ortalı durur: resmin ortası neredeyse iş orada yapılır.
+  const SEED_UP = 54;
+  const seedWorld = (px: number, py: number) => {
     const c = cam.current;
-    return tileAt((px - rootOff.current.x - c.tx) / c.s, (py - SEED_UP - rootOff.current.y - c.ty) / c.s);
+    return { x: (px - rootOff.current.x - c.tx) / c.s, y: (py - SEED_UP - rootOff.current.y - c.ty) / c.s };
+  };
+  const seedTileAt = (px: number, py: number) => {
+    const w = seedWorld(px, py);
+    return tileAt(w.x, w.y);
+  };
+  // Aletler (orak, kova) geniş süpürür: hedef karenin yanı sıra, noktaya yakın komşu kareler de sayılır.
+  // Böylece ekinlerin üstünden kabaca geçmek yeter; tek tek kare tutturmak gerekmez.
+  const seedBrush = (px: number, py: number): number[] => {
+    const w = seedWorld(px, py);
+    const base = tileAt(w.x, w.y);
+    if (base < 0) return [];
+    const [r0, c0] = rc(base);
+    const out = [base];
+    for (let dr = -1; dr <= 1; dr++)
+      for (let dc = -1; dc <= 1; dc++) {
+        const r = r0 + dr;
+        const cc = c0 + dc;
+        if ((!dr && !dc) || r < 0 || cc < 0 || r >= N || cc >= N) continue;
+        const ct = center(r, cc);
+        if (Math.hypot(ct.x - w.x, (ct.y - w.y) * 2) <= TW * 0.66) out.push(r * N + cc);
+      }
+    return out;
   };
   // Sürüklenen şeyin konabileceği kare mi?
   // Aletin bir karede yapacağı iş (yoksa null).
@@ -1613,7 +1636,14 @@ export default function GardenScreen() {
       seedLast.current = { x: px, y: py, hit: -1 };
       seedXY.setValue({ x: px - rootOff.current.x, y: py - rootOff.current.y });
       Haptics.selectionAsync().catch(() => {});
-      setSeed({ it, hit: -1, n: 0 });
+      // Alet, balonu açan kareden başlar: dokunulan ekin hemen toplanır/sulanır, sonra parmak nereye giderse.
+      let n0 = 0;
+      if (it.tool && pop && dragFits(it, pop.i)) {
+        seedDone.current.add(pop.i);
+        doQuickRef.current(toolAct(it.tool, pop.i)!);
+        n0 = 1;
+      }
+      setSeed({ it, hit: -1, n: n0 });
     },
     move: (px, py) => {
       const it = seedIt.current;
@@ -1623,18 +1653,23 @@ export default function GardenScreen() {
       const moved = i !== seedLast.current.hit;
       seedLast.current = { x: px, y: py, hit: i };
       let painted = false;
-      if (dragPaints(it) && i >= 0 && !seedDone.current.has(i) && dragFits(it, i)) {
-        if (seedCoins.current < it.cost) {
-          if (!seedDone.current.has(-1)) flash('Altın yetmiyor');
-          seedDone.current.add(-1);
-        } else {
-          seedDone.current.add(i);
+      if (dragPaints(it)) {
+        for (const j of it.tool ? seedBrush(px, py) : [i]) {
+          if (j < 0 || seedDone.current.has(j) || !dragFits(it, j)) continue;
+          if (seedCoins.current < it.cost) {
+            if (!seedDone.current.has(-1)) flash('Altın yetmiyor');
+            seedDone.current.add(-1);
+            break;
+          }
+          seedDone.current.add(j);
           seedCoins.current -= it.cost;
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           // Parmak tempoyu belirler: iş sıraya girmeden hemen yapılır, kare anında değişir.
-          void walkTo(i);
-          doQuickRef.current(it.tool ? toolAct(it.tool, i)! : ({ ...it.a, i } as Action));
+          doQuickRef.current(it.tool ? toolAct(it.tool, j)! : ({ ...it.a, i: j } as Action));
           painted = true;
+        }
+        if (painted) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          if (i >= 0) void walkTo(i);
         }
       }
       if (moved || painted) setSeed({ it, hit: i, n: [...seedDone.current].filter((k) => k >= 0).length });
@@ -2295,7 +2330,7 @@ export default function GardenScreen() {
             <Image
               source={ART[seed.it.art].src}
               resizeMode="contain"
-              style={{ position: 'absolute', left: -34, top: -SEED_UP - 48, width: 68, height: 68 }}
+              style={{ position: 'absolute', left: -34, top: -SEED_UP - 34, width: 68, height: 68 }}
             />
           ) : (
             <View
@@ -2316,8 +2351,8 @@ export default function GardenScreen() {
             <View
               style={{
                 position: 'absolute',
-                left: 30,
-                top: -SEED_UP - 40,
+                left: 28,
+                top: -SEED_UP - 46,
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: 10,
