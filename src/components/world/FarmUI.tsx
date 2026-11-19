@@ -233,7 +233,8 @@ export function WoodPanel({ children, style, cap = 34 }: { children?: ReactNode;
         <View style={{ flex: 1, marginVertical: -0.5 }}>{row('m')}</View>
         {row('b', cap)}
       </View>
-      <View style={{ padding: Math.round(cap * 0.62) }}>{children}</View>
+      {/* içerik ahşap çerçevenin içinde kalır (çerçeve kalınlığı ≈ cap × 0.55) */}
+      <View style={{ padding: Math.round(cap * 0.86) }}>{children}</View>
     </View>
   );
 }

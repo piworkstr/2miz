@@ -3670,7 +3670,11 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
   );
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+      {/* Depo ızgarası: ahşap kutuda ürün, altında adedi. Çok ürün olunca aşağı kaydırılır. */}
+      <ScrollView
+        style={{ maxHeight: 176 }}
+        contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}
+      >
         {items.map(([k, v]) => {
           const on = pick?.key === k;
           return (
@@ -3678,14 +3682,16 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
               key={k}
               onPress={() => setPick(on ? null : { key: k, n: 1 })}
               accessibilityLabel={`${PRODUCT_NAME[k] ?? k}, ${v} adet`}
-              style={{ width: 70, height: 62, alignItems: 'center', justifyContent: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}
+              style={{ width: 66, alignItems: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}
             >
-              <Image source={UI.slot.src} style={{ position: 'absolute', width: 70, height: 62 }} resizeMode="stretch" />
-              {on && (
-                <View style={{ position: 'absolute', width: 70, height: 62, borderRadius: 14, borderWidth: 3, borderColor: '#E8516A' }} />
-              )}
-              <StockIcon k={k} w={40} h={36} />
-              <GText light size={13} style={{ position: 'absolute', right: 7, bottom: 2 }}>
+              <View style={{ width: 66, height: 58, alignItems: 'center', justifyContent: 'center' }}>
+                <Image source={UI.slot.src} style={{ position: 'absolute', width: 66, height: 58 }} resizeMode="stretch" />
+                {on && (
+                  <View style={{ position: 'absolute', width: 66, height: 58, borderRadius: 14, borderWidth: 3, borderColor: '#E8516A' }} />
+                )}
+                <StockIcon k={k} w={38} h={34} />
+              </View>
+              <GText size={13} style={{ lineHeight: 16 }}>
                 {v}
               </GText>
             </Pressable>
@@ -3957,7 +3963,6 @@ function Sheet(p: SheetProps) {
       .sort((a, b) => b[1] - a[1]);
     const n = stockCount(farm);
     const weekend = isWeekend(now);
-    const smallReady = p.ready - bigReady(farm, now).length;
     return (
       <>
         <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
@@ -3985,18 +3990,11 @@ function Sheet(p: SheetProps) {
             </View>
           </>
         )}
-        {(p.thirsty > 0 || smallReady > 0) && (
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {smallReady > 0 && <Btn flex label={`Hazırları topla (${smallReady})`} onPress={p.onAll} />}
-            {p.thirsty > 0 && <Btn flex kind="accent" label={`Hepsini sula (${p.thirsty})`} onPress={p.onWaterAll} />}
-          </View>
-        )}
+        {/* Sulama, toplama, dükkân ve pazar ekrandaki kendi düğmelerinden açılır; burada yalnız depoyla ilgili işler durur. */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {items.length === 0 && <Btn flex kind="soft" label="Siparişler" onPress={p.onOrders} />}
-          <Btn flex kind="soft" label="Çiftçi pazarı" onPress={p.onMarket} />
-          <Btn flex kind="soft" label="Dükkân" onPress={p.onShop} />
+          <Btn flex kind="soft" label="Depoyu taşı" onPress={() => p.onPlace({ a: 'moveBarn' })} />
         </View>
-        <Btn kind="soft" label="Depoyu taşı · sonra 2×2 boş çimene dokun" onPress={() => p.onPlace({ a: 'moveBarn' })} />
       </>
     );
   }

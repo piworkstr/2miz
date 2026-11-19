@@ -51,10 +51,11 @@ export function bodyOf(profile: Profile | null | undefined): 'm' | 'f' {
   return 'm';
 }
 
-const BODY_H = 44; // gövde yüksekliği (dünya px)
-const HEAD_W = 42; // baş genişliği
+// Karakter binalara göre iri duruyordu: ölçüler %80'e indirildi (ölçekleme dönüşümü bulanıklaştırdığı için gerçek ölçüyle).
+const BODY_H = 35; // gövde yüksekliği (dünya px)
+const HEAD_W = 34; // baş genişliği
 const HEAD_H = (HEAD_W * 200) / 280; // avatarHeadSvg viewBox 280×200
-const NECK = 7; // başın gövde üstüne bindiği miktar (boyun kütüğünü örter)
+const NECK = 5.6; // başın gövde üstüne bindiği miktar (boyun kütüğünü örter)
 
 export function WorldChar({
   profile,
@@ -183,9 +184,7 @@ export function WorldChar({
           width: 60,
           height: total,
           alignItems: 'center',
-          // Karakter binalara göre iri duruyordu: ayak noktası sabit kalacak biçimde %80'e küçültülür.
-          transformOrigin: 'center bottom',
-          transform: [{ translateY: jump }, { scaleX: flip ? -1 : 1 }, { scale: 0.8 }],
+          transform: [{ translateY: jump }, { scaleX: flip ? -1 : 1 }],
         }}
       >
         {/* gövde: ayaklar (x, y) noktasında */}
