@@ -45,12 +45,14 @@ import {
 } from '../../lib/chat';
 import { setChatOpen } from '../../lib/push';
 import { useTrips } from '../../lib/trips';
+import { useL } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
 export default function Chat() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerName, partnerId, profile, partnerProfile } = useSession();
   // Son 50 mesajla açılır; en üste kaydırınca 50'şer eski mesaj daha yüklenir.
   const [msgMax, setMsgMax] = useState(50);
@@ -64,10 +66,10 @@ export default function Chat() {
   const kbOpen = useKeyboardVisible();
   const voice = useVoice((uri, ms) => {
     if (!couple || !user) return;
-    voice.setHint('Sesli mesaj gönderiliyor…');
+    voice.setHint(l('Sesli mesaj gönderiliyor…', 'Sending voice message…'));
     sendVoice(couple.id, user.uid, uri, ms, { to: partnerId, fromName: profile?.name ?? 'Partnerin' })
       .then(() => voice.setHint(''))
-      .catch(() => voice.setHint('Sesli mesaj gönderilemedi, tekrar dene.'));
+      .catch(() => voice.setHint(l('Sesli mesaj gönderilemedi, tekrar dene.', "Couldn't send the voice message, try again.")));
   });
 
   // Sekme açıkken gelen mesajlar okundu sayılır.
@@ -165,7 +167,7 @@ export default function Chat() {
             <Pressable
               onPress={() => Keyboard.dismiss()}
               hitSlop={10}
-              accessibilityLabel="Klavyeyi kapat"
+              accessibilityLabel={l('Klavyeyi kapat', 'Hide keyboard')}
               style={{
                 width: 40,
                 height: 40,
@@ -186,10 +188,12 @@ export default function Chat() {
         </View>
         {partnerTyping ? (
           <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: t.colors.primary, fontWeight: '600' }}>
-            {partnerTyping === 'voice' ? '🎤 ses kaydediyor…' : 'yazıyor…'}
+            {partnerTyping === 'voice' ? l('🎤 ses kaydediyor…', '🎤 recording audio…') : l('yazıyor…', 'typing…')}
           </Text>
         ) : (
-          <Muted style={{ fontSize: 12 }}>Sadece ikiniz görürsünüz. Fotoğraflar anlık çekilir.</Muted>
+          <Muted style={{ fontSize: 12 }}>
+            {l('Sadece ikiniz görürsünüz. Fotoğraflar anlık çekilir.', 'Only the two of you can see this. Photos are taken live.')}
+          </Muted>
         )}
       </View>
 
@@ -208,7 +212,12 @@ export default function Chat() {
           ListEmptyComponent={
             <View style={{ alignItems: 'center', gap: 8, padding: 30, transform: [{ scaleY: -1 }] }}>
               <Ionicons name="chatbubbles-outline" size={36} color={t.colors.primary} />
-              <Muted style={{ textAlign: 'center' }}>{partnerName}'e ilk mesajını yaz ya da anlık bir fotoğraf gönder.</Muted>
+              <Muted style={{ textAlign: 'center' }}>
+                {l(
+                  `${partnerName}'e ilk mesajını yaz ya da anlık bir fotoğraf gönder.`,
+                  `Write your first message to ${partnerName} or send a live photo.`,
+                )}
+              </Muted>
             </View>
           }
           renderItem={({ item, index }) => (
@@ -244,14 +253,16 @@ export default function Chat() {
               >
                 {fmt(voice.ms)}
               </Text>
-              <Muted style={{ flex: 1, fontSize: 12 }}>Bırakınca gönderilir · iptal için yukarı kaydır</Muted>
+              <Muted style={{ flex: 1, fontSize: 12 }}>
+                {l('Bırakınca gönderilir · iptal için yukarı kaydır', 'Release to send · slide up to cancel')}
+              </Muted>
             </View>
           ) : (
             <>
               <Pressable
                 onPress={() => router.push('/camera')}
                 hitSlop={8}
-                accessibilityLabel="Anlık fotoğraf gönder"
+                accessibilityLabel={l('Anlık fotoğraf gönder', 'Send a live photo')}
                 style={{ padding: 8 }}
               >
                 <Ionicons name="camera" size={26} color={t.colors.primary} />
@@ -259,7 +270,7 @@ export default function Chat() {
               <TextInput
                 value={text}
                 onChangeText={onType}
-                placeholder="Mesaj yaz…"
+                placeholder={l('Mesaj yaz…', 'Write a message…')}
                 placeholderTextColor={t.colors.muted}
                 multiline
                 maxLength={1000}
@@ -282,7 +293,7 @@ export default function Chat() {
           {text.trim() && !voice.recording ? (
             <Pressable
               onPress={send}
-              accessibilityLabel="Gönder"
+              accessibilityLabel={l('Gönder', 'Send')}
               style={{
                 width: 42,
                 height: 42,
@@ -301,7 +312,7 @@ export default function Chat() {
                 voice.start();
               }}
               onPressOut={(e) => voice.stop(startY.current - e.nativeEvent.pageY < 60)}
-              accessibilityLabel="Basılı tutarak sesli mesaj kaydet"
+              accessibilityLabel={l('Basılı tutarak sesli mesaj kaydet', 'Hold to record a voice message')}
               style={{
                 width: voice.recording ? 54 : 42,
                 height: voice.recording ? 54 : 42,
@@ -332,6 +343,7 @@ export default function Chat() {
 // Partner yazarken ya da ses kaydederken listenin en altında beliren balon (üç nokta atar).
 function TypingBubble({ kind, name }: { kind: 'text' | 'voice'; name: string }) {
   const t = useTheme();
+  const l = useL();
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(Animated.timing(anim, { toValue: 1, duration: 1200, easing: Easing.linear, useNativeDriver: true }));
@@ -365,7 +377,7 @@ function TypingBubble({ kind, name }: { kind: 'text' | 'voice'; name: string }) 
           <>
             <Ionicons name="mic" size={16} color={t.colors.primary} />
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, color: t.colors.muted }}>
-              {name} ses kaydediyor
+              {l(`${name} ses kaydediyor`, `${name} is recording`)}
             </Text>
           </>
         ) : null}
@@ -382,11 +394,12 @@ type MsgState = 'sending' | 'sent' | 'delivered' | 'read';
 // WhatsApp'taki tikler yerine: tik (gönderildi), boş kalp (ulaştı), kırmızı dolu kalp (okundu).
 function StatusIcon({ state, size = 13 }: { state: MsgState; size?: number }) {
   const t = useTheme();
+  const l = useL();
   const map = {
-    sending: { name: 'time-outline', color: t.colors.muted, label: 'Gönderiliyor' },
-    sent: { name: 'checkmark', color: t.colors.muted, label: 'Gönderildi' },
-    delivered: { name: 'heart-outline', color: t.colors.muted, label: 'Ulaştı' },
-    read: { name: 'heart', color: '#E8516A', label: 'Okundu' },
+    sending: { name: 'time-outline', color: t.colors.muted, label: l('Gönderiliyor', 'Sending') },
+    sent: { name: 'checkmark', color: t.colors.muted, label: l('Gönderildi', 'Sent') },
+    delivered: { name: 'heart-outline', color: t.colors.muted, label: l('Ulaştı', 'Delivered') },
+    read: { name: 'heart', color: '#E8516A', label: l('Okundu', 'Read') },
   } as const;
   const s = map[state];
   return <Ionicons name={s.name} size={size} color={s.color} accessibilityLabel={s.label} />;
@@ -547,7 +560,13 @@ function Bubble({
   );
 }
 
-const REASONS = ['Uygunsuz içerik', 'Taciz ya da tehdit', 'Rızam olmadan paylaşılan fotoğraf', 'Diğer'];
+// Şikayet nedeni ekibe her zaman Türkçe gider (tr); ekranda kullanıcının dilinde görünür.
+const REASONS = [
+  { tr: 'Uygunsuz içerik', en: 'Inappropriate content' },
+  { tr: 'Taciz ya da tehdit', en: 'Harassment or threats' },
+  { tr: 'Rızam olmadan paylaşılan fotoğraf', en: 'A photo shared without my consent' },
+  { tr: 'Diğer', en: 'Other' },
+];
 
 // Uzun basınca: kendi mesajını silme, partnerin mesajını şikayet etme.
 function MessageMenu({
@@ -564,6 +583,7 @@ function MessageMenu({
   onClose: () => void;
 }) {
   const t = useTheme();
+  const l = useL();
   const [reporting, setReporting] = useState(false);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -593,7 +613,7 @@ function MessageMenu({
       else await addToTrip(coupleId, m, uid, target, note);
       close();
     } catch {
-      setErr('Eklenemedi, tekrar dene.');
+      setErr(l('Eklenemedi, tekrar dene.', "Couldn't add it, try again."));
     } finally {
       setBusy(false);
     }
@@ -631,11 +651,11 @@ function MessageMenu({
 
   const albumRow = m?.hasPhoto
     ? m.inAlbum
-      ? row('Albümden çıkar', async () => {
+      ? row(l('Albümden çıkar', 'Remove from album'), async () => {
           if (m) await removeFromAlbum(coupleId, m.id).catch(() => {});
           close();
         })
-      : row('Albüme ekle', () => setAdding(true))
+      : row(l('Albüme ekle', 'Add to album'), () => setAdding(true))
     : null;
 
   async function report(reason: string) {
@@ -677,7 +697,7 @@ function MessageMenu({
             {adding ? (
               <View style={{ padding: 20, gap: 12 }}>
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
-                  Albüme anı olarak ekle
+                  {l('Albüme anı olarak ekle', 'Add to the album as a memory')}
                 </Text>
                 {!!trips?.length && (
                   <ScrollView
@@ -686,7 +706,7 @@ function MessageMenu({
                     contentContainerStyle={{ gap: 8 }}
                     keyboardShouldPersistTaps="handled"
                   >
-                    {[{ id: 'album', name: 'Genel albüm' }, ...trips].map((tr) => {
+                    {[{ id: 'album', name: l('Genel albüm', 'Main album') }, ...trips].map((tr) => {
                       const on = target === tr.id;
                       return (
                         <Pressable
@@ -709,11 +729,16 @@ function MessageMenu({
                     })}
                   </ScrollView>
                 )}
-                <Muted>Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).</Muted>
+                <Muted>
+                  {l(
+                    'Polaroidin altına el yazısıyla bir not yaz (istersen boş bırak).',
+                    'Write a handwritten note under the polaroid (or leave it blank).',
+                  )}
+                </Muted>
                 <TextInput
                   value={note}
                   onChangeText={setNote}
-                  placeholder="Örn. O akşamki gün batımı"
+                  placeholder={l('Örn. O akşamki gün batımı', 'e.g. That sunset that evening')}
                   placeholderTextColor={t.colors.muted}
                   maxLength={80}
                   autoFocus
@@ -740,53 +765,57 @@ function MessageMenu({
                     <ActivityIndicator color={t.colors.onPrimary} />
                   ) : (
                     <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '600' }}>
-                      {target === 'album' ? 'Albüme ekle' : 'Seyahat albümüne ekle'}
+                      {target === 'album' ? l('Albüme ekle', 'Add to album') : l('Seyahat albümüne ekle', 'Add to trip album')}
                     </Text>
                   )}
                 </Pressable>
-                {row('Vazgeç', close)}
+                {row(l('Vazgeç', 'Cancel'), close)}
               </View>
             ) : done ? (
               <View style={{ padding: 20, gap: 8 }}>
                 <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text }}>
-                  Şikayetin alındı
+                  {l('Şikayetin alındı', 'Report received')}
                 </Text>
                 <Muted>
-                  Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan Biz ekranından
-                  eşleşmeni bitirebilirsin.
+                  {l(
+                    'Mesaj senin ekranından kaldırıldı ve inceleme için ekibimize iletildi. Kendini güvende hissetmiyorsan Biz ekranından eşleşmeni bitirebilirsin.',
+                    "The message was removed from your screen and sent to our team for review. If you don't feel safe, you can end your pairing from the Us screen.",
+                  )}
                 </Muted>
-                {row('Tamam', close)}
+                {row(l('Tamam', 'OK'), close)}
               </View>
             ) : reporting ? (
               <>
-                <Muted style={{ paddingHorizontal: 20, paddingVertical: 10 }}>Neden şikayet ediyorsun?</Muted>
+                <Muted style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                  {l('Neden şikayet ediyorsun?', 'Why are you reporting this?')}
+                </Muted>
                 {busy ? (
                   <ActivityIndicator style={{ padding: 20 }} color={t.colors.primary} />
                 ) : (
-                  REASONS.map((r) => row(r, () => report(r)))
+                  REASONS.map((r) => row(l(r.tr, r.en), () => report(r.tr)))
                 )}
-                {row('Vazgeç', close)}
+                {row(l('Vazgeç', 'Cancel'), close)}
               </>
             ) : m?.from === uid ? (
               <>
                 {emojiRow}
                 {albumRow}
                 {row(
-                  'Mesajı sil',
+                  l('Mesajı sil', 'Delete message'),
                   async () => {
                     if (m) await deleteMessage(coupleId, m);
                     close();
                   },
                   true,
                 )}
-                {row('Vazgeç', close)}
+                {row(l('Vazgeç', 'Cancel'), close)}
               </>
             ) : (
               <>
                 {emojiRow}
                 {albumRow}
-                {row(`${partnerName}'in mesajını şikayet et`, () => setReporting(true), true)}
-                {row('Vazgeç', close)}
+                {row(l(`${partnerName}'in mesajını şikayet et`, `Report ${partnerName}'s message`), () => setReporting(true), true)}
+                {row(l('Vazgeç', 'Cancel'), close)}
               </>
             )}
           </Pressable>

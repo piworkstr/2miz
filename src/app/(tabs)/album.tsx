@@ -16,7 +16,7 @@ import { TripCover } from '../../components/TripCover';
 import { router } from 'expo-router';
 import { useSession } from '../../lib/session';
 import { taskById, taskTitle } from '../../lib/tasks';
-import type { Lang } from '../../lib/i18n';
+import { useL, type Lang } from '../../lib/i18n';
 import { useTheme } from '../../lib/useTheme';
 
 type Page =
@@ -26,16 +26,17 @@ type Page =
   | { kind: 'trip'; day: string; trip: Trip };
 
 type Filter = 'all' | 'tasks' | 'moments' | 'trips';
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'Tümü' },
-  { key: 'tasks', label: 'Görevler' },
-  { key: 'moments', label: 'Anılar' },
-  { key: 'trips', label: 'Seyahatler' },
+const FILTERS: { key: Filter; label: { tr: string; en: string } }[] = [
+  { key: 'all', label: { tr: 'Tümü', en: 'All' } },
+  { key: 'tasks', label: { tr: 'Görevler', en: 'Tasks' } },
+  { key: 'moments', label: { tr: 'Anılar', en: 'Moments' } },
+  { key: 'trips', label: { tr: 'Seyahatler', en: 'Trips' } },
 ];
 const ORDER = { trip: -1, date: 0, task: 1, moment: 2 };
 
 export default function Album() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerName, profile } = useSession();
   const photos = usePhotos(couple?.id);
   const trips = useTrips(couple?.id);
@@ -81,7 +82,7 @@ export default function Album() {
   );
 
   if (photos === null) return <Loading />;
-  const myName = profile?.name ?? 'Sen';
+  const myName = profile?.name ?? l('Sen', 'You');
   const nameOf = (uid?: string) => (uid === user?.uid ? myName : partnerName);
 
   return (
@@ -89,14 +90,19 @@ export default function Album() {
       <Title>{t.copy.tabs.album}</Title>
       <Muted>
         {pages.length > 0
-          ? `${photos.length} anı · ${partnerName} ile hikayeniz`
-          : 'Görevleri selfieyle tamamladıkça anılarınız burada polaroid olarak birikecek.'}
+          ? l(`${photos.length} anı · ${partnerName} ile hikayeniz`, `${photos.length} moments · your story with ${partnerName}`)
+          : l(
+              'Görevleri selfieyle tamamladıkça anılarınız burada polaroid olarak birikecek.',
+              'As you finish tasks with selfies, your memories will pile up here as polaroids.',
+            )}
       </Muted>
 
       {pages.length === 0 && filter === 'all' && (
         <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
           <Ionicons name="images-outline" size={34} color={t.colors.primary} />
-          <Muted style={{ textAlign: 'center' }}>İlk polaroidiniz bugünün görevinden gelecek.</Muted>
+          <Muted style={{ textAlign: 'center' }}>
+            {l('İlk polaroidiniz bugünün görevinden gelecek.', "Your first polaroid will come from today's task.")}
+          </Muted>
         </Card>
       )}
 
@@ -119,7 +125,7 @@ export default function Album() {
                 maxFontSizeMultiplier={1.25}
                 style={{ color: filter === f.key ? t.colors.onPrimary : t.colors.text, fontWeight: '600', fontFamily: t.fonts.button }}
               >
-                {f.label}
+                {l(f.label.tr, f.label.en)}
               </Text>
             </Pressable>
           ))}
@@ -144,10 +150,10 @@ export default function Album() {
             maxFontSizeMultiplier={1.25}
             style={{ color: t.colors.onPrimary, fontSize: 16, fontWeight: '700', fontFamily: t.fonts.button }}
           >
-            Albümünü bastır
+            {l('Albümünü bastır', 'Print your album')}
           </Text>
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, opacity: 0.9, fontSize: 13 }}>
-            Anılarınız gerçek bir albüm olsun: 21×21 ya da A4
+            {l('Anılarınız gerçek bir albüm olsun: 21×21 ya da A4', 'Turn your memories into a real album: 21×21 or A4')}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={t.colors.onPrimary} />
@@ -159,7 +165,9 @@ export default function Album() {
       >
         <Ionicons name={showMissing ? 'chevron-up' : 'camera-outline'} size={16} color={t.colors.primary} />
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-          {showMissing ? 'Fotoğrafsız günleri gizle' : 'Geçmiş günlere fotoğraf ekle'}
+          {showMissing
+            ? l('Fotoğrafsız günleri gizle', 'Hide days without photos')
+            : l('Geçmiş günlere fotoğraf ekle', 'Add photos to past days')}
         </Text>
       </Pressable>
       {showMissing && couple && user && (
@@ -191,7 +199,7 @@ export default function Album() {
         >
           <Ionicons name="airplane-outline" size={18} color={t.colors.primary} />
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-            Seyahat albümü oluştur
+            {l('Seyahat albümü oluştur', 'Create a trip album')}
           </Text>
         </Pressable>
       )}
@@ -199,10 +207,16 @@ export default function Album() {
       {shown.length === 0 && filter !== 'all' && (
         <Muted style={{ textAlign: 'center', paddingVertical: 20 }}>
           {filter === 'moments'
-            ? 'Mesajlarda bir fotoğrafa uzun basıp "Albüme ekle" dediğinde burada anı olarak görünür.'
+            ? l(
+                'Mesajlarda bir fotoğrafa uzun basıp "Albüme ekle" dediğinde burada anı olarak görünür.',
+                'Long-press a photo in chat and tap "Add to album"; it shows up here as a moment.',
+              )
             : filter === 'trips'
-              ? 'Tatilde çektiğiniz fotoğraflar için bir seyahat albümü oluşturun.'
-              : 'Henüz görev fotoğrafı yok.'}
+              ? l(
+                  'Tatilde çektiğiniz fotoğraflar için bir seyahat albümü oluşturun.',
+                  'Create a trip album for the photos from your travels.',
+                )
+              : l('Henüz görev fotoğrafı yok.', 'No task photos yet.')}
         </Muted>
       )}
 
@@ -220,7 +234,7 @@ export default function Album() {
               <>
                 <View style={{ alignItems: 'center' }}>
                   <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 18, color: '#5E8C7A' }}>
-                    {page.photo.taskId ? 'Bonus görev' : 'Anı'}
+                    {page.photo.taskId ? l('Bonus görev', 'Bonus task') : l('Anı', 'Moment')}
                   </Text>
                   {!!page.photo.taskId && (
                     <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#8A7F78', textAlign: 'center' }}>
@@ -230,7 +244,7 @@ export default function Album() {
                 </View>
                 <Polaroid
                   photo={page.photo}
-                  name={`${nameOf(page.photo.from)} çekti`}
+                  name={l(`${nameOf(page.photo.from)} çekti`, `Taken by ${nameOf(page.photo.from)}`)}
                   aspect={3 / 4}
                   tilt={1.5}
                   style={{ alignSelf: 'center', width: '74%' }}
@@ -249,7 +263,7 @@ export default function Album() {
               <>
                 <View style={{ alignItems: 'center', gap: 2 }}>
                   <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: handFont, fontSize: 18, color: '#E8516A' }}>
-                    Date günü
+                    {l('Date günü', 'Date day')}
                   </Text>
                 </View>
                 <Polaroid photo={page.photo} name={`${myName} & ${partnerName}`} aspect={4 / 3} tilt={-1} />
@@ -262,18 +276,23 @@ export default function Album() {
                       style={{ flex: 1 }}
                       delayLongPress={350}
                       onLongPress={() => setEditing(page.mine!)}
-                      accessibilityLabel="Notu düzenlemek için basılı tut"
+                      accessibilityLabel={l('Notu düzenlemek için basılı tut', 'Hold to edit the note')}
                     >
-                      <Polaroid photo={page.mine} name={myName} tilt={-3} noteHint="basılı tut, not ekle" />
+                      <Polaroid photo={page.mine} name={myName} tilt={-3} noteHint={l('basılı tut, not ekle', 'hold to add a note')} />
                     </Pressable>
                   ) : (
                     <Pressable
                       style={{ flex: 1 }}
                       delayLongPress={350}
                       onLongPress={() => setAdding({ day: page.day, taskId: (page.theirs?.taskId ?? '') as string })}
-                      accessibilityLabel="Fotoğrafını eklemek için basılı tut"
+                      accessibilityLabel={l('Fotoğrafını eklemek için basılı tut', 'Hold to add your photo')}
                     >
-                      <Polaroid photo={undefined} name={myName} tilt={-3} empty={'basılı tut,\nfotoğrafını ekle'} />
+                      <Polaroid
+                        photo={undefined}
+                        name={myName}
+                        tilt={-3}
+                        empty={l('basılı tut,\nfotoğrafını ekle', 'hold to\nadd your photo')}
+                      />
                     </Pressable>
                   )}
                   <Polaroid style={{ flex: 1, marginTop: 12 }} photo={page.theirs} name={partnerName} tilt={2.5} />
@@ -287,7 +306,7 @@ export default function Album() {
               </>
             )}
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 12, color: '#9C8C87', textAlign: 'center', marginTop: -10 }}>
-              {prettyDate(page.day)}
+              {prettyDate(page.day, t.lang)}
             </Text>
           </Pressable>
         ),
@@ -319,6 +338,7 @@ function pageTaskTitle(page: Extract<Page, { kind: 'task' }>, lang: Lang): strin
 // Siparişi olan çift için Siparişler bağlantısı.
 function OrdersLink() {
   const t = useTheme();
+  const l = useL();
   const { couple } = useSession();
   const orders = useMyOrders(couple?.id);
   const open = (orders ?? []).filter((o) => o.status !== 'teslim' && o.status !== 'iptal' && o.status !== 'talep').length;
@@ -330,7 +350,7 @@ function OrdersLink() {
     >
       <Ionicons name="cube-outline" size={16} color={t.colors.primary} />
       <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600', fontFamily: t.fonts.button }}>
-        {open ? 'Siparişiniz yolda · durumu gör' : 'Siparişlerim'}
+        {open ? l('Siparişiniz yolda · durumu gör', 'Your order is on its way · see status') : l('Siparişlerim', 'My orders')}
       </Text>
     </Pressable>
   );

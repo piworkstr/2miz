@@ -14,6 +14,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useVoiceFile, VOICE_MAX_MS, type Message } from '../lib/chat';
+import { useL } from '../lib/i18n';
 import { useTheme } from '../lib/useTheme';
 
 // Konuşma için yeterli, küçük dosya: tek kanal, 32 kbps AAC (1 dakika ≈ 240 KB).
@@ -32,6 +33,7 @@ export const fmt = (ms: number) => {
 
 // Basılı tut → kaydet, bırak → gönder. Bırakırken parmağı yukarı kaydırırsan iptal.
 export function useVoice(onDone: (uri: string, ms: number) => void) {
+  const l = useL();
   const recorder = useAudioRecorder(VOICE_OPTS);
   const state = useAudioRecorderState(recorder, 200);
   const [recording, setRecording] = useState(false);
@@ -46,7 +48,11 @@ export function useVoice(onDone: (uri: string, ms: number) => void) {
     const perm = await getRecordingPermissionsAsync();
     if (!perm.granted) {
       const r = await requestRecordingPermissionsAsync();
-      setHint(r.granted ? 'İzin verildi. Kaydetmek için mikrofona basılı tut.' : 'Sesli mesaj için mikrofon izni gerekli (Ayarlar).');
+      setHint(
+        r.granted
+          ? l('İzin verildi. Kaydetmek için mikrofona basılı tut.', 'Permission granted. Hold the mic to record.')
+          : l('Sesli mesaj için mikrofon izni gerekli (Ayarlar).', 'Voice messages need microphone access (Settings).'),
+      );
       pressing.current = false;
       return;
     }
@@ -60,7 +66,7 @@ export function useVoice(onDone: (uri: string, ms: number) => void) {
       // Hazırlanırken parmak kalktıysa kısa kayıt sayılır ve gönderilmez.
       if (!pressing.current) await stop(false);
     } catch {
-      setHint('Kayıt başlatılamadı, tekrar dene.');
+      setHint(l('Kayıt başlatılamadı, tekrar dene.', "Couldn't start recording, try again."));
     }
   }
 
@@ -78,7 +84,7 @@ export function useVoice(onDone: (uri: string, ms: number) => void) {
     setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
     if (!send) return;
     if (ms < 800) {
-      setHint('Kaydetmek için mikrofona basılı tut, bırakınca gönderilir.');
+      setHint(l('Kaydetmek için mikrofona basılı tut, bırakınca gönderilir.', 'Hold the mic to record; release to send.'));
       return;
     }
     if (recorder.uri) onDone(recorder.uri, Math.min(ms, VOICE_MAX_MS));
@@ -112,6 +118,7 @@ export function VoicePlayer({ coupleId, m, mine }: { coupleId: string; m: Messag
 
 function Player({ uri, id, ms, mine }: { uri: string; id: string; ms: number; mine: boolean }) {
   const t = useTheme();
+  const l = useL();
   const player = useAudioPlayer({ uri });
   const st = useAudioPlayerStatus(player);
   const dur = st.duration > 0 ? st.duration * 1000 : ms;
@@ -142,7 +149,7 @@ function Player({ uri, id, ms, mine }: { uri: string; id: string; ms: number; mi
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingVertical: 8, width: 230 }}>
-      <Pressable onPress={toggle} hitSlop={8} accessibilityLabel={st.playing ? 'Durdur' : 'Oynat'}>
+      <Pressable onPress={toggle} hitSlop={8} accessibilityLabel={st.playing ? l('Durdur', 'Pause') : l('Oynat', 'Play')}>
         <Ionicons name={st.playing ? 'pause' : 'play'} size={26} color={fg} />
       </Pressable>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 26 }}>

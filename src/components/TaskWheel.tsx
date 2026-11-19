@@ -11,6 +11,7 @@ import { ANSWER_TASKS } from '../lib/taskKinds';
 import { dayKey } from '../lib/date';
 import { notifyPartner } from '../lib/push';
 import { FREE, openPlus, usePlus } from '../lib/plus';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { allowed, CATEGORIES, categoryLabel, categoryStyle, taskById, taskTitle, TASKS, type Category, type Task } from '../lib/tasks';
 import { tx } from '../lib/theme';
@@ -37,6 +38,7 @@ function slicePath(i: number, n: number) {
 // "Favorilerimiz" seçiliyse sadece favori görevler arasından seçer.
 export function TaskWheel() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const { day, key } = useToday(couple?.id, couple?.members);
   const plus = usePlus();
@@ -189,8 +191,14 @@ export function TaskWheel() {
       <T style={{ fontSize: 17, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, t.copy.surpriseTitle)}</T>
       <Muted>
         {doneToday
-          ? 'Bugünün bonus puanını aldınız. Yine de çevirip bir görev daha yapabilirsiniz.'
-          : `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. Tamamlayınca +${BONUS_POINTS} puan (günde bir kez).`}
+          ? l(
+              'Bugünün bonus puanını aldınız. Yine de çevirip bir görev daha yapabilirsiniz.',
+              "You've earned today's bonus points. You can still spin for another task.",
+            )
+          : l(
+              `Biriniz çevirir, çıkan görev ikinizin ekranına da gelir. Tamamlayınca +${BONUS_POINTS} puan (günde bir kez).`,
+              `One of you spins and the task shows up on both screens. Finish it for +${BONUS_POINTS} points (once a day).`,
+            )}
       </Muted>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -224,14 +232,21 @@ export function TaskWheel() {
                   fontFamily: t.fonts.button,
                 }}
               >
-                {m === 'all' ? tx(t, 'Tüm görevler') : tx(t, `Favorilerimiz (${favTasks.length})`)}
+                {m === 'all'
+                  ? tx(t, l('Tüm görevler', 'All tasks'))
+                  : tx(t, l(`Favorilerimiz (${favTasks.length})`, `Our favorites (${favTasks.length})`))}
               </Text>
             </Pressable>
           );
         })}
       </View>
       {!canFav && (
-        <Muted style={{ fontSize: 12 }}>Görevlerdeki kalbe dokunarak favori ekleyin; 2 favoriden sonra favori çarkı açılır.</Muted>
+        <Muted style={{ fontSize: 12 }}>
+          {l(
+            'Görevlerdeki kalbe dokunarak favori ekleyin; 2 favoriden sonra favori çarkı açılır.',
+            'Tap the heart on tasks to add favorites; the favorites wheel opens after 2.',
+          )}
+        </Muted>
       )}
 
       <View style={{ alignItems: 'center', paddingVertical: 8 }}>
@@ -286,7 +301,7 @@ export function TaskWheel() {
                 >
                   <Ionicons name={categoryStyle[c].icon as IconName} size={22} color="#fff" />
                   <Text maxFontSizeMultiplier={1.25} style={{ color: '#fff', fontSize: 11, fontWeight: '700' }} numberOfLines={1}>
-                    {c === 'yeni' ? (t.lang === 'en' ? 'New' : 'Yeni') : categoryLabel(c, t.lang)}
+                    {c === 'yeni' ? l('Yeni', 'New') : categoryLabel(c, t.lang)}
                   </Text>
                 </View>
               );
@@ -323,7 +338,7 @@ export function TaskWheel() {
                 fontFamily: t.fonts.button,
               }}
             >
-              {spinning ? '…' : tx(t, 'ÇEVİR')}
+              {spinning ? '…' : tx(t, l('ÇEVİR', 'SPIN'))}
             </Text>
           </Pressable>
         </View>
@@ -332,12 +347,18 @@ export function TaskWheel() {
       {task && shown && (
         <View style={{ gap: 10 }}>
           <Muted style={{ fontSize: 12 }}>
-            {shown.by === uid ? 'Sen çevirdin' : `${partnerName} çevirdi`} · ikinizde de bu görev görünüyor
+            {shown.by === uid
+              ? l('Sen çevirdin · ikinizde de bu görev görünüyor', 'You spun · this task shows for both of you')
+              : l(`${partnerName} çevirdi · ikinizde de bu görev görünüyor`, `${partnerName} spun · this task shows for both of you`)}
           </Muted>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pill>{t.copy.surpriseLabel}</Pill>
             <Muted style={{ fontSize: 12, flex: 1 }}>{tx(t, categoryLabel(task.category, t.lang))}</Muted>
-            <Pressable onPress={() => toggleFavorite(coupleId, task.id, !isFav).catch(() => {})} hitSlop={10} accessibilityLabel="Favori">
+            <Pressable
+              onPress={() => toggleFavorite(coupleId, task.id, !isFav).catch(() => {})}
+              hitSlop={10}
+              accessibilityLabel={l('Favori', 'Favorite')}
+            >
               <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={24} color={t.colors.primary} />
             </Pressable>
           </View>
@@ -350,7 +371,7 @@ export function TaskWheel() {
               spin={live ?? shown}
               uid={uid}
               partnerName={partnerName}
-              myName={profile?.name ?? 'Sen'}
+              myName={profile?.name ?? l('Sen', 'You')}
               doneToday={doneToday}
               onSend={sendAnswer}
               busy={busy}
@@ -381,6 +402,7 @@ function Answers({
   busy: boolean;
 }) {
   const t = useTheme();
+  const l = useL();
   const [text, setText] = useState('');
   const answers = spin.answers ?? {};
   const mine = answers[uid];
@@ -426,7 +448,9 @@ function Answers({
         {bubble(myName, mine.text)}
         {bubble(partnerName, theirs.text)}
         <Muted style={{ fontSize: 13 }}>
-          {doneToday ? 'İkiniz de cevapladınız, bugünün bonusu tamam 🎉' : 'İkiniz de cevapladınız 🎉'}
+          {doneToday
+            ? l('İkiniz de cevapladınız, bugünün bonusu tamam 🎉', "You both answered, today's bonus is done 🎉")
+            : l('İkiniz de cevapladınız 🎉', 'You both answered 🎉')}
         </Muted>
       </View>
     );
@@ -441,7 +465,7 @@ function Answers({
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Cevabını ya da nasıl geçtiğini yaz…"
+            placeholder={l('Cevabını ya da nasıl geçtiğini yaz…', 'Write your answer or how it went…')}
             placeholderTextColor={t.colors.muted}
             multiline
             maxLength={500}
@@ -459,7 +483,11 @@ function Answers({
             }}
           />
           <Button
-            label={doneToday ? 'Cevabımı gönder' : `Cevabımı gönder · +${BONUS_POINTS} puan`}
+            label={
+              doneToday
+                ? l('Cevabımı gönder', 'Send my answer')
+                : l(`Cevabımı gönder · +${BONUS_POINTS} puan`, `Send my answer · +${BONUS_POINTS} points`)
+            }
             onPress={() => onSend(text)}
             busy={busy}
           />
@@ -469,10 +497,16 @@ function Answers({
         <Ionicons name={theirs ? 'lock-closed' : 'time-outline'} size={14} color={t.colors.muted} />
         <Muted style={{ fontSize: 12, flex: 1 }}>
           {theirs
-            ? `${partnerName} cevapladı. Görmek için sen de yaz.`
+            ? l(`${partnerName} cevapladı. Görmek için sen de yaz.`, `${partnerName} answered. Write yours to see it.`)
             : mine
-              ? `${partnerName}'in cevabı bekleniyor. O da yazınca ikiniz de görürsünüz.`
-              : `${partnerName} da cevap yazacak; ikiniz de yazınca cevaplar açılır.`}
+              ? l(
+                  `${partnerName}'in cevabı bekleniyor. O da yazınca ikiniz de görürsünüz.`,
+                  `Waiting for ${partnerName}'s answer. Once they write, you'll both see them.`,
+                )
+              : l(
+                  `${partnerName} da cevap yazacak; ikiniz de yazınca cevaplar açılır.`,
+                  `${partnerName} will answer too; the answers open once you've both written.`,
+                )}
         </Muted>
       </View>
     </View>
@@ -495,6 +529,7 @@ function DecideBox({
   busy: boolean;
 }) {
   const t = useTheme();
+  const l = useL();
   if (spin.decision === 'accepted') {
     return (
       <View style={{ gap: 8 }}>
@@ -510,21 +545,29 @@ function DecideBox({
         >
           <Ionicons name="checkmark-circle" size={22} color="#4FA37E" />
           <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, color: t.colors.text, fontFamily: t.fonts.body }}>
-            {spin.decidedBy === uid ? 'Kabul ettin' : `${partnerName} kabul etti`}. Görev ana sayfadaki görevlerinize eklendi; yapınca orada
-            "Tamamladım" deyin.
+            {spin.decidedBy === uid ? l('Kabul ettin', 'You accepted') : l(`${partnerName} kabul etti`, `${partnerName} accepted`)}
+            {l(
+              '. Görev ana sayfadaki görevlerinize eklendi; yapınca orada "Tamamladım" deyin.',
+              '. The task was added to your tasks on the home screen; tap "Done" there when you finish.',
+            )}
           </Text>
         </View>
-        <Button label="Ana sayfaya dön" variant="secondary" onPress={() => router.back()} />
+        <Button label={l('Ana sayfaya dön', 'Back to home')} variant="secondary" onPress={() => router.back()} />
       </View>
     );
   }
   return (
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button label="Kabul et" onPress={() => onDecide(true)} busy={busy} style={{ flex: 1 }} />
-        <Button label="Reddet" variant="secondary" onPress={() => onDecide(false)} style={{ flex: 1 }} />
+        <Button label={l('Kabul et', 'Accept')} onPress={() => onDecide(true)} busy={busy} style={{ flex: 1 }} />
+        <Button label={l('Reddet', 'Decline')} variant="secondary" onPress={() => onDecide(false)} style={{ flex: 1 }} />
       </View>
-      <Muted style={{ fontSize: 12 }}>Reddedersen çark yeniden döner. Kabul edilen görev ikinizin görev listesine eklenir.</Muted>
+      <Muted style={{ fontSize: 12 }}>
+        {l(
+          'Reddedersen çark yeniden döner. Kabul edilen görev ikinizin görev listesine eklenir.',
+          'If you decline, the wheel spins again. An accepted task is added to both of your task lists.',
+        )}
+      </Muted>
     </View>
   );
 }

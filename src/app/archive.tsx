@@ -6,6 +6,7 @@ import { Card, Loading, Muted, Screen, Title } from '../components/ui';
 import { toggleFavorite, useDays } from '../lib/archive';
 import { modeOf, type DayDoc } from '../lib/daily';
 import { dayKey, prettyDate } from '../lib/date';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { categoryLabel, categoryStyle, taskById, taskTitle, TASKS } from '../lib/tasks';
 import { tx } from '../lib/theme';
@@ -17,6 +18,7 @@ type Filter = 'all' | 'fav' | 'missed';
 // Görev arşivi: geçmiş günlerin görevleri, kim yaptı, favoriler.
 export default function Archive() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerId, partnerName, profile } = useSession();
   const days = useDays(couple?.id);
   const [filter, setFilter] = useState<Filter>('all');
@@ -30,9 +32,9 @@ export default function Archive() {
   const done = days.filter((d) => bothDone(d.day)).length;
 
   const chips: { key: Filter; label: string }[] = [
-    { key: 'all', label: 'Tüm günler' },
-    { key: 'fav', label: `Favoriler (${favorites.length})` },
-    { key: 'missed', label: 'Yapılmayanlar' },
+    { key: 'all', label: l('Tüm günler', 'All days') },
+    { key: 'fav', label: l(`Favoriler (${favorites.length})`, `Favorites (${favorites.length})`) },
+    { key: 'missed', label: l('Yapılmayanlar', 'Missed') },
   ];
 
   return (
@@ -40,12 +42,15 @@ export default function Archive() {
       <Pressable onPress={() => router.back()} hitSlop={12} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Ionicons name="chevron-back" size={22} color={t.colors.text} />
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 15, fontFamily: t.fonts.body }}>
-          {tx(t, 'Bugün')}
+          {tx(t, l('Bugün', 'Today'))}
         </Text>
       </Pressable>
-      <Title>Görev arşivi</Title>
+      <Title>{l('Görev arşivi', 'Task archive')}</Title>
       <Muted>
-        {days.length} gün · {done} gün ikiniz de tamamladınız. Kalbe dokunduğunuz görevler bonus çarkında "Favorilerimiz" olarak çıkar.
+        {l(
+          `${days.length} gün · ${done} gün ikiniz de tamamladınız. Kalbe dokunduğunuz görevler bonus çarkında "Favorilerimiz" olarak çıkar.`,
+          `${days.length} days · you both finished ${done}. Tasks you heart show up on the bonus wheel as "Our favorites".`,
+        )}
       </Muted>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -78,7 +83,10 @@ export default function Archive() {
       {filter === 'fav' ? (
         favorites.length === 0 ? (
           <Muted style={{ textAlign: 'center', paddingVertical: 24 }}>
-            Henüz favori yok. Sevdiğiniz görevlerin yanındaki kalbe dokunun.
+            {l(
+              'Henüz favori yok. Sevdiğiniz görevlerin yanındaki kalbe dokunun.',
+              'No favorites yet. Tap the heart next to tasks you love.',
+            )}
           </Muted>
         ) : (
           TASKS.filter((x) => favorites.includes(x.id)).map((task) => (
@@ -96,7 +104,9 @@ export default function Archive() {
         )
       ) : list.length === 0 ? (
         <Muted style={{ textAlign: 'center', paddingVertical: 24 }}>
-          {filter === 'missed' ? 'Kaçırılan görev yok, harikasınız!' : 'Görev geçmişiniz burada birikecek.'}
+          {filter === 'missed'
+            ? l('Kaçırılan görev yok, harikasınız!', "No missed tasks, you're doing great!")
+            : l('Görev geçmişiniz burada birikecek.', 'Your task history will build up here.')}
         </Muted>
       ) : (
         list.map(({ key, day }) => {
@@ -104,7 +114,7 @@ export default function Archive() {
           const rows =
             mode === 'separate'
               ? [
-                  { who: profile?.name ?? 'Sen', id: day.separate[uid], done: !!day.completions?.[uid] },
+                  { who: profile?.name ?? l('Sen', 'You'), id: day.separate[uid], done: !!day.completions?.[uid] },
                   { who: partnerName, id: day.separate[partnerId], done: !!day.completions?.[partnerId] },
                 ]
               : [{ who: null, id: day.sharedTaskId, done: bothDone(day) }];
@@ -112,12 +122,12 @@ export default function Archive() {
             <Card key={key} style={{ gap: 10 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text maxFontSizeMultiplier={1.25} style={{ fontWeight: '600', color: t.colors.text, fontFamily: t.fonts.button }}>
-                  {key === today ? tx(t, 'Bugün') : prettyDate(key)}
+                  {key === today ? tx(t, l('Bugün', 'Today')) : prettyDate(key, t.lang)}
                 </Text>
                 <Status
                   me={!!day.completions?.[uid]}
                   them={!!day.completions?.[partnerId]}
-                  myName={profile?.name ?? 'Sen'}
+                  myName={profile?.name ?? l('Sen', 'You')}
                   partnerName={partnerName}
                 />
               </View>
@@ -156,7 +166,7 @@ export default function Archive() {
                 >
                   <Ionicons name="color-wand-outline" size={16} color={t.colors.primary} />
                   <Text maxFontSizeMultiplier={1.25} style={{ flex: 1, fontSize: 14, color: t.colors.text, fontFamily: t.fonts.body }}>
-                    {tx(t, t.copy.surpriseLabel)}: {taskById(day.bonus.taskId).title}
+                    {tx(t, t.copy.surpriseLabel)}: {taskTitle(taskById(day.bonus.taskId), t.lang)}
                   </Text>
                   <Heart coupleId={couple.id} id={day.bonus.taskId} on={favorites.includes(day.bonus.taskId)} />
                 </View>
@@ -180,8 +190,9 @@ function CategoryDot({ id }: { id: string }) {
 
 function Heart({ coupleId, id, on }: { coupleId: string; id: string; on: boolean }) {
   const t = useTheme();
+  const l = useL();
   return (
-    <Pressable onPress={() => toggleFavorite(coupleId, id, !on).catch(() => {})} hitSlop={10} accessibilityLabel="Favori">
+    <Pressable onPress={() => toggleFavorite(coupleId, id, !on).catch(() => {})} hitSlop={10} accessibilityLabel={l('Favori', 'Favorite')}>
       <Ionicons name={on ? 'heart' : 'heart-outline'} size={22} color={t.colors.primary} />
     </Pressable>
   );
