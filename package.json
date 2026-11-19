@@ -51,6 +51,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test": "npx --yes tsx -r ./scripts/test/stubs.cjs scripts/test/farm.test.ts",
     "guncelle": "git pull --ff-only && expo start --tunnel --clear",
     "cek": "git pull --ff-only",
     "panel:build": "node panel/build.mjs"

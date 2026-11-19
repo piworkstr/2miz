@@ -613,6 +613,9 @@ export type Farm = {
   noteAt?: number; // Not Ağacı taşındıysa yeni karesi
   giftSpot?: number; // hediye sepeti tezgâhı taşındıysa yeni karesi
   dog?: string; // çiftlik köpeğinin adı
+  seen?: Record<string, 1>; // koleksiyon: en az bir kez elde edilen ürünler
+  colClaim?: number; // koleksiyonda alınan ödül basamağı sayısı
+  depotUp?: number; // depo büyütme sayısı
   big?: BigOrder; // haftalık büyük sipariş (ilk katkıda kaydedilir)
 };
 
@@ -797,6 +800,35 @@ export const PRODUCT_NAME: Record<string, string> = {
   ...Object.fromEntries(Object.entries(TREES).map(([k, v]) => [k, v.fruit])),
   ...Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.name])),
 };
+// ---------- Depo sınırı ----------
+// Depo sınırlıdır; altınla büyütülür. Dolu depoya hasat, hayvan ürünü, meyve, üretim ve alışveriş girmez.
+export const DEPOT_BASE = 300;
+export const DEPOT_STEP = 100;
+const FILLS_DEPOT: Action['a'][] = ['harvest', 'collect', 'pick', 'gather', 'harvestDay', 'collectProd', 'stall', 'trader', 'mkIn'];
+export const depotCap = (f: Farm) => DEPOT_BASE + DEPOT_STEP * (f.depotUp ?? 0);
+export const depotUsed = (f: Farm) => Object.values(f.stock).reduce((a, n) => a + (n > 0 ? n : 0), 0);
+export const depotUpCost = (f: Farm) => 400 + 300 * (f.depotUp ?? 0);
+
+// ---------- Koleksiyon ----------
+// En az bir kez elde edilen her ürün koleksiyona girer. Her 5 üründe bir ödül: 150, 300, 450… altın.
+export const COLLECTION_STEP = 5;
+export const COLLECTION_COINS = 150;
+export const COLLECTION: string[] = Object.keys(PRODUCT_NAME);
+export function collectionOf(f: Farm) {
+  // Eski çiftlikler: depoda duran ürünler de görülmüş sayılır.
+  const seen = new Set([...Object.keys(f.seen ?? {}), ...Object.entries(f.stock).flatMap(([k, n]) => (n > 0 ? [k] : []))]);
+  const have = COLLECTION.filter((k) => seen.has(k)).length;
+  const claimed = f.colClaim ?? 0;
+  return {
+    seen,
+    have,
+    total: COLLECTION.length,
+    claimable: Math.floor(have / COLLECTION_STEP) - claimed,
+    nextAt: (claimed + 1) * COLLECTION_STEP,
+    nextCoins: COLLECTION_COINS * (claimed + 1),
+  };
+}
+
 // Pazar tezgâhı: seviyesi açılmış ham ürünler (tarla, hayvan, meyve) satış fiyatının iki katına, istenildiği kadar alınır.
 // İki kat fiyat sayesinde alıp geri satmak kâr etmez; eksik malzemeyi tamamlamak içindir.
 export const STALL_MULT = 2;
@@ -1025,6 +1057,8 @@ export type Action =
   | { a: 'nameDog'; i: number; name: string } // köpeğin adı
   | { a: 'chop'; i: number } // yabani ağaç/çalı/kayayı aletle temizle
   | { a: 'tool'; i: number; key: ToolId; n: number } // pazardan balta/kazma al
+  | { a: 'depotUp'; i: number } // depoyu büyüt
+  | { a: 'colClaim'; i: number } // koleksiyon ödülünü al
   | { a: 'sellOne'; i: number; key: string; n: number } // depodan tek ürün sat
   | { a: 'release'; i: number; idx: number } // binadaki hayvanı geri ver (yarı fiyat)
   | { a: 'skipOrder'; i: number; order: string } // siparişi geri çevir; yenisi biraz sonra yazılır
@@ -1146,10 +1180,16 @@ export function applyAction(
     f.dx = dx;
   };
   const countOf = (pred: (x: Tile) => boolean) => f.tiles.filter(pred).length;
-  const put = (k: string, n = 1) => (f.stock[k] = (f.stock[k] ?? 0) + n);
+  const put = (k: string, n = 1) => {
+    f.stock[k] = (f.stock[k] ?? 0) + n;
+    if (!f.seen?.[k]) f.seen = { ...f.seen, [k]: 1 }; // koleksiyona işlenir
+  };
   fillOrders(f, now);
   const t = f.tiles[act.i];
   if (!t) return 'Böyle bir yer yok.';
+  // Depo sınırı: dolu depoya yeni ürün girmez (tek işlem sınırı aşabilir; hasat yarım kalmaz).
+  if (FILLS_DEPOT.includes(act.a) && depotUsed(f) >= depotCap(f))
+    return `Depo dolu (${depotUsed(f)}/${depotCap(f)}). Bir şeyler sat, siparişe ver ya da depoyu büyüt.`;
   const lv = levelOf(f.xp).level;
   let text = '';
   let gained = 0;
@@ -1553,6 +1593,25 @@ export function applyAction(
       f.xp += w.xp;
       f.tiles[act.i] = { k: 'grass' };
       text = `${name} ${w.name.toLocaleLowerCase('tr-TR')} temizledi`;
+      break;
+    }
+    case 'depotUp': {
+      const cost = depotUpCost(f);
+      if (f.coins < cost) return `Depoyu büyütmek ${cost} altın. ${cost - f.coins} altın eksik.`;
+      f.coins -= cost;
+      f.depotUp = (f.depotUp ?? 0) + 1;
+      text = `${name} depoyu büyüttü: ${depotCap(f)} ürün alıyor`;
+      break;
+    }
+    case 'colClaim': {
+      const c = collectionOf(f);
+      if (c.claimable <= 0) return `Sıradaki ödül ${c.nextAt} üründe; şu an ${c.have}.`;
+      const step = (f.colClaim ?? 0) + 1;
+      const coins = COLLECTION_COINS * step;
+      f.coins += coins;
+      f.colClaim = step;
+      gained = coins;
+      text = `${name} koleksiyon ödülünü aldı: +${coins} altın (${step * COLLECTION_STEP} ürün)`;
       break;
     }
     case 'tool': {

@@ -122,6 +122,14 @@ const APP_STEPS: Step[] = [
     ],
   },
   {
+    art: <Badge icon="sparkles" extra={['calendar', 'heart']} />,
+    title: ['Hayal panosu ve date planı', 'Dream board and date plans'],
+    body: [
+      'Ana ekrandaki Hayal panomuz kartına birlikte gerçekleştirmek istediklerinizi ekleyin. "Date" kısayolunda bütçe ve tür seçin, adım adım bir date planı çıksın.',
+      'Add the things you want to make happen to the Dream board card on the home screen. In the "Date" shortcut, pick a budget and a mood to get a step-by-step date plan.',
+    ],
+  },
+  {
     art: <Badge icon="gift" extra={['star', 'heart']} />,
     title: ['Puanlarınla kupon aç', 'Spend points on coupons'],
     body: [
@@ -162,6 +170,22 @@ const FARM_STEPS: Step[] = [
     body: [
       'Posta kutusundaki sipariş defterini aç, hazır siparişi seç. Çift girişe gelince üstlerine dokun; altın ve deneyim kazanırsın.',
       'Open the order book at the mailbox and pick a ready order. Tap the couple at the gate to hand it over for gold and experience.',
+    ],
+  },
+  {
+    art: <Farm items={['pazar', 'coin']} />,
+    title: ['Haftalık büyük sipariş', 'The weekly big order'],
+    body: [
+      'Sipariş defterinin en üstünde her pazartesi yenilenen ortak bir hedef var. İkiniz birlikte doldurursanız altın ödülü %25 fazla olur.',
+      'At the top of the order book is a shared goal that renews every Monday. Fill it together and the gold reward is 25% higher.',
+    ],
+  },
+  {
+    art: <Farm items={['barn', 'dog']} />,
+    title: ['Depo, koleksiyon ve isimler', 'Storage, collection and names'],
+    body: [
+      'Depo sınırlıdır; ahırdan büyütülür ve koleksiyon ödülleri oradan alınır. Seviye rozetine dokununca sırada ne açılacağını görürsün. Üstteki ada dokunup çiftliğe ve köpeğe ad ver.',
+      'Storage is limited; expand it at the barn, where you also claim collection rewards. Tap the level badge to see what unlocks next. Tap the name at the top to name your farm and your dog.',
     ],
   },
 ];

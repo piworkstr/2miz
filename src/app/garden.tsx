@@ -137,7 +137,22 @@ import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
 import { settleMine } from '../lib/market';
 import { srvNow, syncClock } from '../lib/serverClock';
-import { BIG_BOTH, bigCanGive, bigLeft, bigOrderOf, nextUnlockLevel, unlocksAt, useFarmBonuses, weekEnd, type Unlock } from '../lib/farm';
+import {
+  COLLECTION,
+  collectionOf,
+  depotCap,
+  depotUpCost,
+  depotUsed,
+  BIG_BOTH,
+  bigCanGive,
+  bigLeft,
+  bigOrderOf,
+  nextUnlockLevel,
+  unlocksAt,
+  useFarmBonuses,
+  weekEnd,
+  type Unlock,
+} from '../lib/farm';
 import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
@@ -1371,7 +1386,7 @@ export default function GardenScreen() {
         while (paceQ.current.length) {
           const next = paceQ.current.shift()!;
           const far =
-            !['skipOrder', 'bigGive', 'rename', 'nameDog'].includes(next.a) &&
+            !['skipOrder', 'bigGive', 'rename', 'nameDog', 'depotUp', 'colClaim'].includes(next.a) &&
             next.i >= 0 &&
             next.i < N * N &&
             next.i !== myTileRef.current;
@@ -1608,6 +1623,22 @@ export default function GardenScreen() {
     }
     lvSeen.current = lvNow;
   }, [lvNow]);
+
+  // Partner eski sürümdeyse (22x22 araziye yazmaya devam ediyorsa) yaptıkları bu çiftliğe yansımaz: bir kez uyar.
+  const staleWarned = useRef(false);
+  useEffect(() => {
+    if (staleWarned.current || !couple || !partnerId) return;
+    const logOf = (f: unknown) => ((f as { log?: { by: string; at: number }[] } | undefined)?.log ?? []) as { by: string; at: number }[];
+    const mine = logOf(couple.farm5);
+    const old = logOf(couple.farm4).find((x) => x.by === partnerId);
+    if (!mine.length || !old) return;
+    const since = mine[mine.length - 1].at;
+    if (old.at > since && Date.now() - old.at < 3 * 24 * 3600_000) {
+      staleWarned.current = true;
+      setSay(`${partnerName} eski sürümde oynuyor; yaptıkları buraya yansımaz. Uygulamayı kapatıp açmasını iste.`);
+      setTimeout(() => setSay(''), 7000);
+    }
+  }, [couple, partnerId, partnerName]);
 
   if (!user || !couple || !partnerId) return null;
 
@@ -3440,6 +3471,74 @@ function ago(ms: number) {
 
 // Hediye sepeti tezgâhı: ev ile ahır arasındaki yol karesinde durur; dokununca sepet hazırlanır / gelen sepet açılır.
 
+// Depo doluluğu, büyütme ve koleksiyon (koleksiyon ızgarası açılır kapanır).
+function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onClaim: () => void }) {
+  const [open, setOpen] = useState(false);
+  const used = depotUsed(farm);
+  const cap = depotCap(farm);
+  const cost = depotUpCost(farm);
+  const col = collectionOf(farm);
+  const full = used >= cap;
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, fontWeight: '800', color: full ? '#C0392B' : INK }}>
+            Depo {used}/{cap}
+            {full ? ' · dolu' : ''}
+          </Text>
+          <View style={{ height: 7, borderRadius: 4, backgroundColor: '#EFE3CF', overflow: 'hidden' }}>
+            <View
+              style={{
+                width: `${Math.min(100, Math.round((used / cap) * 100))}%`,
+                height: 7,
+                backgroundColor: full ? '#C0392B' : '#6DB33F',
+              }}
+            />
+          </View>
+        </View>
+        <Btn kind={farm.coins >= cost ? 'green' : 'soft'} label={`Büyüt · ${cost}`} onPress={onUp} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Pressable onPress={() => setOpen(!open)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="albums-outline" size={16} color={INK} />
+          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, fontWeight: '800', color: INK }}>
+            Koleksiyon {col.have}/{col.total} · {col.claimable > 0 ? 'ödül hazır' : `${col.nextAt} üründe ${col.nextCoins} altın`}
+          </Text>
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={MUTED} />
+        </Pressable>
+        {col.claimable > 0 && <Btn kind="accent" label={`Ödülü al · ${col.nextCoins}`} onPress={onClaim} />}
+      </View>
+      {open && (
+        <ScrollView style={{ maxHeight: 150 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {COLLECTION.map((k) => {
+            const has = col.seen.has(k);
+            return (
+              <View
+                key={k}
+                style={{
+                  width: 54,
+                  alignItems: 'center',
+                  gap: 2,
+                  padding: 4,
+                  borderRadius: 10,
+                  backgroundColor: has ? '#FBF3E4' : '#EFEAE2',
+                  opacity: has ? 1 : 0.55,
+                }}
+              >
+                {has ? <StockIcon k={k} w={26} h={26} /> : <Ionicons name="help" size={22} color={MUTED} />}
+                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, fontWeight: '700', color: INK }}>
+                  {has ? (PRODUCT_NAME[k] ?? k) : '?'}
+                </Text>
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
 // Depodaki ürünler: birine dokununca yalnızca o ürün, seçilen adet kadar satılır (malzemeler elde kalsın).
 function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key: string, n: number) => void }) {
@@ -3733,6 +3832,7 @@ function Sheet(p: SheetProps) {
     return (
       <>
         <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
+        <DepotBar farm={farm} onUp={() => p.onStay({ a: 'depotUp', i })} onClaim={() => p.onStay({ a: 'colClaim', i })} />
         {items.length === 0 ? (
           <Note>
             Depo boş. Topladığınız ürünler burada birikir: satınca altın olur, siparişlere verilir, atölyelerde yeni ürünlere, sepet
