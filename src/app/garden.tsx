@@ -2151,8 +2151,10 @@ export default function GardenScreen() {
     return true;
   };
   sceneTileRef.current = sceneTile;
-  const meAt = stand(sceneTile ?? myTile, -1);
-  const pAt = stand(sceneTile ?? partnerTile, 1);
+  // Aynı karedeyken (ve sahnelerde) üst üste binmesinler: karenin iki ucuna açılıp yan yana dururlar.
+  const together = sceneTile !== null || myTile === partnerTile;
+  const meAt = stand(sceneTile ?? myTile, together ? -1.75 : -1);
+  const pAt = stand(sceneTile ?? partnerTile, together ? 1.75 : 1);
   // Öpücük balonu: ikiniz ayrı yerlerdeyken aranızda çıkar. Dokunan, partnerin yanındaki boş kareye yürür ve öper.
   const [mr, mc] = rc(myTile);
   const [qr, qc] = rc(partnerTile);
