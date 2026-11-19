@@ -11,6 +11,7 @@ import { BoredCard } from '../../components/BoredCard';
 import { dockOn } from '../../components/CoupleDock';
 import { EventsCard } from '../../components/EventsCard';
 import { PerksCard } from '../../components/PerksCard';
+import { DreamBoardCard } from '../../components/DreamBoardCard';
 import { GardenCard } from '../../components/GardenCard';
 import { SkyHero } from '../../components/home/SkyHero';
 import { WeekStrip } from '../../components/home/WeekStrip';
@@ -188,6 +189,7 @@ export default function Today() {
         />
         <WeekStrip />
         <GardenCard />
+        <DreamBoardCard />
         <PerksCard />
         <EventsCard />
 
