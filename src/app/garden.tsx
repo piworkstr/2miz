@@ -4,7 +4,18 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react';
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   Animated,
   AppState,
@@ -358,7 +369,7 @@ const SCENERY: Spr[] = [
   { key: 'stall', art: 'pazar', x: STALL.x, y: STALL.y, w: STALL.w, z: STALL.z },
 ];
 
-function SpriteImg({ s }: { s: Spr }) {
+const SpriteImg = memo(function SpriteImg({ s }: { s: Spr }) {
   const a = ART[s.art];
   if (s.wall)
     return (
@@ -377,7 +388,7 @@ function SpriteImg({ s }: { s: Spr }) {
       style={{ position: 'absolute', left: s.x - s.w / 2, top: s.y - h, width: s.w, height: h, zIndex: Math.floor(s.z), opacity: s.o ?? 1 }}
     />
   );
-}
+});
 
 // Siparişi almaya gelen çift. 'wait': yoldan yürüyüp girişte bekler, üstlerinde sepet balonu zıplar (dokununca teslim).
 // 'thanks': sepeti alır, sevinçle zıplayıp teşekkür eder, sonra yoldan geri döner.
@@ -483,7 +494,8 @@ function Visitors({
   );
 }
 
-function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
+// memo: kaydırma ve sürükleme sırasında (çiftlik değişmediği sürece) 800 karelik zemin yeniden çizilmez.
+const Ground = memo(function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
   const pts = (r: number, c: number) => {
     const { x, y } = center(r, c);
     return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
@@ -550,7 +562,7 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
       ))}
     </Svg>
   );
-}
+});
 
 // Kapalı her parselin ortasında küçük tabela: ortak hasatla açılır.
 function Signs({ f }: { f: Farm }) {
@@ -820,7 +832,14 @@ export default function GardenScreen() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [toast, setToast] = useState('');
   // Sürüklenen tohum: ekran konumu (pencereye göre) ve bu sürüklemede ekilen kareler.
-  const [seed, setSeed] = useState<{ it: DragItem; x: number; y: number } | null>(null);
+  // Sürüklenen şey. Konumu Animated ile taşınır (her parmak hareketinde bütün çiftlik yeniden çizilmesin diye);
+  // durum yalnızca hedef kare ya da sayaç değişince güncellenir.
+  const [seed, setSeed] = useState<{ it: DragItem; hit: number; n: number } | null>(null);
+  const seedXY = useRef(new Animated.ValueXY()).current;
+  // Çizilecek nesnelerin önbelleği (çiftlik ya da 5 saniyelik dilim değişince yenilenir).
+  const sprCache = useRef<{ f: Farm; tick: number; list: Spr[] } | null>(null);
+  const seedIt = useRef<DragItem | null>(null);
+  const seedLast = useRef({ x: 0, y: 0, hit: -1 });
   const seedApi = useRef<SeedDragApi | null>(null);
   // Kareye dokununca yanında açılan küçük balon: tohumlar, orak, kova ya da büyüme bilgisi.
   const [pop, setPop] = useState<{ i: number; kind: 'seed' | 'orak' | 'kova' | 'info' } | null>(null);
@@ -1344,6 +1363,13 @@ export default function GardenScreen() {
         }, idx * 350);
       });
     }
+    if (job.a === 'plant') {
+      const at = center(...rc(job.i));
+      const fid = Date.now() + Math.random();
+      const cropId = job.crop;
+      setFloats((f) => [...f, { id: fid, x: at.x, y: at.y - TW * 0.5, text: `-${CROPS[cropId].cost}`, art: 'coin' }]);
+      setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
+    }
     batch.current.push(job);
     setMine((m) => [...m, { a: job, sent: false }]);
     const tl = job.a === 'water' ? 'can' : job.a === 'plant' || job.a === 'till' ? 'seed' : null;
@@ -1583,37 +1609,49 @@ export default function GardenScreen() {
       seedDone.current = new Set();
       seedCoins.current = farm.coins;
       seedFarm.current = farm;
+      seedIt.current = it;
+      seedLast.current = { x: px, y: py, hit: -1 };
+      seedXY.setValue({ x: px - rootOff.current.x, y: py - rootOff.current.y });
       Haptics.selectionAsync().catch(() => {});
-      setSeed({ it, x: px, y: py });
+      setSeed({ it, hit: -1, n: 0 });
     },
     move: (px, py) => {
-      if (!seed) return;
-      setSeed({ ...seed, x: px, y: py });
-      if (!dragPaints(seed.it)) return;
+      const it = seedIt.current;
+      if (!it) return;
+      seedXY.setValue({ x: px - rootOff.current.x, y: py - rootOff.current.y });
       const i = seedTileAt(px, py);
-      if (i < 0 || seedDone.current.has(i) || !dragFits(seed.it, i)) return;
-      if (seedCoins.current < seed.it.cost) {
-        if (!seedDone.current.has(-1)) flash('Altın yetmiyor');
-        seedDone.current.add(-1);
-        return;
+      const moved = i !== seedLast.current.hit;
+      seedLast.current = { x: px, y: py, hit: i };
+      let painted = false;
+      if (dragPaints(it) && i >= 0 && !seedDone.current.has(i) && dragFits(it, i)) {
+        if (seedCoins.current < it.cost) {
+          if (!seedDone.current.has(-1)) flash('Altın yetmiyor');
+          seedDone.current.add(-1);
+        } else {
+          seedDone.current.add(i);
+          seedCoins.current -= it.cost;
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          // Parmak tempoyu belirler: iş sıraya girmeden hemen yapılır, kare anında değişir.
+          void walkTo(i);
+          doQuickRef.current(it.tool ? toolAct(it.tool, i)! : ({ ...it.a, i } as Action));
+          painted = true;
+        }
       }
-      seedDone.current.add(i);
-      seedCoins.current -= seed.it.cost;
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      work(seed.it.tool ? toolAct(seed.it.tool, i)! : ({ ...seed.it.a, i } as Action));
+      if (moved || painted) setSeed({ it, hit: i, n: [...seedDone.current].filter((k) => k >= 0).length });
     },
     end: () => {
-      const cur = seed;
+      const it = seedIt.current;
+      seedIt.current = null;
       let done = [...seedDone.current].some((i) => i >= 0);
       setSeed(null);
-      if (cur && !dragPaints(cur.it)) {
-        const i = seedTileAt(cur.x, cur.y);
-        if (i >= 0 && dragFits(cur.it, i)) {
+      if (it && !dragPaints(it)) {
+        const i = seedTileAt(seedLast.current.x, seedLast.current.y);
+        if (i >= 0 && dragFits(it, i)) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-          work({ ...cur.it.a, i } as Action);
+          work({ ...it.a, i } as Action);
           done = true;
         } else if (i >= 0) {
-          flash(cur.it.a.a === 'adopt' ? 'Hayvanı boş yeri olan binasına bırak' : 'Boş bir çimene bırak');
+          flash(it.a.a === 'adopt' ? 'Hayvanı boş yeri olan binasına bırak' : 'Boş bir çimene bırak');
         }
       }
       if (done) {
@@ -1631,10 +1669,9 @@ export default function GardenScreen() {
     (pop.kind === 'seed'
       ? popTile?.k === 'soil'
       : popTile?.k === 'crop' && (pop.kind === 'orak' ? cropReady(popTile, now) : pop.kind === 'kova' ? !popTile.watered : true));
-  useEffect(() => {
-    if (!popOk && !seed) setPop(null);
-  }, [popOk, seed]);
-  const seedHit = seed ? seedTileAt(seed.x, seed.y) : -1;
+  // (Kanca kullanılmaz: bu satırlar erken dönüşten sonra gelir.) Eskimiş balon çizilmez; bir sonraki dokunuşta temizlenir.
+  const popNow = pop && (popOk || seed) ? pop : null;
+  const seedHit = seed ? seed.hit : -1;
   const seedTarget = seed && seedHit >= 0 && dragFits(seed.it, seedHit) ? seedHit : null;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
   const liftSrc = lift ? farm.tiles[lift.from] : undefined;
@@ -1648,7 +1685,11 @@ export default function GardenScreen() {
         ...(lift.from === GIFT_TILE ? { giftSpot: -1 } : {}),
       }
     : farm;
-  const sprs = [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z);
+  // 5 saniyede bir yenilenir (büyüme aşamaları için yeterli); kaydırma ve sürüklemede yeniden hesaplanmaz.
+  const sprTick = Math.floor(now / 5000);
+  if (!sprCache.current || sprCache.current.f !== farmView || sprCache.current.tick !== sprTick)
+    sprCache.current = { f: farmView, tick: sprTick, list: [...SCENERY, ...sprites(farmView, now)].sort((a, b) => a.z - b.z) };
+  const sprs = sprCache.current.list;
   objectAtRef.current = (wx, wy) => {
     let best = -1;
     let bz = -1;
@@ -2245,77 +2286,66 @@ export default function GardenScreen() {
       )}
 
       {/* alt bölüm: zemin yok. Bir şey seçiliyse ahşap tabela, yoksa oyun düğmeleri. */}
-      {seed &&
-        (ART[seed.it.art] ? (
-          <Image
-            pointerEvents="none"
-            source={ART[seed.it.art].src}
-            resizeMode="contain"
-            style={{
-              position: 'absolute',
-              left: seed.x - rootOff.current.x - 34,
-              top: seed.y - rootOff.current.y - SEED_UP - 48,
-              width: 68,
-              height: 68,
-              zIndex: 50,
-            }}
-          />
-        ) : (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: seed.x - rootOff.current.x - 16,
-              top: seed.y - rootOff.current.y - SEED_UP - 16,
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: '#9A6534',
-              borderWidth: 3,
-              borderColor: '#FFF8E8',
-              zIndex: 50,
-            }}
-          />
-        ))}
-      {seed &&
-        (() => {
-          const n = [...seedDone.current].filter((i) => i >= 0).length;
-          if (!n) return null;
-          return (
+      {seed && (
+        <Animated.View
+          pointerEvents="none"
+          style={{ position: 'absolute', left: 0, top: 0, zIndex: 50, transform: [{ translateX: seedXY.x }, { translateY: seedXY.y }] }}
+        >
+          {ART[seed.it.art] ? (
+            <Image
+              source={ART[seed.it.art].src}
+              resizeMode="contain"
+              style={{ position: 'absolute', left: -34, top: -SEED_UP - 48, width: 68, height: 68 }}
+            />
+          ) : (
             <View
-              pointerEvents="none"
               style={{
                 position: 'absolute',
-                left: seed.x - rootOff.current.x + 30,
-                top: seed.y - rootOff.current.y - SEED_UP - 40,
+                left: -16,
+                top: -SEED_UP - 16,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: '#9A6534',
+                borderWidth: 3,
+                borderColor: '#FFF8E8',
+              }}
+            />
+          )}
+          {seed.n > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                left: 30,
+                top: -SEED_UP - 40,
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: 10,
                 backgroundColor: '#FFF8E8',
                 borderWidth: 1.5,
                 borderColor: '#9A6534',
-                zIndex: 51,
               }}
             >
-              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 13, color: INK }}>
-                {seed.it.tool ? n : `${n} · ${n * seed.it.cost} altın`}
+              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '900', fontSize: 13, color: INK }}>
+                {seed.it.tool ? seed.n : `${seed.n} · ${seed.n * seed.it.cost} altın`}
               </Text>
             </View>
-          );
-        })()}
+          )}
+        </Animated.View>
+      )}
       <SeedDrag.Provider value={seedApi}>
-        {pop &&
+        {popNow &&
           !scene &&
           !placing &&
           sel === null &&
           !showShop &&
-          farm.tiles[pop.i] &&
+          farm.tiles[popNow.i] &&
           (() => {
             const c = cam.current;
-            const at = center(...rc(pop.i));
+            const at = center(...rc(popNow.i));
             const sx = at.x * c.s + c.tx;
             const sy = at.y * c.s + c.ty;
-            const W = pop.kind === 'seed' ? Math.min(box.w - 16, 296) : 200;
+            const W = popNow.kind === 'seed' ? Math.min(box.w - 16, 312) : 200;
             const above = sy > box.h * 0.42;
             return (
               <View
@@ -2331,8 +2361,8 @@ export default function GardenScreen() {
               >
                 <ToolPop
                   farm={(seed && seedFarm.current) || farm}
-                  i={pop.i}
-                  kind={pop.kind}
+                  i={popNow.i}
+                  kind={popNow.kind}
                   now={now}
                   level={lv.level}
                   onAct={(a) => {
@@ -2341,7 +2371,7 @@ export default function GardenScreen() {
                   }}
                   toolAct={toolAct}
                   onMore={() => {
-                    setSel(pop.i);
+                    setSel(popNow.i);
                     setPop(null);
                   }}
                 />
@@ -2783,7 +2813,7 @@ function ToolPop({
         </Text>
         {more}
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
         {seeds.map((k) => {
           const c = CROPS[k];
           const off = farm.coins < c.cost;
@@ -2794,7 +2824,7 @@ function ToolPop({
                 onPress={() => onAct({ a: 'plant', i, crop: k })}
                 accessibilityLabel={c.name}
                 style={({ pressed }) => ({
-                  width: 50,
+                  width: 54,
                   paddingVertical: 4,
                   borderRadius: 12,
                   borderWidth: 1.5,
@@ -2804,7 +2834,10 @@ function ToolPop({
                   opacity: off ? 0.4 : 1,
                 })}
               >
-                {ART[k] && <Image source={ART[k].src} style={{ width: 36, height: 32 }} resizeMode="contain" />}
+                {ART[k] && <Image source={ART[k].src} style={{ width: 38, height: 32 }} resizeMode="contain" />}
+                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 9, color: INK }}>
+                  {c.name}
+                </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                   <Image source={ART.coin.src} style={{ width: 10, height: 10 }} resizeMode="contain" />
                   <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 11, color: '#7A5A00' }}>
