@@ -245,6 +245,8 @@ type Placing =
   | { a: 'move'; from: number } // yerleştirilmiş bir şeyi taşı
   | { a: 'pave' } // patika döşe: kapatılana kadar her dokunuş bir kare döşer
   | { a: 'moveBarn'; what?: 'house' }; // depoyu ya da evi (2x2) taşı
+// Arayüzdeki ekin simgesi: tarla karesi değil, hasat edilmiş ürünün kendisi (başak demeti, havuç…). Diğerleri kendi çizimi.
+const iconArt = (k: string) => ((CROPS as Record<string, unknown>)[k] ? (stockArt(k) ?? ART[k]) : ART[k]);
 type Spr = {
   key: string;
   art: string;
@@ -409,6 +411,24 @@ const SCENERY: Spr[] = [
   { key: 'stall', art: 'pazar', x: STALL.x, y: STALL.y, w: STALL.w, z: STALL.z },
 ];
 
+// Çizim listesi her değişiklikte yeniden kurulur; değeri aynı kalan nesne yeniden çizilmez.
+function sameSpr(p: { s: Spr }, q: { s: Spr }) {
+  const a = p.s;
+  const b = q.s;
+  return (
+    a === b ||
+    (a.art === b.art &&
+      a.x === b.x &&
+      a.y === b.y &&
+      a.z === b.z &&
+      a.w === b.w &&
+      a.o === b.o &&
+      a.flip === b.flip &&
+      a.wall?.kind === b.wall?.kind &&
+      a.wall?.mask === b.wall?.mask &&
+      a.wall?.flowers === b.wall?.flowers)
+  );
+}
 const SpriteImg = memo(function SpriteImg({ s }: { s: Spr }) {
   const a = ART[s.art];
   if (s.wall)
@@ -437,7 +457,7 @@ const SpriteImg = memo(function SpriteImg({ s }: { s: Spr }) {
       }}
     />
   );
-});
+}, sameSpr);
 
 // Siparişi almaya gelen çift. 'wait': yoldan yürüyüp girişte bekler, üstlerinde sepet balonu zıplar (dokununca teslim).
 // 'thanks': sepeti alır, sevinçle zıplayıp teşekkür eder, sonra yoldan geri döner.
@@ -544,87 +564,32 @@ function Visitors({
 }
 
 // memo: kaydırma ve sürükleme sırasında (çiftlik değişmediği sürece) 800 karelik zemin yeniden çizilmez.
-const Ground = memo(function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
-  const pts = (r: number, c: number) => {
-    const { x, y } = center(r, c);
-    return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
-  };
+const tilePts = (r: number, c: number) => {
+  const { x, y } = center(r, c);
+  return `${x},${y - TH / 2} ${x + TW / 2},${y} ${x},${y + TH / 2} ${x - TW / 2},${y}`;
+};
+// Zemin yalnızca karenin türüne (çim, yol, kapalı, diğer) bağlıdır. Ekme, sulama, toplama zemini değiştirmez;
+// bu imza aynı kaldıkça 784 karelik zemin yeniden çizilmez (sürükleyerek ekerken takılmanın ana nedeni buydu).
+const groundSigs = new WeakMap<Tile[], string>();
+const groundSig = (f: Farm) => {
+  let v = groundSigs.get(f.tiles);
+  if (v === undefined) {
+    v = f.tiles.map((t) => (t.k === 'grass' ? 'g' : t.k === 'path' ? 'p' : t.k === 'locked' ? 'l' : 'o')).join('');
+    groundSigs.set(f.tiles, v);
+  }
+  return v;
+};
+// Seçili / hedef karenin vurgusu ayrı, küçük bir katmandır: parmak kare değiştirdikçe yalnızca bu çizilir.
+function GroundHi({ f, sel }: { f: Farm; sel: number | null }) {
   // sel arazinin dışına düşebilir (ör. sürüklenen binanın çatısından tutulduğunda): o zaman vurgu yok.
   const hiTiles = sel === null || !f.tiles[sel] ? [] : f.tiles[sel].k === 'locked' ? parcelTiles(f, sel) : [sel];
+  if (!hiTiles.length) return null;
   return (
-    <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }}>
-      <Defs>
-        <Pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
-          <Rect width="3" height="7" fill="#5D8A36" />
-        </Pattern>
-      </Defs>
-      {/* Tabakanın altına yumuşak gölge: manzaraya oturur */}
-      {/* Tabaka (kalın ahşap kenar) yok: çiftlik manzaranın çayırına oturur. Satın alınmamış dış arazi çizilmez, resim görünür. */}
-      {f.tiles.map((t, i) => {
-        if (t.k === 'locked' && isOuter(i)) return null;
-        const [r, c] = rc(i);
-        const g =
-          season === 'kis'
-            ? ['#EEF4EC', '#E4ECE2', '#C9D6C6', '#BFCDBC']
-            : season === 'guz'
-              ? ['#B3C65B', '#A9BC52', '#8E9F45', '#869841']
-              : ['#93CB57', '#8BC34F', '#74A146', '#6E9A42'];
-        const fill = t.k === 'path' ? '#D9CDB4' : t.k === 'locked' ? g[(r + c) % 2 ? 2 : 3] : g[(r + c) % 2 ? 0 : 1];
-        // Çim kareleri yarı saydam: manzaranın boyalı çayırı alttan görünür, çiftlik "yapıştırma" durmaz.
-        // Açık arazinin kenarındaki kareler daha da soluktur: kenar keskin bitmez.
-        const edge =
-          t.k === 'grass' &&
-          [
-            [r - 1, c],
-            [r + 1, c],
-            [r, c - 1],
-            [r, c + 1],
-          ].some(([rr, cc]) => {
-            if (rr < 0 || cc < 0 || rr >= N || cc >= N) return true;
-            const j = rr * N + cc;
-            return f.tiles[j].k === 'locked' && isOuter(j);
-          });
-        const op = t.k === 'grass' ? (edge ? 0.3 : 0.6) : 1;
-        return (
-          <Polygon
-            key={i}
-            points={pts(r, c)}
-            fill={fill}
-            fillOpacity={op}
-            stroke={t.k === 'path' ? '#C9BC9F' : 'rgba(255,255,255,0.06)'}
-            strokeWidth={1}
-          />
-        );
-      })}
-      {f.tiles.map((t, i) => {
-        const [r, c] = rc(i);
-        if (t.k === 'locked') return isOuter(i) ? null : <Polygon key={`h${i}`} points={pts(r, c)} fill="url(#hatch)" opacity={0.45} />;
-        if (t.k === 'grass' && season === 'bahar' && i % 3 === 0) {
-          const { x, y } = center(r, c);
-          return (
-            <Path
-              key={`h${i}`}
-              d={`M${x - 12},${y + 2} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 8},${y - 4} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 1},${y + 7} a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0`}
-              fill={i % 2 ? '#FFD6E7' : '#FFF6B3'}
-            />
-          );
-        }
-        if (t.k === 'path') {
-          const { x, y } = center(r, c);
-          return (
-            <Path
-              key={`h${i}`}
-              d={`M${x - 18},${y - 2} a9,4.5 0 1,0 18,0 a9,4.5 0 1,0 -18,0 M${x + 2},${y + 4} a8,4 0 1,0 16,0 a8,4 0 1,0 -16,0`}
-              fill="#E8DEC8"
-            />
-          );
-        }
-        return null;
-      })}
+    <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       {hiTiles.map((j) => (
         <Polygon
           key={`sel${j}`}
-          points={pts(...rc(j))}
+          points={tilePts(...rc(j))}
           fill="rgba(255,255,255,0.28)"
           stroke="#fff"
           strokeWidth={3}
@@ -633,7 +598,93 @@ const Ground = memo(function Ground({ f, sel, season }: { f: Farm; sel: number |
       ))}
     </Svg>
   );
-});
+}
+const GroundBase = memo(
+  function GroundBase({ f, season }: { f: Farm; season: Season }) {
+    const pts = tilePts;
+    return (
+      <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0 }}>
+        <Defs>
+          <Pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+            <Rect width="3" height="7" fill="#5D8A36" />
+          </Pattern>
+        </Defs>
+        {/* Tabakanın altına yumuşak gölge: manzaraya oturur */}
+        {/* Tabaka (kalın ahşap kenar) yok: çiftlik manzaranın çayırına oturur. Satın alınmamış dış arazi çizilmez, resim görünür. */}
+        {f.tiles.map((t, i) => {
+          if (t.k === 'locked' && isOuter(i)) return null;
+          const [r, c] = rc(i);
+          const g =
+            season === 'kis'
+              ? ['#EEF4EC', '#E4ECE2', '#C9D6C6', '#BFCDBC']
+              : season === 'guz'
+                ? ['#B3C65B', '#A9BC52', '#8E9F45', '#869841']
+                : ['#93CB57', '#8BC34F', '#74A146', '#6E9A42'];
+          const fill = t.k === 'path' ? '#D9CDB4' : t.k === 'locked' ? g[(r + c) % 2 ? 2 : 3] : g[(r + c) % 2 ? 0 : 1];
+          // Çim kareleri yarı saydam: manzaranın boyalı çayırı alttan görünür, çiftlik "yapıştırma" durmaz.
+          // Açık arazinin kenarındaki kareler daha da soluktur: kenar keskin bitmez.
+          const edge =
+            t.k === 'grass' &&
+            [
+              [r - 1, c],
+              [r + 1, c],
+              [r, c - 1],
+              [r, c + 1],
+            ].some(([rr, cc]) => {
+              if (rr < 0 || cc < 0 || rr >= N || cc >= N) return true;
+              const j = rr * N + cc;
+              return f.tiles[j].k === 'locked' && isOuter(j);
+            });
+          const op = t.k === 'grass' ? (edge ? 0.3 : 0.6) : 1;
+          return (
+            <Polygon
+              key={i}
+              points={pts(r, c)}
+              fill={fill}
+              fillOpacity={op}
+              stroke={t.k === 'path' ? '#C9BC9F' : 'rgba(255,255,255,0.06)'}
+              strokeWidth={1}
+            />
+          );
+        })}
+        {f.tiles.map((t, i) => {
+          const [r, c] = rc(i);
+          if (t.k === 'locked') return isOuter(i) ? null : <Polygon key={`h${i}`} points={pts(r, c)} fill="url(#hatch)" opacity={0.45} />;
+          if (t.k === 'grass' && season === 'bahar' && i % 3 === 0) {
+            const { x, y } = center(r, c);
+            return (
+              <Path
+                key={`h${i}`}
+                d={`M${x - 12},${y + 2} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 8},${y - 4} a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M${x + 1},${y + 7} a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0`}
+                fill={i % 2 ? '#FFD6E7' : '#FFF6B3'}
+              />
+            );
+          }
+          if (t.k === 'path') {
+            const { x, y } = center(r, c);
+            return (
+              <Path
+                key={`h${i}`}
+                d={`M${x - 18},${y - 2} a9,4.5 0 1,0 18,0 a9,4.5 0 1,0 -18,0 M${x + 2},${y + 4} a8,4 0 1,0 16,0 a8,4 0 1,0 -16,0`}
+                fill="#E8DEC8"
+              />
+            );
+          }
+          return null;
+        })}
+      </Svg>
+    );
+  },
+  (a, b) => a.season === b.season && groundSig(a.f) === groundSig(b.f),
+);
+function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Season }) {
+  return (
+    <>
+      <GroundBase f={f} season={season} />
+      <GroundHi f={f} sel={sel} />
+    </>
+  );
+}
 
 // Kapalı her parselin ortasında küçük tabela: ortak hasatla açılır.
 function Signs({ f }: { f: Farm }) {
@@ -677,7 +728,21 @@ function Signs({ f }: { f: Farm }) {
   );
 }
 
-function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; z: number; n?: number; label?: string }) {
+const Badge = memo(function Badge({
+  x,
+  y,
+  art,
+  z,
+  n,
+  label,
+}: {
+  x: number;
+  y: number;
+  art: string;
+  z: number;
+  n?: number;
+  label?: string;
+}) {
   const bob = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const l = Animated.loop(
@@ -755,7 +820,7 @@ function Badge({ x, y, art, z, n, label }: { x: number; y: number; art: string; 
       )}
     </Animated.View>
   );
-}
+});
 
 function FloatText({ x, y, text, art }: { x: number; y: number; text: string; art?: string }) {
   const v = useRef(new Animated.Value(0)).current;
@@ -967,17 +1032,21 @@ export default function GardenScreen() {
   partnerHereRef.current = partnerHere;
   const [mine, setMine] = useState<{ a: Action; sent: boolean }[]>([]);
   const savedFarm = farmOf(couple);
+  // Kendi işlerim kaydın üstüne uygulanır. Sürüklerken her kare için liste baştan oynatılmasın diye son sonuç saklanır:
+  // kayıt aynıysa ve listeye yalnızca yeni iş eklendiyse, yalnız eklenenler uygulanır.
+  const mineCache = useRef<{ base: unknown; acts: Action[]; out: Farm } | null>(null);
   const farm = useMemo(
-    () =>
-      overlayFarm(
-        overlayFarm(
-          savedFarm,
-          mine.map((x) => x.a),
-          user?.uid ?? '',
-        ),
-        partnerHere ? (partnerLive?.acts ?? []) : [],
-        partnerId ?? '',
-      ),
+    () => {
+      const acts = mine.map((x) => x.a);
+      const mc = mineCache.current;
+      const by = user?.uid ?? '';
+      let own: Farm;
+      if (mc && mc.base === couple && acts.length >= mc.acts.length && mc.acts.every((a, k) => a === acts[k]))
+        own = overlayFarm(mc.out, acts.slice(mc.acts.length), by);
+      else own = overlayFarm(savedFarm, acts, by);
+      mineCache.current = { base: couple, acts, out: own };
+      return overlayFarm(own, partnerHere ? (partnerLive?.acts ?? []) : [], partnerId ?? '');
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [couple, mine, partnerLive, partnerHere],
   );
@@ -2485,7 +2554,7 @@ export default function GardenScreen() {
         >
           {ART[seed.it.art] ? (
             <Image
-              source={ART[seed.it.art].src}
+              source={iconArt(seed.it.art).src}
               resizeMode="contain"
               style={{ position: 'absolute', left: -34, top: -SEED_UP - 34, width: 68, height: 68 }}
             />
@@ -3292,7 +3361,7 @@ function ToolPop({
               })}
             >
               {ART[art] ? (
-                <Image source={ART[art].src} style={{ width: 42, height: 42 }} resizeMode="contain" />
+                <Image source={iconArt(art).src} style={{ width: 42, height: 42 }} resizeMode="contain" />
               ) : (
                 <Ionicons name={kind === 'orak' ? 'cut' : 'water'} size={30} color="#7A4A1C" />
               )}
@@ -3338,7 +3407,7 @@ function ToolPop({
                   opacity: off ? 0.4 : 1,
                 })}
               >
-                {ART[k] && <Image source={ART[k].src} style={{ width: 38, height: 32 }} resizeMode="contain" />}
+                {ART[k] && <Image source={iconArt(k).src} style={{ width: 38, height: 32 }} resizeMode="contain" />}
                 <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 9, color: INK }}>
                   {c.name}
                 </Text>
@@ -3399,7 +3468,7 @@ function Edge({
             }}
           >
             {art && ART[art] ? (
-              <Image source={ART[art].src} style={{ width: d * 0.6, height: d * 0.56 }} resizeMode="contain" />
+              <Image source={iconArt(art).src} style={{ width: d * 0.6, height: d * 0.56 }} resizeMode="contain" />
             ) : (
               <Ionicons name={icon ?? 'ellipse'} size={d * 0.46} color={accent ? '#fff' : '#7A4A1C'} />
             )}
@@ -3452,7 +3521,7 @@ function Edge({
 function Head({ art, title, onClose }: { art?: string; title: string; onClose: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      {art && ART[art] && <Image source={ART[art].src} style={{ width: 38, height: 34 }} resizeMode="contain" />}
+      {art && ART[art] && <Image source={iconArt(art).src} style={{ width: 38, height: 34 }} resizeMode="contain" />}
       <GText size={20} style={{ flex: 1 }}>
         {title}
       </GText>
@@ -3562,7 +3631,7 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
                   <Wall kind={it.wall} mask={0} scale={0.62} flowers={it.flowers} />
                 </View>
               ) : (
-                <Image source={ART[it.art].src} style={{ width: 54, height: 44 }} resizeMode="contain" />
+                <Image source={iconArt(it.art).src} style={{ width: 54, height: 44 }} resizeMode="contain" />
               )}
               <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
                 {it.name}
@@ -4441,7 +4510,7 @@ function ShopPanel({
                 justifyContent: 'center',
               }}
             >
-              {ART[x.art] && <Image source={ART[x.art].src} style={{ width: 32, height: 30 }} resizeMode="contain" />}
+              {ART[x.art] && <Image source={iconArt(x.art).src} style={{ width: 32, height: 30 }} resizeMode="contain" />}
             </Pressable>
           );
         })}
@@ -4490,7 +4559,7 @@ function ShopPanel({
                     {it.wall ? (
                       <Wall kind={it.wall} mask={0} scale={0.62} flowers={it.flowers} />
                     ) : ART[it.art] ? (
-                      <Image source={ART[it.art].src} style={{ width: 64, height: 54 }} resizeMode="contain" />
+                      <Image source={iconArt(it.art).src} style={{ width: 64, height: 54 }} resizeMode="contain" />
                     ) : null}
                   </View>
                   <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
