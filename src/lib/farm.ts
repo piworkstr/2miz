@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import { collection, doc, increment, onSnapshot, runTransaction } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from './firebase';
@@ -819,6 +818,23 @@ export const unlockLvl = (key: string): number =>
   RECIPES[key as RecipeId]?.lvl ??
   STALL_GOODS.find((g) => g.key === key)?.lvl ??
   1;
+// Bir seviyede açılan her şey (kutlama ekranı ve "sırada ne var" için). art: çizim anahtarı; yoksa emoji gösterilir.
+export type Unlock = { name: string; art: string; emoji?: string };
+export function unlocksAt(level: number): Unlock[] {
+  const out: Unlock[] = [];
+  for (const [k, v] of Object.entries(CROPS)) if (v.lvl === level) out.push({ name: v.name, art: k });
+  for (const [k, v] of Object.entries(BUILDINGS)) if (v.lvl === level) out.push({ name: v.name, art: k });
+  for (const [k, v] of Object.entries(ANIMALS)) if (v.lvl === level) out.push({ name: v.name, art: k });
+  for (const [k, v] of Object.entries(TREES)) if (v.lvl === level) out.push({ name: v.name, art: k });
+  for (const v of Object.values(DECOR)) if (v.lvl === level) out.push({ name: v.name, art: v.sp });
+  for (const [k, v] of Object.entries(RECIPES)) if (v.lvl === level) out.push({ name: v.name, art: k, emoji: v.emoji });
+  return out;
+}
+// Bu seviyeden sonra bir şey açılan ilk seviye (yoksa null).
+export function nextUnlockLevel(level: number): number | null {
+  for (let l = level + 1; l <= level + 30; l++) if (unlocksAt(l).length) return l;
+  return null;
+}
 export const stallPrice = (key: string, n = 1) => (PRICE[key] ?? 0) * STALL_MULT * n;
 // Dış arazi yalnızca çiftliğe bitişikse alınır: parselin bir karesi, açılmış bir kareye kenardan komşu olmalı.
 export function parcelAdjacent(f: Farm, i: number): boolean {
@@ -993,7 +1009,10 @@ export type Action =
   // Öpücük: i, partnerin yanındaki kare; avatar oraya yürür ve iki ekranda da kalpler uçar.
   | { a: 'kiss'; i: number };
 
-export type Result = { farm: Farm; text: string; gained: number; ready?: number; points?: number };
+export type Result = { farm: Farm; text: string; gained: number; ready?: number; points?: number; drop?: { art: string; text: string } };
+// Hasatta arada bir sürpriz çıkar: alet ya da altın kesesi. Zar kareden ve ekim zamanından türetilir; yerel deneme ile kayıt aynı sonucu verir.
+export const DROP_TOOL = 4; // %
+export const DROP_COINS = 6; // %
 
 // Hayvan, ağaç ve süs yalnız çayıra (çimene) konur; tarla ekin içindir.
 const emptyOk = (t: Tile) => t.k === 'grass';
@@ -1081,6 +1100,7 @@ export function applyAction(
   let text = '';
   let gained = 0;
   let ready: number | undefined;
+  let drop: Result['drop'];
 
   switch (act.a) {
     case 'plant': {
@@ -1114,6 +1134,16 @@ export function applyAction(
       put(t.crop);
       if (t.watered) f.harvests += 1; // biri ekti, diğeri suladı: ortak hasat
       f.tiles[act.i] = { k: 'soil' };
+      const roll = hashOf(`${act.i}:${t.at}:${t.crop}`) % 100;
+      if (roll < DROP_TOOL) {
+        const tool: ToolId = roll % 2 ? 'kazma' : 'balta';
+        f.tools = { ...toolsOf(f), [tool]: toolsOf(f)[tool] + 1 };
+        drop = { art: tool, text: `+1 ${TOOLS[tool].name}` };
+      } else if (roll < DROP_TOOL + DROP_COINS) {
+        const n = 8 + 2 * levelOf(f.xp).level;
+        f.coins += n;
+        drop = { art: 'coin', text: `+${n} altın` };
+      }
       text = `${name} ${c.name.toLowerCase()} topladı${t.watered ? ' · ortak hasat' : ''}`;
       break;
     }
@@ -1649,7 +1679,7 @@ export function applyAction(
   if (!['mkOut', 'mkBack', 'mkIn', 'mkPaid', 'trader', 'stall', 'tool', 'rename', 'sellOne', 'skipOrder'].includes(act.a))
     f.pos[uid] = restNear(f, act.i);
   f.log = [{ by: uid, text, at: now }, ...f.log].slice(0, 14);
-  return { farm: f, text, gained, ready, points };
+  return { farm: f, text, gained, ready, points, drop };
 }
 
 // Firestore tanımsız alan kabul etmez.
@@ -1705,16 +1735,6 @@ export async function farmFlush(coupleId: string, uid: string, name: string, par
     if (done) tx.update(ref, { ...farmWrite(farm), ...(points ? { points: increment(points) } : {}) });
     return done;
   });
-}
-
-// Hasat hatırlatması yok (istenmedi). Eski sürümlerin telefonda kurduğu bekleyen hatırlatmalar da iptal edilir.
-export async function clearFarmReminders() {
-  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
-  await Promise.all(
-    all
-      .filter((n) => n.identifier.startsWith('farm-'))
-      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})),
-  );
 }
 
 // Günlük görevden biriken altını çiftliğe aktarır.

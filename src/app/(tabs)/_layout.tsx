@@ -11,6 +11,7 @@ import { TourOnce } from '../../components/Tour';
 import { useUnreadCount } from '../../lib/chat';
 import { createCoupon } from '../../lib/coupons';
 import { useDeviceStamp } from '../../lib/deviceStamp';
+import { useFarmReminder } from '../../lib/farmRemind';
 import { clearCouponDraft, loadCouponDraft, saveCouponDraft } from '../../lib/invite';
 import { usePushSetup } from '../../lib/push';
 import { useSession } from '../../lib/session';
@@ -113,6 +114,7 @@ export default function TabsLayout() {
   const { user, couple } = useSession();
   usePushSetup(user?.uid);
   useDeviceStamp(couple, user?.uid);
+  useFarmReminder(couple);
   // Yeni eşleşen çifte tanıtım kartları bir kez gösterilir; eski çiftler Profil'den açabilir.
   const createdMs = couple?.createdAt?.toMillis?.() ?? 0;
   const fresh = createdMs > 0 && Date.now() - createdMs < 7 * 86_400_000;

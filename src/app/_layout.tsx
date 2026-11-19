@@ -1,5 +1,4 @@
 import { useAutoUpdate } from '../lib/autoUpdate';
-import { clearFarmReminders } from '../lib/farm';
 import { Baloo2_500Medium, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { Caveat_500Medium, Caveat_700Bold, useFonts } from '@expo-google-fonts/caveat';
 import { Oswald_400Regular, Oswald_500Medium } from '@expo-google-fonts/oswald';
@@ -42,10 +41,6 @@ function RootNavigator() {
   const theme = useTheme();
   useAutoUpdate();
   const maint = useMaintenance(session.user?.uid);
-  // Eski sürümlerin kurduğu "hasada hazır" hatırlatmalarını açılışta temizle.
-  useEffect(() => {
-    clearFarmReminders().catch(() => {});
-  }, []);
 
   // İlk açılışta yükleme ekranı gösterilir. Sonraki geçişlerde (kayıt, giriş, eşleşme)
   // ekranlar kaldırılmaz; veriler gelene kadar son bilinen durum kullanılır.

@@ -3,6 +3,7 @@ import { useState, type ComponentProps } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 import { useL } from '../lib/i18n';
 import { useTheme } from '../lib/useTheme';
+import { setFarmRemind, useFarmRemind } from '../lib/farmRemind';
 import { setRemind, useRemind } from './SpecialDays';
 import { Tour, type TourId } from './Tour';
 import { Card, Muted, T } from './ui';
@@ -14,6 +15,7 @@ export function GuideCard() {
   const t = useTheme();
   const l = useL();
   const remind = useRemind();
+  const farmRemind = useFarmRemind();
   const [tour, setTour] = useState<TourId | null>(null);
   const row = (icon: IconName, label: string, onPress: () => void) => (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 }}>
@@ -39,6 +41,16 @@ export function GuideCard() {
           </Muted>
         </View>
         <Switch value={remind} onValueChange={(v) => setRemind(v)} trackColor={{ true: t.colors.primary }} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 }}>
+        <Ionicons name="leaf-outline" size={20} color={t.colors.primary} />
+        <View style={{ flex: 1 }}>
+          <T>{l('Hasat hatırlatması', 'Harvest reminder')}</T>
+          <Muted style={{ fontSize: 12 }}>
+            {l('Ekinler olgunlaşınca ve üretim bitince birer bildirim', 'One notification when crops are ripe and when production is done')}
+          </Muted>
+        </View>
+        <Switch value={farmRemind} onValueChange={(v) => setFarmRemind(v)} trackColor={{ true: t.colors.primary }} />
       </View>
       <Tour id={tour ?? 'app'} visible={!!tour} onClose={() => setTour(null)} />
     </Card>

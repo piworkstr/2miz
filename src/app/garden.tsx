@@ -22,6 +22,7 @@ import {
   Dimensions,
   Easing,
   Image,
+  Modal,
   PanResponder,
   Platform,
   Pressable,
@@ -136,7 +137,8 @@ import { FarmBonusGift } from '../components/world/FarmBonusGift';
 import { FarmMarket } from '../components/world/FarmMarket';
 import { settleMine } from '../lib/market';
 import { srvNow, syncClock } from '../lib/serverClock';
-import { useFarmBonuses } from '../lib/farm';
+import { nextUnlockLevel, unlocksAt, useFarmBonuses, type Unlock } from '../lib/farm';
+import { setSfxMuted, sfx, sfxMuted } from '../lib/sfx';
 import type { FarmBonus } from '../lib/farmBonus';
 import { ART, stockArt } from '../lib/farmArt';
 import { finishScene, startScene, useOpenScene, type Scene } from '../lib/scenes';
@@ -850,6 +852,10 @@ export default function GardenScreen() {
   const rootRef = useRef<ComponentRef<typeof View>>(null);
   const rootOff = useRef({ x: 0, y: 0 });
   const [say, setSay] = useState('');
+  // Seviye ekranı: up = yeni seviyeye çıkıldı (kutlama), info = seviye rozetine dokunuldu.
+  const [lvCard, setLvCard] = useState<{ level: number; up: boolean } | null>(null);
+  const lvSeen = useRef<number | null>(null);
+  const [mute, setMute] = useState(sfxMuted());
   const [tool, setTool] = useState<string | null>(null);
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; text: string; art?: string }[]>([]);
   // Teslim alan çift: sipariş tamamlanınca yoldan posta kutusuna yürür, sepeti alır, döner.
@@ -1363,6 +1369,19 @@ export default function GardenScreen() {
         }, idx * 350);
       });
     }
+    if (sim.drop) {
+      const d = sim.drop;
+      const at = center(...rc(job.i));
+      const fid = Date.now() + Math.random();
+      setTimeout(() => {
+        setFloats((f) => [...f, { id: fid, x: at.x, y: at.y - TW * 1.5, text: `Sürpriz! ${d.text}`, art: d.art }]);
+        setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
+        sfx('altin');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }, 350);
+    }
+    if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) sfx('topla');
+    else if (['plant', 'till', 'build', 'tree', 'decor', 'adopt'].includes(job.a)) sfx('ek');
     if (job.a === 'plant') {
       const at = center(...rc(job.i));
       const fid = Date.now() + Math.random();
@@ -1537,6 +1556,18 @@ export default function GardenScreen() {
       busy.current = false;
     }
   }
+
+  // Seviye atlandıysa kutlama açılır (çiftlik ilk yüklendiğinde değil; yalnız ekran açıkken artınca).
+  const lvNow = couple ? levelOf(farm.xp).level : null;
+  useEffect(() => {
+    if (lvNow == null) return;
+    if (lvSeen.current != null && lvNow > lvSeen.current) {
+      setLvCard({ level: lvNow, up: true });
+      sfx('seviye');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    }
+    lvSeen.current = lvNow;
+  }, [lvNow]);
 
   if (!user || !couple || !partnerId) return null;
 
@@ -2174,7 +2205,11 @@ export default function GardenScreen() {
         >
           <Ionicons name="chevron-back" size={22} color={INK} />
         </Pressable>
-        <View style={[pill, { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 3, paddingRight: 10 }]}>
+        <Pressable
+          onPress={() => setLvCard({ level: lv.level, up: false })}
+          accessibilityLabel={`Seviye ${lv.level}, sırada ne açılacak`}
+          style={[pill, { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 3, paddingRight: 10 }]}
+        >
           <Avatar p={profile} name={myName} size={30} showMood={false} />
           <View>
             <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
@@ -2186,8 +2221,19 @@ export default function GardenScreen() {
               />
             </View>
           </View>
-        </View>
+        </Pressable>
         <View style={{ flex: 1 }} />
+        <Pressable
+          onPress={() => {
+            setSfxMuted(!mute);
+            setMute(!mute);
+          }}
+          hitSlop={8}
+          accessibilityLabel={mute ? 'Sesi aç' : 'Sesi kapat'}
+          style={[pill, { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }]}
+        >
+          <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={19} color={INK} />
+        </Pressable>
         <View
           style={{
             flexDirection: 'row',
@@ -2206,6 +2252,7 @@ export default function GardenScreen() {
           </Text>
         </View>
       </View>
+      {lvCard && <LevelCard level={lvCard.level} up={lvCard.up} xp={farm.xp} onClose={() => setLvCard(null)} />}
       {placing && (
         <View style={{ position: 'absolute', left: 0, right: 0, top: insets.top + 96, alignItems: 'center', zIndex: 30 }}>
           <Pressable
@@ -2649,6 +2696,114 @@ type SheetProps = {
   onAct: (a: Action, all?: boolean) => void;
   onStay: (a: Action) => void; // paneli kapatmadan iş ver (mutfak)
 };
+
+// Seviye ekranı: yeni seviyede açılanlar ve sıradaki seviyede açılacaklar.
+function UnlockGrid({ list, dim }: { list: Unlock[]; dim?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', opacity: dim ? 0.75 : 1 }}>
+      {list.map((u) => {
+        const a = stockArt(u.art) ?? ART[u.art];
+        return (
+          <View key={u.art + u.name} style={{ width: 76, alignItems: 'center', gap: 3 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 14,
+                backgroundColor: '#FBF3E4',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {a ? (
+                <Image source={a.src} style={{ width: 42, height: 42 }} resizeMode="contain" />
+              ) : (
+                <Text style={{ fontSize: 28 }}>{u.emoji ?? '✨'}</Text>
+              )}
+            </View>
+            <Text
+              maxFontSizeMultiplier={1.1}
+              numberOfLines={2}
+              style={{ fontSize: 11, fontWeight: '700', color: INK, textAlign: 'center' }}
+            >
+              {u.name}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp: number; onClose: () => void }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(v, { toValue: 1, friction: 6, tension: 70, useNativeDriver: true }).start();
+  }, [v]);
+  const now = up ? unlocksAt(level) : [];
+  const nextLvl = nextUnlockLevel(level);
+  const next = nextLvl ? unlocksAt(nextLvl) : [];
+  const lv = levelOf(xp);
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        onPress={onClose}
+        style={{ flex: 1, backgroundColor: 'rgba(30,20,10,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      >
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 380,
+            maxHeight: '82%',
+            backgroundColor: '#FFFDF8',
+            borderRadius: 26,
+            overflow: 'hidden',
+            transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
+          }}
+        >
+          <Pressable onPress={() => {}}>
+            <View style={{ backgroundColor: up ? '#6DB33F' : '#E9C46A', paddingVertical: 18, alignItems: 'center', gap: 2 }}>
+              {up && <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Tebrikler, seviye atladınız!</Text>}
+              <Text style={{ color: up ? '#fff' : INK, fontWeight: '900', fontSize: 34 }}>Seviye {level}</Text>
+              {!up && (
+                <Text style={{ color: INK, fontWeight: '700', fontSize: 13 }}>
+                  Sonraki seviyeye {Math.max(0, lv.to - xp)} tecrübe kaldı
+                </Text>
+              )}
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
+              {up && (
+                <View style={{ gap: 10 }}>
+                  <Text style={{ fontWeight: '900', color: INK, fontSize: 15, textAlign: 'center' }}>
+                    {now.length ? 'Yeni açılanlar' : 'Bu seviyede yeni bir şey açılmadı'}
+                  </Text>
+                  {now.length > 0 && <UnlockGrid list={now} />}
+                </View>
+              )}
+              {nextLvl ? (
+                <View style={{ gap: 10 }}>
+                  <Text style={{ fontWeight: '800', color: MUTED, fontSize: 13, textAlign: 'center' }}>Seviye {nextLvl}’de açılacak</Text>
+                  <UnlockGrid list={next} dim />
+                </View>
+              ) : (
+                <Text style={{ color: MUTED, textAlign: 'center' }}>Açılacak her şeyi açtınız.</Text>
+              )}
+              <Text style={{ color: MUTED, fontSize: 12, textAlign: 'center' }}>
+                Tecrübe; hasat, hayvan ürünü, üretim ve sipariş teslimiyle kazanılır.
+              </Text>
+              <Pressable
+                onPress={onClose}
+                style={{ backgroundColor: '#6DB33F', borderRadius: 16, paddingVertical: 13, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{up ? 'Harika' : 'Tamam'}</Text>
+              </Pressable>
+            </ScrollView>
+          </Pressable>
+        </Animated.View>
+      </Pressable>
+    </Modal>
+  );
+}
 
 function Btn({
   label,

@@ -7,6 +7,11 @@ const SRC = {
   tas: require('../../assets/sfx/tas.wav'),
   kir: require('../../assets/sfx/kir.wav'),
   zar: require('../../assets/sfx/zar.wav'),
+  // çiftlik
+  topla: require('../../assets/sfx/topla.wav'),
+  ek: require('../../assets/sfx/ek.wav'),
+  altin: require('../../assets/sfx/altin.wav'),
+  seviye: require('../../assets/sfx/seviye.wav'),
 } as const;
 export type Sfx = keyof typeof SRC;
 
@@ -28,7 +33,7 @@ export function sfx(name: Sfx) {
   try {
     if (muted) throw new Error('sessiz');
     const p = (players[name] ??= createAudioPlayer(SRC[name]));
-    p.volume = name === 'tas' ? 0.6 : 0.8;
+    p.volume = name === 'tas' ? 0.6 : name === 'topla' || name === 'ek' ? 0.45 : 0.8;
     p.seekTo(0);
     p.play();
   } catch {
