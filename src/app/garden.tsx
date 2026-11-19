@@ -65,6 +65,7 @@ import {
   parcelNeed,
   parcelOf,
   parcelTiles,
+  parcelAdjacent,
   PRODUCT_NAME,
   BASKETS,
   giftWait,
@@ -821,6 +822,8 @@ export default function GardenScreen() {
   // Sürüklenen tohum: ekran konumu (pencereye göre) ve bu sürüklemede ekilen kareler.
   const [seed, setSeed] = useState<{ it: DragItem; x: number; y: number } | null>(null);
   const seedApi = useRef<SeedDragApi | null>(null);
+  // Kareye dokununca yanında açılan küçük balon: tohumlar, orak, kova ya da büyüme bilgisi.
+  const [pop, setPop] = useState<{ i: number; kind: 'seed' | 'orak' | 'kova' | 'info' } | null>(null);
   const seedDone = useRef(new Set<number>());
   const seedCoins = useRef(0);
   // Sürükleme boyunca tabela ve dükkân, başlangıçtaki çiftliği gösterir: ekilen kare yüzünden liste değişip parmağı bırakmasın.
@@ -1109,6 +1112,7 @@ export default function GardenScreen() {
           }
           // Aradaki öpücük balonu: dokununca avatar partnerin yanına yürür.
           if (kissRef.current(wx, wy)) return;
+          setPop(null);
           if (quickRef.current(wx, wy)) {
             setSel(null);
             setShowLog(false);
@@ -1549,9 +1553,21 @@ export default function GardenScreen() {
     return tileAt((px - rootOff.current.x - c.tx) / c.s, (py - SEED_UP - rootOff.current.y - c.ty) / c.s);
   };
   // Sürüklenen şeyin konabileceği kare mi?
+  // Aletin bir karede yapacağı iş (yoksa null).
+  const toolAct = (tool: 'orak' | 'kova', i: number): Action | null => {
+    const tl = farm.tiles[i];
+    if (!tl) return null;
+    if (tool === 'kova') return tl.k === 'crop' && tl.by !== uid && !tl.watered && !cropReady(tl, now) ? { a: 'water', i } : null;
+    if (tl.k === 'crop') return cropReady(tl, now) ? { a: 'harvest', i } : null;
+    if (tl.k === 'tree') return treeReady(tl, now) ? { a: 'pick', i } : null;
+    if (tl.k === 'animal') return animalReady(tl, now) ? { a: 'collect', i } : null;
+    if (tl.k === 'building') return tl.res.some((r) => residentReady(r, now)) ? { a: 'gather', i } : null;
+    return null;
+  };
   const dragFits = (it: DragItem, i: number) => {
     const tl = farm.tiles[i];
     if (!tl) return false;
+    if (it.tool) return !!toolAct(it.tool, i);
     if (it.a.a === 'plant') return tl.k === 'soil';
     if (it.a.a === 'adopt') {
       const need = buildingFor(it.a.item);
@@ -1560,7 +1576,7 @@ export default function GardenScreen() {
     return tl.k === 'grass';
   };
   // Tohum ve çit "boyanır": parmak üstünden geçtikçe konur. Diğerleri bırakınca bir kez konur.
-  const dragPaints = (it: DragItem) => it.a.a === 'plant' || (it.a.a === 'decor' && !!DECOR[it.a.item].wall);
+  const dragPaints = (it: DragItem) => !!it.tool || it.a.a === 'plant' || (it.a.a === 'decor' && !!DECOR[it.a.item].wall);
   seedApi.current = {
     start: (it, px, py) => {
       rootRef.current?.measureInWindow((x: number, y: number) => (rootOff.current = { x, y }));
@@ -1584,7 +1600,7 @@ export default function GardenScreen() {
       seedDone.current.add(i);
       seedCoins.current -= seed.it.cost;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      work({ ...seed.it.a, i } as Action);
+      work(seed.it.tool ? toolAct(seed.it.tool, i)! : ({ ...seed.it.a, i } as Action));
     },
     end: () => {
       const cur = seed;
@@ -1604,9 +1620,20 @@ export default function GardenScreen() {
         setSel(null);
         setShowShop(false);
         setPlantAll(false);
+        setPop(null);
       }
     },
   };
+  // Balonun karesi değiştiyse (ekildi, toplandı, kaldırıldı) balon kapanır; sürükleme sırasında dokunulmaz.
+  const popTile = pop ? farm.tiles[pop.i] : undefined;
+  const popOk =
+    !pop ||
+    (pop.kind === 'seed'
+      ? popTile?.k === 'soil'
+      : popTile?.k === 'crop' && (pop.kind === 'orak' ? cropReady(popTile, now) : pop.kind === 'kova' ? !popTile.watered : true));
+  useEffect(() => {
+    if (!popOk && !seed) setPop(null);
+  }, [popOk, seed]);
   const seedHit = seed ? seedTileAt(seed.x, seed.y) : -1;
   const seedTarget = seed && seedHit >= 0 && dragFits(seed.it, seedHit) ? seedHit : null;
   // Kaldırılan eşya yerinde görünmez; parmağın altında yarı saydam kopyası gezer
@@ -1799,10 +1826,13 @@ export default function GardenScreen() {
   const quickFor = (i: number): (() => void) | null => {
     const tl = farm.tiles[i];
     if (!tl) return null;
+    // Tarla ve ekin: yanında balon açılır (tohumlar, orak, kova ya da büyüme bilgisi). Alet tarlaların üstünde gezdirilir.
+    const open = (kind: 'seed' | 'orak' | 'kova' | 'info') => () =>
+      setTimeout(() => setPop((old) => (old && old.i === i && old.kind === kind ? null : { i, kind })), 0);
+    if (tl.k === 'soil') return scene ? null : open('seed');
     if (tl.k === 'crop') {
-      if (cropReady(tl, now)) return CROPS[tl.crop].big ? (scene ? null : () => begin('harvest')) : () => work({ a: 'harvest', i });
-      if (tl.by !== uid && !tl.watered) return () => work({ a: 'water', i });
-      return null;
+      if (scene) return null;
+      return open(cropReady(tl, now) ? 'orak' : tl.by !== uid && !tl.watered ? 'kova' : 'info');
     }
     if (tl.k === 'animal' && animalReady(tl, now)) return () => work({ a: 'collect', i });
     if (tl.k === 'tree' && treeReady(tl, now)) return () => work({ a: 'pick', i });
@@ -2247,7 +2277,77 @@ export default function GardenScreen() {
             }}
           />
         ))}
+      {seed &&
+        (() => {
+          const n = [...seedDone.current].filter((i) => i >= 0).length;
+          if (!n) return null;
+          return (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: seed.x - rootOff.current.x + 30,
+                top: seed.y - rootOff.current.y - SEED_UP - 40,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 10,
+                backgroundColor: '#FFF8E8',
+                borderWidth: 1.5,
+                borderColor: '#9A6534',
+                zIndex: 51,
+              }}
+            >
+              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 13, color: INK }}>
+                {seed.it.tool ? n : `${n} · ${n * seed.it.cost} altın`}
+              </Text>
+            </View>
+          );
+        })()}
       <SeedDrag.Provider value={seedApi}>
+        {pop &&
+          !scene &&
+          !placing &&
+          sel === null &&
+          !showShop &&
+          farm.tiles[pop.i] &&
+          (() => {
+            const c = cam.current;
+            const at = center(...rc(pop.i));
+            const sx = at.x * c.s + c.tx;
+            const sy = at.y * c.s + c.ty;
+            const W = pop.kind === 'seed' ? Math.min(box.w - 16, 296) : 200;
+            const above = sy > box.h * 0.42;
+            return (
+              <View
+                pointerEvents="box-none"
+                style={{
+                  position: 'absolute',
+                  left: Math.min(box.w - W - 8, Math.max(8, sx - W / 2)),
+                  width: W,
+                  ...(above ? { bottom: box.h - (sy - TH * c.s * 0.9) } : { top: sy + TH * c.s * 0.9 }),
+                  opacity: seed ? 0 : 1,
+                  zIndex: 40,
+                }}
+              >
+                <ToolPop
+                  farm={(seed && seedFarm.current) || farm}
+                  i={pop.i}
+                  kind={pop.kind}
+                  now={now}
+                  level={lv.level}
+                  onAct={(a) => {
+                    work(a);
+                    setPop(null);
+                  }}
+                  toolAct={toolAct}
+                  onMore={() => {
+                    setSel(pop.i);
+                    setPop(null);
+                  }}
+                />
+              </View>
+            );
+          })()}
         {/* Tohum sürüklenirken tabela görünmez olur ama sökülmez: parmak hareketi listedeki tohuma bağlı. */}
         <View
           pointerEvents="box-none"
@@ -2572,6 +2672,154 @@ function Quick({
   );
 }
 
+// Karenin yanında açılan balon. Tohumlar ve aletler buradan tarlaların üstüne sürüklenir; dokunulursa yalnızca bu kareye uygulanır.
+function ToolPop({
+  farm,
+  i,
+  kind,
+  now,
+  level,
+  onAct,
+  toolAct,
+  onMore,
+}: {
+  farm: Farm;
+  i: number;
+  kind: 'seed' | 'orak' | 'kova' | 'info';
+  now: number;
+  level: number;
+  onAct: (a: Action) => void;
+  toolAct: (tool: 'orak' | 'kova', i: number) => Action | null;
+  onMore: () => void;
+}) {
+  const t = farm.tiles[i];
+  const crop = t?.k === 'crop' ? t : null;
+  const box = {
+    backgroundColor: 'rgba(255,248,232,0.97)',
+    borderRadius: 18,
+    borderWidth: 2.5,
+    borderColor: '#9A6534',
+    padding: 8,
+    gap: 6,
+    shadowColor: '#3A2A10',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 8,
+  } as const;
+  const more = (
+    <Pressable onPress={onMore} hitSlop={8} accessibilityLabel="Ayrıntılar" style={{ padding: 2 }}>
+      <Ionicons name="ellipsis-horizontal-circle" size={22} color="#9A6534" />
+    </Pressable>
+  );
+  // Büyüme bilgisi: ad, ilerleme çubuğu, kalan süre.
+  const info = crop && (
+    <View style={{ gap: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flex: 1, fontWeight: '900', fontSize: 14, color: INK }}>
+          {CROPS[crop.crop].name}
+        </Text>
+        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: cropReady(crop, now) ? '#3E7F22' : MUTED }}>
+          {cropReady(crop, now) ? 'hazır' : timeLeft(crop.ready - now)}
+        </Text>
+        {more}
+      </View>
+      <View style={{ height: 8, borderRadius: 4, backgroundColor: '#E9D9B8', overflow: 'hidden' }}>
+        <View
+          style={{
+            width: `${Math.round(Math.min(1, Math.max(0.04, (now - crop.at) / Math.max(1, crop.ready - crop.at))) * 100)}%`,
+            height: '100%',
+            backgroundColor: '#5DAA2E',
+          }}
+        />
+      </View>
+    </View>
+  );
+  if (kind === 'info') return <View style={box}>{info}</View>;
+  if (kind === 'orak' || kind === 'kova') {
+    const act = toolAct(kind, i);
+    const art = kind === 'orak' ? 'orak' : 'can';
+    return (
+      <View style={box}>
+        {info}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <SeedChip dir="any" item={{ a: { a: 'harvest', i: -1 }, art, cost: 0, tool: kind }}>
+            <Pressable
+              onPress={() => act && onAct(act)}
+              style={({ pressed }) => ({
+                width: 62,
+                height: 62,
+                borderRadius: 31,
+                backgroundColor: kind === 'orak' ? '#F6D58E' : '#CFE8F7',
+                borderWidth: 2.5,
+                borderColor: pressed ? GREEN : '#9A6534',
+                alignItems: 'center',
+                justifyContent: 'center',
+              })}
+            >
+              {ART[art] ? (
+                <Image source={ART[art].src} style={{ width: 42, height: 42 }} resizeMode="contain" />
+              ) : (
+                <Ionicons name={kind === 'orak' ? 'cut' : 'water'} size={30} color="#7A4A1C" />
+              )}
+            </Pressable>
+          </SeedChip>
+          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, lineHeight: 16, color: MUTED }}>
+            {kind === 'orak'
+              ? 'Orağı sürükle, hazır olanların üstünden geçir. Dokunursan yalnızca burası toplanır.'
+              : 'Kovayı sürükle, susuz ekinlerin üstünden geçir. Dokunursan yalnızca burası sulanır.'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+  // Tohumlar: seviyesi açılmış ekinler; altın yetmeyenler soluk.
+  const seeds = (Object.keys(CROPS) as CropId[]).filter((k) => CROPS[k].lvl <= level);
+  return (
+    <View style={box}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, color: MUTED }}>
+          Tohumu sürükle, tarlaların üstünden geçir
+        </Text>
+        {more}
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {seeds.map((k) => {
+          const c = CROPS[k];
+          const off = farm.coins < c.cost;
+          return (
+            <SeedChip key={k} dir="any" item={off ? null : { a: { a: 'plant', i, crop: k }, art: k, cost: c.cost }}>
+              <Pressable
+                disabled={off}
+                onPress={() => onAct({ a: 'plant', i, crop: k })}
+                accessibilityLabel={c.name}
+                style={({ pressed }) => ({
+                  width: 50,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  borderColor: pressed ? GREEN : '#E5C99B',
+                  backgroundColor: '#FBFAF6',
+                  alignItems: 'center',
+                  opacity: off ? 0.4 : 1,
+                })}
+              >
+                {ART[k] && <Image source={ART[k].src} style={{ width: 36, height: 32 }} resizeMode="contain" />}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <Image source={ART.coin.src} style={{ width: 10, height: 10 }} resizeMode="contain" />
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 11, color: '#7A5A00' }}>
+                    {c.cost}
+                  </Text>
+                </View>
+              </Pressable>
+            </SeedChip>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 // Kenar düğmesi: krem zeminli, ahşap çerçeveli yuvarlak düğme; adı altında yazar.
 function Edge({
   icon,
@@ -2704,13 +2952,14 @@ type Item = {
 };
 // Sürükle-bırak: listedeki şey çekilince parmağı izler. Tohum ve çit geçtiği her uygun kareye konur;
 // bina, ağaç, atölye ve süs bırakıldığı kareye, hayvan bırakıldığı (ya da boş yeri olan) binaya gider.
-type DragItem = { a: Action; art: string; cost: number };
+// tool: tohum yerine alet sürükleniyorsa (orak: hazır olan her şeyi toplar; kova: partnerin susuz ekinini sular).
+type DragItem = { a: Action; art: string; cost: number; tool?: 'orak' | 'kova' };
 type SeedDragApi = { start: (it: DragItem, px: number, py: number) => void; move: (px: number, py: number) => void; end: () => void };
 const SeedDrag = createContext<RefObject<SeedDragApi | null> | null>(null);
 const DRAGGABLE = ['plant', 'build', 'tree', 'decor', 'adopt'];
 
 // dir: liste yatay kayıyorsa yukarı, dikey kayıyorsa sağa çekiş sürüklemeyi başlatır (kaydırmayla karışmasın).
-function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 'right'; children: ReactNode }) {
+function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 'right' | 'any'; children: ReactNode }) {
   const api = useContext(SeedDrag);
   const ref = useRef(item);
   ref.current = item;
@@ -2728,7 +2977,11 @@ function SeedChip({ item, dir, children }: { item: DragItem | null; dir: 'up' | 
         onMoveShouldSetPanResponderCapture: (_e, g) =>
           !!ref.current &&
           !!api?.current &&
-          (dir === 'up' ? g.dy < -10 && Math.abs(g.dy) > Math.abs(g.dx) : g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy)),
+          (dir === 'any'
+            ? Math.hypot(g.dx, g.dy) > 8
+            : dir === 'up'
+              ? g.dy < -10 && Math.abs(g.dy) > Math.abs(g.dx)
+              : g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy)),
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (e) => {
           active.current = true;
@@ -3042,13 +3295,17 @@ function Sheet(p: SheetProps) {
         <Head title="Satılık arazi" onClose={p.onClose} />
         <Note>
           Çiftliğin çevresinde {parcelTiles(farm, i).length} karelik yabani arazi. Satın alınca sizin olur; üstündeki ağaç ve çalıları
-          baltayla kesip tarla sürer, ağaç diker, bina kurarsınız. Her yeni arazi biraz daha pahalı.
+          baltayla, kayaları kazmayla temizleyip tarla sürer, ağaç diker, bina kurarsınız. Her yeni arazi biraz daha pahalı.
         </Note>
-        <Btn
-          label={ok ? `Satın al · ${price} altın` : `${price} altın (${price - farm.coins} eksik)`}
-          onPress={() => p.onAct({ a: 'unlock', i })}
-          disabled={!ok}
-        />
+        {parcelAdjacent(farm, i) ? (
+          <Btn
+            label={ok ? `Satın al · ${price} altın` : `${price} altın (${price - farm.coins} eksik)`}
+            onPress={() => p.onAct({ a: 'unlock', i })}
+            disabled={!ok}
+          />
+        ) : (
+          <Note>Bu arazi çiftliğinize bitişik değil. Önce aradaki araziyi alın; çiftlik kenarından dışa doğru büyür.</Note>
+        )}
       </>
     );
   }

@@ -88,6 +88,14 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   sus_kemer: { src: require('../../assets/farm/sus_kemer.webp'), h: 1.375 },
   sus_traktor: { src: require('../../assets/farm/sus_traktor.webp'), h: 0.898 },
   sus_kalpheykel: { src: require('../../assets/farm/sus_kalpheykel.webp'), h: 1.019 },
+  y_mese: { src: require('../../assets/farm/y_mese.webp'), h: 1.106 },
+  y_hus: { src: require('../../assets/farm/y_hus.webp'), h: 1.491 },
+  y_cali: { src: require('../../assets/farm/y_cali.webp'), h: 0.8 },
+  y_kaya: { src: require('../../assets/farm/y_kaya.webp'), h: 0.803 },
+  y_kutuk: { src: require('../../assets/farm/y_kutuk.webp'), h: 0.816 },
+  balta: { src: require('../../assets/farm/balta.webp'), h: 2.5 },
+  kazma: { src: require('../../assets/farm/kazma.webp'), h: 1.364 },
+  orak: { src: require('../../assets/farm/orak.webp'), h: 1.765 },
   // </yeni-atolyeler>
   // Atölyeler ve ürünleri
   mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },

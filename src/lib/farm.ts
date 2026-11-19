@@ -536,15 +536,15 @@ export type Tile =
 // Arazi satın alınınca bunlar yerinde kalır; ağaç, çalı ve kütük baltayla, kayalar kazmayla temizlenir.
 export type WildId = 'mese' | 'hus' | 'sogut' | 'cali' | 'kutuk' | 'kaya' | 'tas';
 export type ToolId = 'balta' | 'kazma';
-// art yoksa alt kullanılır. Kaya, taş ve kütük çizimleri henüz yok; wildAt şimdilik yalnızca ağaç ve çalı üretir.
+// art yoksa alt kullanılır.
 export const WILD: Record<WildId, { name: string; art: string; alt: string; tool: ToolId; w: number; xp: number }> = {
-  mese: { name: 'Yabani ağaç', art: 'y_mese', alt: 'tree', tool: 'balta', w: 1.25, xp: 4 },
-  hus: { name: 'Yabani çam', art: 'y_hus', alt: 'sus_cam', tool: 'balta', w: 1.0, xp: 4 },
+  mese: { name: 'Yabani meşe', art: 'y_mese', alt: 'tree', tool: 'balta', w: 1.35, xp: 4 },
+  hus: { name: 'Yabani huş', art: 'y_hus', alt: 'sus_cam', tool: 'balta', w: 1.05, xp: 4 },
   sogut: { name: 'Yabani söğüt', art: 'y_sogut', alt: 'sus_sogut', tool: 'balta', w: 1.3, xp: 4 },
-  cali: { name: 'Yabani gül çalısı', art: 'y_cali', alt: 'sus_gulcali', tool: 'balta', w: 0.85, xp: 3 },
-  kutuk: { name: 'Kütük', art: 'y_kutuk', alt: 'hay', tool: 'balta', w: 0.7, xp: 3 },
+  cali: { name: 'Yabani çalı', art: 'y_cali', alt: 'sus_gulcali', tool: 'balta', w: 0.9, xp: 3 },
+  kutuk: { name: 'Kütük', art: 'y_kutuk', alt: 'hay', tool: 'balta', w: 0.8, xp: 3 },
   kaya: { name: 'Kaya', art: 'y_kaya', alt: 'well', tool: 'kazma', w: 0.95, xp: 5 },
-  tas: { name: 'Taş yığını', art: 'y_tas', alt: 'well', tool: 'kazma', w: 0.8, xp: 4 },
+  tas: { name: 'Taş', art: 'y_kaya', alt: 'well', tool: 'kazma', w: 0.6, xp: 4 },
 };
 export const TOOLS: Record<ToolId, { name: string; art: string; cost: number; verb: string }> = {
   balta: { name: 'Balta', art: 'balta', cost: 120, verb: 'Baltayla kes' },
@@ -552,14 +552,13 @@ export const TOOLS: Record<ToolId, { name: string; art: string; cost: number; ve
 };
 export const TOOL_MAX = 20; // tek seferde alınabilecek en çok alet
 // Her çiftlik birkaç aletle başlar.
-export const toolsOf = (f: Farm): Record<ToolId, number> => ({ balta: 3, kazma: 0, ...(f.tools ?? {}) });
-// Şu an kullanılan aletler (kazma, kaya çizimleri gelince açılacak).
-export const TOOLS_ON: ToolId[] = ['balta'];
+export const toolsOf = (f: Farm): Record<ToolId, number> => ({ balta: 3, kazma: 2, ...(f.tools ?? {}) });
+// Pazarda satılan ve siparişlerin ödül verdiği aletler.
+export const TOOLS_ON: ToolId[] = ['balta', 'kazma'];
 // Bir dış arazi karesinde ne yetiştiği kare numarasından türetilir (kayıt gerekmez; herkes aynısını görür).
 export function wildAt(i: number): WildId | null {
   const h = (Math.imul(i + 17, 2654435761) >>> 0) % 100;
-  // 'mese' (eski yuvarlak ağaç çizimi) şimdilik üretilmiyor; yeni yabani ağaç çizimleri gelince açılacak.
-  return h < 14 ? 'hus' : h < 24 ? 'sogut' : h < 32 ? 'cali' : null;
+  return h < 11 ? 'mese' : h < 19 ? 'hus' : h < 27 ? 'cali' : h < 31 ? 'kutuk' : h < 35 ? 'kaya' : h < 38 ? 'tas' : null;
 }
 
 export type FarmLog = { by: string; text: string; at: number };
@@ -821,6 +820,14 @@ export const unlockLvl = (key: string): number =>
   STALL_GOODS.find((g) => g.key === key)?.lvl ??
   1;
 export const stallPrice = (key: string, n = 1) => (PRICE[key] ?? 0) * STALL_MULT * n;
+// Dış arazi yalnızca çiftliğe bitişikse alınır: parselin bir karesi, açılmış bir kareye kenardan komşu olmalı.
+export function parcelAdjacent(f: Farm, i: number): boolean {
+  const open = (j: number) => !!f.tiles[j] && f.tiles[j].k !== 'locked';
+  return parcelTiles(f, i).some((j) => {
+    const c = j % N;
+    return open(j - N) || open(j + N) || (c > 0 && open(j - 1)) || (c < N - 1 && open(j + 1));
+  });
+}
 export const stockCount = (f: Farm) => Object.values(f.stock).reduce((a, b) => a + b, 0);
 export const stockValue = (f: Farm, bonus = 1) =>
   Math.round(Object.entries(f.stock).reduce((a, [k, n]) => a + (PRICE[k] ?? 0) * n, 0) * bonus);
@@ -875,7 +882,7 @@ export function makeOrder(f: Farm, now: number, openAt = now): Order {
     xp: (5 * picks.length + 3 * qty) * (special ? 2 : 1),
     ...(special ? { special: true } : {}),
     // Her dört siparişten biri ödül olarak bir balta da verir.
-    ...(Math.random() < 0.25 ? { tool: 'balta' as ToolId } : {}),
+    ...(Math.random() < 0.25 ? { tool: (Math.random() < 0.65 ? 'balta' : 'kazma') as ToolId } : {}),
     openAt,
     who: `${ORDER_WOMEN[Math.floor(Math.random() * ORDER_WOMEN.length)]} ve ${ORDER_MEN[Math.floor(Math.random() * ORDER_MEN.length)]}`,
   };
@@ -1236,6 +1243,7 @@ export function applyAction(
       if (isOuter(act.i)) {
         // dış arazi: altınla satın alınır
         const price = outerPrice(f);
+        if (!parcelAdjacent(f, act.i)) return 'Bu arazi çiftliğe bitişik değil; önce aradaki araziyi al.';
         if (f.coins < price) return `Bu arazi ${price} altın; ${price - f.coins} altın eksik.`;
         f.coins -= price;
         f.outer = (f.outer ?? 0) + 1;
