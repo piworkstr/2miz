@@ -8,6 +8,8 @@ import {
   depotUsed,
   DEPOT_BASE,
   farmOf,
+  levelStart,
+  xpOf,
   levelOf,
   MIN,
   N,
@@ -189,6 +191,24 @@ test('date planı: bütçeyi aşmaz, adımlar yinelenmez, soru ve fotoğraf adı
           const q = swapStep(p, 1, s);
           assert.ok(q.total <= b);
         }
+});
+
+test('seviye eğrisi: eski tecrübe seviyesini korur, yeni tecrübe yavaş eğriyle sayılır', () => {
+  // İlk 20 seviye değişmedi.
+  assert.equal(levelOf(xpOf({ xp: 5699 })).level, 19);
+  assert.equal(levelOf(xpOf({ xp: 5700, xm: 0 })).level, 20);
+  // Eski eğride 62. seviyede olan çift (56.730 tecrübe) yine 62. seviyededir; yeni başlayan aynı tecrübeyle 45'te olur.
+  assert.equal(levelOf(xpOf({ xp: 56730 })).level, 62);
+  assert.equal(levelOf(xpOf({ xp: 56730, xm: 0 })).level, 45);
+  // Eski eğride 62'den 63'e 1.860 tecrübe yetiyordu; artık yetmez.
+  assert.equal(levelOf(xpOf({ xp: 56730 + 1900, xm: 56730 })).level, 62);
+  assert.ok(levelStart(63) - levelStart(62) > 20000);
+  // İlk işte eski tecrübe sabitlenir.
+  const f0 = { ...newFarm(), xp: 56730, coins: 1000 };
+  const soil = f0.tiles.findIndex((t) => t.k === 'soil');
+  const r = applyAction(f0, { a: 'plant', i: soil, crop: 'bugday' }, 'u1', () => '', 'A', Date.now(), null);
+  assert.ok(typeof r !== 'string');
+  if (typeof r !== 'string') assert.equal(r.farm.xm, 56730);
 });
 
 console.log(process.exitCode ? 'Bazı testler geçmedi.' : `${passed} test geçti.`);

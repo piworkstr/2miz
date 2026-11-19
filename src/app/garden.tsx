@@ -3331,82 +3331,92 @@ function NameCard({
           paddingTop: 110,
         }}
       >
-        <Pressable
-          onPress={() => {}}
-          style={{ width: '100%', maxWidth: 380, backgroundColor: '#FFFDF8', borderRadius: 24, padding: 16, gap: 10 }}
-        >
-          <Text style={{ fontWeight: '900', fontSize: 18, color: INK, textAlign: 'center' }}>Çiftlik ayarları</Text>
-          <Text style={label}>Çiftliğin adı</Text>
-          <TextInput
-            value={fn}
-            onChangeText={setFn}
-            placeholder="Papatya Çiftliği"
-            placeholderTextColor="#B9A27E"
-            maxLength={22}
-            style={input}
-          />
-          <Text style={{ color: badFarm ? '#C0392B' : MUTED, fontSize: 12 }}>
-            {badFarm ? 'En az 3 harf olmalı.' : 'Pazarda ilanlarınız bu adla görünür; gerçek adınız görünmez.'}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Image source={ART.dog.src} style={{ width: 26, height: 26 * ART.dog.h }} resizeMode="contain" />
-            <Text style={label}>Köpeğin adı</Text>
-          </View>
-          <TextInput value={dn} onChangeText={setDn} placeholder="Karabaş" placeholderTextColor="#B9A27E" maxLength={14} style={input} />
-          {badDog && <Text style={{ color: '#C0392B', fontSize: 12 }}>En az 2 harf olmalı.</Text>}
-          <Pressable
-            onPress={() => {
-              setIsOpen(!isOpen);
-              onOpen(!isOpen);
-            }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}
-          >
-            <Ionicons name={isOpen ? 'eye-outline' : 'eye-off-outline'} size={20} color={INK} />
-            <View style={{ flex: 1 }}>
-              <Text style={label}>Çiftlik ziyarete açık</Text>
-              <Text style={{ color: MUTED, fontSize: 12 }}>
-                Başka çiftler çiftliğinizin görünümünü gezebilir. Altın, depo ve notlarınız görünmez.
+        <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 380 }}>
+          <WoodPanel cap={30}>
+            <View style={{ gap: 10 }}>
+              <GText size={19} style={{ textAlign: 'center' }}>
+                Çiftlik ayarları
+              </GText>
+              <Text style={label}>Çiftliğin adı</Text>
+              <TextInput
+                value={fn}
+                onChangeText={setFn}
+                placeholder="Papatya Çiftliği"
+                placeholderTextColor="#B9A27E"
+                maxLength={22}
+                style={input}
+              />
+              <Text style={{ color: badFarm ? '#C0392B' : MUTED, fontSize: 12 }}>
+                {badFarm ? 'En az 3 harf olmalı.' : 'Pazarda ilanlarınız bu adla görünür; gerçek adınız görünmez.'}
               </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image source={ART.dog.src} style={{ width: 26, height: 26 * ART.dog.h }} resizeMode="contain" />
+                <Text style={label}>Köpeğin adı</Text>
+              </View>
+              <TextInput
+                value={dn}
+                onChangeText={setDn}
+                placeholder="Karabaş"
+                placeholderTextColor="#B9A27E"
+                maxLength={14}
+                style={input}
+              />
+              {badDog && <Text style={{ color: '#C0392B', fontSize: 12 }}>En az 2 harf olmalı.</Text>}
+              <Pressable
+                onPress={() => {
+                  setIsOpen(!isOpen);
+                  onOpen(!isOpen);
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}
+              >
+                <Ionicons name={isOpen ? 'eye-outline' : 'eye-off-outline'} size={20} color={INK} />
+                <View style={{ flex: 1 }}>
+                  <Text style={label}>Çiftlik ziyarete açık</Text>
+                  <Text style={{ color: MUTED, fontSize: 12 }}>
+                    Başka çiftler çiftliğinizin görünümünü gezebilir. Altın, depo ve notlarınız görünmez.
+                  </Text>
+                </View>
+                <Text style={{ fontWeight: '800', color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
+              </Pressable>
+              {isOpen && !!visitors?.length && (
+                <Text style={{ color: MUTED, fontSize: 12 }}>
+                  Son uğrayanlar:{' '}
+                  {visitors
+                    .slice(0, 4)
+                    .map((v) => v.name)
+                    .join(', ')}
+                  {visitors.length > 4 ? ` ve ${visitors.length - 4} çiftlik daha` : ''}
+                </Text>
+              )}
+              <Pressable onPress={onMute} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
+                <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={20} color={INK} />
+                <Text style={[label, { flex: 1 }]}>Oyun sesleri</Text>
+                <Text style={{ fontWeight: '800', color: mute ? MUTED : '#4E8E2A' }}>{mute ? 'Kapalı' : 'Açık'}</Text>
+              </Pressable>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                <Pressable
+                  onPress={onClose}
+                  style={{ flex: 1, backgroundColor: '#F1E8E2', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}
+                >
+                  <Text style={{ fontWeight: '800', color: INK }}>Vazgeç</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => onSave(fn, dn)}
+                  disabled={badFarm || badDog}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#6DB33F',
+                    borderRadius: 14,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    opacity: badFarm || badDog ? 0.5 : 1,
+                  }}
+                >
+                  <Text style={{ fontWeight: '900', color: '#fff' }}>Kaydet</Text>
+                </Pressable>
+              </View>
             </View>
-            <Text style={{ fontWeight: '800', color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
-          </Pressable>
-          {isOpen && !!visitors?.length && (
-            <Text style={{ color: MUTED, fontSize: 12 }}>
-              Son uğrayanlar:{' '}
-              {visitors
-                .slice(0, 4)
-                .map((v) => v.name)
-                .join(', ')}
-              {visitors.length > 4 ? ` ve ${visitors.length - 4} çiftlik daha` : ''}
-            </Text>
-          )}
-          <Pressable onPress={onMute} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
-            <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={20} color={INK} />
-            <Text style={[label, { flex: 1 }]}>Oyun sesleri</Text>
-            <Text style={{ fontWeight: '800', color: mute ? MUTED : '#4E8E2A' }}>{mute ? 'Kapalı' : 'Açık'}</Text>
-          </Pressable>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-            <Pressable
-              onPress={onClose}
-              style={{ flex: 1, backgroundColor: '#F1E8E2', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontWeight: '800', color: INK }}>Vazgeç</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => onSave(fn, dn)}
-              disabled={badFarm || badDog}
-              style={{
-                flex: 1,
-                backgroundColor: '#6DB33F',
-                borderRadius: 14,
-                paddingVertical: 12,
-                alignItems: 'center',
-                opacity: badFarm || badDog ? 0.5 : 1,
-              }}
-            >
-              <Text style={{ fontWeight: '900', color: '#fff' }}>Kaydet</Text>
-            </Pressable>
-          </View>
+          </WoodPanel>
         </Pressable>
       </Pressable>
     </Modal>
@@ -3471,49 +3481,57 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
             width: '100%',
             maxWidth: 380,
             maxHeight: '82%',
-            backgroundColor: '#FFFDF8',
-            borderRadius: 26,
-            overflow: 'hidden',
             transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
           }}
         >
           <Pressable onPress={() => {}}>
-            <View style={{ backgroundColor: up ? '#6DB33F' : '#E9C46A', paddingVertical: 18, alignItems: 'center', gap: 2 }}>
-              {up && <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Tebrikler, seviye atladınız!</Text>}
-              <Text style={{ color: up ? '#fff' : INK, fontWeight: '900', fontSize: 34 }}>Seviye {level}</Text>
-              {!up && (
-                <Text style={{ color: INK, fontWeight: '700', fontSize: 13 }}>
-                  Sonraki seviyeye {Math.max(0, lv.to - xp)} tecrübe kaldı
-                </Text>
-              )}
-            </View>
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-              {up && (
-                <View style={{ gap: 10 }}>
-                  <Text style={{ fontWeight: '900', color: INK, fontSize: 15, textAlign: 'center' }}>
-                    {now.length ? 'Yeni açılanlar' : 'Bu seviyede yeni bir şey açılmadı'}
-                  </Text>
-                  {now.length > 0 && <UnlockGrid list={now} />}
-                </View>
-              )}
-              {nextLvl ? (
-                <View style={{ gap: 10 }}>
-                  <Text style={{ fontWeight: '800', color: MUTED, fontSize: 13, textAlign: 'center' }}>Seviye {nextLvl}’de açılacak</Text>
-                  <UnlockGrid list={next} dim />
-                </View>
-              ) : (
-                <Text style={{ color: MUTED, textAlign: 'center' }}>Açılacak her şeyi açtınız.</Text>
-              )}
-              <Text style={{ color: MUTED, fontSize: 12, textAlign: 'center' }}>
-                Tecrübe; hasat, hayvan ürünü, üretim ve sipariş teslimiyle kazanılır.
-              </Text>
-              <Pressable
-                onPress={onClose}
-                style={{ backgroundColor: '#6DB33F', borderRadius: 16, paddingVertical: 13, alignItems: 'center' }}
+            <WoodPanel cap={30}>
+              <View
+                style={{ backgroundColor: up ? '#6DB33F' : '#F1D9A0', borderRadius: 14, paddingVertical: 14, alignItems: 'center', gap: 2 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{up ? 'Harika' : 'Tamam'}</Text>
-              </Pressable>
-            </ScrollView>
+                {up && (
+                  <GText light size={15}>
+                    Tebrikler, seviye atladınız!
+                  </GText>
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <LevelBadge level={level} size={58} />
+                  <GText size={30} light={up}>{`Seviye ${level}`}</GText>
+                </View>
+                {!up && (
+                  <Text style={{ color: INK, fontWeight: '700', fontSize: 13 }}>
+                    Sonraki seviyeye {Math.max(0, lv.to - xp)} tecrübe kaldı
+                  </Text>
+                )}
+              </View>
+              <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ paddingTop: 12, gap: 14 }}>
+                {up && (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ fontWeight: '900', color: INK, fontSize: 15, textAlign: 'center' }}>
+                      {now.length ? 'Yeni açılanlar' : 'Bu seviyede yeni bir şey açılmadı'}
+                    </Text>
+                    {now.length > 0 && <UnlockGrid list={now} />}
+                  </View>
+                )}
+                {nextLvl ? (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ fontWeight: '800', color: MUTED, fontSize: 13, textAlign: 'center' }}>Seviye {nextLvl}’de açılacak</Text>
+                    <UnlockGrid list={next} dim />
+                  </View>
+                ) : (
+                  <Text style={{ color: MUTED, textAlign: 'center' }}>Açılacak her şeyi açtınız.</Text>
+                )}
+                <Text style={{ color: MUTED, fontSize: 12, textAlign: 'center' }}>
+                  Tecrübe; hasat, hayvan ürünü, üretim ve sipariş teslimiyle kazanılır.
+                </Text>
+                <Pressable
+                  onPress={onClose}
+                  style={{ backgroundColor: '#6DB33F', borderRadius: 16, paddingVertical: 13, alignItems: 'center' }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{up ? 'Harika' : 'Tamam'}</Text>
+                </Pressable>
+              </ScrollView>
+            </WoodPanel>
           </Pressable>
         </Animated.View>
       </Pressable>
@@ -4912,13 +4930,11 @@ function BigOrderCard({
   const mine = o.by[uid] ?? 0;
   const theirs = Object.entries(o.by).reduce((a, [k, n]) => (k === uid ? a : a + n), 0);
   return (
-    <View style={{ borderWidth: 2, borderColor: '#E9C46A', backgroundColor: '#FFF9E8', borderRadius: 16, padding: 10, gap: 7 }}>
+    <View style={{ borderWidth: 2, borderColor: '#C99A5B', backgroundColor: '#FFF3D6', borderRadius: 16, padding: 10, gap: 7 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Image source={ART.pazar.src} style={{ width: 34, height: 34 }} resizeMode="contain" />
         <View style={{ flex: 1 }}>
-          <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 14, color: INK }}>
-            Haftalık büyük sipariş
-          </Text>
+          <GText size={15}>Haftalık büyük sipariş</GText>
           <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 11 }}>
             {o.done ? 'Tamamlandı · yenisi pazartesi gelir' : `Kasaba pazarı için · ${rest} kaldı`}
           </Text>
@@ -4927,9 +4943,7 @@ function BigOrderCard({
           {got}/{total}
         </Text>
       </View>
-      <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F1E3B8', overflow: 'hidden' }}>
-        <View style={{ width: `${Math.round((got / Math.max(1, total)) * 100)}%`, height: 8, backgroundColor: '#6DB33F' }} />
-      </View>
+      <WoodBar value={got / Math.max(1, total)} height={14} style={{ alignSelf: 'stretch' }} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {Object.entries(o.items).map(([k, q]) => (
           <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
