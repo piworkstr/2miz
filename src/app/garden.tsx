@@ -1373,18 +1373,15 @@ export default function GardenScreen() {
   simFarm.current = null;
   const farmRef = useRef(farm);
   farmRef.current = farm;
-  // Atölye seçilince (listeden ya da rozetten) makine ekranın kenarında ya da dışında kalmışsa kamera ona kayar:
-  // ürünler makinenin çevresinde açıldığı için makinenin görünmesi gerekir.
+  // Atölye seçilince kamera makineyi ekranın ortasının biraz altına getirir. Atölye ekranı açıkken çiftlik kaydırılamaz;
+  // böylece ürünler, kurdele ve sıra hep aynı yerde durur (kaydırınca çerçeveler oynamaz).
   useEffect(() => {
     if (sel === null) return;
     const t = farmRef.current.tiles[sel];
     if (!(t?.k === 'decor' && DECOR[t.item].station)) return;
     const c = cam.current;
     const at = center(...rc(sel));
-    const sx = at.x * c.s + c.tx;
-    const sy = at.y * c.s + c.ty;
-    if (sx > 110 && sx < box.w - 110 && sy > insets.top + 270 && sy < box.h - insets.bottom - 290) return;
-    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * c.s, box.h * 0.45 - c.oy + (c.cy - at.y) * c.s, c.s));
+    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * c.s, box.h * 0.6 - c.oy + (c.cy - at.y) * c.s, c.s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel]);
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
@@ -2673,6 +2670,8 @@ export default function GardenScreen() {
           (() => {
             const c = cam.current;
             const at = center(...rc(sel));
+            const sp = sprs.find((q) => q.key === `s${sel}`);
+            const a = sp ? ART[sp.art] : undefined;
             return (
               <StationPop
                 farm={farm}
@@ -2681,8 +2680,19 @@ export default function GardenScreen() {
                 level={lv.level}
                 sx={at.x * c.s + c.tx}
                 sy={(at.y - TW * 0.42) * c.s + c.ty}
+                spr={
+                  sp && a
+                    ? {
+                        src: a.src,
+                        left: (sp.x - sp.w / 2) * c.s + c.tx,
+                        top: (sp.y - sp.w * a.h) * c.s + c.ty,
+                        w: sp.w * c.s,
+                        h: sp.w * a.h * c.s,
+                      }
+                    : null
+                }
                 box={box}
-                top={insets.top + 96}
+                top={insets.top + 8}
                 bottom={insets.bottom + 8}
                 onCook={(recipe) => work({ a: 'cook', i: sel, recipe })}
                 onCollect={() => work({ a: 'collectProd', i: sel, at: (farm.tiles[sel] as { item: string }).item as Station })}
@@ -2849,7 +2859,7 @@ export default function GardenScreen() {
           </View>
         </View>
         {/* Pencere açıkken karakterin konuşma balonu karartının altında kalır: ileti üstte de gösterilir. */}
-        {panelMid && !!say && (
+        {(panelMid || stSel) && !!say && (
           <View
             pointerEvents="none"
             style={{ position: 'absolute', top: insets.top + 10, left: 20, right: 20, alignItems: 'center', zIndex: 60 }}
