@@ -1375,13 +1375,31 @@ export default function GardenScreen() {
   farmRef.current = farm;
   // Atölye seçilince kamera makineyi ekranın ortasının biraz altına getirir. Atölye ekranı açıkken çiftlik kaydırılamaz;
   // böylece ürünler, kurdele ve sıra hep aynı yerde durur (kaydırınca çerçeveler oynamaz).
+  // Yakınlık da sabitlenir (atölye ekranda hep ~150 genişlikte): yerleşim her atölyede ve her kamerada aynı görünür.
+  // Ekran kapanınca kamera eski yerine ve yakınlığına döner.
+  const camBack = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null);
+  const panNow = useRef(pan);
+  panNow.current = pan;
+  const zoomNow = useRef(zoom);
+  zoomNow.current = zoom;
   useEffect(() => {
-    if (sel === null) return;
-    const t = farmRef.current.tiles[sel];
-    if (!(t?.k === 'decor' && DECOR[t.item].station)) return;
+    const t = sel === null ? undefined : farmRef.current.tiles[sel];
+    if (sel === null || !(t?.k === 'decor' && DECOR[t.item].station)) {
+      if (camBack.current) {
+        setZoom(camBack.current.zoom);
+        setPan(camBack.current.pan);
+        camBack.current = null;
+      }
+      return;
+    }
     const c = cam.current;
     const at = center(...rc(sel));
-    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * c.s, box.h * 0.6 - c.oy + (c.cy - at.y) * c.s, c.s));
+    if (!camBack.current) camBack.current = { zoom: zoomNow.current, pan: panNow.current };
+    const base = c.s / zoomNow.current; // yakınlık 1 iken ölçek
+    const z = Math.min(3, Math.max(minZoomRef.current, 150 / (TW * DECOR[t.item].w) / base));
+    const s2 = base * z;
+    setZoom(z);
+    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * s2, box.h * 0.6 - c.oy + (c.cy - at.y) * s2, s2));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel]);
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.
@@ -2333,7 +2351,8 @@ export default function GardenScreen() {
             <SpriteImg key={`g${sp.key}`} s={sp} />
           ))}
           {zoom < 0.8 && <Signs f={farm} />}
-          {badges.map((b) => (
+          {/* Atölye ekranı açıkken çiftliğin balonları gizlenir: karartının altından görünüp ürünlerle karışmasın. */}
+          {(stSel || panelMid ? [] : badges).map((b) => (
             <Badge key={b.key} x={b.x} y={b.y} art={b.art} z={b.z} n={b.n} label={b.label} />
           ))}
           <Dog name={farm.dog} />

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useMemo, useRef, useState } from 'react';
 import { Alert, Animated, Image, PanResponder, Pressable, View, type ImageSourcePropType } from 'react-native';
@@ -18,6 +19,7 @@ import {
   type Station,
 } from '../../lib/farm';
 import { stockArt } from '../../lib/farmArt';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { UI } from '../../lib/farmUiArt';
 import { GText } from './FarmUI';
 
@@ -193,7 +195,8 @@ export function StationPop({
   const stateOf = (id: RecipeId): St =>
     level < RECIPES[id].lvl ? 'locked' : full ? 'full' : hasAll(farm, RECIPES[id].needs) ? 'ok' : 'missing';
 
-  const [pick, setPick] = useState<RecipeId | null>(null);
+  // Ekran açılınca yapılabilen ilk ürün seçili gelir: balon boş kalmaz, ne gerektiği hemen görünür.
+  const [pick, setPick] = useState<RecipeId | null>(() => list.find((id) => stateOf(id) === 'ok') ?? list[0] ?? null);
   const [drag, setDrag] = useState<RecipeId | null>(null);
   const [over, setOver] = useState(false);
   const xy = useRef(new Animated.ValueXY()).current;
@@ -277,8 +280,8 @@ export function StationPop({
   const RIB_W = 150;
   const RIB_H = Math.round((RIB_W * UI.ribbon2.h) / UI.ribbon2.w);
   const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
-  const Q = 36; // sıra madalyonu
-  const QR = 46; // hazır olanın çelengi
+  const Q = 28; // sıra madalyonu
+  const QR = 44; // hazır olanın çelengi
   const rowW = slots * (Q + 6) - 6 + (QR - Q);
   const rowTop = ribTop + RIB_H + 2;
 
@@ -288,21 +291,24 @@ export function StationPop({
       <Pressable
         accessibilityLabel="Atölyeyi kapat"
         onPress={onClose}
-        style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,12,4,0.5)' }}
+        style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,12,4,0.62)' }}
       />
       {/* Atölye karartının üstünde, ışık içinde yeniden çizilir. Hazır ürün varsa dokununca toplanır. */}
-      <View
+      <Svg
         pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: mcx - mw * 0.75,
-          top: mcy - mh * 0.75,
-          width: mw * 1.5,
-          height: mh * 1.5,
-          borderRadius: mw,
-          backgroundColor: drag ? (over ? 'rgba(139,224,78,0.42)' : 'rgba(255,236,170,0.34)') : 'rgba(255,236,170,0.2)',
-        }}
-      />
+        width={mw * 2.6}
+        height={mw * 2.6}
+        style={{ position: 'absolute', left: mcx - mw * 1.3, top: mcy - mw * 1.3 }}
+      >
+        <Defs>
+          <RadialGradient id="stGlow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={drag && over ? '#B6F27A' : '#FFE9A8'} stopOpacity={drag ? 0.75 : 0.55} />
+            <Stop offset="0.55" stopColor={drag && over ? '#B6F27A' : '#FFE9A8'} stopOpacity={0.22} />
+            <Stop offset="1" stopColor="#FFE9A8" stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={mw * 1.3} cy={mw * 1.3} r={mw * 1.3} fill="url(#stGlow)" />
+      </Svg>
       {spr && (
         <Pressable
           onPress={ready > 0 ? onCollect : undefined}
@@ -388,7 +394,7 @@ export function StationPop({
           return (
             <View key={k} style={{ width: w, alignItems: 'center', marginTop: done ? 0 : (QR - Q) / 2 }}>
               <View style={{ width: w, height: h, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={art.src} style={{ position: 'absolute', width: w, height: h, opacity: j ? 1 : 0.9 }} resizeMode="stretch" />
+                <Image source={art.src} style={{ position: 'absolute', width: w, height: h, opacity: j ? 1 : 0.7 }} resizeMode="stretch" />
                 {j && <Icon k={j.recipe} size={Math.round(w * (done ? 0.46 : 0.6))} />}
               </View>
               {j &&
@@ -426,11 +432,19 @@ export function StationPop({
             ])
           }
           hitSlop={8}
-          style={{ position: 'absolute', left: mcx - 60, width: 120, top: rowTop + QR + 22, alignItems: 'center' }}
+          accessibilityLabel="Atölyeyi kaldır"
+          style={{
+            position: 'absolute',
+            right: 14,
+            bottom: bottom + 10,
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <GText light size={11} style={{ textDecorationLine: 'underline' }}>
-            Atölyeyi kaldır
-          </GText>
+          <Image source={UI.round.src} style={{ position: 'absolute', width: 40, height: 40 }} resizeMode="stretch" />
+          <Ionicons name="trash-outline" size={18} color="#FFF3D6" />
         </Pressable>
       )}
       {/* Parmağın altındaki ürün */}
