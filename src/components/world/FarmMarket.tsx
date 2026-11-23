@@ -71,7 +71,7 @@ function Coins({ n, size = 14, color = GOLD }: { n: number | string; size?: numb
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
       <Image source={ART.coin.src} style={{ width: size + 2, height: size + 2 }} resizeMode="contain" />
-      <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: size, color }}>
+      <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: size, color }}>
         {n}
       </Text>
     </View>
@@ -80,7 +80,7 @@ function Coins({ n, size = 14, color = GOLD }: { n: number | string; size?: numb
 function Heading({ title, sub }: { title: string; sub?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 6 }}>
-      <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontWeight: '900', fontSize: 18, color: INK }}>
+      <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontFamily: 'Baloo2_800ExtraBold', fontSize: 18, color: INK }}>
         {title}
       </Text>
       {!!sub && (
@@ -132,7 +132,7 @@ function Pill({
   );
 }
 const pillText = (text: string, main?: boolean) => (
-  <Text maxFontSizeMultiplier={1.15} style={{ fontWeight: '900', fontSize: 14, color: main ? '#fff' : INK }}>
+  <Text maxFontSizeMultiplier={1.15} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 14, color: main ? '#fff' : INK }}>
     {text}
   </Text>
 );
@@ -150,7 +150,10 @@ function Stepper({ n, onChange, min, max }: { n: number; onChange: (n: number) =
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {btn('remove', -1)}
-      <Text maxFontSizeMultiplier={1.1} style={{ minWidth: 30, textAlign: 'center', fontWeight: '900', fontSize: 18, color: INK }}>
+      <Text
+        maxFontSizeMultiplier={1.1}
+        style={{ minWidth: 30, textAlign: 'center', fontFamily: 'Baloo2_800ExtraBold', fontSize: 18, color: INK }}
+      >
         {n}
       </Text>
       {btn('add', 1)}
@@ -259,7 +262,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
         borderColor: LINE,
       }}
     >
-      <Text maxFontSizeMultiplier={1.15} style={{ color: tab === id ? '#fff' : INK, fontWeight: '900', fontSize: 15 }}>
+      <Text maxFontSizeMultiplier={1.15} style={{ color: tab === id ? '#fff' : INK, fontFamily: 'Baloo2_800ExtraBold', fontSize: 15 }}>
         {text}
       </Text>
     </Pressable>
@@ -282,7 +285,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
       }}
     >
       <Icon k={k} size={Math.min(54, w - 20)} />
-      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: 'Baloo2_700Bold', fontSize: 12, color: INK }}>
         {name ?? PRODUCT_NAME[k] ?? k}
       </Text>
       {below}
@@ -295,7 +298,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: PAD, paddingVertical: 10 }}>
           {ART.pazar && <Image source={ART.pazar.src} style={{ width: 96, height: 82 }} resizeMode="contain" />}
           <View style={{ flex: 1, gap: 4 }}>
-            <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: 24, color: INK }}>
+            <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 24, color: INK }}>
               Çiftçi pazarı
             </Text>
             {!!farm.name && (
@@ -348,12 +351,12 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
             {tabBtn('sat', `Tezgâhım ${mine.length}/${MARKET_MAX}`)}
           </View>
           {!!msg && (
-            <Text maxFontSizeMultiplier={1.2} style={{ color: '#3E7F22', fontWeight: '800', fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.2} style={{ color: '#3E7F22', fontFamily: 'Baloo2_700Bold', fontSize: 13 }}>
               {msg}
             </Text>
           )}
           {!!error && (
-            <Text maxFontSizeMultiplier={1.2} style={{ color: '#B93A55', fontWeight: '800', fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.2} style={{ color: '#B93A55', fontFamily: 'Baloo2_700Bold', fontSize: 13 }}>
               {error}
             </Text>
           )}
@@ -372,7 +375,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                 <View style={{ ...row, backgroundColor: '#fff', borderColor: BROWN, borderWidth: 2 }}>
                   <Icon k={buy.key} size={44} />
                   <View style={{ flex: 1 }}>
-                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                    <Text
+                      maxFontSizeMultiplier={1.1}
+                      numberOfLines={1}
+                      style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}
+                    >
                       {PRODUCT_NAME[buy.key] ?? buy.key}
                     </Text>
                     <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
@@ -420,7 +427,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                 <View style={{ ...row, backgroundColor: '#fff', borderColor: BROWN, borderWidth: 2 }}>
                   <Icon k={tool.key} size={44} />
                   <View style={{ flex: 1 }}>
-                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                    <Text
+                      maxFontSizeMultiplier={1.1}
+                      numberOfLines={1}
+                      style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}
+                    >
                       {TOOLS[tool.key].name}
                     </Text>
                     <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
@@ -466,7 +477,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                       <View style={{ opacity: done ? 0.45 : 1 }}>
                         <Icon k={o.key} size={54} />
                       </View>
-                      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+                      <Text
+                        maxFontSizeMultiplier={1.0}
+                        numberOfLines={1}
+                        style={{ fontFamily: 'Baloo2_700Bold', fontSize: 13, color: INK }}
+                      >
                         {label(o.key, o.n)}
                       </Text>
                       {done ? (
@@ -501,7 +516,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                   <View key={l.id} style={row}>
                     <Icon k={l.key} size={44} />
                     <View style={{ flex: 1 }}>
-                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                      <Text
+                        maxFontSizeMultiplier={1.1}
+                        numberOfLines={1}
+                        style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}
+                      >
                         {label(l.key, l.n)}
                       </Text>
                       <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
@@ -536,14 +555,18 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                   >
                     <Icon k="barn" size={44} />
                     <View style={{ flex: 1 }}>
-                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                      <Text
+                        maxFontSizeMultiplier={1.1}
+                        numberOfLines={1}
+                        style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}
+                      >
                         {n.name}
                       </Text>
                       <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
                         {`seviye ${n.lvl}${n.dog ? ` · köpeği ${n.dog}` : ''}`}
                       </Text>
                     </View>
-                    <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '800', fontSize: 13, color: '#4E8E2A' }}>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_700Bold', fontSize: 13, color: '#4E8E2A' }}>
                       Ziyaret et
                     </Text>
                   </Pressable>
@@ -590,7 +613,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                 <View key={l.id} style={row}>
                   <Icon k={l.key} size={44} />
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                    <Text
+                      maxFontSizeMultiplier={1.1}
+                      numberOfLines={1}
+                      style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}
+                    >
                       {label(l.key, l.n)}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -617,7 +644,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                         k,
                         cell4,
                         sell?.key === k,
-                        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: GOLD }}>
+                        <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 12, color: GOLD }}>
                           ×{n}
                         </Text>,
                         () => setSell(sell?.key === k ? null : { key: k, n: Math.min(n, 5), unit: PRICE[k] }),
@@ -631,7 +658,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                       const step = Math.max(1, Math.round(PRICE[sell.key] / 10));
                       const line = (text: string, ctl: ReactNode) => (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontSize: 14, color: INK, fontWeight: '700' }}>
+                          <Text maxFontSizeMultiplier={1.15} style={{ flex: 1, fontSize: 14, color: INK, fontFamily: 'Baloo2_700Bold' }}>
                             {text}
                           </Text>
                           {ctl}
@@ -644,7 +671,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                             <Icon k={sell.key} size={44} />
                             <View style={{ flex: 1 }}>
-                              <Text maxFontSizeMultiplier={1.1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+                              <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}>
                                 {PRODUCT_NAME[sell.key]}
                               </Text>
                               <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
@@ -672,7 +699,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                               </Pressable>
                               <Text
                                 maxFontSizeMultiplier={1.1}
-                                style={{ minWidth: 30, textAlign: 'center', fontWeight: '900', fontSize: 18, color: INK }}
+                                style={{ minWidth: 30, textAlign: 'center', fontFamily: 'Baloo2_800ExtraBold', fontSize: 18, color: INK }}
                               >
                                 {sell.unit}
                               </Text>

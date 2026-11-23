@@ -249,3 +249,180 @@ export function Bubble({ size = 38, children }: { size?: number; children?: Reac
     </View>
   );
 }
+
+// ── Sade pencere takımı ──────────────────────────────────────────────────────────────────────────────────────────────
+// Çiftlikteki pencereler çerçevesiz, açık renkli ve yuvarlak köşelidir; ürün çizimleri öne çıkar. Ahşap parçalar yalnızca
+// çiftliğin üstündeki göstergelerde (seviye, altın, alt düğmeler) kalır.
+export const SOFT_INK = '#4A2E1C';
+export const SOFT_MUTED = '#8C6E54';
+export const SOFT_LINE = '#F0E4D0';
+export const SOFT_GREEN = '#76BA48';
+export const FONT_BODY = 'Baloo2_500Medium';
+export const FONT_BOLD = 'Baloo2_700Bold';
+
+export function SoftPanel({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle>; cap?: number }) {
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: '#FFFAF0',
+          borderRadius: 26,
+          padding: 18,
+          shadowColor: '#32200A',
+          shadowOpacity: 0.28,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 10,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
+// Düğme: yeşil asıl iş, kırmızı ödül ve dikkat, bej ikincil işler. art: yazının solunda küçük çizim (ör. altın).
+export function SoftButton({
+  label,
+  onPress,
+  kind = 'green',
+  disabled,
+  height = 46,
+  size = 16,
+  icon,
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  kind?: 'green' | 'red' | 'soft';
+  disabled?: boolean;
+  height?: number;
+  size?: number;
+  icon?: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const bg = kind === 'green' ? SOFT_GREEN : kind === 'red' ? '#E8604C' : SOFT_LINE;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        {
+          minHeight: height,
+          borderRadius: height / 2,
+          backgroundColor: bg,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          opacity: disabled ? 0.45 : 1,
+          transform: [{ scale: pressed ? 0.96 : 1 }],
+          shadowColor: '#32200A',
+          shadowOpacity: kind === 'soft' ? 0.08 : 0.18,
+          shadowRadius: 5,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
+        },
+        style,
+      ]}
+    >
+      {icon}
+      <Text
+        maxFontSizeMultiplier={1.0}
+        numberOfLines={2}
+        style={{
+          fontFamily: GAME_FONT,
+          fontSize: size,
+          lineHeight: Math.round(size * 1.2),
+          color: kind === 'soft' ? SOFT_INK : '#fff',
+          textAlign: 'center',
+          flexShrink: 1,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function SoftClose({ onPress, size = 34 }: { onPress: () => void; size?: number }) {
+  const w = Math.round(size * 0.34);
+  const bar = (deg: string) => (
+    <View
+      style={{
+        position: 'absolute',
+        width: w * 1.5,
+        height: 2.6,
+        borderRadius: 2,
+        backgroundColor: SOFT_INK,
+        transform: [{ rotate: deg }],
+      }}
+    />
+  );
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityLabel="Kapat"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: SOFT_LINE,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {bar('45deg')}
+      {bar('-45deg')}
+    </Pressable>
+  );
+}
+
+export function SoftBar({
+  value,
+  height = 10,
+  color,
+  style,
+}: {
+  value: number;
+  height?: number;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const v = Math.max(0, Math.min(1, value));
+  return (
+    <View style={[{ height, borderRadius: height / 2, backgroundColor: '#ECE0CC', overflow: 'hidden' }, style]}>
+      <View style={{ width: `${v * 100}%`, height, borderRadius: height / 2, backgroundColor: color ?? SOFT_GREEN }} />
+    </View>
+  );
+}
+
+// Ürün kutusunun zemini: beyaz, yumuşak köşeli. Seçiliyken yeşil kenarlık.
+export function SoftTileBg({ on, radius = 16 }: { on?: boolean; radius?: number }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        backgroundColor: '#fff',
+        borderRadius: radius,
+        borderWidth: on ? 2.5 : 1.5,
+        borderColor: on ? SOFT_GREEN : SOFT_LINE,
+        shadowColor: '#32200A',
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 1,
+      }}
+    />
+  );
+}

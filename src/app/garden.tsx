@@ -166,6 +166,15 @@ import {
   WoodBar,
   WoodButton,
   WoodPanel,
+  SoftPanel,
+  SoftButton,
+  SoftClose,
+  SoftBar,
+  SoftTileBg,
+  SOFT_INK,
+  SOFT_MUTED,
+  FONT_BODY,
+  FONT_BOLD,
 } from '../components/world/FarmUI';
 import { UI } from '../lib/farmUiArt';
 import { usePublishFarm, useVisitors, type PublicChar } from '../lib/farmVisit';
@@ -786,7 +795,7 @@ const Badge = memo(function Badge({
                       ? '#4E8E2A'
                       : 'rgba(74,44,20,0.82)',
               color: '#fff',
-              fontWeight: '800',
+              fontFamily: FONT_BOLD,
               fontSize: 10,
               paddingHorizontal: 7,
               paddingVertical: 2,
@@ -815,7 +824,7 @@ const Badge = memo(function Badge({
             justifyContent: 'center',
           }}
         >
-          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 10, fontWeight: '900', color: '#5A3E00' }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 10, fontFamily: 'Baloo2_800ExtraBold', color: '#5A3E00' }}>
             {n}
           </Text>
         </View>
@@ -831,7 +840,7 @@ function FloatText({ x, y, text, art }: { x: number; y: number; text: string; ar
   }, [v, art]);
   const label = {
     color: '#fff',
-    fontWeight: '900' as const,
+    fontFamily: 'Baloo2_800ExtraBold' as const,
     fontSize: 16,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowRadius: 3,
@@ -937,7 +946,7 @@ function Dog({ name }: { name?: string }) {
             numberOfLines={1}
             style={{
               fontSize: 11,
-              fontWeight: '800',
+              fontFamily: FONT_BOLD,
               color: '#fff',
               backgroundColor: 'rgba(43,29,34,0.55)',
               borderRadius: 8,
@@ -2511,7 +2520,7 @@ export default function GardenScreen() {
               paddingVertical: 8,
             }}
           >
-            <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ color: '#fff', fontFamily: FONT_BOLD, fontSize: 13 }}>
               {placing.a === 'plant'
                 ? `${CROPS[placing.crop].name}: boş bir tarlaya dokun`
                 : placing.a === 'decor' && DECOR[placing.item].wall
@@ -2544,7 +2553,7 @@ export default function GardenScreen() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Avatar p={partnerProfile} name={partnerName} size={26} showMood={false} />
-              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFE08A', fontWeight: '800', fontSize: 13 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: '#FFE08A', fontFamily: FONT_BOLD, fontSize: 13 }}>
                 Sen yokken {partnerName} 🌾
               </Text>
               <Ionicons name="close-circle" size={18} color="#fff" />
@@ -2578,7 +2587,7 @@ export default function GardenScreen() {
             style={{
               backgroundColor: 'rgba(43,29,34,0.86)',
               color: '#fff',
-              fontWeight: '700',
+              fontFamily: FONT_BOLD,
               fontSize: 12,
               paddingHorizontal: 12,
               paddingVertical: 6,
@@ -2633,7 +2642,7 @@ export default function GardenScreen() {
                 borderColor: '#9A6534',
               }}
             >
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '900', fontSize: 13, color: INK }}>
+              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 13, color: INK }}>
                 {seed.it.tool ? seed.n : `${seed.n} · ${seed.n * seed.it.cost} altın`}
               </Text>
             </View>
@@ -2889,7 +2898,7 @@ export default function GardenScreen() {
               style={{
                 backgroundColor: 'rgba(43,29,34,0.94)',
                 color: '#fff',
-                fontWeight: '800',
+                fontFamily: FONT_BOLD,
                 fontSize: 13,
                 paddingHorizontal: 14,
                 paddingVertical: 8,
@@ -3190,7 +3199,7 @@ export function FarmVisit({
             style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
           />
           <View style={{ width: '100%', maxWidth: 440, alignSelf: 'center' }}>
-            <WoodPanel cap={30}>
+            <SoftPanel>
               <View style={{ gap: 10 }}>
                 <Head art="pazar" title={`${farm.name ?? 'Komşu'} · tezgâh`} onClose={() => setShowStall(false)} />
                 {coins !== undefined && (
@@ -3213,12 +3222,12 @@ export function FarmVisit({
                       return (
                         <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                           <View style={{ width: 50, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-                            <Image source={UI.slot.src} style={{ position: 'absolute', width: 50, height: 44 }} resizeMode="stretch" />
+                            <SoftTileBg />
                             <StockIcon k={l.key} w={30} h={28} />
                           </View>
                           <View style={{ flex: 1 }}>
                             <GText size={15}>{`${l.n} ${PRODUCT_NAME[l.key] ?? l.key}`}</GText>
-                            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED, fontWeight: '700' }}>
+                            <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BOLD }}>
                               {`${l.price} altın · tanesi ${Math.round((l.price / l.n) * 10) / 10}`}
                             </Text>
                           </View>
@@ -3234,7 +3243,7 @@ export function FarmVisit({
                   </ScrollView>
                 )}
               </View>
-            </WoodPanel>
+            </SoftPanel>
           </View>
         </View>
       )}
@@ -3245,7 +3254,7 @@ export function FarmVisit({
             style={{
               backgroundColor: 'rgba(43,29,34,0.94)',
               color: '#fff',
-              fontWeight: '800',
+              fontFamily: FONT_BOLD,
               fontSize: 13,
               paddingHorizontal: 14,
               paddingVertical: 8,
@@ -3278,7 +3287,7 @@ export function FarmVisit({
           <Ionicons name="chevron-back" size={22} color={INK} />
         </Pressable>
         <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 }}>
-          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontWeight: '900', fontSize: 15, color: INK }}>
+          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}>
             {title}
           </Text>
           <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 11, color: MUTED }}>
@@ -3299,12 +3308,9 @@ function PanelShell({ on, children }: { on: boolean; children: ReactNode }) {
       </View>
     );
   return (
-    <WoodPanel
-      cap={30}
-      style={{ shadowColor: '#3A2A10', shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8 }}
-    >
+    <SoftPanel>
       <View style={{ gap: 10 }}>{children}</View>
-    </WoodPanel>
+    </SoftPanel>
   );
 }
 
@@ -3346,7 +3352,7 @@ function NameCard({
     fontSize: 16,
     color: INK,
   };
-  const label = { fontWeight: '800' as const, color: INK, fontSize: 13 };
+  const label = { fontFamily: FONT_BOLD, color: INK, fontSize: 13 };
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
@@ -3361,7 +3367,7 @@ function NameCard({
         }}
       >
         <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 380 }}>
-          <WoodPanel cap={30}>
+          <SoftPanel>
             <View style={{ gap: 10 }}>
               <GText size={19} style={{ textAlign: 'center' }}>
                 Çiftlik ayarları
@@ -3405,7 +3411,7 @@ function NameCard({
                     Başka çiftler çiftliğinizin görünümünü gezebilir. Altın, depo ve notlarınız görünmez.
                   </Text>
                 </View>
-                <Text style={{ fontWeight: '800', color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
+                <Text style={{ fontFamily: FONT_BOLD, color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
               </Pressable>
               {isOpen && !!visitors?.length && (
                 <Text style={{ color: MUTED, fontSize: 12 }}>
@@ -3420,14 +3426,14 @@ function NameCard({
               <Pressable onPress={onMute} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
                 <Ionicons name={mute ? 'volume-mute' : 'volume-medium'} size={20} color={INK} />
                 <Text style={[label, { flex: 1 }]}>Oyun sesleri</Text>
-                <Text style={{ fontWeight: '800', color: mute ? MUTED : '#4E8E2A' }}>{mute ? 'Kapalı' : 'Açık'}</Text>
+                <Text style={{ fontFamily: FONT_BOLD, color: mute ? MUTED : '#4E8E2A' }}>{mute ? 'Kapalı' : 'Açık'}</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                 <Pressable
                   onPress={onClose}
                   style={{ flex: 1, backgroundColor: '#F1E8E2', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}
                 >
-                  <Text style={{ fontWeight: '800', color: INK }}>Vazgeç</Text>
+                  <Text style={{ fontFamily: FONT_BOLD, color: INK }}>Vazgeç</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => onSave(fn, dn)}
@@ -3441,11 +3447,11 @@ function NameCard({
                     opacity: badFarm || badDog ? 0.5 : 1,
                   }}
                 >
-                  <Text style={{ fontWeight: '900', color: '#fff' }}>Kaydet</Text>
+                  <Text style={{ fontFamily: 'Baloo2_800ExtraBold', color: '#fff' }}>Kaydet</Text>
                 </Pressable>
               </View>
             </View>
-          </WoodPanel>
+          </SoftPanel>
         </Pressable>
       </Pressable>
     </Modal>
@@ -3479,7 +3485,7 @@ function UnlockGrid({ list, dim }: { list: Unlock[]; dim?: boolean }) {
             <Text
               maxFontSizeMultiplier={1.1}
               numberOfLines={2}
-              style={{ fontSize: 11, fontWeight: '700', color: INK, textAlign: 'center' }}
+              style={{ fontSize: 11, fontFamily: FONT_BOLD, color: INK, textAlign: 'center' }}
             >
               {u.name}
             </Text>
@@ -3514,7 +3520,7 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
           }}
         >
           <Pressable onPress={() => {}}>
-            <WoodPanel cap={30}>
+            <SoftPanel>
               <View
                 style={{ backgroundColor: up ? '#6DB33F' : '#F1D9A0', borderRadius: 14, paddingVertical: 14, alignItems: 'center', gap: 2 }}
               >
@@ -3528,7 +3534,7 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
                   <GText size={30} light={up}>{`Seviye ${level}`}</GText>
                 </View>
                 {!up && (
-                  <Text style={{ color: INK, fontWeight: '700', fontSize: 13 }}>
+                  <Text style={{ color: INK, fontFamily: FONT_BOLD, fontSize: 13 }}>
                     Sonraki seviyeye {Math.max(0, lv.to - xp)} tecrübe kaldı
                   </Text>
                 )}
@@ -3536,7 +3542,7 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
               <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ paddingTop: 12, gap: 14 }}>
                 {up && (
                   <View style={{ gap: 10 }}>
-                    <Text style={{ fontWeight: '900', color: INK, fontSize: 15, textAlign: 'center' }}>
+                    <Text style={{ fontFamily: 'Baloo2_800ExtraBold', color: INK, fontSize: 15, textAlign: 'center' }}>
                       {now.length ? 'Yeni açılanlar' : 'Bu seviyede yeni bir şey açılmadı'}
                     </Text>
                     {now.length > 0 && <UnlockGrid list={now} />}
@@ -3544,7 +3550,9 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
                 )}
                 {nextLvl ? (
                   <View style={{ gap: 10 }}>
-                    <Text style={{ fontWeight: '800', color: MUTED, fontSize: 13, textAlign: 'center' }}>Seviye {nextLvl}’de açılacak</Text>
+                    <Text style={{ fontFamily: FONT_BOLD, color: MUTED, fontSize: 13, textAlign: 'center' }}>
+                      Seviye {nextLvl}’de açılacak
+                    </Text>
                     <UnlockGrid list={next} dim />
                   </View>
                 ) : (
@@ -3557,10 +3565,10 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
                   onPress={onClose}
                   style={{ backgroundColor: '#6DB33F', borderRadius: 16, paddingVertical: 13, alignItems: 'center' }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{up ? 'Harika' : 'Tamam'}</Text>
+                  <Text style={{ color: '#fff', fontFamily: 'Baloo2_800ExtraBold', fontSize: 16 }}>{up ? 'Harika' : 'Tamam'}</Text>
                 </Pressable>
               </ScrollView>
-            </WoodPanel>
+            </SoftPanel>
           </Pressable>
         </Animated.View>
       </Pressable>
@@ -3581,14 +3589,14 @@ function Btn({
   disabled?: boolean;
   flex?: boolean;
 }) {
-  // Yeşil: asıl iş. Kırmızı: ödül ve dikkat. Ahşap: ikincil işler. Uzun yazılar küçülür.
+  // Yeşil: asıl iş. Kırmızı: ödül ve dikkat. Bej: ikincil işler. Uzun yazılar küçülür.
   return (
-    <WoodButton
-      kind={kind === 'green' ? 'green' : kind === 'accent' ? 'red' : 'wood'}
+    <SoftButton
+      kind={kind === 'green' ? 'green' : kind === 'accent' ? 'red' : 'soft'}
       label={label}
       onPress={onPress}
       disabled={disabled}
-      height={48}
+      height={46}
       size={label.length > 30 ? 12 : label.length > 20 ? 14 : 16}
       style={{ flex: flex ? 1 : undefined }}
     />
@@ -3639,10 +3647,14 @@ function ToolPop({
   const info = crop && (
     <View style={{ gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flex: 1, fontWeight: '900', fontSize: 14, color: INK }}>
+        <Text
+          maxFontSizeMultiplier={1.0}
+          numberOfLines={1}
+          style={{ flex: 1, fontFamily: 'Baloo2_800ExtraBold', fontSize: 14, color: INK }}
+        >
           {CROPS[crop.crop].name}
         </Text>
-        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: cropReady(crop, now) ? '#3E7F22' : MUTED }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 12, color: cropReady(crop, now) ? '#3E7F22' : MUTED }}>
           {cropReady(crop, now) ? 'hazır' : timeLeft(crop.ready - now)}
         </Text>
         {more}
@@ -3728,12 +3740,12 @@ function ToolPop({
                 })}
               >
                 {ART[k] && <Image source={iconArt(k).src} style={{ width: 38, height: 32 }} resizeMode="contain" />}
-                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 9, color: INK }}>
+                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: FONT_BOLD, fontSize: 9, color: INK }}>
                   {c.name}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                   <Image source={ART.coin.src} style={{ width: 10, height: 10 }} resizeMode="contain" />
-                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 11, color: '#7A5A00' }}>
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 11, color: '#7A5A00' }}>
                     {c.cost}
                   </Text>
                 </View>
@@ -3809,7 +3821,10 @@ function Edge({
                   justifyContent: 'center',
                 }}
               >
-                <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: accent ? '#5A3E00' : '#fff' }}>
+                <Text
+                  maxFontSizeMultiplier={1.0}
+                  style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 12, color: accent ? '#5A3E00' : '#fff' }}
+                >
                   {badge}
                 </Text>
               </View>
@@ -3820,7 +3835,7 @@ function Edge({
             numberOfLines={2}
             style={{
               marginTop: 3,
-              fontWeight: '900',
+              fontFamily: 'Baloo2_800ExtraBold',
               fontSize: 11,
               lineHeight: 13,
               color: '#fff',
@@ -3841,20 +3856,18 @@ function Edge({
 function Head({ art, title, onClose }: { art?: string; title: string; onClose: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      {art && ART[art] && <Image source={iconArt(art).src} style={{ width: 38, height: 34 }} resizeMode="contain" />}
-      <GText size={20} style={{ flex: 1 }}>
+      {art && ART[art] && <Image source={iconArt(art).src} style={{ width: 34, height: 32 }} resizeMode="contain" />}
+      <GText size={22} color={SOFT_INK} style={{ flex: 1 }}>
         {title}
       </GText>
-      <Pressable onPress={onClose} accessibilityLabel="Kapat" hitSlop={10} style={{ marginRight: -6, marginTop: -6 }}>
-        <Image source={UI.close.src} style={{ width: 36, height: 36 }} />
-      </Pressable>
+      <SoftClose onPress={onClose} />
     </View>
   );
 }
 
 function Note({ children }: { children: ReactNode }) {
   return (
-    <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 13, lineHeight: 18 }}>
+    <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BODY, color: SOFT_MUTED, fontSize: 14, lineHeight: 19 }}>
       {children}
     </Text>
   );
@@ -3953,10 +3966,10 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
               ) : (
                 <Image source={iconArt(it.art).src} style={{ width: 54, height: 44 }} resizeMode="contain" />
               )}
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: FONT_BOLD, fontSize: 12, color: INK }}>
                 {it.name}
               </Text>
-              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 12, color: '#7A5A00' }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 12, color: '#7A5A00' }}>
                 {level < it.lvl ? `Seviye ${it.lvl}` : `${it.cost} altın`}
               </Text>
               <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
@@ -3989,24 +4002,31 @@ function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onCla
   const col = collectionOf(farm);
   const full = used >= cap;
   return (
-    <View style={{ gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ flex: 1, gap: 3 }}>
-          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, fontWeight: '800', color: full ? '#C0392B' : INK }}>
-            Depo {used}/{cap}
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: full ? '#C0392B' : SOFT_MUTED }}>
+            {used.toLocaleString('tr-TR')} / {cap.toLocaleString('tr-TR')}
             {full ? ' · dolu' : ''}
           </Text>
-          <WoodBar value={used / cap} height={16} style={{ alignSelf: 'stretch' }} />
+          <SoftBar value={used / cap} color={full ? '#E8604C' : undefined} style={{ alignSelf: 'stretch' }} />
         </View>
-        <Btn kind={farm.coins >= cost ? 'green' : 'soft'} label={`Büyüt · ${cost}`} onPress={onUp} />
+        <SoftButton
+          kind={farm.coins >= cost ? 'green' : 'soft'}
+          label={`Büyüt · ${cost.toLocaleString('tr-TR')}`}
+          icon={<Image source={ART.coin.src} style={{ width: 16, height: 16 }} resizeMode="contain" />}
+          height={36}
+          size={14}
+          onPress={onUp}
+        />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable onPress={() => setOpen(!open)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Ionicons name="albums-outline" size={16} color={INK} />
-          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, fontWeight: '800', color: INK }}>
-            Koleksiyon {col.have}/{col.total} · {col.claimable > 0 ? 'ödül hazır' : `${col.nextAt} üründe ${col.nextCoins} altın`}
+          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BOLD, fontSize: 13, color: SOFT_MUTED }}>
+            Koleksiyon {col.have}/{col.total} ·{' '}
+            {col.claimable > 0 ? 'ödül hazır' : `${col.nextAt} üründe ${col.nextCoins.toLocaleString('tr-TR')} altın`}
           </Text>
-          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={MUTED} />
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={SOFT_MUTED} />
         </Pressable>
         {col.claimable > 0 && <Btn kind="accent" label={`Ödülü al · ${col.nextCoins}`} onPress={onClaim} />}
       </View>
@@ -4028,7 +4048,7 @@ function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onCla
                 }}
               >
                 {has ? <StockIcon k={k} w={26} h={26} /> : <Ionicons name="help" size={22} color={MUTED} />}
-                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, fontWeight: '700', color: INK }}>
+                <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, fontFamily: FONT_BOLD, color: INK }}>
                   {has ? (PRODUCT_NAME[k] ?? k) : '?'}
                 </Text>
               </View>
@@ -4042,6 +4062,7 @@ function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onCla
 
 // Depodaki bir ürünün simgesi: görseli varsa görsel, yoksa (mutfak ürünleri) emoji.
 // Depodaki ürünler: birine dokununca yalnızca o ürün, seçilen adet kadar satılır (malzemeler elde kalsın).
+const TILE = 72; // depo kutusunun yüksekliği
 function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key: string, n: number) => void }) {
   const [pick, setPick] = useState<{ key: string; n: number } | null>(null);
   const have = pick ? (items.find(([k]) => k === pick.key)?.[1] ?? 0) : 0;
@@ -4052,18 +4073,15 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
       onPress={() => step(d)}
       onLongPress={() => step(d * 10)}
       hitSlop={6}
-      style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#F6D58E', alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#F0E4D0', alignItems: 'center', justifyContent: 'center' }}
     >
-      <Ionicons name={icon} size={18} color={INK} />
+      <Ionicons name={icon} size={18} color={SOFT_INK} />
     </Pressable>
   );
   return (
     <>
-      {/* Depo ızgarası: ahşap kutuda ürün, altında adedi. Çok ürün olunca aşağı kaydırılır. */}
-      <ScrollView
-        style={{ maxHeight: 176 }}
-        contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}
-      >
+      {/* Depo ızgarası: dört sütun, beyaz yumuşak kutuda ürün ve altında adedi. Üç satır tam görünür; fazlası aşağı kayar. */}
+      <ScrollView style={{ maxHeight: 3 * (TILE + 8) - 4 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {items.map(([k, v]) => {
           const on = pick?.key === k;
           return (
@@ -4071,17 +4089,12 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
               key={k}
               onPress={() => setPick(on ? null : { key: k, n: 1 })}
               accessibilityLabel={`${PRODUCT_NAME[k] ?? k}, ${v} adet`}
-              style={{ width: 66, alignItems: 'center', transform: [{ scale: on ? 1.06 : 1 }] }}
+              style={{ width: '23%', height: TILE, alignItems: 'center', justifyContent: 'center' }}
             >
-              <View style={{ width: 66, height: 58, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={UI.slot.src} style={{ position: 'absolute', width: 66, height: 58 }} resizeMode="stretch" />
-                {on && (
-                  <View style={{ position: 'absolute', width: 66, height: 58, borderRadius: 14, borderWidth: 3, borderColor: '#E8516A' }} />
-                )}
-                <StockIcon k={k} w={38} h={34} />
-              </View>
-              <GText size={13} style={{ lineHeight: 16 }}>
-                {v}
+              <SoftTileBg on={on} />
+              <StockIcon k={k} w={42} h={40} />
+              <GText size={13} color={SOFT_INK} style={{ lineHeight: 16 }}>
+                {v.toLocaleString('tr-TR')}
               </GText>
             </Pressable>
           );
@@ -4089,19 +4102,20 @@ function DepotItems({ items, onSell }: { items: [string, number][]; onSell: (key
       </ScrollView>
       {pick && have > 0 ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+          <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ flex: 1, fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
             {PRODUCT_NAME[pick.key] ?? pick.key}
           </Text>
           {round('remove', -1)}
-          <Text maxFontSizeMultiplier={1.0} style={{ minWidth: 26, textAlign: 'center', fontWeight: '900', fontSize: 16, color: INK }}>
+          <Text
+            maxFontSizeMultiplier={1.0}
+            style={{ minWidth: 26, textAlign: 'center', fontFamily: 'Baloo2_800ExtraBold', fontSize: 16, color: INK }}
+          >
             {n}
           </Text>
           {round('add', 1)}
-          <Btn label={`Sat · ${(PRICE[pick.key] ?? 0) * n} altın`} onPress={() => onSell(pick.key, n)} />
+          <Btn label={`Sat · ${((PRICE[pick.key] ?? 0) * n).toLocaleString('tr-TR')}`} onPress={() => onSell(pick.key, n)} />
         </View>
-      ) : (
-        <Note>Satmak için ürüne dokun.</Note>
-      )}
+      ) : null}
     </>
   );
 }
@@ -4254,7 +4268,7 @@ function Sheet(p: SheetProps) {
               style={{
                 backgroundColor: 'rgba(43,29,34,0.78)',
                 color: '#fff',
-                fontWeight: '700',
+                fontFamily: FONT_BOLD,
                 fontSize: 12,
                 textAlign: 'center',
                 paddingHorizontal: 12,
@@ -4354,7 +4368,7 @@ function Sheet(p: SheetProps) {
     const weekend = isWeekend(now);
     return (
       <>
-        <Head art="barn" title="Ahır · Depo" onClose={p.onClose} />
+        <Head title="Depo" onClose={p.onClose} />
         <DepotBar farm={farm} onUp={() => p.onStay({ a: 'depotUp', i })} onClaim={() => p.onStay({ a: 'colClaim', i })} />
         {items.length === 0 ? (
           <Note>
@@ -4362,27 +4376,29 @@ function Sheet(p: SheetProps) {
             tezgâhında partnerine armağana dönüşür.
           </Note>
         ) : (
-          <>
-            <DepotItems items={items} onSell={(key, n) => p.onStay({ a: 'sellOne', i, key, n })} />
-            <Note>
-              {weekend
-                ? 'Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.'
-                : `${n} ürün · ${stockValue(farm).toLocaleString('tr-TR')} altın değerinde`}
-            </Note>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {weekend ? (
-                <Btn flex kind="accent" label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS)}`} onPress={() => p.onScene('market')} />
-              ) : (
-                <Btn flex label={`Hepsini sat · ${stockValue(farm)} altın`} onPress={p.onSell} />
-              )}
-              <Btn kind="soft" label="Siparişler" onPress={p.onOrders} />
-            </View>
-          </>
+          <DepotItems items={items} onSell={(key, n) => p.onStay({ a: 'sellOne', i, key, n })} />
         )}
-        {/* Sulama, toplama, dükkân ve pazar ekrandaki kendi düğmelerinden açılır; burada yalnız depoyla ilgili işler durur. */}
+        {weekend && items.length > 0 && <Note>Hafta sonu: pazarı ikiniz kurarsanız bir buçuk kat.</Note>}
+        {/* Depo, basılı tutup sürüklenerek taşınır; pencerede yalnız satış ve siparişler durur. */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {items.length === 0 && <Btn flex kind="soft" label="Siparişler" onPress={p.onOrders} />}
-          <Btn flex kind="soft" label="Depoyu taşı" onPress={() => p.onPlace({ a: 'moveBarn' })} />
+          {items.length > 0 &&
+            (weekend ? (
+              <Btn
+                flex
+                kind="accent"
+                label={`Pazarı kur · ${stockValue(farm, MARKET_BONUS).toLocaleString('tr-TR')}`}
+                onPress={() => p.onScene('market')}
+              />
+            ) : (
+              <SoftButton
+                style={{ flex: 1 }}
+                label={`Hepsini sat · ${stockValue(farm).toLocaleString('tr-TR')}`}
+                icon={<Image source={ART.coin.src} style={{ width: 20, height: 20 }} resizeMode="contain" />}
+                size={15}
+                onPress={p.onSell}
+              />
+            ))}
+          <Btn flex={items.length === 0} kind="soft" label="Siparişler" onPress={p.onOrders} />
         </View>
       </>
     );
@@ -4600,12 +4616,12 @@ function Sheet(p: SheetProps) {
               return (
                 <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Image source={ART[r.id].src} style={{ width: 34, height: 30 }} resizeMode="contain" />
-                  <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+                  <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
                     {an.name}
                   </Text>
                   <Text
                     maxFontSizeMultiplier={1.0}
-                    style={{ fontSize: 12, color: isReady ? GREEN : hungryOne ? '#B4521E' : MUTED, fontWeight: '700' }}
+                    style={{ fontSize: 12, color: isReady ? GREEN : hungryOne ? '#B4521E' : MUTED, fontFamily: FONT_BOLD }}
                   >
                     {isReady
                       ? `${productNames(r.id)} hazır`
@@ -4619,7 +4635,7 @@ function Sheet(p: SheetProps) {
                     accessibilityLabel={`${an.name} geri ver`}
                     style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: '#F3EEE8' }}
                   >
-                    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontWeight: '800', color: MUTED }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, fontFamily: FONT_BOLD, color: MUTED }}>
                       Geri ver +{Math.floor(an.cost / 2)}
                     </Text>
                   </Pressable>
@@ -4882,15 +4898,15 @@ function ShopPanel({
                       <Image source={iconArt(it.art).src} style={{ width: 64, height: 54 }} resizeMode="contain" />
                     ) : null}
                   </View>
-                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontWeight: '800', fontSize: 12, color: INK }}>
+                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: FONT_BOLD, fontSize: 12, color: INK }}>
                     {it.name}
                   </Text>
                   {locked ? (
-                    <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: '#8A6F4A' }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 12, color: '#8A6F4A' }}>
                       Seviye {it.lvl}
                     </Text>
                   ) : full ? (
-                    <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 12, color: '#3E7F22' }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 12, color: '#3E7F22' }}>
                       1/1 · kuruldu
                     </Text>
                   ) : (
@@ -4898,7 +4914,7 @@ function ShopPanel({
                       <Image source={ART.coin.src} style={{ width: 14, height: 14 }} resizeMode="contain" />
                       <Text
                         maxFontSizeMultiplier={1.0}
-                        style={{ fontWeight: '900', fontSize: 12, color: farm.coins < it.cost ? '#B93A55' : '#7A5A00' }}
+                        style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 12, color: farm.coins < it.cost ? '#B93A55' : '#7A5A00' }}
                       >
                         {it.cost}
                       </Text>
@@ -4910,7 +4926,7 @@ function ShopPanel({
                   {have > 0 && !full && (
                     <Text
                       maxFontSizeMultiplier={1.0}
-                      style={{ position: 'absolute', top: 4, left: 6, fontWeight: '900', fontSize: 11, color: '#7A4A1C' }}
+                      style={{ position: 'absolute', top: 4, left: 6, fontFamily: 'Baloo2_800ExtraBold', fontSize: 11, color: '#7A4A1C' }}
                     >
                       ×{have}
                     </Text>
@@ -4968,16 +4984,16 @@ function BigOrderCard({
             {o.done ? 'Tamamlandı · yenisi pazartesi gelir' : `Kasaba pazarı için · ${rest} kaldı`}
           </Text>
         </View>
-        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '900', fontSize: 13, color: o.done ? GREEN : INK }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 13, color: o.done ? GREEN : INK }}>
           {got}/{total}
         </Text>
       </View>
-      <WoodBar value={got / Math.max(1, total)} height={14} style={{ alignSelf: 'stretch' }} />
+      <SoftBar value={got / Math.max(1, total)} height={10} style={{ alignSelf: 'stretch' }} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {Object.entries(o.items).map(([k, q]) => (
           <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <StockIcon k={k} w={22} h={22} />
-            <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: left[k] ? INK : GREEN }}>
               {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
             </Text>
             {left[k] > 0 && !o.done && (
@@ -5056,7 +5072,7 @@ function Orders({
                     >
                       <Ionicons name="heart" size={15} color="#E8516A" />
                     </View>
-                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 14, color: INK }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BOLD, fontSize: 14, color: INK }}>
                       {orderWho(o)}
                       {o.special ? ' · özel sipariş ⭐' : ''}
                     </Text>
@@ -5068,7 +5084,7 @@ function Orders({
                     {Object.entries(o.items).map(([k, q]) => (
                       <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                         <StockIcon k={k} w={22} h={22} />
-                        <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: left[k] ? INK : GREEN }}>
+                        <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: left[k] ? INK : GREEN }}>
                           {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
                         </Text>
                         {left[k] > 0 && (
@@ -5141,7 +5157,7 @@ function Workshops({ farm, now, onClose, onPick }: { farm: Farm; now: number; on
           >
             <StockIcon k={r.st} w={40} h={36} />
             <View style={{ flex: 1 }}>
-              <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 14, color: INK }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 14, color: INK }}>
                 {STATIONS[r.st].name}
               </Text>
               <Text
@@ -5194,11 +5210,7 @@ function Kitchen({
               key={k}
               style={{ flex: 1, maxWidth: 62, aspectRatio: UI.slot.w / UI.slot.h, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Image
-                source={UI.slot.src}
-                style={{ position: 'absolute', width: '100%', height: '100%', opacity: j ? 1 : 0.6 }}
-                resizeMode="stretch"
-              />
+              <SoftTileBg />
               {j && (
                 <>
                   <StockIcon k={j.recipe} w={30} h={28} />
@@ -5230,7 +5242,7 @@ function Kitchen({
               <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: locked ? 0.5 : 1 }}>
                 <StockIcon k={id} w={34} h={34} />
                 <View style={{ flex: 1 }}>
-                  <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+                  <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
                     {r.name} · {r.sell} altın · {timeLeft(r.mins * MIN)}
                     {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
                   </Text>
@@ -5261,7 +5273,7 @@ function Kitchen({
                               <StockIcon k={k} w={16} h={16} />
                               <Text
                                 maxFontSizeMultiplier={1.0}
-                                style={{ fontSize: 11, fontWeight: '800', color: enough ? GREEN : '#C7354F' }}
+                                style={{ fontSize: 11, fontFamily: FONT_BOLD, color: enough ? GREEN : '#C7354F' }}
                               >
                                 {PRODUCT_NAME[k]} {Math.min(have, q)}/{q}
                               </Text>
@@ -5317,7 +5329,7 @@ function Baskets({
       {incoming.map((g) => (
         <View key={g.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <StockIcon k={BASKETS[g.kind].art} w={36} h={34} />
-          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontWeight: '800', fontSize: 13, color: INK }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
             {partnerName} sana {BASKETS[g.kind].name.toLocaleLowerCase('tr-TR')} gönderdi
           </Text>
           <Btn kind="accent" label="Aç" onPress={() => onOpen(g.id)} />
@@ -5338,7 +5350,7 @@ function Baskets({
             <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <StockIcon k={b.art} w={36} h={34} />
               <View style={{ flex: 1 }}>
-                <Text maxFontSizeMultiplier={1.0} style={{ fontWeight: '800', fontSize: 13, color: INK }}>
+                <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
                   {b.name} · +{b.coins} altın, +{b.points} puan
                 </Text>
                 <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: hasAll(farm, b.needs) ? GREEN : MUTED }}>
