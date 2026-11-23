@@ -6,7 +6,9 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import {
   createContext,
+  forwardRef,
   memo,
+  useImperativeHandle,
   useContext,
   useEffect,
   useMemo,
@@ -697,6 +699,60 @@ function Ground({ f, sel, season }: { f: Farm; sel: number | null; season: Seaso
   );
 }
 
+// Sürükleme katmanı. Parmak tarlaların üstünden geçerken bütün çiftlik yeniden çizilmez: hedef karenin vurgusu ve
+// "buraya yapıldı" izi yalnızca bu küçük katmanda çizilir. Asıl sonuç (ekin, boş tarla…) kısa aralıklarla topluca işlenir.
+type PaintApi = { hit: (i: number | null) => void; add: (i: number) => void; clearDone: () => void; reset: () => void };
+const PaintLayer = forwardRef<PaintApi>(function PaintLayer(_p, ref) {
+  const [st, setSt] = useState<{ hit: number | null; done: number[] }>({ hit: null, done: [] });
+  useImperativeHandle(
+    ref,
+    () => ({
+      hit: (i) => setSt((q) => (q.hit === i ? q : { ...q, hit: i })),
+      add: (i) => setSt((q) => ({ ...q, done: [...q.done, i] })),
+      clearDone: () => setSt((q) => (q.done.length ? { ...q, done: [] } : q)),
+      reset: () => setSt({ hit: null, done: [] }),
+    }),
+    [],
+  );
+  if (st.hit === null && !st.done.length) return null;
+  return (
+    <Svg width={WW} height={WH} style={{ position: 'absolute', left: 0, top: 0, zIndex: 99990 }} pointerEvents="none">
+      {st.done.map((j) => (
+        <Polygon key={`d${j}`} points={tilePts(...rc(j))} fill="rgba(255,255,255,0.5)" />
+      ))}
+      {st.hit !== null && (
+        <Polygon points={tilePts(...rc(st.hit))} fill="rgba(255,255,255,0.28)" stroke="#fff" strokeWidth={3} strokeLinejoin="round" />
+      )}
+    </Svg>
+  );
+});
+// Sürüklenen şeyin yanındaki sayaç: kendi durumunu tutar, sayı değişince yalnızca bu etiket çizilir.
+type CountApi = { set: (n: number) => void };
+const SeedCount = forwardRef<CountApi, { cost: number; tool: boolean; top: number }>(function SeedCount({ cost, tool, top }, ref) {
+  const [n, setN] = useState(0);
+  useImperativeHandle(ref, () => ({ set: setN }), []);
+  if (n <= 0) return null;
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        left: 28,
+        top,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 10,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#F0E4D0',
+      }}
+    >
+      <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 13, color: INK }}>
+        {tool ? n : `${n} · ${(n * cost).toLocaleString('tr-TR')} altın`}
+      </Text>
+    </View>
+  );
+});
+
 // Kapalı her parselin ortasında küçük tabela: ortak hasatla açılır.
 function Signs({ f }: { f: Farm }) {
   const groups = new Map<string, number[]>();
@@ -1017,6 +1073,11 @@ export default function GardenScreen() {
   // Kareye dokununca yanında açılan küçük balon: tohumlar, orak, kova ya da büyüme bilgisi.
   const [pop, setPop] = useState<{ i: number; kind: 'seed' | 'orak' | 'kova' | 'info' } | null>(null);
   const seedDone = useRef(new Set<number>());
+  // Sürüklerken yapılan işler burada birikir, kısa aralıklarla topluca işlenir (her karede bütün ekran çizilmesin diye).
+  const paintRef = useRef<PaintApi>(null);
+  const countRef = useRef<CountApi>(null);
+  const paintJobs = useRef<Action[]>([]);
+  const paintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seedCoins = useRef(0);
   // Sürükleme boyunca tabela ve dükkân, başlangıçtaki çiftliği gösterir: ekilen kare yüzünden liste değişip parmağı bırakmasın.
   const seedFarm = useRef<Farm | null>(null);
@@ -1620,6 +1681,78 @@ export default function GardenScreen() {
 
   doQuickRef.current = doQuick;
 
+  // Sürükleyerek yapılan işlerin toplu hâli: hepsi tek seferde denenir, ekran bir kez çizilir, ses ve uçan yazı bir kez çıkar.
+  function doQuickMany(jobs: Action[]) {
+    if (!couple || !jobs.length) return;
+    if (jobs.length === 1) return doQuick(jobs[0]);
+    const base = simFarm.current ?? farmRef.current;
+    let cur = base;
+    const ok: Action[] = [];
+    let err = '';
+    let spent = 0;
+    for (const job of jobs) {
+      const sim = applyAction(cur, job, uid, (by) => (by === uid ? 'kendi' : `${partnerName}’in`), myName, srvNow(), null);
+      if (typeof sim === 'string') {
+        err = err || sim;
+        continue;
+      }
+      cur = sim.farm;
+      ok.push(job);
+      if (job.a === 'plant') spent += CROPS[job.crop].cost;
+      if (sim.drop) {
+        const d = sim.drop;
+        const at = center(...rc(job.i));
+        const fid = Date.now() + Math.random();
+        setTimeout(() => {
+          setFloats((f) => [...f, { id: fid, x: at.x, y: at.y - TW * 1.5, text: `Sürpriz! ${d.text}`, art: d.art }]);
+          setTimeout(() => setFloats((f) => f.filter((q) => q.id !== fid)), 1750);
+          sfx('altin');
+        }, 350);
+      }
+    }
+    if (err) flash(err);
+    if (!ok.length) return;
+    simFarm.current = cur;
+    const last = ok[ok.length - 1];
+    const at = center(...rc(last.i));
+    const texts: { text: string; art: string }[] = Object.entries(cur.stock)
+      .map(([k, n]) => [k, n - (base.stock[k] ?? 0)] as const)
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) => ({ text: `+${n} ${PRODUCT_NAME[k] ?? ''}`.trim(), art: k }));
+    if (spent > 0) texts.push({ text: `-${spent.toLocaleString('tr-TR')}`, art: 'coin' });
+    if (texts.length) {
+      // Uçan yazılar tek seferde eklenir ve tek seferde kaldırılır (her biri için ekran ayrı ayrı çizilmez).
+      const ids = texts.map(() => Date.now() + Math.random());
+      setFloats((f) => [
+        ...f,
+        ...texts.map((x, k) => ({ id: ids[k], x: at.x + (k - (texts.length - 1) / 2) * 46, y: at.y - TW * 1.1, ...x })),
+      ]);
+      setTimeout(() => setFloats((f) => f.filter((q) => !ids.includes(q.id))), 1750);
+    }
+    const a0 = last.a;
+    if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(a0)) sfx('topla');
+    else if (['plant', 'till', 'build', 'tree', 'decor', 'adopt'].includes(a0)) sfx('ek');
+    batch.current.push(...ok);
+    setMine((m) => [...m, ...ok.map((a) => ({ a, sent: false }))]);
+    const tl = a0 === 'water' ? 'can' : a0 === 'plant' || a0 === 'till' ? 'seed' : null;
+    setTool(tl);
+    if (toolTimer.current) clearTimeout(toolTimer.current);
+    toolTimer.current = setTimeout(() => setTool(null), 700);
+    if (partnerHereRef.current) publishLive(couple.id, uid, { tile: last.i, tool: tl, acts: [...batch.current] });
+    flushSoon(batch.current.length >= 10 ? 0 : 450);
+    void walkTo(last.i);
+  }
+  const paintCommit = () => {
+    if (paintTimer.current) clearTimeout(paintTimer.current);
+    paintTimer.current = null;
+    const jobs = paintJobs.current.splice(0);
+    if (!jobs.length) return;
+    doQuickMany(jobs);
+    paintRef.current?.clearDone();
+  };
+  const paintCommitRef = useRef(paintCommit);
+  paintCommitRef.current = paintCommit;
+
   async function work(a: Action) {
     if (isPlain(a)) return quick(a);
     queue.current.push(a);
@@ -1911,7 +2044,11 @@ export default function GardenScreen() {
         doQuickRef.current(toolAct(it.tool, pop.i)!);
         n0 = 1;
       }
+      paintJobs.current = [];
+      paintRef.current?.reset();
       setSeed({ it, hit: -1, n: n0 });
+      // Sayaç etiketi bu çizimden sonra oluşur.
+      setTimeout(() => countRef.current?.set(n0), 0);
     },
     move: (px, py) => {
       const it = seedIt.current;
@@ -1931,20 +2068,25 @@ export default function GardenScreen() {
           }
           seedDone.current.add(j);
           seedCoins.current -= it.cost;
-          // Parmak tempoyu belirler: iş sıraya girmeden hemen yapılır, kare anında değişir.
-          doQuickRef.current(it.tool ? toolAct(it.tool, j)! : ({ ...it.a, i: j } as Action));
+          // Kare hemen "yapıldı" iziyle işaretlenir; asıl iş birikir ve kısa aralıklarla topluca işlenir.
+          paintJobs.current.push(it.tool ? toolAct(it.tool, j)! : ({ ...it.a, i: j } as Action));
+          paintRef.current?.add(j);
           painted = true;
         }
         if (painted) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-          if (i >= 0) void walkTo(i);
+          countRef.current?.set([...seedDone.current].filter((k) => k >= 0).length);
+          if (!paintTimer.current) paintTimer.current = setTimeout(() => paintCommitRef.current(), 240);
         }
       }
-      if (moved || painted) setSeed({ it, hit: i, n: [...seedDone.current].filter((k) => k >= 0).length });
+      // Hedef karenin vurgusu yalnızca küçük katmanda çizilir; çiftliğin tamamı yeniden çizilmez.
+      if (moved) paintRef.current?.hit(i >= 0 && !seedDone.current.has(i) && dragFits(it, i) ? i : null);
     },
     end: () => {
       const it = seedIt.current;
       seedIt.current = null;
+      paintCommitRef.current();
+      paintRef.current?.reset();
       let done = [...seedDone.current].some((i) => i >= 0);
       setSeed(null);
       if (it && !dragPaints(it)) {
@@ -2356,6 +2498,7 @@ export default function GardenScreen() {
           {sprs.map((sp) => (
             <SpriteImg key={sp.key} s={sp} />
           ))}
+          <PaintLayer ref={paintRef} />
           {ghost.map((sp) => (
             <SpriteImg key={`g${sp.key}`} s={sp} />
           ))}
@@ -2628,25 +2771,7 @@ export default function GardenScreen() {
               }}
             />
           )}
-          {seed.n > 0 && (
-            <View
-              style={{
-                position: 'absolute',
-                left: 28,
-                top: -SEED_UP - 46,
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                borderRadius: 10,
-                backgroundColor: '#FFFFFF',
-                borderWidth: 1.5,
-                borderColor: '#F0E4D0',
-              }}
-            >
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 13, color: INK }}>
-                {seed.it.tool ? seed.n : `${seed.n} · ${seed.n * seed.it.cost} altın`}
-              </Text>
-            </View>
-          )}
+          <SeedCount ref={countRef} cost={seed.it.cost} tool={!!seed.it.tool} top={-SEED_UP - 46} />
         </Animated.View>
       )}
       <SeedDrag.Provider value={seedApi}>
