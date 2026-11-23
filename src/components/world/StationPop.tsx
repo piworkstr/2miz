@@ -26,8 +26,8 @@ import { GText } from './FarmUI';
 // durur; istenen ürün atölyenin üstüne sürüklenir. Ürüne dokununca parşömen balonda adı, süresi ve malzemeleri görünür.
 // Atölyenin adı altındaki kurdelede, sıradaki işler onun altındaki madalyonlardadır.
 // Ekran açıkken çiftlik kaydırılamaz (karartı dokunuşu alır): parçalar hep aynı yerde durur.
-const M = 68; // ürün madalyonunun çapı
-const M_ON = 78; // seçili madalyon
+const M = 76; // ürün madalyonunun çapı
+const M_ON = 86; // seçili madalyon
 const R_MIN = 118; // yayın yarıçapı (az ürün)
 const DROP = 92; // atölyeye bırakma yarıçapı
 const GREEN_INK = '#2F6E12';
@@ -252,8 +252,8 @@ export function StationPop({
   const RIB_W = 180;
   const RIB_H = 38;
   const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
-  const Q = 42; // sıra madalyonu
-  const QR = 50; // hazır olanın çelengi
+  const Q = 48; // sıra madalyonu
+  const QR = 56; // hazır olanın çelengi
   const rowW = slots * (Q + 6) - 6 + (QR - Q);
   const rowTop = ribTop + RIB_H + 2;
 

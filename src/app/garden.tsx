@@ -1495,9 +1495,9 @@ export default function GardenScreen() {
 
   heartsRef.current = hearts;
 
-  // Sıradan işler (ekme, sulama, toplama, taşıma, kurma…) anında yapılır: kural yerelde denenir, sonuç hemen ekranda
+  // Sıradan işler (ekme, sulama, toplama, taşıma, kurma, atölyede üretim…) anında yapılır: kural yerelde denenir, sonuç hemen ekranda
   // görünür, avatar beklenmeden o kareye yürür, kayıt arkadan toplu gider. Böylece hiçbir iş yürüyüşü ya da ağı beklemez.
-  const NOT_PLAIN = ['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'];
+  const NOT_PLAIN = ['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift'];
   const isPlain = (job: Action) => !('scene' in job && job.scene) && !NOT_PLAIN.includes(job.a);
   const flushSoon = (ms: number) => {
     if (flushTimer.current) clearTimeout(flushTimer.current);
@@ -1599,7 +1599,7 @@ export default function GardenScreen() {
       }, 350);
     }
     if (['collect', 'gather', 'harvest', 'pick', 'collectProd'].includes(job.a)) sfx('topla');
-    else if (['plant', 'till', 'build', 'tree', 'decor', 'adopt'].includes(job.a)) sfx('ek');
+    else if (['plant', 'till', 'build', 'tree', 'decor', 'adopt', 'cook'].includes(job.a)) sfx('ek');
     if (job.a === 'plant') {
       const at = center(...rc(job.i));
       const fid = Date.now() + Math.random();
@@ -1636,7 +1636,7 @@ export default function GardenScreen() {
         // Toplu kayıt: sahnesiz, sıradan işler birikir; sıra bitince ya da 10 olunca tek yazmayla gider.
         const plain =
           !('scene' in job && job.scene) &&
-          !['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift', 'cook'].includes(job.a);
+          !['kiss', 'deliver', 'handover', 'note', 'sell', 'harvestDay', 'unlock', 'gift', 'openGift'].includes(job.a);
         // Partner de çiftlikteyse nereye gittiğimi ve henüz kaydedilmemiş işlerimi anında görür.
         if (partnerHereRef.current)
           publishLive(couple.id, uid, { tile: job.i, tool: tl, acts: plain ? [...batch.current, job] : batch.current });
