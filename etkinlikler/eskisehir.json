@@ -1,0 +1,25 @@
+{
+  "city": "Eskişehir",
+  "items": [
+    { "title": "KAVAK", "day": "2026-11-27", "cat": "konser", "venue": "Holly Garden Eskişehir", "url": "https://www.songkick.com/concerts/43409626-kavak-at-holly-garden-eskisehir" },
+    { "title": "Bu Hikaye Senden Uzun Osman", "day": "2026-11-29", "time": "20:30", "cat": "tiyatro", "venue": "Odunpazarı Belediyesi Hasan Polatkan Kültür Merkezi", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/bu-hikaye-senden-uzun-osman-tiyatrosu-29-kasim-eskisehir-bilet", "price": "1.430 TL" },
+    { "title": "Beyaz Geceler", "day": "2026-12-02", "time": "20:00", "cat": "tiyatro", "venue": "Odunpazarı Belediyesi 100. Yıl Kültür Merkezi", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/beyaz-geceler-tiyatrosu-2-aralik-eskisehir-bilet", "price": "545 TL" },
+    { "title": "Masumiyet Müzesi", "day": "2026-12-04", "time": "18:15", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/masumiyet-muzesi-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "No.1", "day": "2026-12-04", "time": "22:00", "cat": "konser", "venue": "Milyon Performance Hall Eskişehir", "url": "https://iticket.com.tr/en/events/concerts/eskisehir/no1-konseri-4-aralik-eskisehir-bilet", "price": "750 TL'den başlar" },
+    { "title": "Mavi", "day": "2026-12-04", "time": "22:00", "cat": "konser", "venue": "Holly Garden Eskişehir", "url": "https://iticket.com.tr/en/events/concerts/eskisehir/mavi-konseri-4-aralik-bilet", "price": "472,50 TL'den başlar" },
+    { "title": "Leyla The Band", "day": "2026-12-04", "cat": "konser", "venue": "Eskişehir Fuar Kongre Merkezi", "url": "https://www.songkick.com/concerts/43448017-leyla-the-band-at-eskisehir-fuar-kongre-merkezi-fuar-alani-salon-1" },
+    { "title": "Redd", "day": "2026-12-04", "cat": "konser", "venue": "Holly Stone Performance Hall Eskişehir", "url": "https://www.songkick.com/concerts/43496164-redd-at-holly-stone-performance-hall-eskisehir" },
+    { "title": "Murda", "day": "2026-12-05", "cat": "konser", "venue": "Holly Stone Performance Hall Eskişehir", "url": "https://www.songkick.com/concerts/43497526-murda-at-holly-stone-performance-hall-eskisehir" },
+    { "title": "Ayna", "day": "2026-12-08", "cat": "konser", "venue": "Vehbi Koç Kongre Merkezi", "url": "https://www.songkick.com/concerts/43403852-ayna-at-eskisehir-vehbi-koc-kongre-merkezi-oditoryumu" },
+    { "title": "Kürk Mantolu Madonna", "day": "2026-12-11", "time": "20:30", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/kurk-mantolu-madonna-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Martin Eden", "day": "2026-12-12", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/martin-eden-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Dorian Gray'in Portresi", "day": "2026-12-12", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/dorian-grayin-portresi-12-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Pinhani", "day": "2026-12-13", "cat": "konser", "venue": "Holly Stone Performance Hall Eskişehir", "url": "https://www.songkick.com/concerts/43512906-pinhani-at-holly-stone-performance-hall-eskisehir" },
+    { "title": "Candlelight: Sezen Aksu Şarkıları", "day": "2026-12-18", "time": "18:00", "cat": "konser", "venue": "Tasigo Hotel", "url": "https://feverup.com/m/776758", "price": "1.000 TL'den başlar" },
+    { "title": "Candlelight: Yılbaşı Klasikleri", "day": "2026-12-18", "time": "20:30", "cat": "konser", "venue": "Tasigo Hotel", "url": "https://feverup.com/m/776757", "price": "834 TL'den başlar" },
+    { "title": "Anna Karenina", "day": "2026-12-18", "time": "20:30", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/anna-karenina-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Masumiyet Müzesi", "day": "2026-12-19", "time": "19:30", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/masumiyet-muzesi-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Anna Karenina", "day": "2026-12-27", "time": "18:15", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/anna-karenina-aralik-eskisehir-bilet", "price": "300 TL'den başlar" },
+    { "title": "Kürk Mantolu Madonna", "day": "2026-12-27", "time": "19:30", "cat": "tiyatro", "venue": "Eskişehir Rampa Sahne", "url": "https://iticket.com.tr/en/events/theatre/eskisehir/kurk-mantolu-madonna-aralik-eskisehir-bilet", "price": "300 TL'den başlar" }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "city": "Kayseri",
+  "items": [
+    { "title": "Memleket Kumaşı - Sunay Akın", "day": "2026-11-25", "time": "20:00", "cat": "gosteri", "venue": "Kayseri Kültür Merkezi I. Alaeddin Keykubat Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/memleket-kumasi-sunay-akin", "price": "560 TL'den başlar" },
+    { "title": "Gece Yarısı Kütüphanesi", "day": "2026-11-27", "time": "17:00", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/gece-yarisi-kutuphanesi-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Karsu", "day": "2026-11-27", "time": "21:00", "cat": "konser", "venue": "Kayseri Erciyes Kültür Merkezi", "url": "https://biletinial.com/tr-tr/muzik/karsu-konseri", "price": "1450 TL'den başlar" },
+    { "title": "Deli Bayramı", "day": "2026-11-28", "time": "19:00", "cat": "tiyatro", "venue": "Çat Kapı Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/deli-bayrami-cat-kapi", "price": "350 TL'den başlar" },
+    { "title": "Anna Karenina", "day": "2026-11-29", "time": "17:00", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/anna-karenina-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Serenad", "day": "2026-11-29", "time": "18:15", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/serenad-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Kuvayi Milliye Destanı", "day": "2026-11-29", "time": "19:00", "cat": "tiyatro", "venue": "Kayseri İl Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/kuvayi-milliye-destani-hop", "price": "672 TL'den başlar" },
+    { "title": "No.1", "day": "2026-11-29", "time": "21:00", "cat": "konser", "venue": "Kayseri Erciyes Kültür Merkezi", "url": "https://iticket.com.tr/en/events/concerts/kayseri/no1-konseri-29-kasim-kayseri-bilet", "price": "700 TL'den başlar" },
+    { "title": "Deli Bayramı", "day": "2026-12-05", "time": "19:00", "cat": "tiyatro", "venue": "Çat Kapı Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/deli-bayrami-cat-kapi", "price": "350 TL'den başlar" },
+    { "title": "Kürk Mantolu Madonna", "day": "2026-12-06", "time": "20:30", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/kurk-mantolu-madonna-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Masumiyet Müzesi", "day": "2026-12-11", "time": "17:00", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/masumiyet-muzesi-11-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Operadaki Hayalet", "day": "2026-12-11", "time": "20:30", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/operadaki-hayalet-11-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Doğu Demirkol", "day": "2026-12-13", "time": "20:00", "cat": "standup", "venue": "Kayseri Kadir Has Gösteri ve Sanat Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/dogu-demirkol-stand-up-gosterisi", "price": "1500 TL'den başlar" },
+    { "title": "Wegh", "day": "2026-12-13", "time": "21:00", "cat": "konser", "venue": "Kayseri Erciyes Kültür Merkezi", "url": "https://iticket.com.tr/en/events/music/wegh-konseri-13-aralik-kayseri-bilet", "price": "800 TL" },
+    { "title": "Seksendört", "day": "2026-12-19", "time": "20:30", "cat": "konser", "venue": "Erciyes Kültür Merkezi", "url": "https://www.jambase.com/show/seksendort-erciyes-kultur-merkezi-20261219" },
+    { "title": "Haybeden Gerçeküstü Aşk", "day": "2026-12-20", "time": "20:00", "cat": "tiyatro", "venue": "Kayseri Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/haybeden-gercekustu-ask-kyb", "price": "720 TL'den başlar" },
+    { "title": "Anna Karenina", "day": "2026-12-20", "time": "20:30", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/anna-karenina-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" },
+    { "title": "Özel Bir Gün", "day": "2026-12-26", "time": "19:30", "cat": "tiyatro", "venue": "Melikgazi Belediye Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/ozel-bir-gun-", "price": "336 TL'den başlar" },
+    { "title": "Kürk Mantolu Madonna", "day": "2026-12-27", "time": "20:30", "cat": "tiyatro", "venue": "Kayseri Çatkapı Sahne", "url": "https://iticket.com.tr/en/events/theatre/kayseri/kurk-mantolu-madonna-kasim-aralik-kayseri-bilet", "price": "600 TL (öğrenci 300 TL)" }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "city": "Yozgat",
+  "items": [
+    { "title": "Bir İdam Mahkumunun Son Günü - Oğuz Öztaş", "day": "2026-11-27", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/bir-idam-mahkumunun-son-gunu-tiyatro-oyunuu?cinemaBranchId=23286", "price": "560 TL'den başlar" },
+    { "title": "Nazım", "day": "2026-11-28", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/nazim?cinemaBranchId=23286", "price": "672 TL'den başlar" },
+    { "title": "Zafer Algöz - Loading", "day": "2026-12-01", "time": "20:00", "cat": "tiyatro", "venue": "Erdoğan Akdağ Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/zafer-algoz-loading#city=yozgat", "price": "2192 TL'den başlar" },
+    { "title": "JAVADOFF - We Don't Say I Love You", "day": "2026-12-06", "time": "19:00", "cat": "konser", "venue": "Yozgat Belediyesi Büyük Sinema Kültür ve Sanat Merkezi", "url": "https://biletsirasi.com/konser/javadoff-we-dont-say-i-love-you#city=yozgat", "price": "1000 TL'den başlar" },
+    { "title": "Simyacı", "day": "2026-12-09", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/simyaci#city=yozgat", "price": "858 TL'den başlar" },
+    { "title": "Hijyenik Aşklar", "day": "2026-12-11", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/hijyenik-asklar-tiyatro-oyunu?cinemaBranchId=23286", "price": "860 TL'den başlar" },
+    { "title": "Kocasını Pişiren Kadın", "day": "2026-12-18", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/kocasini-pisiren-kadin-tiyatro?cinemaBranchId=23286", "price": "560 TL'den başlar" },
+    { "title": "Suç ve Ceza", "day": "2026-12-24", "time": "20:00", "cat": "tiyatro", "venue": "Yozgat Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/suc-ve-ceza#city=yozgat", "price": "500 TL'den başlar" },
+    { "title": "Lumera Trio - Sezen Aksu Şarkıları", "day": "2026-12-29", "time": "20:00", "cat": "konser", "venue": "Yozgat Belediyesi Büyük Sinema Kültür ve Sanat Merkezi", "url": "https://biletsirasi.com/konser/lumera-trio-sezen-aksu-sarkilari#city=yozgat", "price": "750 TL'den başlar" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "city": "Karaman",
+  "items": [
+    { "title": "Nazım", "day": "2026-11-23", "time": "20:00", "cat": "tiyatro", "venue": "Piri Reis Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/nazim", "price": "672 TL'den başlar" },
+    { "title": "Candles and Echoes", "day": "2026-11-26", "time": "20:15", "cat": "konser", "venue": "Lütfi Elvan Fuar ve Kongre Merkezi", "url": "https://biletsirasi.com/konser/candles-and-echoes-karaman", "price": "699 TL'den başlar" },
+    { "title": "Sezer Sarıgöz", "day": "2026-11-28", "time": "21:00", "cat": "konser", "venue": "Lotus Cafe", "url": "https://biletsirasi.com/konser/sezer-sarigoz", "price": "500 TL'den başlar" },
+    { "title": "Tuğkan", "day": "2026-12-04", "time": "22:00", "cat": "konser", "venue": "Lotus Cafe", "url": "https://biletsirasi.com/konser/tugkan", "price": "499 TL'den başlar" },
+    { "title": "ElMusto", "day": "2026-12-05", "time": "18:30", "cat": "konser", "venue": "Lotus Cafe", "url": "https://biletsirasi.com/konser/elmusto", "price": "500 TL'den başlar" },
+    { "title": "İkiye On Kala", "day": "2026-12-09", "time": "21:00", "cat": "konser", "venue": "Lotus Performans", "url": "https://biletsirasi.com/konser/ikiye-on-kala", "price": "600 TL'den başlar" },
+    { "title": "Bir 80'ler Hikayesi - Müfit Can Saçıntı", "day": "2026-12-17", "time": "20:00", "cat": "tiyatro", "venue": "Piri Reis Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/bir-80ler-hikayesi-mufit-can-sacinti", "price": "1385 TL'den başlar" },
+    { "title": "Ceren Gündoğdu Candle Session", "day": "2026-12-18", "time": "20:30", "cat": "konser", "venue": "Piri Reis Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5UC01/TURKIYE/tr/ceren-gundogdu-candle-session-18-12-2026-karaman" },
+    { "title": "Kumarbaz", "day": "2026-12-19", "time": "20:00", "cat": "tiyatro", "venue": "Piri Reis Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/kumarbaz", "price": "572 TL'den başlar" },
+    { "title": "Yung Ouzo", "day": "2026-12-25", "cat": "konser", "venue": "Lotus Performans", "url": "https://biletsirasi.com/konser/yung-ouzo", "price": "500 TL'den başlar" }
+  ]
+}

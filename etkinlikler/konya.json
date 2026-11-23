@@ -1,0 +1,27 @@
+{
+  "city": "Konya",
+  "items": [
+    { "title": "Karsu", "day": "2026-11-24", "time": "21:00", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5MY26/TURKIYE/tr/karsu-24-11-2026-konya", "price": "1.450 TL'den başlar" },
+    { "title": "Nurettin Rençber", "day": "2026-11-26", "time": "20:30", "cat": "konser", "venue": "Ereğli Belediyesi Kültür ve Spor Merkezi", "url": "https://maxbilet.tr/d/konya/nurettin-rencber-konseri", "price": "850 TL'den başlar" },
+    { "title": "Kafesten Bir Kuş Uçtu", "day": "2026-11-27", "time": "19:00", "cat": "tiyatro", "venue": "Konya Şehir Tiyatrosu", "url": "https://www.turkiye.gov.tr/konya-buyuksehir-belediyesi-etkinlik-sorgulama" },
+    { "title": "Yaşar", "day": "2026-11-28", "time": "19:00", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5JDH7/TURKIYE/tr/yasar-28-11-2026-konya", "price": "1.710 TL'den başlar" },
+    { "title": "Sema Mukabelesi - Konya Türk Tasavvuf Müziği Topluluğu", "day": "2026-11-28", "time": "19:00", "cat": "gosteri", "venue": "Mevlana Kültür Merkezi", "url": "https://biletinial.com/tr-tr/muzik/sema-mukabelesi-konya-turk-tasavvuf-mt" },
+    { "title": "Emre Aydın", "day": "2026-11-29", "time": "20:30", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5ADBT/TURKIYE/tr/emre-aydin-29-11-2026-konya" },
+    { "title": "Zengin Mutfağı", "day": "2026-11-30", "time": "20:30", "cat": "tiyatro", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5YS1Z/TURKIYE/tr/zengin-mutfagi-30-11-2026-konya", "price": "1.000 TL'den başlar" },
+    { "title": "Devlerin Savaşı", "day": "2026-12-02", "time": "20:30", "cat": "gosteri", "venue": "Selçuklu Kongre Merkezi Konya Sahne", "url": "https://www.biletix.com/etkinlik/5J7AF/ISTANBUL/en/devlerin-savasi-02-12-2026-konya", "price": "1.350 TL'den başlar" },
+    { "title": "Woyzeck", "day": "2026-12-03", "time": "20:00", "cat": "tiyatro", "venue": "Konya Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/woyzeck-konya-dt?cinemaBranchId=2476", "price": "70 TL'den başlar" },
+    { "title": "Çok Güzel Hareketler 2", "day": "2026-12-05", "time": "16:00", "cat": "gosteri", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5T9O5/TURKIYE/tr/cok-guzel-hareketler-2-05-12-2026-konya", "price": "1.600 TL'den başlar" },
+    { "title": "Figen Genç & Yeşilçam Quartet - Yeşilçam Şarkıları", "day": "2026-12-05", "time": "20:00", "cat": "konser", "venue": "Konya Bergüzar Gösteri Merkezi", "url": "https://biletinial.com/tr-tr/muzik/lumera-yesilcam-turk-sinemasinin-unutulmaz-melodileri", "price": "548 TL'den başlar" },
+    { "title": "Şeb-i Arûs - Hz. Mevlâna'nın 753. Vuslat Yıl Dönümü Anma Törenleri (açılış)", "day": "2026-12-07", "time": "19:00", "cat": "festival", "venue": "Mevlana Kültür Merkezi Sema Salonu", "url": "https://biletinial.com/tr-tr/muzik/hz-mevlananin-753-vuslat-yildonumu-uluslararasi-anma-torenleri-seb-i-arus" },
+    { "title": "Yunus Benem (Kumdan Şehir)", "day": "2026-12-10", "time": "20:00", "cat": "tiyatro", "venue": "Konya Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/yunus-benem-kumdan-sehir-konya-dt?cinemaBranchId=2476" },
+    { "title": "İkiye On Kala - Akustik", "day": "2026-12-10", "time": "21:00", "cat": "konser", "venue": "Konya PSM", "url": "https://www.biletix.com/etkinlik/5BISG/ANKARA/tr/ikiye-on-kala-akustik-10-12-2026-konya", "price": "600 TL'den başlar" },
+    { "title": "Ogün Sanlısoy", "day": "2026-12-12", "time": "21:00", "cat": "konser", "venue": "Konya PSM", "url": "https://www.biletix.com/etkinlik/5W994/ANKARA/tr/ogun-sanlisoy-12-12-2026-konya", "price": "1.100 TL'den başlar" },
+    { "title": "Güldür Güldür Show", "day": "2026-12-13", "time": "20:30", "cat": "gosteri", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/55AT4/TURKIYE/tr/guldur-guldur-show-13-12-2026-konya", "price": "1.100 TL'den başlar" },
+    { "title": "Şeb-i Arûs - Vuslat Günü Sema Töreni", "day": "2026-12-17", "time": "14:00", "cat": "festival", "venue": "Mevlana Kültür Merkezi Sema Salonu", "url": "https://biletinial.com/tr-tr/muzik/hz-mevlananin-753-vuslat-yildonumu-uluslararasi-anma-torenleri-seb-i-arus" },
+    { "title": "Melis Fis", "day": "2026-12-18", "time": "20:30", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://biletbende.com/sanatci/melis-fis" },
+    { "title": "Seksendört", "day": "2026-12-20", "time": "20:30", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5ADBY/TURKIYE/tr/seksendort-20-12-2026-konya", "price": "800 TL'den başlar" },
+    { "title": "Şahane Pazar Sahnede", "day": "2026-12-22", "time": "20:30", "cat": "gosteri", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://www.biletix.com/etkinlik/5KS06/TURKIYE/tr/sahane-pazar-sahnede-22-12-2026-konya", "price": "900 TL'den başlar" },
+    { "title": "Cem Adrian", "day": "2026-12-25", "cat": "konser", "venue": "Selçuklu Kongre Merkezi Anadolu Sahne", "url": "https://biletsirasi.com/konya/konser/cem-adrian", "price": "1.100 TL'den başlar" },
+    { "title": "Yung Ouzo", "day": "2026-12-26", "time": "20:00", "cat": "konser", "venue": "Konya PSM", "url": "https://www.biletix.com/etkinlik/5OF49/ANKARA/tr/yung-ouzo-26-12-2026-konya", "price": "600 TL'den başlar" }
+  ]
+}
