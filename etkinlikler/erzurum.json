@@ -1,0 +1,17 @@
+{
+  "city": "Erzurum",
+  "items": [
+    {"title":"Şahane Pazar Sahnede","day":"2026-11-24","time":"20:30","cat":"tiyatro","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/sahane-pazar-sahnede","price":"795,60 TL'den başlar"},
+    {"title":"Seferi Ramazan Bey'in Nafile Dünyası","day":"2026-11-26","time":"19:30","cat":"tiyatro","venue":"Erzurum Devlet Tiyatrosu Sahnesi","url":"https://biletsirasi.com/tiyatro/seferi-ramazan-beyin-nafile-dunyasi","price":"80 TL'den başlar"},
+    {"title":"Ezginin Günlüğü","day":"2026-11-26","time":"20:00","cat":"konser","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://iticket.com.tr/etkinlikler/konser/erzurum/ezginin-gunlugu-konseri-26-kasim-erzurum-bilet","price":"935 TL'den başlar"},
+    {"title":"Bir İdam Mahkumunun Son Günü","day":"2026-11-28","time":"16:00","cat":"tiyatro","venue":"Medya Sanat Evi","url":"https://iticket.com.tr/etkinlikler/tiyatro/erzurum/bir-idam-mahkumunun-son-gunu-28-kasim-erzurum-bilet","price":"300 TL'den başlar"},
+    {"title":"Ahmet Aslan","day":"2026-11-28","time":"20:00","cat":"konser","venue":"Atatürk Üniversitesi 15 Temmuz Milli İrade Salonu","url":"https://biletsirasi.com/erzurum/konser/ahmet-aslan","price":"1100 TL'den başlar"},
+    {"title":"Operadaki Hayalet","day":"2026-11-28","time":"20:30","cat":"tiyatro","venue":"Medya Sanat Evi","url":"https://iticket.com.tr/etkinlikler/tiyatro/erzurum/operadaki-hayalet-28-kasim-erzurum-bilet","price":"300 TL'den başlar"},
+    {"title":"Cem Erdost İleri","day":"2026-12-01","cat":"konser","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://www.songkick.com/concerts/43456077-cem-erdost-ileri-at-necip-fazil-kisakurek-kultur-merkezi-erzurum"},
+    {"title":"Seferi Ramazan Bey'in Nafile Dünyası","day":"2026-12-04","time":"19:30","cat":"tiyatro","venue":"Erzurum Devlet Tiyatrosu Sahnesi","url":"https://biletsirasi.com/tiyatro/seferi-ramazan-beyin-nafile-dunyasi"},
+    {"title":"Doktor Bana Bir Çare","day":"2026-12-05","time":"20:00","cat":"tiyatro","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/doktor-bana-bir-care","price":"987 TL'den başlar"},
+    {"title":"Kürk Mantolu Madonna","day":"2026-12-12","time":"20:30","cat":"tiyatro","venue":"Medya Sanat Evi","url":"https://iticket.com.tr/etkinlikler/tiyatro/erzurum/kurk-mantolu-madonna-12-aralik-erzurum-bilet","price":"300 TL'den başlar"},
+    {"title":"Konken Partisi","day":"2026-12-13","time":"20:00","cat":"tiyatro","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/konken-partisi-tiyatro","price":"1000 TL'den başlar"},
+    {"title":"Haybeden Gerçeküstü Aşk","day":"2026-12-26","time":"20:00","cat":"tiyatro","venue":"Necip Fazıl Kısakürek Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/haybeden-gercekustu-ask","price":"820 TL'den başlar"}
+  ]
+}

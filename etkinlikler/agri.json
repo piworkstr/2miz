@@ -1,0 +1,9 @@
+{
+  "city": "Ağrı",
+  "items": [
+    {"title":"Sabotaj","day":"2026-11-26","time":"20:00","cat":"tiyatro","venue":"Ağrı Barosu Konferans Salonu","url":"https://biletsirasi.com/tiyatro/sabotaj","price":"990 TL'den başlar"},
+    {"title":"Sefiller","day":"2026-11-28","time":"20:00","cat":"tiyatro","venue":"Ağrı Kültür ve Kongre Merkezi","url":"https://biletsirasi.com/tiyatro/sefiller","price":"672 TL'den başlar"},
+    {"title":"Kuyucaklı Yusuf","day":"2026-12-05","time":"19:00","cat":"tiyatro","venue":"Ağrı Kültür ve Kongre Merkezi","url":"https://biletsirasi.com/tiyatro/kuyucakli-yusuf","price":"643 TL'den başlar"},
+    {"title":"Satranç","day":"2026-12-05","time":"20:00","cat":"tiyatro","venue":"Vali Kutlu Aktaş Konferans Salonu, Doğubayazıt","url":"https://biletsirasi.com/tiyatro/satranc","price":"672 TL'den başlar"}
+  ]
+}

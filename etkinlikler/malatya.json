@@ -1,0 +1,17 @@
+{
+  "city": "Malatya",
+  "items": [
+    {"title":"Suç ve Ceza","day":"2026-11-26","time":"20:00","cat":"tiyatro","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletinial.com/tr-tr/tiyatro/suc-ve-ceza-biletinial?cinemaBranchId=16966","price":"400 TL'den başlar"},
+    {"title":"Haybeden Gerçeküstü Aşk","day":"2026-11-29","time":"20:00","cat":"tiyatro","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletinial.com/tr-tr/tiyatro/haybeden-gercekustu-ask-kyb?cinemaBranchId=16966","price":"820 TL'den başlar"},
+    {"title":"Şehriban'la Memleket Kahkahası","day":"2026-11-30","time":"20:30","cat":"standup","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/stand-up/sehribanla-memleket-kahkahasi","price":"1950 TL'den başlar"},
+    {"title":"Pinhani","day":"2026-12-02","time":"21:30","cat":"konser","venue":"Hanzade Konağı","url":"https://www.jambase.com/show/pinhani-malatya-hanzade-konagi-20261202"},
+    {"title":"Zakkum","day":"2026-12-03","time":"20:00","cat":"konser","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/konser/zakkum","price":"850 TL'den başlar"},
+    {"title":"Ender Balkır","day":"2026-12-05","time":"20:30","cat":"konser","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/konser/ender-balkir","price":"1350 TL'den başlar"},
+    {"title":"Orhan Kemal","day":"2026-12-06","time":"20:30","cat":"konser","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/konser/orhan-kemal","price":"750 TL'den başlar"},
+    {"title":"Çelik","day":"2026-12-10","time":"20:00","cat":"konser","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/konser/celik","price":"1811 TL'den başlar"},
+    {"title":"Cem Erdost İleri","day":"2026-12-11","time":"20:00","cat":"konser","venue":"Malatya Kültür Merkezi (İnönü Caddesi)","url":"https://www.jambase.com/show/cem-erdost-ileri-malatya-cultural-center-20261211"},
+    {"title":"Lvbel C5","day":"2026-12-11","time":"21:00","cat":"konser","venue":"İnönü Üniversitesi Spor Bilimleri Spor Sahası","url":"https://biletsirasi.com/konser/lvbel-c5","price":"1000 TL'den başlar"},
+    {"title":"Tuğba Yurt","day":"2026-12-14","time":"20:30","cat":"konser","venue":"Malatya Kongre ve Kültür Merkezi - Kemal Sunal Salonu","url":"https://biletsirasi.com/konser/tugba-yurt","price":"1050 TL'den başlar"},
+    {"title":"Romeo & Juliet","day":"2026-12-25","time":"20:00","cat":"tiyatro","venue":"Malatya Kongre ve Kültür Merkezi Kemal Sunal Salonu","url":"https://iticket.com.tr/en/events/theatre/malatya/romeo-and-juliet-25-aralik-malatya-bilet","price":"550 TL'den başlar"}
+  ]
+}

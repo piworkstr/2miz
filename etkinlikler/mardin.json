@@ -1,0 +1,15 @@
+{
+  "city": "Mardin",
+  "items": [
+    {"title":"Erdal Kaya - Zikopişto","day":"2026-11-27","time":"19:30","cat":"standup","venue":"Mardin Brecht Sahne","url":"https://biletsirasi.com/stand-up/erdal-kaya-zikopisto","price":"600 TL'den başlar"},
+    {"title":"Soner Arıca","day":"2026-11-27","time":"20:30","cat":"konser","venue":"Mardin Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/konser/soner-arica","price":"750 TL'den başlar"},
+    {"title":"Xero Abbas","day":"2026-11-29","time":"20:00","cat":"konser","venue":"Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/konser/xero-abbas","price":"1100 TL'den başlar"},
+    {"title":"Pinhani","day":"2026-12-01","time":"21:00","cat":"konser","venue":"Sinek","url":"https://biletsirasi.com/konser/pinhani"},
+    {"title":"Zakkum","day":"2026-12-05","cat":"konser","venue":"Mardin Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/konser/zakkum","price":"850 TL'den başlar"},
+    {"title":"Ahmed Arif","day":"2026-12-11","time":"20:00","cat":"tiyatro","venue":"Şaneşin Performans","url":"https://biletsirasi.com/tiyatro/ahmed-arif","price":"560 TL'den başlar"},
+    {"title":"Zafer Algöz - Loading","day":"2026-12-15","time":"20:00","cat":"standup","venue":"Mardin Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/stand-up/zafer-algoz-loading","price":"1000 TL'den başlar"},
+    {"title":"Çelik","day":"2026-12-18","time":"20:30","cat":"konser","venue":"Mardin Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/konser/celik","price":"1100 TL'den başlar"},
+    {"title":"Koma Amed","day":"2026-12-19","time":"20:00","cat":"konser","venue":"Yay Grand Otel Cemal Yay Kongre Salonu","url":"https://biletsirasi.com/konser/koma-amed","price":"1000 TL'den başlar"},
+    {"title":"Tahsin Hasoğlu","day":"2026-12-23","time":"20:00","cat":"standup","venue":"Mardin Atatürk Kültür Merkezi - Vali Koçaklar Salonu","url":"https://biletsirasi.com/stand-up/tahsin-hasoglu","price":"1000 TL'den başlar"}
+  ]
+}

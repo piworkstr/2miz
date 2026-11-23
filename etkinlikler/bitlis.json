@@ -1,0 +1,7 @@
+{
+  "city": "Bitlis",
+  "items": [
+    {"title":"Pinhani Akustik","day":"2026-11-27","time":"20:00","cat":"konser","venue":"Bitlis Eren Üniversitesi Merkezi Konferans Salonu","url":"https://biletsirasi.com/konser/pinhani-akustik","price":"900 TL'den başlar"},
+    {"title":"Sefiller","day":"2026-12-19","time":"20:00","cat":"tiyatro","venue":"Bitlis İl Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/sefiller","price":"672 TL'den başlar"}
+  ]
+}

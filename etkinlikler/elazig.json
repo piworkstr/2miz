@@ -1,0 +1,17 @@
+{
+  "city": "Elazığ",
+  "items": [
+    {"title":"Düğün","day":"2026-11-25","time":"19:30","cat":"tiyatro","venue":"Fi Sanat Mathilda Sahne","url":"https://biletinial.com/tr-tr/tiyatro/dugun-tiyatro-oyunu"},
+    {"title":"Bir Öğretmen Bin Yürek Konseri","day":"2026-11-27","time":"20:00","cat":"konser","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/muzik/bir-ogretmen-bin-yurek-edktmkt","price":"100 TL'den başlar"},
+    {"title":"Ender Balkır","day":"2026-12-06","time":"19:30","cat":"konser","venue":"Elazığ Akgün Otel","url":"https://biletsirasi.com/konser/ender-balkir","price":"1250 TL'den başlar"},
+    {"title":"Ortadaki Oyun","day":"2026-12-06","time":"20:00","cat":"tiyatro","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/ortadaki-oyun-ss?cinemaBranchId=17075"},
+    {"title":"Cem Erdost İleri Solo Konser","day":"2026-12-10","time":"20:00","cat":"konser","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/muzik/cem-erdost-ileri-trio?cinemaBranchId=17075"},
+    {"title":"Yusuf Bilal Altıntaş - Entel Maganda","day":"2026-12-11","time":"21:00","cat":"standup","venue":"Fi Sanat Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/yusuf-bilal-altintas-stand-up","price":"500 TL'den başlar"},
+    {"title":"Lvbel C5","day":"2026-12-12","time":"21:00","cat":"konser","venue":"Ahmet Tevfik Ozan Fuar ve Kongre Merkezi","url":"https://www.bandsintown.com/e/1039685121-lvbel-c5-at-elazig-ahmet-tevfik-ozan-fuar-ve-kongre-merkezi"},
+    {"title":"Üç Kadın ve Bir Kavanoz Kül","day":"2026-12-14","time":"20:00","cat":"tiyatro","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/uc-kavanoz-ve-bir-kavanoz-kul?cinemaBranchId=17075"},
+    {"title":"Hamlet","day":"2026-12-20","time":"20:00","cat":"tiyatro","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/hamlet-tiyatroyunu?cinemaBranchId=17075","price":"600 TL'den başlar"},
+    {"title":"Gökhan Türkmen","day":"2026-12-20","time":"20:30","cat":"konser","venue":"Ahmet Tevfik Ozan Fuar ve Kongre Merkezi","url":"https://www.bandsintown.com/e/1040463017-gokhan-turkmen-at-elazig-ahmet-tevfik-ozan-fuar-ve-kongre-merkezi"},
+    {"title":"Kerbela","day":"2026-12-24","time":"19:30","cat":"tiyatro","venue":"Nurettin Ardıçoğlu Kültür Merkezi - Büyük Salon","url":"https://biletinial.com/tr-tr/tiyatro/kerbela?cinemaBranchId=1252"},
+    {"title":"Haybeden Gerçeküstü Aşk","day":"2026-12-27","time":"20:00","cat":"tiyatro","venue":"Nurettin Ardıçoğlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/haybeden-gercekustu-ask-kyb?cinemaBranchId=17075","price":"860 TL'den başlar"}
+  ]
+}

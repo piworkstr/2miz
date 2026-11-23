@@ -1,0 +1,24 @@
+{
+  "city": "Gaziantep",
+  "items": [
+    {"title":"Eliott Tordo Konseri","day":"2026-11-26","time":"21:00","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/eliott-tordo-konseri","price":"1500 TL'den başlar"},
+    {"title":"Ersay Üner \"Aşka Yazılan Şarkılar\"","day":"2026-11-28","time":"20:30","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/-ersay-uner-aska-yazilan-sarkilar-","price":"1250 TL'den başlar"},
+    {"title":"Kalben","day":"2026-11-28","time":"21:00","cat":"konser","venue":"Jolly Joker Gaziantep","url":"https://www.biletix.com/etkinlik/5JG45/TURKIYE/tr/kalben-28-11-2026-gaziantep","price":"684 TL'den başlar"},
+    {"title":"Güldür Güldür Show","day":"2026-12-04","time":"20:30","cat":"gosteri","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/55AP0/TURKIYE/tr/guldur-guldur-show-04-12-2026-gaziantep","price":"2970 TL'den başlar"},
+    {"title":"Çelik","day":"2026-12-05","cat":"konser","venue":"Jolly Joker Gaziantep","url":"https://www.biletix.com/etkinlik/5JG34/TURKIYE/tr/celik-05-12-2026-gaziantep","price":"997,50 TL'den başlar"},
+    {"title":"Ceren Sagu Konseri","day":"2026-12-06","time":"20:30","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/ceren-sagu--konseri","price":"900 TL'den başlar"},
+    {"title":"Kel Diva","day":"2026-12-08","time":"20:00","cat":"tiyatro","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/52725/TURKIYE/tr/kel-diva-08-12-2026-gaziantep","price":"2750 TL'den başlar"},
+    {"title":"Ege 30. Yıl Konseri","day":"2026-12-09","time":"20:30","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/ege-konseri-","price":"900 TL'den başlar"},
+    {"title":"Tuğba Yurt Konseri","day":"2026-12-12","time":"20:30","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/tugba-yurt-konseri","price":"1200 TL'den başlar"},
+    {"title":"Gökhan Türkmen","day":"2026-12-12","time":"20:30","cat":"konser","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/gokhan-turkmen-konseri","price":"1850 TL'den başlar"},
+    {"title":"Ender Balkır Konseri","day":"2026-12-13","time":"20:30","cat":"konser","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/ender-balkir-konseri","price":"1450 TL'den başlar"},
+    {"title":"Şahane Pazar Sahnede","day":"2026-12-17","time":"20:30","cat":"tiyatro","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/5MK86/TURKIYE/tr/art-sahane-pazar-sahnede-01-12-2026-gaziantep","price":"1250 TL'den başlar"},
+    {"title":"Evgeny Grinko","day":"2026-12-18","time":"20:00","cat":"konser","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/5RG94/TURKIYE/tr/evgeny-grinko-18-12-2026-gaziantep","price":"2000 TL'den başlar"},
+    {"title":"Kibariye & Hüsnü Şenlendirici","day":"2026-12-18","cat":"konser","venue":"Jolly Joker Gaziantep","url":"https://www.biletix.com/etkinlik/5JG46/TURKIYE/tr/kibariye-husnu-senlendirici-18-12-2026-gaziantep","price":"1710 TL'den başlar"},
+    {"title":"Hijyenik Aşklar","day":"2026-12-20","time":"20:00","cat":"tiyatro","venue":"Gaziantep Şehitkamil Kültür ve Kongre Merkezi","url":"https://www.bubilet.com.tr/gaziantep/etkinlik/hijyenik-asklar-oyunu","price":"840 TL"},
+    {"title":"Profesyonel","day":"2026-12-24","time":"20:30","cat":"tiyatro","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/5MN77/TURKIYE/tr/art-profesyonel-24-12-2026-gaziantep","price":"1620 TL'den başlar"},
+    {"title":"Emir Can İğrek","day":"2026-12-25","cat":"konser","venue":"Jolly Joker Gaziantep","url":"https://www.biletix.com/etkinlik/5JG51/TURKIYE/tr/emir-can-igrek-25-12-2026-gaziantep","price":"1425 TL'den başlar"},
+    {"title":"Çok Güzel Hareketler 2","day":"2026-12-26","time":"15:30","cat":"gosteri","venue":"Şahinbey Kongre ve Sanat Merkezi","url":"https://www.biletix.com/etkinlik/5T9O9/TURKIYE/tr/cok-guzel-hareketler-2-26-12-2026-gaziantep","price":"1600 TL'den başlar"},
+    {"title":"Ayçin Asan Yılbaşı Özel","day":"2026-12-31","cat":"konser","venue":"Jolly Joker Gaziantep","url":"https://www.biletix.com/etkinlik/5JG53/TURKIYE/tr/aycin-asan-yilbasi-ozel-31-12-2026-gaziantep","price":"1140 TL'den başlar"}
+  ]
+}

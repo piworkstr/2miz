@@ -1,0 +1,9 @@
+{
+  "city": "Kars",
+  "items": [
+    {"title":"Şahane Pazar Sahnede","day":"2026-11-23","time":"20:30","cat":"tiyatro","venue":"Kafkas Üniversitesi Ahmet Arslan Kültür ve Kongre Merkezi","url":"https://biletsirasi.com/kars/tiyatro/sahane-pazar-sahnede","price":"900 TL'den başlar"},
+    {"title":"Ezginin Günlüğü","day":"2026-11-27","time":"20:00","cat":"konser","venue":"Kafkas Üniversitesi Ahmet Arslan Kültür ve Kongre Merkezi","url":"https://iticket.com.tr/en/events/concerts/kars/ezginin-gunlugu-konseri-27-kasim-kars-bilet","price":"1.000 TL'den başlar"},
+    {"title":"Ahmet Aslan","day":"2026-11-29","time":"19:00","cat":"konser","venue":"Kafkas Üniversitesi Ahmet Arslan Kültür ve Kongre Merkezi","url":"https://biletsirasi.com/konser/ahmet-aslan","price":"767 TL'den başlar"},
+    {"title":"Destanların Dansı","day":"2026-12-02","time":"19:00","cat":"gosteri","venue":"Kafkas Üniversitesi Ahmet Arslan Kültür ve Kongre Merkezi","url":"https://biletsirasi.com/kars/tiyatro/destanlarin-dansi","price":"1.400 TL'den başlar"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "city": "Diyarbakır",
+  "items": [
+    {"title":"Destana Moraşînê","day":"2026-11-23","time":"19:30","cat":"tiyatro","venue":"Sezai Karakoç Kongre ve Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/destana-morasine","price":"75 TL'den başlar"},
+    {"title":"Alevli Günler","day":"2026-11-24","time":"20:30","cat":"tiyatro","venue":"Sezai Karakoç Kongre ve Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/alevli-gunler-","price":"1.118 TL'den başlar"},
+    {"title":"Yeşilçam Nostaljik Şarkılar Konseri","day":"2026-11-26","time":"19:30","cat":"konser","venue":"Cahit Sıtkı Tarancı Kültür Merkezi Koro Salonu","url":"https://biletinial.com/tr-tr/muzik/yesilcam-nostaljik-sarkilar-konseri-ddktmmk","price":"100 TL'den başlar"},
+    {"title":"Cinayet Kumpanyası (Diyarbakır Devlet Tiyatrosu)","day":"2026-11-27","time":"20:00","cat":"tiyatro","venue":"Cahit Sıtkı Tarancı Kültür Merkezi Orhan Asena Sahnesi","url":"https://biletinial.com/tr-tr/tiyatro/cinayet-kumpanyasi-diyarbakir-dt","price":"70 TL'den başlar"},
+    {"title":"Borderline (Diyarbakır Devlet Tiyatrosu)","day":"2026-12-01","time":"20:00","cat":"tiyatro","venue":"Oda Tiyatrosu DT Genç Sahne","url":"https://biletinial.com/tr-tr/tiyatro/borderline-diyarbakir-dt","price":"80 TL'den başlar"},
+    {"title":"Ahmet Kaya ile Kardeş Türküler","day":"2026-12-02","cat":"konser","venue":"Diyarbakır Sezai Karakoç Kültür ve Kongre Merkezi","url":"https://www.songkick.com/concerts/43368236-kardes-turkuler-at-diyarbakir-sezai-karakoc-kultur-ve-kongre-merkezi","price":"1.000 TL'den başlar"},
+    {"title":"Cinayet Kumpanyası (Diyarbakır Devlet Tiyatrosu)","day":"2026-12-05","time":"20:00","cat":"tiyatro","venue":"Cahit Sıtkı Tarancı Kültür Merkezi Orhan Asena Sahnesi","url":"https://biletinial.com/tr-tr/tiyatro/cinayet-kumpanyasi-diyarbakir-dt","price":"70 TL'den başlar"},
+    {"title":"Aryen Kom Konseri","day":"2026-12-06","time":"19:00","cat":"konser","venue":"Mehmet Emin Yalçınkaya Tiyatro Sahnesi","url":"https://biletinial.com/tr-tr/muzik/aryen-kom-konseri","price":"500 TL'den başlar"},
+    {"title":"Koma Amed","day":"2026-12-10","time":"20:00","cat":"konser","venue":"Diyarbakır Sezai Karakoç Kültür ve Kongre Merkezi","url":"https://biletinial.com/tr-tr/muzik/koma-amed","price":"800 TL'den başlar"},
+    {"title":"Midas'ın Kulakları (Diyarbakır Devlet Tiyatrosu)","day":"2026-12-11","time":"20:00","cat":"tiyatro","venue":"Cahit Sıtkı Tarancı Kültür Merkezi Orhan Asena Sahnesi","url":"https://biletinial.com/tr-tr/tiyatro/midasin-kulaklari-dt-"},
+    {"title":"Soner Sarıkabadayı","day":"2026-12-13","time":"21:00","cat":"konser","venue":"Diyarbakır Sezai Karakoç Kültür ve Kongre Merkezi","url":"https://biletinial.com/tr-tr/muzik/soner-sarikabadayi","price":"750 TL'den başlar"},
+    {"title":"Ersin Korkut - Ben mi Yapmışım?","day":"2026-12-16","time":"20:30","cat":"gosteri","venue":"Sezai Karakoç Kongre ve Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/ben-mi-yapmisim","price":"750 TL'den başlar"},
+    {"title":"Evgeny Grinko","day":"2026-12-17","cat":"konser","venue":"Diyarbakır Sezai Karakoç Kültür ve Kongre Merkezi","url":"https://www.songkick.com/concerts/43493264-evgeny-grinko-at-diyarbakir-sezai-karakoc-kultur-ve-kongre-merkezi","price":"2.000 TL'den başlar"},
+    {"title":"7 Kocalı Hürmüz Müzikali","day":"2026-12-19","time":"20:00","cat":"tiyatro","venue":"Diyarbakır Sezai Karakoç Kültür ve Kongre Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/7-kocali-hurmuz-muzikali","price":"1.350 TL'den başlar"},
+    {"title":"Profesyonel","day":"2026-12-23","time":"20:30","cat":"tiyatro","venue":"Diyarbakır Sezai Karakoç Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/profesyonel","price":"1.580 TL'den başlar"},
+    {"title":"Doğu Demirkol Stand-Up Gösterisi","day":"2026-12-24","time":"20:30","cat":"standup","venue":"Sezai Karakoç Kongre ve Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/dogu-demirkol-stand-up-gosterisi","price":"1.500 TL'den başlar"}
+  ]
+}

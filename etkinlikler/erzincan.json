@@ -1,0 +1,14 @@
+{
+  "city": "Erzincan",
+  "items": [
+    {"title":"Suç ve Ceza","day":"2026-11-27","time":"20:00","cat":"tiyatro","venue":"Erzincan Belediyesi Kültür Sanat Merkezi","url":"https://biletsirasi.com/tiyatro/suc-ve-ceza","price":"600 TL'den başlar"},
+    {"title":"Çelik","day":"2026-11-28","time":"20:30","cat":"konser","venue":"Erzincan Binali Yıldırım Üniversitesi Kongre ve Kültür Merkezi","url":"https://biletsirasi.com/konser/celik","price":"1650 TL'den başlar"},
+    {"title":"Sagopa Kajmer","day":"2026-11-29","time":"20:30","cat":"konser","venue":"Erzincan Binali Yıldırım Üniversitesi Kongre ve Kültür Merkezi","url":"https://biletsirasi.com/konser/sagopa-kajmer","price":"1250 TL'den başlar"},
+    {"title":"Gülden","day":"2026-12-06","time":"20:30","cat":"konser","venue":"Erzincan Binali Yıldırım Üniversitesi Kongre ve Kültür Merkezi","url":"https://biletsirasi.com/konser/gulden","price":"1120 TL'den başlar"},
+    {"title":"Candles and Echoes","day":"2026-12-11","cat":"konser","venue":"Erzincan Binali Yıldırım Üniversitesi Kongre ve Kültür Merkezi","url":"https://biletsirasi.com/konser/candles-and-echoes-erzincan","price":"699 TL'den başlar"},
+    {"title":"Hijyenik Aşklar","day":"2026-12-12","time":"20:00","cat":"tiyatro","venue":"Erzincan Belediyesi Kültür Sanat Merkezi","url":"https://biletsirasi.com/tiyatro/hijyenik-asklar","price":"850 TL'den başlar"},
+    {"title":"Nazım","day":"2026-12-16","time":"19:00","cat":"tiyatro","venue":"Erzincan Belediyesi Kültür Sanat Merkezi","url":"https://biletsirasi.com/tiyatro/nazim","price":"896 TL'den başlar"},
+    {"title":"Zakkum","day":"2026-12-18","time":"20:30","cat":"konser","venue":"Erzincan Binali Yıldırım Üniversitesi Kongre ve Kültür Merkezi","url":"https://biletsirasi.com/konser/zakkum","price":"500 TL'den başlar"},
+    {"title":"Haybeden Gerçeküstü Aşk","day":"2026-12-22","time":"20:00","cat":"tiyatro","venue":"Erzincan Belediyesi Kültür Sanat Merkezi","url":"https://biletsirasi.com/tiyatro/haybeden-gercekustu-ask","price":"750 TL'den başlar"}
+  ]
+}

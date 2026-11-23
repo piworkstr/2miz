@@ -1,0 +1,15 @@
+{
+  "city": "Van",
+  "items": [
+    {"title":"Godot'yu Beklerken","day":"2026-11-25","time":"19:30","cat":"tiyatro","venue":"Van Bölge Tiyatrosu","url":"https://www.etkinlinkler.com/etkinlik/godotyu-beklerken-van/526038","price":"300 TL'den başlar"},
+    {"title":"Jurnal","day":"2026-11-25","time":"20:00","cat":"tiyatro","venue":"Van Barosu Tahir Elçi Konferans Salonu","url":"https://www.etkinlinkler.com/etkinlik/jurnal-van/486395","price":"1190 TL'den başlar"},
+    {"title":"Hidayet Tılı - Stand Up Gösterisi","day":"2026-11-27","time":"20:00","cat":"standup","venue":"Human Sahne","url":"https://www.etkinlinkler.com/etkinlik/hidayet-tili-stand-up-gosterisi-van/539588","price":"575 TL'den başlar"},
+    {"title":"Pinhani \"Akustik\"","day":"2026-11-28","time":"21:30","cat":"konser","venue":"Van Niçe","url":"https://biletsirasi.com/konser/pinhani-akustik"},
+    {"title":"Ahmet Aslan Konseri","day":"2026-12-01","time":"19:30","cat":"konser","venue":"Atakan Çelik Kültür Merkezi","url":"https://www.etkinlinkler.com/etkinlik/ahmet-aslan-konseri-van/527835","price":"1206 TL'den başlar"},
+    {"title":"Xero Abbas Konseri","day":"2026-12-01","time":"20:00","cat":"konser","venue":"DoubleTree by Hilton Van","url":"https://www.etkinlinkler.com/etkinlik/xero-abbas-van/268964","price":"1000 TL'den başlar"},
+    {"title":"Aryen Kom Konseri","day":"2026-12-05","time":"19:00","cat":"konser","venue":"ŞanoWan Sahnesi","url":"https://www.etkinlinkler.com/etkinlik/aryen-kom-konseri-van/551039","price":"450 TL'den başlar"},
+    {"title":"Sefiller","day":"2026-12-06","time":"20:00","cat":"tiyatro","venue":"Erciş Atakan Çelik Kültür Merkezi","url":"https://www.etkinlinkler.com/etkinlik/sefiller-van/414075","price":"600 TL'den başlar"},
+    {"title":"Tahsin Hasoğlu","day":"2026-12-25","time":"20:00","cat":"standup","venue":"Van Bölge Tiyatrosu","url":"https://www.etkinlinkler.com/etkinlik/tahsin-hasoglu-van/105776","price":"1250 TL'den başlar"},
+    {"title":"Tahsin Hasoğlu","day":"2026-12-26","time":"20:00","cat":"standup","venue":"Van Bölge Tiyatrosu","url":"https://www.etkinlinkler.com/etkinlik/tahsin-hasoglu-van/105776"}
+  ]
+}

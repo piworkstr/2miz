@@ -1,0 +1,9 @@
+{
+  "city": "Şırnak",
+  "items": [
+    {"title":"Satranç","day":"2026-11-27","time":"20:00","cat":"tiyatro","venue":"Cizre Belediyesi Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/satranc-uvercinka?cinemaBranchId=16870","price":"616 TL'den başlar"},
+    {"title":"Bir İdam Mahkumunun Son Günü - Oğuz Öztaş","day":"2026-12-04","time":"20:00","cat":"tiyatro","venue":"Cizre Belediyesi Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/bir-idam-mahkumunun-son-gunu-tiyatro-oyunuu?cinemaBranchId=16870","price":"896 TL'den başlar"},
+    {"title":"Dönüşüm - Franz Kafka","day":"2026-12-12","time":"20:00","cat":"tiyatro","venue":"Cizre Belediyesi Konferans Salonu","url":"https://biletsirasi.com/tiyatro/donusum-franz-kafka","price":"800 TL'den başlar"},
+    {"title":"Duyduk Ki","day":"2026-12-25","time":"20:00","cat":"tiyatro","venue":"Cizre Belediyesi Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/duyduk-ki?cinemaBranchId=16870","price":"800 TL'den başlar"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "city": "Batman",
+  "items": [
+    {"title":"Ozan Orhon & Dj Jesus","day":"2026-11-27","time":"21:00","cat":"konser","venue":"Holly Stone Batman","url":"https://biletsirasi.com/konser/ozan-orhon-dj-jesus","price":"400 TL'den başlar"},
+    {"title":"Ali Rıza Tanyeli - Kendime Düşünceler","day":"2026-12-02","time":"20:30","cat":"standup","venue":"Holly Stone Batman","url":"https://biletsirasi.com/stand-up/ali-riza-tanyeli-kendime-dusunceler-stand-up","price":"1000 TL'den başlar"},
+    {"title":"Ahmet Kaya ile Kardeş Türküler","day":"2026-12-03","time":"20:30","cat":"konser","venue":"Hatice Nasıroğlu Konferans Salonu","url":"https://biletsirasi.com/konser/ahmet-kaya-ile-kardes-turkuler","price":"1394 TL'den başlar"},
+    {"title":"Cem Erdost İleri ile PortakalAltı Buluşmaları","day":"2026-12-04","time":"20:00","cat":"konser","venue":"Batman İl Kültür Merkezi","url":"https://biletsirasi.com/konser/cem-erdost-ileri-ile-portakalalti-bulusmalari","price":"1400 TL'den başlar"},
+    {"title":"Sefiller","day":"2026-12-05","time":"20:00","cat":"tiyatro","venue":"Batman Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/sefiller","price":"672 TL'den başlar"},
+    {"title":"Nalınlar","day":"2026-12-07","time":"20:00","cat":"tiyatro","venue":"Batman DT Sahnesi","url":"https://biletsirasi.com/tiyatro/nalinlar"},
+    {"title":"Dönüşüm - Franz Kafka","day":"2026-12-10","time":"20:00","cat":"tiyatro","venue":"Batman İl Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/donusum-franz-kafka","price":"800 TL'den başlar"},
+    {"title":"Feridun Düzağaç","day":"2026-12-12","time":"22:00","cat":"konser","venue":"Holly Stone Batman","url":"https://biletsirasi.com/konser/feridun-duzagac","price":"899 TL'den başlar"},
+    {"title":"Ahmed Arif","day":"2026-12-13","time":"20:00","cat":"tiyatro","venue":"Batman Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/ahmed-arif","price":"672 TL'den başlar"},
+    {"title":"Çelik","day":"2026-12-16","time":"20:30","cat":"konser","venue":"Hatice Nasıroğlu Konferans Salonu","url":"https://biletsirasi.com/konser/celik","price":"1100 TL'den başlar"},
+    {"title":"Tahsin Hasoğlu","day":"2026-12-22","time":"20:00","cat":"standup","venue":"Batman İl Kültür Merkezi","url":"https://biletsirasi.com/stand-up/tahsin-hasoglu","price":"900 TL'den başlar"},
+    {"title":"Yusuf Bilal Altıntaş - Entel Maganda","day":"2026-12-23","time":"20:30","cat":"standup","venue":"Holly Stone Batman","url":"https://biletsirasi.com/stand-up/yusuf-bilal-altintas-entel-maganda-stand-up"},
+    {"title":"Zedi | RNBESK","day":"2026-12-24","time":"21:30","cat":"konser","venue":"Holly Stone Batman","url":"https://biletsirasi.com/konser/zedi-rnbesk","price":"750 TL'den başlar"}
+  ]
+}

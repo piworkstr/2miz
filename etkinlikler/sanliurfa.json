@@ -1,0 +1,17 @@
+{
+  "city": "Şanlıurfa",
+  "items": [
+    {"title":"Soner Arıca","day":"2026-11-28","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/soner-arica","price":"750 TL'den başlar"},
+    {"title":"Ersay Üner - Aşka Yazılan Şarkılar","day":"2026-11-29","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/ersay-uner-aska-yazilan-sarkilar","price":"1500 TL'den başlar"},
+    {"title":"Şahane Pazar Sahnede","day":"2026-11-30","time":"20:30","cat":"tiyatro","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/tiyatro/sahane-pazar-sahnede","price":"900 TL'den başlar"},
+    {"title":"Ahmet Kaya ile Kardeş Türküler","day":"2026-12-01","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletinial.com/tr-tr/muzik/ahmet-kaya-ile-kardes-turkuler?cinemaBranchId=16398"},
+    {"title":"Ömür Gedik","day":"2026-12-02","cat":"konser","venue":"Mehmet Akif İnan Konferans Salonu - Urfa City AVM","url":"https://www.songkick.com/fr/concerts/43525627-omur-gedik-at-mehmet-akif-inan-konferans-salonu-urfa-city-avm"},
+    {"title":"Gülden Karaböcek - Bir Ömürlük Nostalji","day":"2026-12-04","time":"20:00","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/gulden-karabocek-bir-omurluk-nostalji","price":"990 TL'den başlar"},
+    {"title":"Zakkum","day":"2026-12-06","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/zakkum","price":"550 TL'den başlar"},
+    {"title":"Ender Balkır","day":"2026-12-12","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/ender-balkir","price":"1500 TL'den başlar"},
+    {"title":"Tuğba Yurt","day":"2026-12-13","time":"20:30","cat":"konser","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletsirasi.com/konser/tugba-yurt","price":"1250 TL'den başlar"},
+    {"title":"Ersin Korkut - Ben mi Yapmışım?","day":"2026-12-15","time":"20:30","cat":"gosteri","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/ben-mi-yapmisim?cinemaBranchId=16398","price":"750 TL'den başlar"},
+    {"title":"Hijyenik Aşklar","day":"2026-12-19","time":"20:00","cat":"tiyatro","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/hijyenik-asklar-tiyatro-oyunu?cinemaBranchId=16398","price":"800 TL'den başlar"},
+    {"title":"Çok Güzel Hareketler 2","day":"2026-12-27","time":"20:00","cat":"gosteri","venue":"Urfa City AVM - Mehmet Akif İnan Konferans Salonu","url":"https://biletinial.com/tr-tr/tiyatro/cok-guzel-hareketler?cinemaBranchId=16398","price":"1900 TL'den başlar"}
+  ]
+}
