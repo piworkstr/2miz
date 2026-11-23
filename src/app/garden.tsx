@@ -5409,7 +5409,7 @@ function Kitchen({
                                 maxFontSizeMultiplier={1.0}
                                 style={{ fontSize: 11, fontFamily: FONT_BOLD, color: enough ? GREEN : '#C7354F' }}
                               >
-                                {PRODUCT_NAME[k]} {Math.min(have, q)}/{q}
+                                {PRODUCT_NAME[k]} {have.toLocaleString('tr-TR')}/{q}
                               </Text>
                             </View>
                           );

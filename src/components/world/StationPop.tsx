@@ -99,9 +99,11 @@ function RecipeMedal({
   state,
   picked,
   hidden,
+  stock,
   api,
 }: {
   id: RecipeId;
+  stock: number; // depoda bu üründen kaç tane var
   x: number;
   y: number;
   state: St;
@@ -148,6 +150,29 @@ function RecipeMedal({
         <GText light size={11} style={{ marginTop: 6, width: 90, textAlign: 'center' }}>
           {`Seviye ${r.lvl}`}
         </GText>
+      )}
+      {/* Depoda bu üründen kaç tane olduğu: dairenin sol üstünde küçük etiket. */}
+      {state !== 'locked' && (
+        <View
+          style={{
+            position: 'absolute',
+            left: -6,
+            top: -6,
+            minWidth: 24,
+            height: 22,
+            borderRadius: 11,
+            paddingHorizontal: 6,
+            backgroundColor: '#4A2E1C',
+            borderWidth: 1.5,
+            borderColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <GText size={12} color="#fff" style={{ lineHeight: 16 }}>
+            {stock > 999 ? '999+' : stock}
+          </GText>
+        </View>
       )}
       {(state === 'missing' || state === 'full') && (
         <View
@@ -350,7 +375,17 @@ export function StationPop({
         </Pressable>
       )}
       {list.map((id, k) => (
-        <RecipeMedal key={id} id={id} x={pos[k].x} y={pos[k].y} state={stateOf(id)} picked={pk === id} hidden={drag === id} api={api} />
+        <RecipeMedal
+          key={id}
+          id={id}
+          x={pos[k].x}
+          y={pos[k].y}
+          state={stateOf(id)}
+          picked={pk === id}
+          hidden={drag === id}
+          stock={farm.stock[id] ?? 0}
+          api={api}
+        />
       ))}
       {/* Seçili ürünün kartı: ad + süre, malzemeler, tek satır yönerge. Altındaki küçük ok seçili ürünü gösterir. */}
       {pr && pk && pAt && !drag && (
@@ -392,7 +427,7 @@ export function StationPop({
                 return (
                   <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                     <Icon k={k} size={28} />
-                    <GText size={16} color={have >= q ? GREEN_INK : RED_INK}>{`${Math.min(have, q)}/${q}`}</GText>
+                    <GText size={16} color={have >= q ? GREEN_INK : RED_INK}>{`${have.toLocaleString('tr-TR')}/${q}`}</GText>
                   </View>
                 );
               })}
@@ -438,7 +473,13 @@ export function StationPop({
                   justifyContent: 'center',
                 }}
               >
-                {j && <Icon k={j.recipe} size={Math.round(w * 0.7)} />}
+                {j ? (
+                  <Icon k={j.recipe} size={Math.round(w * 0.7)} />
+                ) : (
+                  <GText light size={11}>
+                    Boş
+                  </GText>
+                )}
               </View>
               {j &&
                 (done ? (
