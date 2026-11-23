@@ -1,0 +1,23 @@
+{
+  "city": "Zonguldak",
+  "items": [
+    { "title": "Musti Kusti - Stand Up (Yeni Gösteri)", "day": "2026-11-25", "time": "20:00", "cat": "standup", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletinial.com/tr-tr/tiyatro/musti-kusti-stand-up-yeni-gosteri", "price": "750 TL'den başlar" },
+    { "title": "Fani But Funny (Bekir Develi)", "day": "2026-11-26", "time": "20:00", "cat": "standup", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/tiyatro/fani-but-funny", "price": "700 TL'den başlar" },
+    { "title": "Simyacı", "day": "2026-11-26", "time": "20:00", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletsirasi.com/tiyatro/simyaci", "price": "700 TL'den başlar" },
+    { "title": "Ayna 30. Yıl", "day": "2026-11-27", "time": "20:30", "cat": "konser", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/konser/ayna-30-yil", "price": "1650 TL'den başlar" },
+    { "title": "Destanların Dansı", "day": "2026-11-28", "time": "19:00", "cat": "gosteri", "venue": "Bülent Ecevit Üniversitesi Sezai Karakoç Konferans Salonu", "url": "https://biletsirasi.com/konser/destanlarin-dansi", "price": "1120 TL'den başlar" },
+    { "title": "Gülden", "day": "2026-11-28", "time": "20:30", "cat": "konser", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/konser/gulden", "price": "1120 TL'den başlar" },
+    { "title": "Karı Koca İşleri / Yeni Sürüm", "day": "2026-11-29", "time": "20:30", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletsirasi.com/tiyatro/kari-koca-isleri-yeni-surum", "price": "1200 TL'den başlar" },
+    { "title": "Sezer Sarıgöz", "day": "2026-12-04", "time": "21:00", "cat": "konser", "venue": "Pera Performance Hall", "url": "https://biletsirasi.com/konser/sezer-sarigoz", "price": "500 TL'den başlar" },
+    { "title": "Orhan Veli - Garip", "day": "2026-12-08", "time": "20:00", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletsirasi.com/tiyatro/orhan-veli-garip", "price": "800 TL'den başlar" },
+    { "title": "Lumera Trio - Sezen Aksu Şarkıları", "day": "2026-12-09", "time": "20:30", "cat": "konser", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/konser/lumera-trio-sezen-aksu-sarkilari", "price": "500 TL'den başlar" },
+    { "title": "Çetin Akdeniz", "day": "2026-12-11", "time": "20:00", "cat": "konser", "venue": "Zonguldak Belediye Sineması", "url": "https://biletsirasi.com/konser/cetin-akdeniz", "price": "1100 TL'den başlar" },
+    { "title": "Yung Ouzo", "day": "2026-12-11", "time": "21:45", "cat": "konser", "venue": "Pera Performance Hall", "url": "https://biletsirasi.com/konser/yung-ouzo", "price": "599 TL'den başlar" },
+    { "title": "Kocasını Pişiren Kadın", "day": "2026-12-12", "time": "20:00", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/kocasini-pisiren-kadin-tiyatro", "price": "1041 TL'den başlar" },
+    { "title": "Çetin Akdeniz", "day": "2026-12-13", "time": "20:00", "cat": "konser", "venue": "Çaycuma Kültür ve Sanat Merkezi", "url": "https://biletsirasi.com/konser/cetin-akdeniz", "price": "1100 TL'den başlar" },
+    { "title": "Çağrı Çelik - Klarnete Kalırsa", "day": "2026-12-17", "time": "20:30", "cat": "konser", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/konser/cagri-celik-klarnete-kalirsa", "price": "900 TL'den başlar" },
+    { "title": "Sefiller", "day": "2026-12-18", "time": "20:00", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletsirasi.com/tiyatro/sefiller", "price": "750 TL'den başlar" },
+    { "title": "Taylan Özgür Ölmez - Bir Tel Bir Ses", "day": "2026-12-18", "time": "20:30", "cat": "konser", "venue": "Hüseyin Tatoğlu Kültür Merkezi, Ereğli", "url": "https://biletsirasi.com/konser/taylan-ozgur-olmez-bir-tel-bir-ses", "price": "500 TL'den başlar" },
+    { "title": "Boşanma Teklifi", "day": "2026-12-21", "time": "20:00", "cat": "tiyatro", "venue": "Zonguldak Belediyesi Sinema Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/bosanma-teklifi", "price": "800 TL'den başlar" }
+  ]
+}

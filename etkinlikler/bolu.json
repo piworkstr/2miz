@@ -1,0 +1,21 @@
+{
+  "city": "Bolu",
+  "items": [
+    { "title": "Flashback 90'lar Türkçe Pop Gecesi", "day": "2026-11-28", "time": "22:00", "cat": "konser", "venue": "6:45 KK Bolu", "url": "https://www.biletix.com/etkinlik/5MG77/TURKIYE/tr/flashback-90lar-turkce-pop-gecesi-28-11-2026-bolu", "price": "350 TL'den başlar" },
+    { "title": "Hikayeden Adamlar - Mahalle", "day": "2026-12-02", "time": "20:30", "cat": "standup", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/hikayeden-adamlar-mahalle", "price": "1290 TL'den başlar" },
+    { "title": "Hüsnü Arkan", "day": "2026-12-04", "time": "22:00", "cat": "konser", "venue": "6:45 KK Bolu", "url": "https://biletsirasi.com/konser/husnu-arkan#city=bolu", "price": "700 TL'den başlar" },
+    { "title": "Hayrettin ile Kaos Night", "day": "2026-12-05", "time": "19:30", "cat": "standup", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/hayrettin-ile-kaos-night", "price": "1710 TL'den başlar" },
+    { "title": "Lumera Trio - Sezen Aksu Şarkıları", "day": "2026-12-07", "time": "20:00", "cat": "konser", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/konser/lumera-trio-sezen-aksu-sarkilari#city=bolu", "price": "500 TL'den başlar" },
+    { "title": "Haybeden Gerçeküstü Aşk", "day": "2026-12-09", "time": "20:00", "cat": "tiyatro", "venue": "Bolu Necip Fazıl Kısakürek Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/haybeden-gercekustu-ask#city=bolu", "price": "540 TL'den başlar" },
+    { "title": "Şamhal İsmail & String Quartet", "day": "2026-12-10", "time": "20:00", "cat": "konser", "venue": "Bolu Necip Fazıl Kısakürek Kültür Merkezi", "url": "https://biletsirasi.com/konser/samhal-ismail-string-quartet#city=bolu", "price": "600 TL'den başlar" },
+    { "title": "Aşk Listesi", "day": "2026-12-14", "time": "20:00", "cat": "tiyatro", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/ask-listesi#city=bolu", "price": "1148 TL'den başlar" },
+    { "title": "Gülden Karaböcek - Bir Ömürlük Nostalji", "day": "2026-12-15", "time": "20:00", "cat": "konser", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/konser/gulden-karabocek-bir-omurluk-nostalji#city=bolu", "price": "990 TL'den başlar" },
+    { "title": "7 Kocalı Hürmüz", "day": "2026-12-16", "time": "19:30", "cat": "tiyatro", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/7-kocali-hurmuz#city=bolu", "price": "684 TL'den başlar" },
+    { "title": "Cem Adrian", "day": "2026-12-17", "time": "22:00", "cat": "konser", "venue": "6:45 KK Bolu", "url": "https://biletsirasi.com/konser/cem-adrian#city=bolu", "price": "1200 TL'den başlar" },
+    { "title": "Ayı", "day": "2026-12-18", "time": "20:00", "cat": "tiyatro", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/ayi#city=bolu", "price": "1000 TL'den başlar" },
+    { "title": "Kobra Murat ile Roman Gecesi", "day": "2026-12-19", "cat": "konser", "venue": "6:45 KK Bolu", "url": "https://www.biletix.com/etkinlik/5EN06/TURKIYE/tr/kobra-murat-ile-roman-gecesi-19-12-2026-bolu", "price": "250 TL'den başlar" },
+    { "title": "Motive", "day": "2026-12-19", "time": "20:30", "cat": "konser", "venue": "Bolu Hampton by Hilton Pasha Convention Center", "url": "https://biletsirasi.com/konser/motive#city=bolu", "price": "1100 TL'den başlar" },
+    { "title": "O.M.G", "day": "2026-12-22", "time": "20:30", "cat": "tiyatro", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/omg#city=bolu", "price": "1000 TL'den başlar" },
+    { "title": "İçimizdeki Şeytan", "day": "2026-12-24", "time": "20:30", "cat": "tiyatro", "venue": "Bolu Belediyesi Necip Fazıl Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/icimizdeki-seytan#city=bolu", "price": "400 TL'den başlar" }
+  ]
+}

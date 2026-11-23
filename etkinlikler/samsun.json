@@ -1,0 +1,23 @@
+{
+  "city": "Samsun",
+  "items": [
+    { "title": "İçimizdeki Şeytan", "day": "2026-11-25", "cat": "tiyatro", "venue": "Samsun Büyükşehir Belediyesi Atakum Sanat Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/icimizdeki-seytan", "price": "600 TL'den başlar" },
+    { "title": "Leman Sam", "day": "2026-11-25", "time": "20:30", "cat": "konser", "venue": "Atakum Belediyesi Ata Sahne", "url": "https://biletsirasi.com/konser/leman-sam", "price": "1995 TL'den başlar" },
+    { "title": "Eser Yenenler ile İtiraf Et", "day": "2026-11-26", "cat": "standup", "venue": "Samsun Büyükşehir Belediyesi Atakum Sanat Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/eser-yenenler-ile-itiraf-et", "price": "1000 TL'den başlar" },
+    { "title": "İsmail Nuri - Stand Up (Yeni Gösteri)", "day": "2026-11-28", "cat": "standup", "venue": "Samsun Ata Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/ismail-nuri-stand-up-yeni-gosteri", "price": "1000 TL'den başlar" },
+    { "title": "Norm Ender", "day": "2026-11-28", "time": "21:00", "cat": "konser", "venue": "ChapStage", "url": "https://biletsirasi.com/konser/norm-ender", "price": "750 TL'den başlar" },
+    { "title": "Ayna 30. Yıl", "day": "2026-11-29", "time": "20:30", "cat": "konser", "venue": "Atakum Belediyesi Ata Sahne", "url": "https://biletsirasi.com/konser/ayna-30-yil", "price": "1750 TL'den başlar" },
+    { "title": "İncesaz", "day": "2026-11-30", "cat": "konser", "venue": "Samsun Ata Sahne", "url": "https://biletsirasi.com/konser/incesaz", "price": "1650 TL'den başlar" },
+    { "title": "Karanlıkta Kumpas", "day": "2026-12-02", "time": "20:00", "cat": "tiyatro", "venue": "Samsun Büyükşehir Belediyesi Sanat Merkezi (Atakum)", "url": "https://www.biletix.com/etkinlik/5LWJ5/TURKIYE/tr/karanlikta-kumpas-02-12-2026-samsun", "price": "1430 TL'den başlar" },
+    { "title": "Emrah Kaman - Yüksek Gelirim 2", "day": "2026-12-04", "cat": "standup", "venue": "Samsun Büyükşehir Belediyesi Atakum Sanat Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/emrah-kaman-yuksek-gelirim-versiyon-iki", "price": "900 TL'den başlar" },
+    { "title": "Alevli Günler", "day": "2026-12-08", "cat": "tiyatro", "venue": "Samsun Ata Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/alevli-gunler-", "price": "2095 TL'den başlar" },
+    { "title": "Musti Kusti - Stand Up (Yeni Gösteri)", "day": "2026-12-09", "time": "20:30", "cat": "standup", "venue": "Samsun Büyükşehir Belediyesi Atakum Sanat Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/musti-kusti-stand-up-yeni-gosteri", "price": "750 TL'den başlar" },
+    { "title": "Ferman Akgül", "day": "2026-12-13", "time": "19:00", "cat": "konser", "venue": "Samsun Ata Sahne", "url": "https://biletsirasi.com/konser/ferman-akgul" },
+    { "title": "Mahşer-i Cümbüş", "day": "2026-12-17", "time": "20:00", "cat": "tiyatro", "venue": "Samsun Büyükşehir Belediyesi Sanat Merkezi (Atakum)", "url": "https://www.biletix.com/etkinlik/5LWFD/TURKIYE/tr/mahser-i-cumbus-17-12-2026-samsun", "price": "1144 TL'den başlar" },
+    { "title": "Seyfi Bey", "day": "2026-12-19", "cat": "tiyatro", "venue": "Samsun Ata Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/seyfi-bey", "price": "1750 TL'den başlar" },
+    { "title": "Seninle Evlenir Miyim?", "day": "2026-12-20", "cat": "tiyatro", "venue": "Samsun Büyükşehir Belediyesi Atakum Sanat Merkezi Küçük Salon", "url": "https://biletinial.com/tr-tr/tiyatro/seninle-evlenir-miyim-tiyatro-oyunu", "price": "800 TL'den başlar" },
+    { "title": "Zakkum", "day": "2026-12-22", "time": "20:30", "cat": "konser", "venue": "Atakum Belediyesi Ata Sahne", "url": "https://biletsirasi.com/konser/zakkum", "price": "1750 TL'den başlar" },
+    { "title": "Azize Show", "day": "2026-12-25", "cat": "standup", "venue": "Rock City", "url": "https://biletinial.com/tr-tr/tiyatro/azize-show", "price": "1250 TL'den başlar" },
+    { "title": "Paris'te Aşk-ı Derun", "day": "2026-12-26", "cat": "tiyatro", "venue": "Samsun Ata Sahne", "url": "https://biletinial.com/tr-tr/tiyatro/pariste-ask-i-derun", "price": "600 TL'den başlar" }
+  ]
+}

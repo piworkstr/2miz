@@ -1,0 +1,9 @@
+{
+  "city": "Düzce",
+  "items": [
+    { "title": "Miray Akovalıgil - Ya Bende Bir Şey Yoksa?", "day": "2026-12-09", "time": "20:00", "cat": "standup", "venue": "Düzce Kültür Merkezi Celil Yağız Sahnesi", "url": "https://biletsirasi.com/stand-up/miray-akovaligil-ya-bende-bir-sey-yoksa", "price": "800 TL'den başlar" },
+    { "title": "Anlatanadam", "day": "2026-12-13", "time": "19:00", "cat": "tiyatro", "venue": "Düzce Kültür Merkezi Celil Yağız Sahnesi", "url": "https://biletsirasi.com/tiyatro/anlatanadam", "price": "950 TL'den başlar" },
+    { "title": "Özgür Turhan - Yepyenisi", "day": "2026-12-23", "time": "20:30", "cat": "standup", "venue": "Düzce Kültür Merkezi Celil Yağız Sahnesi", "url": "https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi", "price": "1100 TL'den başlar" },
+    { "title": "Boşanma Teklifi", "day": "2026-12-26", "time": "20:00", "cat": "tiyatro", "venue": "Düzce Kültür Merkezi Celil Yağız Sahnesi", "url": "https://biletsirasi.com/tiyatro/bosanma-teklifi", "price": "650 TL'den başlar" }
+  ]
+}

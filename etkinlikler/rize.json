@@ -1,0 +1,12 @@
+{
+  "city": "Rize",
+  "items": [
+    { "title": "Şahane Pazar Sahnede", "day": "2026-11-26", "time": "20:30", "cat": "tiyatro", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5MPR2/TURKIYE/tr/sahane-pazar-sahnede-26-11-2026-rize" },
+    { "title": "Yaver Coruk \"Muazzam\"", "day": "2026-12-02", "time": "20:00", "cat": "standup", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/yaver-coruk-muazzam#city=rize", "price": "690 TL'den başlar" },
+    { "title": "Doktor Bana Bir Çare", "day": "2026-12-04", "time": "20:00", "cat": "tiyatro", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5GMON/TURKIYE/tr/doktor-bana-bir-care-04-12-2026-rize" },
+    { "title": "Gülden", "day": "2026-12-05", "time": "20:30", "cat": "konser", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://biletsirasi.com/konser/gulden#city=rize", "price": "940 TL'den başlar" },
+    { "title": "Alevli Günler", "day": "2026-12-06", "time": "20:00", "cat": "tiyatro", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5SKA3/IZMIR/tr/alevli-gunler-06-12-2026-rize", "price": "1400 TL'den başlar" },
+    { "title": "Kuyucaklı Yusuf", "day": "2026-12-20", "time": "19:00", "cat": "tiyatro", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/kuyucakli-yusuf#city=rize", "price": "536 TL'den başlar" },
+    { "title": "Zakkum", "day": "2026-12-20", "time": "20:30", "cat": "konser", "venue": "Rize İsmail Kahraman Kültür Merkezi", "url": "https://biletsirasi.com/konser/zakkum#city=rize", "price": "950 TL'den başlar" }
+  ]
+}

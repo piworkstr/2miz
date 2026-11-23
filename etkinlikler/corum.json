@@ -1,0 +1,19 @@
+{
+  "city": "Çorum",
+  "items": [
+    { "title": "Kusursuz", "day": "2026-11-28", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/kusursuz-tiyatro-oyunu?cinemaBranchId=349", "price": "448 TL'den başlar" },
+    { "title": "Eser Yenenler ile İtiraf Et", "day": "2026-11-29", "time": "21:00", "cat": "standup", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/eser-yenenler-ile-itiraf-et?cinemaBranchId=349", "price": "1750 TL'den başlar" },
+    { "title": "Destanların Dansı", "day": "2026-11-30", "time": "20:00", "cat": "gosteri", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/muzik/destanlarin-dansi?cinemaBranchId=349", "price": "1008 TL'den başlar" },
+    { "title": "Suç ve Ceza", "day": "2026-12-02", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/suc-ve-ceza-sek?cinemaBranchId=349", "price": "1008 TL'den başlar" },
+    { "title": "Bir Yaz Gecesi Rüyası", "day": "2026-12-05", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/bir-yaz-gecesi-ruyasi-tiyatro?cinemaBranchId=349", "price": "1096 TL'den başlar" },
+    { "title": "Seçmen Lazım", "day": "2026-12-09", "time": "20:30", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/secmen-lazim?cinemaBranchId=349", "price": "900 TL'den başlar" },
+    { "title": "Hijyenik Aşklar", "day": "2026-12-13", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/hijyenik-asklar-tiyatro-oyunu?cinemaBranchId=349", "price": "840 TL'den başlar" },
+    { "title": "Çağrı Çelik - Klarnete Kalırsa", "day": "2026-12-14", "time": "20:30", "cat": "konser", "venue": "Çorum Devlet Tiyatrosu", "url": "https://bilettakvimi.com/corum/cagri-celik-klarnete-kalirsa-14-aralik-2026" },
+    { "title": "Mahşer-i Cümbüş", "day": "2026-12-15", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/mahseri-cumbus-sanart?cinemaBranchId=349", "price": "1120 TL'den başlar" },
+    { "title": "Sefiller", "day": "2026-12-16", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/sefiller-sek?cinemaBranchId=349", "price": "1008 TL'den başlar" },
+    { "title": "Sagopa Kajmer", "day": "2026-12-17", "time": "20:30", "cat": "konser", "venue": "Çorum Devlet Tiyatrosu", "url": "https://bilettakvimi.com/corum/sagopa-kajmer-17-aralik-2026" },
+    { "title": "Romeo & Juliet", "day": "2026-12-20", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/romeo-juliet-sek?cinemaBranchId=349", "price": "1008 TL'den başlar" },
+    { "title": "JAVADOFF - We Don't Say I Love You", "day": "2026-12-21", "time": "20:00", "cat": "konser", "venue": "Çorum Devlet Tiyatrosu", "url": "https://bilettakvimi.com/corum/javadoff-we-don-t-say-i-love-you-21-aralik-2026" },
+    { "title": "7 Kocalı Hürmüz", "day": "2026-12-28", "time": "20:00", "cat": "tiyatro", "venue": "Çorum Devlet Tiyatrosu", "url": "https://biletinial.com/tr-tr/tiyatro/yedikocali-hurmuz-atf?cinemaBranchId=349", "price": "672 TL'den başlar" }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "city": "Ordu",
+  "items": [
+    { "title": "Leman Sam", "day": "2026-11-23", "time": "20:30", "cat": "konser", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/konser/leman-sam#city=ordu", "price": "2000 TL'den başlar" },
+    { "title": "Destanların Dansı", "day": "2026-11-24", "time": "19:00", "cat": "gosteri", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/tiyatro/destanlarin-dansi#city=ordu", "price": "1400 TL'den başlar" },
+    { "title": "Kahvede Şenlik Var", "day": "2026-11-24", "time": "20:00", "cat": "tiyatro", "venue": "Ordu Büyükşehir Belediyesi Karadeniz Tiyatrosu", "url": "https://biletsirasi.com/tiyatro/kahvede-senlik-var#city=ordu", "price": "56 TL'den başlar" },
+    { "title": "Özgür Turhan - Yepyenisi", "day": "2026-11-28", "time": "20:30", "cat": "standup", "venue": "Ordu Atatürk Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi#city=ordu", "price": "1008 TL'den başlar" },
+    { "title": "Yaver Coruk \"Muazzam\"", "day": "2026-11-29", "time": "20:00", "cat": "standup", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/stand-up/yaver-coruk-muazzam#city=ordu", "price": "590 TL'den başlar" },
+    { "title": "Murda", "day": "2026-11-29", "time": "22:00", "cat": "konser", "venue": "Akçaağaç Koru Lounge & Event", "url": "https://biletsirasi.com/konser/murda#city=ordu", "price": "750 TL'den başlar" },
+    { "title": "Ayna 30. Yıl", "day": "2026-11-30", "time": "20:30", "cat": "konser", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/konser/ayna-30-yil#city=ordu", "price": "1450 TL'den başlar" },
+    { "title": "Suç ve Ceza", "day": "2026-12-01", "time": "20:00", "cat": "tiyatro", "venue": "Ordu Atatürk Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/suc-ve-ceza#city=ordu" },
+    { "title": "Kadın Kafası", "day": "2026-12-06", "time": "20:00", "cat": "tiyatro", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://www.biletix.com/etkinlik/56601/ISTANBUL/tr/kadin-kafasi-06-12-2026-ordu" },
+    { "title": "Alevli Günler", "day": "2026-12-07", "time": "20:30", "cat": "tiyatro", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://www.biletix.com/etkinlik/5SK81/ISTANBUL/tr/alevli-gunler-07-12-2026-ordu" },
+    { "title": "Adil Yıldırım - Toksik İlişki", "day": "2026-12-08", "time": "20:30", "cat": "standup", "venue": "Ordu Atatürk Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/adil-yildirim-toksik-iliski-yeni-gosteri#city=ordu", "price": "900 TL'den başlar" },
+    { "title": "Ferman Akgül", "day": "2026-12-14", "time": "20:30", "cat": "konser", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/konser/ferman-akgul#city=ordu" },
+    { "title": "Adil Yıldırım - Toksik İlişki", "day": "2026-12-20", "time": "20:30", "cat": "standup", "venue": "Ordu Atatürk Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/adil-yildirim-toksik-iliski-yeni-gosteri#city=ordu", "price": "900 TL'den başlar" },
+    { "title": "Zakkum", "day": "2026-12-21", "time": "20:30", "cat": "konser", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/konser/zakkum#city=ordu", "price": "1650 TL'den başlar" },
+    { "title": "Kuyucaklı Yusuf", "day": "2026-12-22", "time": "20:00", "cat": "tiyatro", "venue": "Fatsa Belediyesi Kültür Sarayı", "url": "https://biletsirasi.com/tiyatro/kuyucakli-yusuf#city=ordu" },
+    { "title": "Kuyucaklı Yusuf", "day": "2026-12-23", "time": "20:00", "cat": "tiyatro", "venue": "Ordu Atatürk Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/kuyucakli-yusuf#city=ordu" },
+    { "title": "Karanlıkta Kumpas", "day": "2026-12-25", "time": "20:00", "cat": "tiyatro", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://www.biletix.com/etkinlik/5LWA9/ISTANBUL/tr/karanlikta-kumpas-25-12-2026-ordu" },
+    { "title": "İnsan Kaynakları", "day": "2027-01-03", "time": "20:00", "cat": "standup", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/stand-up/insan-kaynaklari#city=ordu", "price": "504 TL'den başlar" },
+    { "title": "Lumera - Sezen Aksu Şarkıları", "day": "2027-01-04", "time": "20:00", "cat": "konser", "venue": "Ordu Kültür Sanat Merkezi", "url": "https://biletsirasi.com/konser/lumera-sezen-aksu-sarkilari#city=ordu", "price": "877 TL'den başlar" }
+  ]
+}

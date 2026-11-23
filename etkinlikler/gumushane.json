@@ -1,0 +1,7 @@
+{
+  "city": "Gümüşhane",
+  "items": [
+    { "title": "Nazım", "day": "2026-12-17", "time": "19:00", "cat": "tiyatro", "venue": "Gümüşhane Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/nazim?cinemaBranchId=6171", "price": "896 TL'den başlar" },
+    { "title": "Haybeden Gerçeküstü Aşk", "day": "2026-12-24", "time": "20:00", "cat": "tiyatro", "venue": "Gümüşhane Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/haybeden-gercekustu-ask-kyb?cinemaBranchId=6171", "price": "560 TL'den başlar" }
+  ]
+}

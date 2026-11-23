@@ -1,0 +1,10 @@
+{
+  "city": "Artvin",
+  "items": [
+    { "title": "Çelik", "day": "2026-11-25", "time": "20:30", "cat": "konser", "venue": "Artvin Çoruh Üniversitesi Nihat Gökyiğit Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/konser/celik#city=artvin" },
+    { "title": "Çelik", "day": "2026-11-26", "time": "20:30", "cat": "konser", "venue": "Artvin Çoruh Üniversitesi Nihat Gökyiğit Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/konser/celik#city=artvin" },
+    { "title": "Destanların Dansı", "day": "2026-12-01", "time": "19:00", "cat": "gosteri", "venue": "Artvin Çoruh Üniversitesi Nihat Gökyiğit Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/destanlarin-dansi#city=artvin", "price": "1400 TL'den başlar" },
+    { "title": "Candles and Echoes - Artvin", "day": "2026-12-04", "time": "20:15", "cat": "konser", "venue": "Artvin Çoruh Üniversitesi Nihat Gökyiğit Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/konser/candles-and-echoes-artvin", "price": "1190 TL'den başlar" },
+    { "title": "Yeni Türkü", "day": "2026-12-15", "time": "20:30", "cat": "konser", "venue": "Artvin Çoruh Üniversitesi Nihat Gökyiğit Kongre ve Kültür Merkezi", "url": "https://biletsirasi.com/konser/yeni-turku#city=artvin" }
+  ]
+}

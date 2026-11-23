@@ -1,0 +1,10 @@
+{
+  "city": "Sinop",
+  "items": [
+    { "title": "Destanların Dansı", "day": "2026-11-25", "cat": "gosteri", "venue": "Sinop Kültür Merkezi", "url": "https://biletsirasi.com/konser/destanlarin-dansi", "price": "1120 TL'den başlar" },
+    { "title": "Özgür Turhan - Yepyenisi", "day": "2026-11-26", "time": "20:30", "cat": "standup", "venue": "Sinop Kültür Merkezi", "url": "https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi", "price": "1000 TL'den başlar" },
+    { "title": "Otizm Bestiz Sahne Gala Gecesi", "day": "2026-12-07", "time": "20:00", "cat": "tiyatro", "venue": "Sinop Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/otizm-bestiz-sahne?cinemaBranchId=16382", "price": "500 TL'den başlar" },
+    { "title": "Havva", "day": "2026-12-16", "time": "20:00", "cat": "tiyatro", "venue": "Sinop Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/havva?cinemaBranchId=16382", "price": "560 TL'den başlar" },
+    { "title": "Taylan Özgür Ölmez - Bir Tel Bir Ses", "day": "2026-12-19", "time": "20:30", "cat": "konser", "venue": "Sinop Kültür Merkezi", "url": "https://biletsirasi.com/konser/taylan-ozgur-olmez-bir-tel-bir-ses", "price": "795 TL'den başlar" }
+  ]
+}

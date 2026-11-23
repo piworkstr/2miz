@@ -1,0 +1,13 @@
+{
+  "city": "Kastamonu",
+  "items": [
+    { "title": "Özgür Turhan - Yepyenisi", "day": "2026-11-25", "time": "20:30", "cat": "standup", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi", "price": "1000 TL'den başlar" },
+    { "title": "Gülden", "day": "2026-11-27", "time": "20:30", "cat": "konser", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/konser/gulden", "price": "1120 TL'den başlar" },
+    { "title": "Coşkun Sabah", "day": "2026-12-02", "time": "20:00", "cat": "konser", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/konser/coskun-sabah", "price": "1450 TL'den başlar" },
+    { "title": "Hikayeden Adamlar - Mahalle", "day": "2026-12-04", "time": "20:30", "cat": "standup", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/stand-up/hikayeden-adamlar-mahalle", "price": "990 TL'den başlar" },
+    { "title": "Kahraman Deniz", "day": "2026-12-05", "time": "20:30", "cat": "konser", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/konser/kahraman-deniz", "price": "650 TL'den başlar" },
+    { "title": "Aycey Grand Illusion", "day": "2026-12-12", "time": "20:00", "cat": "gosteri", "venue": "Kastamonu Belediyesi Nikah ve Konferans Merkezi", "url": "https://biletsirasi.com/tiyatro/aycey-grand-illusion", "price": "800 TL'den başlar" },
+    { "title": "İçimizdeki Şeytan", "day": "2026-12-13", "time": "20:30", "cat": "tiyatro", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/tiyatro/icimizdeki-seytan", "price": "400 TL'den başlar" },
+    { "title": "Çağrı Çelik - Klarnete Kalırsa", "day": "2026-12-15", "time": "20:30", "cat": "konser", "venue": "Kastamonu Belediyesi Nikah ve Konferans Salonu", "url": "https://biletsirasi.com/konser/cagri-celik-klarnete-kalirsa", "price": "650 TL'den başlar" }
+  ]
+}

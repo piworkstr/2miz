@@ -1,0 +1,21 @@
+{
+  "city": "Trabzon",
+  "items": [
+    { "title": "Şahane Pazar Sahnede", "day": "2026-11-25", "time": "20:30", "cat": "standup", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://www.biletix.com/etkinlik/5KS10/TURKIYE/tr/sahane-pazar-sahnede-25-11-2026-trabzon", "price": "700 TL'den başlar" },
+    { "title": "Töre (Trabzon Devlet Tiyatrosu)", "day": "2026-11-26", "time": "20:00", "cat": "tiyatro", "venue": "Trabzon Devlet Tiyatrosu Haluk Ongan Sahnesi", "url": "https://biletinial.com/tr-tr/tiyatro/tore-trabzon-dt?cinemaBranchId=1297", "price": "105 TL'den başlar" },
+    { "title": "Nilgün Belgün Aşk ve Komedi", "day": "2026-11-27", "time": "20:00", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/tiyatro/nilgun-belgun-ask-ve-komedi-epizot-tytr?cinemaBranchId=16397", "price": "1096 TL'den başlar" },
+    { "title": "Trabzon Büyükşehir Belediyesi Kent Orkestrası Konseri", "day": "2026-11-30", "time": "19:00", "cat": "konser", "venue": "Hamamizade İhsan Bey Kültür ve Sanat Merkezi", "url": "https://rayhaber.com/2026/11/trabzonda-kasim-ayinda-17-kultur-ve-sanat-etkinligi-duzenlenecek/", "price": "Ücretsiz" },
+    { "title": "Töre (Trabzon Devlet Tiyatrosu)", "day": "2026-12-03", "time": "20:00", "cat": "tiyatro", "venue": "Trabzon Devlet Tiyatrosu Haluk Ongan Sahnesi", "url": "https://biletinial.com/tr-tr/tiyatro/tore-trabzon-dt?cinemaBranchId=1297", "price": "105 TL'den başlar" },
+    { "title": "Kadın Kafası", "day": "2026-12-04", "time": "20:00", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/tiyatro/kadin-kafasi-epizot?cinemaBranchId=16397", "price": "877 TL'den başlar" },
+    { "title": "Alevli Günler", "day": "2026-12-05", "time": "20:00", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/tiyatro/alevli-gunler-?cinemaBranchId=16397", "price": "1402 TL'den başlar" },
+    { "title": "Sessizlik Kayıttayız! (Trabzon Devlet Tiyatrosu)", "day": "2026-12-10", "time": "20:00", "cat": "tiyatro", "venue": "Trabzon Devlet Tiyatrosu Haluk Ongan Sahnesi", "url": "https://biletinial.com/tr-tr/tiyatro/sessizlik-kayittayiz-dt?cinemaBranchId=1297" },
+    { "title": "Teoman", "day": "2026-12-11", "time": "20:30", "cat": "konser", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://www.biletix.com/etkinlik/5JBEA/TURKIYE/tr/teoman-11-12-2026-trabzon" },
+    { "title": "Topraktan Ezgiler", "day": "2026-12-12", "cat": "konser", "venue": "Hamamizade İhsan Bey Kültür ve Sanat Merkezi", "url": "https://www.trabzon.org/etkinlikler" },
+    { "title": "Konken Partisi", "day": "2026-12-12", "time": "20:30", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/tiyatro/konken-partisi?cinemaBranchId=16397", "price": "1000 TL'den başlar" },
+    { "title": "Venüs", "day": "2026-12-13", "cat": "konser", "venue": "DoubleTree by Hilton Trabzon", "url": "https://www.biletix.com/etkinlik/5OF2C/TURKIYE/tr" },
+    { "title": "Yeni Türkü Konseri", "day": "2026-12-14", "time": "20:30", "cat": "konser", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/muzik/yeni-turku-fthaydnypm?cinemaBranchId=16397", "price": "1500 TL'den başlar" },
+    { "title": "Kuyucaklı Yusuf", "day": "2026-12-21", "time": "20:00", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://biletinial.com/tr-tr/tiyatro/kuyucakli-yusuf-sirius?cinemaBranchId=16397", "price": "858 TL'den başlar" },
+    { "title": "Karanlıkta Kumpas", "day": "2026-12-26", "time": "20:30", "cat": "tiyatro", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://www.biletix.com/etkinlik/5LWAC/TURKIYE/tr/karanlikta-kumpas-26-12-2026-trabzon", "price": "1144 TL'den başlar" },
+    { "title": "Harry's Magic Symphony", "day": "2026-12-30", "cat": "konser", "venue": "KTÜ Atatürk Kültür Merkezi (AKM)", "url": "https://www.haber61.net/trabzon/harry-potter-in-buyulu-muzikleri-trabzon-da-yankilanacak/649696" }
+  ]
+}
