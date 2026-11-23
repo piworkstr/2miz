@@ -4028,7 +4028,16 @@ function DepotBar({ farm, onUp, onClaim }: { farm: Farm; onUp: () => void; onCla
           </Text>
           <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={SOFT_MUTED} />
         </Pressable>
-        {col.claimable > 0 && <Btn kind="accent" label={`Ödülü al · ${col.nextCoins}`} onPress={onClaim} />}
+        {col.claimable > 0 && (
+          <SoftButton
+            kind="red"
+            label={`Ödülü al · ${col.nextCoins.toLocaleString('tr-TR')}`}
+            icon={<Image source={ART.coin.src} style={{ width: 16, height: 16 }} resizeMode="contain" />}
+            height={36}
+            size={14}
+            onPress={onClaim}
+          />
+        )}
       </View>
       {open && (
         <ScrollView style={{ maxHeight: 150 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
