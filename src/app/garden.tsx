@@ -282,7 +282,7 @@ const PENS: Partial<Record<string, { sw: number; sh: number; slots: [number, num
       [222, 314],
       [160, 330],
     ],
-    px: { koyun: 76, inek: 92 },
+    px: { koyun: 76, inek: 92, keci: 78 },
   },
   kumes: {
     sw: 412,
