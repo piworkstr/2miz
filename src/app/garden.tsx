@@ -1405,10 +1405,10 @@ export default function GardenScreen() {
     const at = center(...rc(sel));
     if (!camBack.current) camBack.current = { zoom: zoomNow.current, pan: panNow.current };
     const base = c.s / zoomNow.current; // yakınlık 1 iken ölçek
-    const z = Math.min(3, Math.max(minZoomRef.current, 150 / (TW * DECOR[t.item].w) / base));
+    const z = Math.min(3, Math.max(minZoomRef.current, 176 / (TW * DECOR[t.item].w) / base));
     const s2 = base * z;
     setZoom(z);
-    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * s2, box.h * 0.6 - c.oy + (c.cy - at.y) * s2, s2));
+    setPan(clampRef.current(box.w / 2 - c.ox + (c.cx - at.x) * s2, box.h * 0.62 - c.oy + (c.cy - at.y) * s2, s2));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel]);
   // Ekran kapanınca ya da uygulama arka plana geçince telefon uygulamayı durdurur; avatar yürüyemez.

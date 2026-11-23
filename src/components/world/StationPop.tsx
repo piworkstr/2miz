@@ -26,10 +26,9 @@ import { GText } from './FarmUI';
 // durur; istenen ürün atölyenin üstüne sürüklenir. Ürüne dokununca parşömen balonda adı, süresi ve malzemeleri görünür.
 // Atölyenin adı altındaki kurdelede, sıradaki işler onun altındaki madalyonlardadır.
 // Ekran açıkken çiftlik kaydırılamaz (karartı dokunuşu alır): parçalar hep aynı yerde durur.
-const M = 52; // ürün madalyonunun çapı
-const M_ON = 60; // seçili madalyon
-const R = 138; // yayın yarıçapı
-const STEP = 30; // madalyonlar arası açı
+const M = 68; // ürün madalyonunun çapı
+const M_ON = 78; // seçili madalyon
+const R_MIN = 118; // yayın yarıçapı (az ürün)
 const DROP = 92; // atölyeye bırakma yarıçapı
 const GREEN_INK = '#2F6E12';
 const RED_INK = '#C7354F';
@@ -69,7 +68,7 @@ function Medal({ id, size, state, on }: { id: string; size: number; state: St; o
       }}
     >
       <View style={{ opacity: state === 'locked' ? 0.4 : 1 }}>
-        <Icon k={id} size={Math.round(size * 0.66)} />
+        <Icon k={id} size={Math.round(size * 0.72)} />
       </View>
       {state === 'locked' && (
         <View
@@ -237,12 +236,15 @@ export function StationPop({
   const mh = Math.min(190, Math.max(96, spr?.h ?? 120));
   // Yayın merkezi atölyenin biraz üstüdür; ekran kenarına yakınsa ekranda kalacak kadar kayar.
   const n = list.length;
+  // Yay atölyenin hemen üstünü sarar: yarıçap atölyenin yarı boyundan biraz büyüktür; ürün çoksa yay genişler.
+  const R = Math.max(R_MIN, mh * 0.5 + M_ON * 0.62) + (n > 4 ? 22 : 0);
+  const STEP = Math.min(44, (Math.asin(Math.min(1, (M + 12) / 2 / R)) * 2 * 180) / Math.PI + 2);
   const tot = (n - 1) * STEP;
   const half = R * Math.sin((Math.min(180, tot) / 2) * (Math.PI / 180)) + M_ON / 2 + 6;
-  const BAL_W = 216;
-  const BAL_H = 108;
+  const BAL_W = 230;
+  const BAL_H = 112;
   const cx = Math.min(box.w - half, Math.max(half, mcx));
-  const cy = Math.min(box.h - bottom - mh / 2 - 150, Math.max(top + BAL_H + R + M_ON / 2 - 8, mcy - mh * 0.18));
+  const cy = Math.min(box.h - bottom - mh / 2 - 170, Math.max(top + BAL_H + R + M_ON / 2 - 8, mcy));
   const pos = list.map((_id, k) => {
     const a = (-90 - tot / 2 + k * STEP) * (Math.PI / 180);
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
@@ -250,8 +252,8 @@ export function StationPop({
   const RIB_W = 180;
   const RIB_H = 38;
   const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
-  const Q = 28; // sıra madalyonu
-  const QR = 44; // hazır olanın çelengi
+  const Q = 42; // sıra madalyonu
+  const QR = 50; // hazır olanın çelengi
   const rowW = slots * (Q + 6) - 6 + (QR - Q);
   const rowTop = ribTop + RIB_H + 2;
 
@@ -377,7 +379,7 @@ export function StationPop({
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
-              <GText size={15} color="#4A2E1C" style={{ flexShrink: 1 }}>
+              <GText size={17} color="#4A2E1C" style={{ flexShrink: 1 }}>
                 {pr.name}
               </GText>
               <GText size={12} color="#8C6E54">
@@ -389,13 +391,13 @@ export function StationPop({
                 const have = farm.stock[k] ?? 0;
                 return (
                   <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                    <Icon k={k} size={22} />
-                    <GText size={14} color={have >= q ? GREEN_INK : RED_INK}>{`${Math.min(have, q)}/${q}`}</GText>
+                    <Icon k={k} size={28} />
+                    <GText size={16} color={have >= q ? GREEN_INK : RED_INK}>{`${Math.min(have, q)}/${q}`}</GText>
                   </View>
                 );
               })}
             </View>
-            <GText size={11} color={pState === 'ok' ? '#8C6E54' : RED_INK}>
+            <GText size={12} color={pState === 'ok' ? '#8C6E54' : RED_INK}>
               {hint}
             </GText>
           </View>
@@ -407,7 +409,7 @@ export function StationPop({
         style={{ position: 'absolute', left: mcx - RIB_W / 2, top: ribTop + 6, width: RIB_W, alignItems: 'center' }}
       >
         <View style={{ backgroundColor: '#FFFAF0', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 3, ...SH }}>
-          <GText size={13} color="#4A2E1C">
+          <GText size={15} color="#4A2E1C">
             {d.name}
           </GText>
         </View>
@@ -436,7 +438,7 @@ export function StationPop({
                   justifyContent: 'center',
                 }}
               >
-                {j && <Icon k={j.recipe} size={Math.round(w * 0.62)} />}
+                {j && <Icon k={j.recipe} size={Math.round(w * 0.7)} />}
               </View>
               {j &&
                 (done ? (
@@ -455,7 +457,7 @@ export function StationPop({
                     </GText>
                   </View>
                 ) : (
-                  <GText light size={10} style={{ marginTop: 1, width: 64, textAlign: 'center' }}>
+                  <GText light size={11} style={{ marginTop: 1, width: 70, textAlign: 'center' }}>
                     {timeLeft(j.ready - now)}
                   </GText>
                 ))}
