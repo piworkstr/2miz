@@ -2450,7 +2450,7 @@ export default function GardenScreen() {
       {/* üst bilgi: ahşap levhalar. Seviye rozeti (sırada ne açılacak), çiftlik adı + tecrübe (ayarlar), altın. */}
       <View style={{ position: 'absolute', left: 8, right: 8, top: insets.top + 2, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <RoundButton size={42} label="Geri" onPress={close}>
-          <Ionicons name="chevron-back" size={24} color={CREAM} style={{ marginLeft: -2 }} />
+          <Ionicons name="chevron-back" size={24} color={SOFT_INK} style={{ marginLeft: -2 }} />
         </RoundButton>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
           <Pressable
@@ -2576,7 +2576,7 @@ export default function GardenScreen() {
           }}
           style={{ position: 'absolute', right: 10, top: insets.top + 54 }}
         >
-          <Ionicons name="contract-outline" size={20} color={CREAM} />
+          <Ionicons name="contract-outline" size={20} color={SOFT_INK} />
         </RoundButton>
       )}
       {!!toast && (
@@ -2622,9 +2622,9 @@ export default function GardenScreen() {
                 width: 32,
                 height: 32,
                 borderRadius: 16,
-                backgroundColor: '#9A6534',
+                backgroundColor: '#76BA48',
                 borderWidth: 3,
-                borderColor: '#FFF8E8',
+                borderColor: '#FFFFFF',
               }}
             />
           )}
@@ -2637,9 +2637,9 @@ export default function GardenScreen() {
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: 10,
-                backgroundColor: '#FFF8E8',
+                backgroundColor: '#FFFFFF',
                 borderWidth: 1.5,
-                borderColor: '#9A6534',
+                borderColor: '#F0E4D0',
               }}
             >
               <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 13, color: INK }}>
@@ -3626,10 +3626,10 @@ function ToolPop({
   const t = farm.tiles[i];
   const crop = t?.k === 'crop' ? t : null;
   const box = {
-    backgroundColor: 'rgba(255,248,232,0.97)',
+    backgroundColor: '#FFFAF0',
     borderRadius: 18,
     borderWidth: 2.5,
-    borderColor: '#9A6534',
+    borderColor: '#F0E4D0',
     padding: 8,
     gap: 6,
     shadowColor: '#3A2A10',
@@ -3640,7 +3640,7 @@ function ToolPop({
   } as const;
   const more = (
     <Pressable onPress={onMore} hitSlop={8} accessibilityLabel="Ayrıntılar" style={{ padding: 2 }}>
-      <Ionicons name="ellipsis-horizontal-circle" size={22} color="#9A6534" />
+      <Ionicons name="ellipsis-horizontal-circle" size={22} color={SOFT_MUTED} />
     </Pressable>
   );
   // Büyüme bilgisi: ad, ilerleme çubuğu, kalan süre.
@@ -3687,7 +3687,7 @@ function ToolPop({
                 borderRadius: 31,
                 backgroundColor: kind === 'orak' ? '#F6D58E' : '#CFE8F7',
                 borderWidth: 2.5,
-                borderColor: pressed ? GREEN : '#9A6534',
+                borderColor: pressed ? GREEN : '#F0E4D0',
                 alignItems: 'center',
                 justifyContent: 'center',
               })}
@@ -3786,9 +3786,9 @@ function Edge({
               width: d,
               height: d,
               borderRadius: d / 2,
-              backgroundColor: accent ? '#E8516A' : '#FFF8E8',
+              backgroundColor: accent ? '#E8516A' : '#FFFFFF',
               borderWidth: 3,
-              borderColor: accent ? '#B93A55' : '#9A6534',
+              borderColor: accent ? '#FFFFFF' : '#F0E4D0',
               alignItems: 'center',
               justifyContent: 'center',
               transform: [{ scale: pressed ? 0.93 : 1 }],
@@ -4840,8 +4840,8 @@ function ShopPanel({
                 borderBottomRightRadius: 12,
                 borderWidth: 3,
                 borderLeftWidth: 0,
-                borderColor: '#9A6534',
-                backgroundColor: on ? '#FFF8E8' : '#E9C480',
+                borderColor: '#F0E4D0',
+                backgroundColor: on ? '#FFFFFF' : '#F0E4D0',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -4855,10 +4855,10 @@ function ShopPanel({
         style={{
           width,
           flex: 1,
-          backgroundColor: 'rgba(255,248,232,0.97)',
+          backgroundColor: '#FFFAF0',
           borderRadius: 20,
           borderWidth: 3,
-          borderColor: '#9A6534',
+          borderColor: '#F0E4D0',
           padding: 8,
           gap: 8,
           shadowColor: '#3A2A10',
@@ -4975,7 +4975,7 @@ function BigOrderCard({
   const mine = o.by[uid] ?? 0;
   const theirs = Object.entries(o.by).reduce((a, [k, n]) => (k === uid ? a : a + n), 0);
   return (
-    <View style={{ borderWidth: 2, borderColor: '#C99A5B', backgroundColor: '#FFF3D6', borderRadius: 16, padding: 10, gap: 7 }}>
+    <View style={{ borderWidth: 1.5, borderColor: '#F0E4D0', backgroundColor: '#FFFFFF', borderRadius: 18, padding: 10, gap: 7 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Image source={ART.pazar.src} style={{ width: 34, height: 34 }} resizeMode="contain" />
         <View style={{ flex: 1 }}>

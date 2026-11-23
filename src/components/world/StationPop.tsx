@@ -52,16 +52,44 @@ type DragApi = {
   end: (id: RecipeId, x: number, y: number, moved: boolean) => void;
 };
 
-// Madalyon: çerçeve çizimi + içine oturan ürün. Ürün, çerçevenin krem iç alanının ölçüsündedir (taşmaz).
+// Ürün dairesi: beyaz, yumuşak gölgeli. Seçiliyken yeşil kenarlık, kilitliyken gri zemin ve küçük kilit.
+const SH = { shadowColor: '#32200A', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 4 } as const;
 function Medal({ id, size, state, on }: { id: string; size: number; state: St; on: boolean }) {
-  const art = state === 'locked' ? UI.med_lock : on ? UI.med_on : UI.med;
-  const h = Math.round((size * art.h) / art.w);
   return (
-    <View style={{ width: size, height: h, alignItems: 'center' }}>
-      <Image source={art.src} style={{ position: 'absolute', width: size, height: h }} resizeMode="stretch" />
-      <View style={{ height: size, alignItems: 'center', justifyContent: 'center', opacity: state === 'locked' ? 0.5 : 1 }}>
-        <Icon k={id} size={Math.round(size * 0.62)} />
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: state === 'locked' ? '#EFEAE2' : '#FFFFFF',
+        borderWidth: on ? 3 : 1.5,
+        borderColor: on ? '#76BA48' : '#F0E4D0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SH,
+      }}
+    >
+      <View style={{ opacity: state === 'locked' ? 0.4 : 1 }}>
+        <Icon k={id} size={Math.round(size * 0.66)} />
       </View>
+      {state === 'locked' && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: -5,
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: '#8C6E54',
+            borderWidth: 1.5,
+            borderColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="lock-closed" size={10} color="#fff" />
+        </View>
+      )}
     </View>
   );
 }
@@ -119,7 +147,7 @@ function RecipeMedal({
     >
       <Medal id={id} size={size} state={state} on={picked} />
       {state === 'locked' && (
-        <GText light size={11} style={{ marginTop: 2, width: 90, textAlign: 'center' }}>
+        <GText light size={11} style={{ marginTop: 6, width: 90, textAlign: 'center' }}>
           {`Seviye ${r.lvl}`}
         </GText>
       )}
@@ -132,7 +160,7 @@ function RecipeMedal({
             width: 17,
             height: 17,
             borderRadius: 9,
-            backgroundColor: '#D8455C',
+            backgroundColor: '#E8604C',
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 1.5,
@@ -212,8 +240,8 @@ export function StationPop({
   const n = list.length;
   const tot = (n - 1) * STEP;
   const half = R * Math.sin((Math.min(180, tot) / 2) * (Math.PI / 180)) + M_ON / 2 + 6;
-  const BAL_W = 214;
-  const BAL_H = Math.round((BAL_W * UI.balloon.h) / UI.balloon.w);
+  const BAL_W = 216;
+  const BAL_H = 108;
   const cx = Math.min(box.w - half, Math.max(half, mcx));
   const cy = Math.min(box.h - bottom - mh / 2 - 150, Math.max(top + BAL_H + R + M_ON / 2 - 8, mcy - mh * 0.18));
   const pos = list.map((_id, k) => {
@@ -262,8 +290,8 @@ export function StationPop({
   const pState = pk ? stateOf(pk) : null;
   const pAt = pk ? pos[list.indexOf(pk)] : null;
   // Balonun kuyruğu çizimin alt kenarında, soldan %47'dedir: kuyruk seçili madalyonun üstüne gelir.
-  const balLeft = pAt ? Math.min(box.w - BAL_W - 6, Math.max(6, pAt.x - BAL_W * 0.47)) : 0;
-  const balTop = pAt ? pAt.y - M_ON / 2 - BAL_H + 6 : 0;
+  const balLeft = pAt ? Math.min(box.w - BAL_W - 8, Math.max(8, pAt.x - BAL_W / 2)) : 0;
+  const balTop = pAt ? pAt.y - M_ON / 2 - BAL_H - 2 : 0;
   const needs = pr ? Object.entries(pr.needs) : [];
   const hint =
     pState === 'locked'
@@ -277,8 +305,8 @@ export function StationPop({
               .join(', ') + ' eksik'
           : 'Atölyenin üstüne sürükle';
 
-  const RIB_W = 150;
-  const RIB_H = Math.round((RIB_W * UI.ribbon2.h) / UI.ribbon2.w);
+  const RIB_W = 180;
+  const RIB_H = 38;
   const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
   const Q = 28; // sıra madalyonu
   const QR = 44; // hazır olanın çelengi
@@ -321,26 +349,37 @@ export function StationPop({
       {list.map((id, k) => (
         <RecipeMedal key={id} id={id} x={pos[k].x} y={pos[k].y} state={stateOf(id)} picked={pk === id} hidden={drag === id} api={api} />
       ))}
-      {/* Seçili ürünün parşömen balonu: ad + süre, malzemeler, tek satır yönerge. İçerik parşömenin iç alanına ortalanır. */}
+      {/* Seçili ürünün kartı: ad + süre, malzemeler, tek satır yönerge. Altındaki küçük ok seçili ürünü gösterir. */}
       {pr && pk && pAt && !drag && (
         <View pointerEvents="none" style={{ position: 'absolute', left: balLeft, top: balTop, width: BAL_W, height: BAL_H }}>
-          <Image source={UI.balloon.src} style={{ position: 'absolute', width: BAL_W, height: BAL_H }} resizeMode="stretch" />
           <View
             style={{
               position: 'absolute',
-              left: BAL_W * 0.09,
-              right: BAL_W * 0.09,
-              top: BAL_H * 0.1,
-              height: BAL_H * 0.62,
-              justifyContent: 'space-evenly',
+              left: Math.min(BAL_W - 30, Math.max(14, pAt.x - balLeft - 8)),
+              bottom: 6,
+              width: 16,
+              height: 16,
+              backgroundColor: '#FFFAF0',
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+          <View
+            style={{
+              height: BAL_H - 14,
+              borderRadius: 18,
+              backgroundColor: '#FFFAF0',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              justifyContent: 'space-between',
               alignItems: 'center',
+              ...SH,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
-              <GText size={15} style={{ flexShrink: 1 }}>
+              <GText size={15} color="#4A2E1C" style={{ flexShrink: 1 }}>
                 {pr.name}
               </GText>
-              <GText size={12} color="#8A6A45">
+              <GText size={12} color="#8C6E54">
                 {timeLeft(pr.mins * MIN)}
               </GText>
             </View>
@@ -355,26 +394,19 @@ export function StationPop({
                 );
               })}
             </View>
-            <GText size={11} color={pState === 'ok' ? '#8A6A45' : RED_INK}>
+            <GText size={11} color={pState === 'ok' ? '#8C6E54' : RED_INK}>
               {hint}
             </GText>
           </View>
         </View>
       )}
-      {/* Kurdele: atölyenin adı. Yazı kurdelenin düz orta kısmına sığar. */}
-      <View pointerEvents="none" style={{ position: 'absolute', left: mcx - RIB_W / 2, top: ribTop, width: RIB_W, height: RIB_H }}>
-        <Image source={UI.ribbon2.src} style={{ position: 'absolute', width: RIB_W, height: RIB_H }} resizeMode="stretch" />
-        <View
-          style={{
-            position: 'absolute',
-            left: RIB_W * 0.2,
-            right: RIB_W * 0.2,
-            top: RIB_H * 0.2,
-            height: RIB_H * 0.46,
-            justifyContent: 'center',
-          }}
-        >
-          <GText light size={d.name.length > 13 ? 11 : 13} style={{ textAlign: 'center' }}>
+      {/* Atölyenin adı: beyaz hap etiket. */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', left: mcx - RIB_W / 2, top: ribTop + 6, width: RIB_W, alignItems: 'center' }}
+      >
+        <View style={{ backgroundColor: '#FFFAF0', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 3, ...SH }}>
+          <GText size={13} color="#4A2E1C">
             {d.name}
           </GText>
         </View>
@@ -389,20 +421,28 @@ export function StationPop({
           const j = jobs[k];
           const done = !!j && j.ready <= now;
           const w = done ? QR : Q;
-          const art = done ? UI.wreath : UI.med;
-          const h = Math.round((w * art.h) / art.w);
           return (
             <View key={k} style={{ width: w, alignItems: 'center', marginTop: done ? 0 : (QR - Q) / 2 }}>
-              <View style={{ width: w, height: h, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={art.src} style={{ position: 'absolute', width: w, height: h, opacity: j ? 1 : 0.7 }} resizeMode="stretch" />
-                {j && <Icon k={j.recipe} size={Math.round(w * (done ? 0.46 : 0.6))} />}
+              <View
+                style={{
+                  width: w,
+                  height: w,
+                  borderRadius: w / 2,
+                  backgroundColor: j ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
+                  borderWidth: done ? 3 : 1.5,
+                  borderColor: done ? '#76BA48' : 'rgba(255,255,255,0.8)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {j && <Icon k={j.recipe} size={Math.round(w * 0.62)} />}
               </View>
               {j &&
                 (done ? (
                   <View
                     style={{
                       marginTop: 1,
-                      backgroundColor: '#62AA34',
+                      backgroundColor: '#76BA48',
                       borderRadius: 9,
                       borderWidth: 1.5,
                       borderColor: '#fff',
@@ -443,8 +483,8 @@ export function StationPop({
             justifyContent: 'center',
           }}
         >
-          <Image source={UI.round.src} style={{ position: 'absolute', width: 40, height: 40 }} resizeMode="stretch" />
-          <Ionicons name="trash-outline" size={18} color="#FFF3D6" />
+          <View style={{ position: 'absolute', width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', ...SH }} />
+          <Ionicons name="trash-outline" size={18} color="#4A2E1C" />
         </Pressable>
       )}
       {/* Parmağın altındaki ürün */}

@@ -72,7 +72,15 @@ export function Bar3({
   );
 }
 
-// Kabartmalı düğme: yeşil (asıl iş), kırmızı (ödül), ahşap (ikincil). Basınca hafifçe çöker. Kapalıyken soluklaşır.
+// Çiftliğin üstündeki düğme: yeşil (asıl iş), kırmızı (ödül), beyaz (ikincil). Basınca hafifçe küçülür. Kapalıyken soluklaşır.
+// (Adı eski ahşap takımdan kaldı; görünüm sade takımla aynıdır.)
+const SHADOW = {
+  shadowColor: '#32200A',
+  shadowOpacity: 0.22,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 4,
+} as const;
 export function WoodButton({
   kind = 'green',
   label,
@@ -97,6 +105,7 @@ export function WoodButton({
   style?: StyleProp<ViewStyle>;
 }) {
   const a = art ? ART[art] : null;
+  const h = height - 4;
   return (
     <Pressable
       disabled={disabled}
@@ -105,29 +114,26 @@ export function WoodButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled }}
       hitSlop={4}
-      style={({ pressed }) => [
-        { opacity: disabled ? 0.72 : 1, transform: [{ translateY: pressed ? 2 : 0 }, { scale: pressed ? 0.97 : 1 }] },
-        style,
-      ]}
+      style={({ pressed }) => [{ opacity: disabled ? 0.62 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }, style]}
     >
-      <Bar3 kind={`btn_${kind}`} height={height} style={{ alignSelf: 'stretch' }}>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            paddingHorizontal: Math.round(height * 0.42),
-            paddingBottom: Math.round(height * 0.1), // düğmenin alt dudağı kadar yukarı
-          }}
-        >
-          {a ? <Image source={a.src} style={{ width: height * 0.56, height: height * 0.56 }} resizeMode="contain" /> : icon}
-          <GText light size={size}>
-            {label}
-          </GText>
-        </View>
-      </Bar3>
+      <View
+        style={{
+          height: h,
+          borderRadius: h / 2,
+          backgroundColor: kind === 'green' ? '#76BA48' : kind === 'red' ? '#E8604C' : '#FFFFFF',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingHorizontal: Math.round(h * 0.4),
+          ...SHADOW,
+        }}
+      >
+        {a ? <Image source={a.src} style={{ width: h * 0.56, height: h * 0.56 }} resizeMode="contain" /> : icon}
+        <GText size={size} color={kind === 'wood' ? '#4A2E1C' : '#fff'}>
+          {label}
+        </GText>
+      </View>
       {!!count && count > 0 && <Dot n={count} style={{ position: 'absolute', right: -4, top: -8 }} />}
     </Pressable>
   );
@@ -136,8 +142,23 @@ export function WoodButton({
 // Kırmızı sayaç noktası.
 export function Dot({ n, style }: { n: number; style?: StyleProp<ViewStyle> }) {
   return (
-    <View pointerEvents="none" style={[{ width: 26, height: 26, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Image source={UI.dot.src} style={{ position: 'absolute', width: 26, height: 26 }} />
+    <View
+      pointerEvents="none"
+      style={[
+        {
+          minWidth: 24,
+          height: 24,
+          borderRadius: 12,
+          paddingHorizontal: 5,
+          backgroundColor: '#E8604C',
+          borderWidth: 2,
+          borderColor: '#fff',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        style,
+      ]}
+    >
       <GText size={n > 99 ? 10 : 12} color="#fff" style={{ lineHeight: 15 }}>
         {n > 99 ? '99+' : n}
       </GText>
@@ -145,7 +166,7 @@ export function Dot({ n, style }: { n: number; style?: StyleProp<ViewStyle> }) {
   );
 }
 
-// Yuvarlak ahşap düğme; içine simge ya da çizim konur.
+// Yuvarlak beyaz düğme; içine simge ya da çizim konur.
 export function RoundButton({
   size = 44,
   label,
@@ -166,47 +187,76 @@ export function RoundButton({
       accessibilityLabel={label}
       hitSlop={8}
       style={({ pressed }) => [
-        { width: size, height: size, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.93 : 1 }] },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale: pressed ? 0.93 : 1 }],
+          ...SHADOW,
+        },
         style,
       ]}
     >
-      <Image source={UI.round.src} style={{ position: 'absolute', width: size, height: size }} />
       {children}
     </Pressable>
   );
 }
 
-// Ahşap levha: üst bardaki ad ve altın kutuları.
+// Üst bardaki ad ve altın kutuları: beyaz hap.
 export function Plaque({ height = 44, style, children }: { height?: number; style?: StyleProp<ViewStyle>; children?: ReactNode }) {
+  const h = height - 4;
   return (
-    <Bar3 kind="plaque" height={height} style={style}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Math.round(height * 0.34) }}>
-        {children}
-      </View>
-    </Bar3>
+    <View
+      style={[
+        {
+          height: h,
+          borderRadius: h / 2,
+          backgroundColor: '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: Math.round(h * 0.36),
+          ...SHADOW,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
   );
 }
 
-// İlerleme çubuğu: ahşap oluk içinde yeşil dolgu (0..1).
+// İlerleme çubuğu (0..1).
 export function WoodBar({ value, height = 16, style }: { value: number; height?: number; style?: StyleProp<ViewStyle> }) {
   const v = Math.max(0, Math.min(1, value));
-  const pad = Math.round(height * 0.26);
+  const h = Math.max(6, Math.round(height * 0.6));
   return (
-    <Bar3 kind="track" height={height} style={style}>
-      <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: pad + 2 }}>
-        {v > 0 && <Bar3 kind="fill" height={height - pad * 2} style={{ width: `${Math.max(8, Math.round(v * 100))}%` }} />}
-      </View>
-    </Bar3>
+    <View style={[{ height: h, borderRadius: h / 2, backgroundColor: '#ECE0CC', overflow: 'hidden' }, style]}>
+      <View style={{ width: `${v * 100}%`, height: h, borderRadius: h / 2, backgroundColor: '#76BA48' }} />
+    </View>
   );
 }
 
-// Seviye rozeti: yapraklı kalkan içinde sayı.
+// Seviye rozeti: yeşil daire içinde sayı.
 export function LevelBadge({ level, size = 52 }: { level: number; size?: number }) {
-  const h = Math.round((size * UI.shield.h) / UI.shield.w);
+  const d = Math.round(size * 0.86);
   return (
-    <View style={{ width: size, height: h, alignItems: 'center', justifyContent: 'center' }}>
-      <Image source={UI.shield.src} style={{ position: 'absolute', width: size, height: h }} />
-      <GText size={Math.round(size * (level > 99 ? 0.3 : 0.36))} style={{ marginTop: -2 }}>
+    <View
+      style={{
+        width: d,
+        height: d,
+        borderRadius: d / 2,
+        backgroundColor: '#76BA48',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOW,
+      }}
+    >
+      <GText size={Math.round(d * (level > 99 ? 0.34 : 0.42))} color="#fff">
         {level}
       </GText>
     </View>
