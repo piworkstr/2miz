@@ -20,7 +20,6 @@ import {
 } from '../../lib/farm';
 import { stockArt } from '../../lib/farmArt';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { UI } from '../../lib/farmUiArt';
 import { GText } from './FarmUI';
 
 // Atölye ekranı: çiftlik kararır, atölye parlak kalır. Ürünler atölyenin üstünde yay hâlinde, altın çerçeveli madalyonlarda
@@ -248,7 +247,17 @@ export function StationPop({
     const a = (-90 - tot / 2 + k * STEP) * (Math.PI / 180);
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
   });
-  const near = (x: number, y: number) => Math.hypot(x - mcx, y - mcy) < DROP;
+  const RIB_W = 180;
+  const RIB_H = 38;
+  const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
+  const Q = 28; // sıra madalyonu
+  const QR = 44; // hazır olanın çelengi
+  const rowW = slots * (Q + 6) - 6 + (QR - Q);
+  const rowTop = ribTop + RIB_H + 2;
+
+  // Bırakma alanı: atölyenin kendisi, adı ve altındaki sıra. (Ürünü sıraya doğru sürükleyip bırakmak da üretimi başlatır.)
+  const near = (x: number, y: number) =>
+    Math.hypot(x - mcx, y - mcy) < DROP || (Math.abs(x - mcx) < Math.max(DROP, rowW / 2 + 24) && y > mcy && y < rowTop + QR + 40);
 
   const api = useRef<DragApi | null>(null);
   api.current = {
@@ -304,14 +313,6 @@ export function StationPop({
               .map(([k, q]) => `${q - (farm.stock[k] ?? 0)} ${PRODUCT_NAME[k].toLocaleLowerCase('tr-TR')}`)
               .join(', ') + ' eksik'
           : 'Atölyenin üstüne sürükle';
-
-  const RIB_W = 180;
-  const RIB_H = 38;
-  const ribTop = Math.min(box.h - bottom - RIB_H - 96, mcy + mh / 2 - 6);
-  const Q = 28; // sıra madalyonu
-  const QR = 44; // hazır olanın çelengi
-  const rowW = slots * (Q + 6) - 6 + (QR - Q);
-  const rowTop = ribTop + RIB_H + 2;
 
   return (
     <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: 46 }}>
@@ -454,7 +455,7 @@ export function StationPop({
                     </GText>
                   </View>
                 ) : (
-                  <GText light size={10} style={{ marginTop: 1 }}>
+                  <GText light size={10} style={{ marginTop: 1, width: 64, textAlign: 'center' }}>
                     {timeLeft(j.ready - now)}
                   </GText>
                 ))}

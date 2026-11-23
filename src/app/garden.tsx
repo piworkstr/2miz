@@ -2417,7 +2417,7 @@ export default function GardenScreen() {
               ) : null
             }
           />
-          {kissAtPos && (
+          {kissAtPos && !stSel && !panelMid && (
             <View
               pointerEvents="none"
               style={{
