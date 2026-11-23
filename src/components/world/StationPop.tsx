@@ -239,7 +239,8 @@ export function StationPop({
   const ready = jobs.filter((j) => j.ready <= now).length;
   const list = (Object.keys(RECIPES) as RecipeId[])
     .filter((id) => stationOf(id, farm) === st)
-    .sort((a, b) => RECIPES[a].lvl - RECIPES[b].lvl)
+    // Soldan sağa: önce açılan önce gelir; aynı seviyede açılanlarda ucuz (basit) olan solda durur. Sıra hiç değişmez.
+    .sort((a, b) => RECIPES[a].lvl - RECIPES[b].lvl || RECIPES[a].sell - RECIPES[b].sell || a.localeCompare(b))
     // Açılmış tarifler ve sıradaki tek kilitli tarif (ne geleceği görünsün).
     .filter((id, _k, all) => RECIPES[id].lvl <= level || all.filter((q) => RECIPES[q].lvl > level).indexOf(id) < 1)
     .slice(0, 6);
