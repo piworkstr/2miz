@@ -71,6 +71,7 @@ export type DecorId =
   | 'tatli'
   | 'cikolataci'
   | 'kahveci'
+  | 'dondurmaci'
   | 'mandira'
   | 'atolye'
   | 'konserve'
@@ -202,10 +203,24 @@ export type RecipeId =
   | 'nanelimonata'
   | 'kecipeyniri'
   | 'hceviziyagi'
-  | 'sevgilikutusu';
+  | 'sevgilikutusu'
+  | 'cikolatadondurma'
+  | 'limonsorbe';
 // Üretim yeri: hepsi dükkândan alınıp çiftliğe konan atölyelerdir. 'mutfak' yalnızca eski kayıtlardaki yarım işler için durur.
 export type Station =
-  'mutfak' | 'mandira' | 'atolye' | 'konserve' | 'degirmen' | 'firin' | 'yag' | 'meyvesuyu' | 'tatli' | 'asci' | 'cikolataci' | 'kahveci';
+  | 'mutfak'
+  | 'mandira'
+  | 'atolye'
+  | 'konserve'
+  | 'degirmen'
+  | 'firin'
+  | 'yag'
+  | 'meyvesuyu'
+  | 'tatli'
+  | 'asci'
+  | 'cikolataci'
+  | 'kahveci'
+  | 'dondurmaci';
 export const RECIPES: Record<
   RecipeId,
   {
@@ -322,8 +337,19 @@ export const RECIPES: Record<
     xp: 56,
     lvl: 42,
     mins: 120,
-    at: 'tatli',
+    at: 'dondurmaci',
   },
+  cikolatadondurma: {
+    name: 'Çikolatalı dondurma',
+    emoji: '🍨',
+    needs: { krema: 1, seker: 1, sutlucikolata: 1 },
+    sell: 3750,
+    xp: 88,
+    lvl: 48,
+    mins: 120,
+    at: 'dondurmaci',
+  },
+  limonsorbe: { name: 'Limon sorbe', emoji: '🍧', needs: { limon: 3, seker: 1 }, sell: 1750, xp: 58, lvl: 54, mins: 90, at: 'dondurmaci' },
   sutlucikolata: {
     name: 'Sütlü çikolata',
     emoji: '🍫',
@@ -419,6 +445,7 @@ export const STATIONS: Record<Station, { name: string; slot: string; from: strin
   tatli: { name: 'Tatlı atölyesi', slot: 'tezgâh', from: 'tatlı atölyesinden', inn: 'tatlı atölyesinde' },
   cikolataci: { name: 'Çikolatacı', slot: 'kalıp', from: 'çikolatacıdan', inn: 'çikolatacıda' },
   kahveci: { name: 'Kahve dükkânı', slot: 'demlik', from: 'kahve dükkânından', inn: 'kahve dükkânında' },
+  dondurmaci: { name: 'Dondurmacı', slot: 'kazan', from: 'dondurmacıdan', inn: 'dondurmacıda' },
 };
 // Tarifin yapıldığı yer. alt'ı olan tarif (reçel, turşu) o atölye çiftlikteyse orada, değilse mutfakta yapılır.
 export const stationOf = (r: RecipeId, f?: Farm): Station => {
@@ -674,7 +701,7 @@ export const DECOR: Record<
     xp: 35,
     lvl: 25,
     w: 1.6,
-    perk: 'Kavunlu tatlı, yaş pasta, piknik sepeti ve dondurma hazırlar',
+    perk: 'Kavunlu tatlı, meyve tabağı, yaş pasta ve piknik sepeti hazırlar',
     station: true,
   },
   cikolataci: {
@@ -685,6 +712,16 @@ export const DECOR: Record<
     lvl: 44,
     w: 1.6,
     perk: 'Kakaodan sütlü ve çilekli çikolata, sevgili kutusu hazırlar',
+    station: true,
+  },
+  dondurmaci: {
+    name: 'Dondurmacı',
+    sp: 'dondurmaci',
+    cost: 3500,
+    xp: 40,
+    lvl: 42,
+    w: 1.6,
+    perk: 'Çilekli ve çikolatalı dondurma, limon sorbe yapar',
     station: true,
   },
   kahveci: {

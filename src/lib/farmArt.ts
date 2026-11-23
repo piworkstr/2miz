@@ -149,6 +149,9 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   latte: { src: require('../../assets/farm/latte.webp'), h: 1.031 },
   mocha: { src: require('../../assets/farm/mocha.webp'), h: 1.031 },
   nanecayi: { src: require('../../assets/farm/nanecayi.webp'), h: 0.965 },
+  dondurmaci: { src: require('../../assets/farm/dondurmaci.webp'), h: 1.05 },
+  cikolatadondurma: { src: require('../../assets/farm/cikolatadondurma.webp'), h: 1.183 },
+  limonsorbe: { src: require('../../assets/farm/limonsorbe.webp'), h: 1.198 },
   // </yeni-atolyeler>
   // Atölyeler ve ürünleri
   mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },
