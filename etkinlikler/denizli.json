@@ -1,0 +1,24 @@
+{
+  "city": "Denizli",
+  "items": [
+    { "title": "Karsu", "day": "2026-11-23", "time": "21:00", "cat": "konser", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Özay Gönlüm Salonu", "url": "https://www.biletix.com/etkinlik/5MY31/ISTANBUL/tr/karsu-23-11-2026-denizli", "price": "2400 TL'den başlar" },
+    { "title": "Salih Tıraş Stand Up", "day": "2026-11-26", "time": "20:30", "cat": "standup", "venue": "Route Bar", "url": "https://biletinial.com/tr-tr/tiyatro/salih-tiras-standup", "price": "600 TL'den başlar" },
+    { "title": "Nurettin Rençber", "day": "2026-11-28", "time": "20:30", "cat": "konser", "venue": "Merkezefendi Belediyesi Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5MO35/IZMIR/tr/nurettin-rencber-28-11-2026-denizli", "price": "850 TL'den başlar" },
+    { "title": "Redd", "day": "2026-11-28", "time": "22:00", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5AMAX/TURKIYE/tr/redd-28-11-2026-denizli", "price": "899 TL'den başlar" },
+    { "title": "Yüksek Sadakat", "day": "2026-11-28", "time": "22:00", "cat": "konser", "venue": "Holly Stone Performance Hall", "url": "https://www.biletix.com/etkinlik/5ERKF/TURKIYE/en/yuksek-sadakat-28-11-2026-denizli", "price": "800 TL'den başlar" },
+    { "title": "Eser Yenenler ile İtiraf Et", "day": "2026-12-02", "time": "20:00", "cat": "standup", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Mehmet Gazi Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/eser-yenenler-ile-itiraf-et" },
+    { "title": "Murda", "day": "2026-12-03", "time": "22:00", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5OF6A/TURKIYE/tr/murda-03-12-2026-denizli", "price": "750 TL'den başlar" },
+    { "title": "Tuana", "day": "2026-12-04", "time": "22:00", "cat": "konser", "venue": "Holly Stone Performance Hall", "url": "https://biletinial.com/tr-tr/muzik/tuana", "price": "550 TL'den başlar" },
+    { "title": "Emre Aydın", "day": "2026-12-04", "time": "22:15", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5ADBK/TURKIYE/tr/emre-aydin-04-12-2026-denizli", "price": "800 TL'den başlar" },
+    { "title": "Miray Akovalıgil - Ya Bende Bir Şey Yoksa?", "day": "2026-12-05", "time": "20:00", "cat": "standup", "venue": "Merkezefendi Belediyesi Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5BZA0/TURKIYE/tr/miray-akovaligil-ya-bende-bir-sey-yoksa-stand-up-05-12-2026-denizli" },
+    { "title": "Madrigal", "day": "2026-12-05", "time": "22:00", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5PSLW/TURKIYE/tr/music-madrigal-05-12-2026-denizli", "price": "600 TL'den başlar" },
+    { "title": "Bu Hikaye Senden Uzun Osman", "day": "2026-12-09", "time": "20:30", "cat": "tiyatro", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Fatma Yıldız Salonu", "url": "https://www.biletix.com/etkinlik/5STFM/TURKIYE/en/art-bu-hikaye-senden-uzun-osman-09-12-2026-denizli" },
+    { "title": "Evgeny Grinko", "day": "2026-12-11", "cat": "konser", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Mehmet Gazi Salonu", "url": "https://songkick.com/de/concerts/43498148-evgeny-grinko-at-nihat-zeybekci-kultur-merkezi-mehmet-gazi-salonu" },
+    { "title": "Morkomedyen Stand Up", "day": "2026-12-13", "time": "19:00", "cat": "standup", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Mehmet Gazi Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/morkomedyen", "price": "1299 TL'den başlar" },
+    { "title": "Devlerin Savaşı", "day": "2026-12-15", "time": "20:30", "cat": "tiyatro", "venue": "Nihat Zeybekci Kongre ve Kültür Merkezi - Özay Gönlüm Salonu", "url": "https://www.biletix.com/etkinlik/5YDY1/TURKIYE/tr/art-devlerin-savasi-15-12-2026-denizli", "price": "1430 TL'den başlar" },
+    { "title": "Venüs", "day": "2026-12-16", "time": "22:00", "cat": "konser", "venue": "Holly Stone Performance Hall", "url": "https://www.biletix.com/etkinlik/5OF99/TURKIYE/en/venus-16-12-2026-denizli", "price": "425 TL'den başlar" },
+    { "title": "Lvbel C5", "day": "2026-12-18", "time": "22:30", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5AP40/TURKIYE/tr/lvbel-c5-18-12-2026-denizli", "price": "850 TL'den başlar" },
+    { "title": "Sevgili Arsız Ölüm - Dirmit", "day": "2026-12-23", "time": "20:30", "cat": "tiyatro", "venue": "Merkezefendi Belediyesi Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/6T608/IZMIR/tr/sevgili-arsiz-olum-dirmit-23-12-2026-denizli", "price": "1100 TL'den başlar" },
+    { "title": "No.1", "day": "2026-12-26", "time": "22:00", "cat": "konser", "venue": "Hayal Kahvesi Premium Denizli", "url": "https://www.biletix.com/etkinlik/5OSB5/TURKIYE/tr/no-1-26-12-2026-denizli", "price": "750 TL'den başlar" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "city": "Manisa",
+  "items": [
+    { "title": "Ozbi", "day": "2026-11-27", "cat": "konser", "venue": "Holly Stone Performance Hall Manisa", "url": "https://www.songkick.com/concerts/43416289-ozbi-at-holly-stone-performance-hall-manisa" },
+    { "title": "Kuyucaklı Yusuf", "day": "2026-11-28", "cat": "tiyatro", "venue": "Yunus Emre Belediyesi Millet Çarşısı Konferans Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/kuyucakli-yusuf-sirius", "price": "500 TL'den başlar" },
+    { "title": "Musti Kusti - Stand Up (Yeni Gösteri)", "day": "2026-11-30", "cat": "standup", "venue": "Ferdi Zeyrek Millet Çarşısı İsmail Hakkı Tonguç Konferans Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/musti-kusti-stand-up-yeni-gosteri", "price": "750 TL'den başlar" },
+    { "title": "Edi ile Büdü", "day": "2026-12-05", "cat": "tiyatro", "venue": "Ferdi Zeyrek Millet Çarşısı İsmail Hakkı Tonguç Konferans Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/edi-ile-budu", "price": "1.250 TL'den başlar" },
+    { "title": "Tartuffe", "day": "2026-12-05", "cat": "tiyatro", "venue": "Manisa Büyükşehir Belediyesi Şehir Tiyatrosu Uğur Mumcu Sahnesi", "url": "https://biletinial.com/tr-tr/tiyatro/tartuffe-tiyatro", "price": "700 TL'den başlar" },
+    { "title": "Fazlı Polat - Şaka Şaka Stand-Up", "day": "2026-12-08", "cat": "standup", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/fazli-polat-saka-saka-stand-up", "price": "1.200 TL'den başlar" },
+    { "title": "Bir Evlenme Teklifi", "day": "2026-12-08", "cat": "tiyatro", "venue": "Ferdi Zeyrek Millet Çarşısı İsmail Hakkı Tonguç Konferans Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/bir-evlenme-teklifi-reverans", "price": "1.000 TL'den başlar" },
+    { "title": "Venüs", "day": "2026-12-09", "time": "22:00", "cat": "konser", "venue": "Holly Stone Performance Hall Manisa", "url": "https://www.biletix.com/etkinlik/5OF98/TURKIYE/tr/music-venus-09-12-2026-manisa", "price": "425 TL'den başlar" },
+    { "title": "80'ler 90'lar Gülümseten Hatıralar", "day": "2026-12-11", "time": "20:00", "cat": "gosteri", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/80ler-90lar-gulumseten-hatiralar", "price": "877 TL'den başlar" },
+    { "title": "Bir Delinin Hatıra Defteri", "day": "2026-12-17", "cat": "tiyatro", "venue": "Salihli Sanat Akademisi", "url": "https://biletinial.com/tr-tr/tiyatro/bir-delinin-hatira-defteri-tiyatro-oyunuu", "price": "600 TL'den başlar" },
+    { "title": "Yükleniyor", "day": "2026-12-17", "cat": "tiyatro", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/yukleniyor", "price": "600 TL'den başlar" },
+    { "title": "Palto", "day": "2026-12-18", "cat": "tiyatro", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/palto-tiyatro-oyunu-kstbk", "price": "600 TL'den başlar" },
+    { "title": "Soğuk Savaş", "day": "2026-12-19", "cat": "tiyatro", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/soguk-savas-", "price": "700 TL'den başlar" },
+    { "title": "Sefiller", "day": "2026-12-24", "time": "20:00", "cat": "tiyatro", "venue": "Salihli Belediyesi Zafer Keskiner Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/sefiller-sek", "price": "448 TL'den başlar" },
+    { "title": "İki Şehrin Hikayesi", "day": "2026-12-27", "cat": "tiyatro", "venue": "Ferdi Zeyrek Millet Çarşısı İsmail Hakkı Tonguç Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/iki-sehrin-hikayesi", "price": "600 TL'den başlar" }
+  ]
+}

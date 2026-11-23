@@ -1,0 +1,15 @@
+{
+  "city": "Isparta",
+  "items": [
+    { "title": "Kadın", "day": "2026-11-25", "time": "20:00", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Gül Salonu", "url": "https://biletsirasi.com/tiyatro/kadin#city=isparta", "price": "1315 TL'den başlar" },
+    { "title": "İhsan Görgülü Stand Up – Acayip Duygular", "day": "2026-11-28", "time": "20:00", "cat": "standup", "venue": "Tulûat Sahne", "url": "https://biletsirasi.com/tiyatro/ihsan-gorgulu-stand-up-acayip-duygular#city=isparta", "price": "530 TL'den başlar" },
+    { "title": "Mahşer-i Cümbüş", "day": "2026-12-01", "time": "20:00", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Gül Salonu", "url": "https://biletsirasi.com/tiyatro/mahser-i-cumbus#city=isparta", "price": "1120 TL'den başlar" },
+    { "title": "Bir Evlenme Teklifi", "day": "2026-12-05", "time": "20:00", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Lavanta Salonu", "url": "https://biletsirasi.com/tiyatro/bir-evlenme-teklifi#city=isparta" },
+    { "title": "İçimizdeki Şeytan", "day": "2026-12-06", "time": "19:00", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Gül Salonu", "url": "https://www.bubilet.com.tr/isparta/etkinlik/icimizdeki-seytan/seans/269596", "price": "700 TL'den başlar" },
+    { "title": "Bu Hikaye Senden Uzun Osman", "day": "2026-12-12", "time": "20:30", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Gül Salonu", "url": "https://biletsirasi.com/tiyatro/bu-hikaye-senden-uzun-osman#city=isparta" },
+    { "title": "Erkek Aklı Oksimoron", "day": "2026-12-16", "time": "20:30", "cat": "tiyatro", "venue": "Isparta Belediyesi Kültür Merkezi Gül Salonu", "url": "https://biletsirasi.com/tiyatro/erkek-akli-oksimoron#city=isparta" },
+    { "title": "Gökhan Türkmen", "day": "2026-12-17", "time": "20:30", "cat": "konser", "venue": "Süleyman Demirel Kongre Merkezi", "url": "https://www.bubilet.com.tr/isparta/etkinlik/gokhan-turkmen-konseri/seans/226142", "price": "850 TL'den başlar" },
+    { "title": "Venüs", "day": "2026-12-17", "cat": "konser", "venue": "Holly Stone Performance Hall", "url": "https://www.songkick.com/concerts/43414436-venus-at-holly-stone-performance-hall-isparta" },
+    { "title": "Afara – Bir Arabesk Müzikali | Uğur Aslan'la Bu Kez Baş Başa", "day": "2026-12-22", "time": "20:00", "cat": "tiyatro", "venue": "Süleyman Demirel Üniversitesi M. Lütfü Çakmakçı Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/afara-bir-arabesk-muzikali-ugur-aslanla-bu-kez-bas-basa#city=isparta", "price": "1000 TL'den başlar" }
+  ]
+}

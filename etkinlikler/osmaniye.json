@@ -1,0 +1,10 @@
+{
+  "city": "Osmaniye",
+  "items": [
+    { "title": "Duyduk Ki", "day": "2026-11-28", "time": "20:00", "cat": "tiyatro", "venue": "Kadirli Devlet Bahçeli Kültür Merkezi (Kadirli)", "url": "https://biletsirasi.com/tiyatro/duyduk-ki#city=osmaniye", "price": "800 TL'den başlar" },
+    { "title": "Boşanma Teklifi", "day": "2026-12-04", "time": "20:00", "cat": "tiyatro", "venue": "Kadirli Devlet Bahçeli Kültür Merkezi (Kadirli)", "url": "https://biletsirasi.com/stand-up/bosanma-teklifi#city=osmaniye" },
+    { "title": "Ölünce Ara", "day": "2026-12-09", "time": "20:30", "cat": "tiyatro", "venue": "Kadirli Devlet Bahçeli Kültür Merkezi (Kadirli)", "url": "https://biletsirasi.com/tiyatro/olunce-ara#city=osmaniye", "price": "887 TL'den başlar" },
+    { "title": "Kobra Murat ile Roman", "day": "2026-12-24", "time": "21:00", "cat": "konser", "venue": "Osmaniye Royal Park Salonları", "url": "https://biletsirasi.com/konser/kobra-murat-ile-roman#city=osmaniye", "price": "2464 TL'den başlar" },
+    { "title": "Çöz Çözebilirsen", "day": "2026-12-26", "time": "20:00", "cat": "tiyatro", "venue": "Karacaoğlan Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/coz-cozebilirsen#city=osmaniye", "price": "665 TL'den başlar" }
+  ]
+}

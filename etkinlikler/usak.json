@@ -1,0 +1,15 @@
+{
+  "city": "Uşak",
+  "items": [
+    { "title": "Boşanma Teklifi", "day": "2026-11-23", "time": "20:30", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/bosanma-teklifi?cinemaBranchId=16400", "price": "896 TL'den başlar" },
+    { "title": "Üstün Dökmen ile 'Küçük Şeyler'", "day": "2026-11-29", "time": "20:00", "cat": "diger", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/ustun-dokmen-ile-kucuk-seyler?cinemaBranchId=16400", "price": "1.232 TL'den başlar" },
+    { "title": "Ruh Öküzüm", "day": "2026-12-02", "time": "20:00", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5FN99/TURKIYE/tr/ruh-okuzum-02-12-2026-usak", "price": "605 TL'den başlar" },
+    { "title": "Madalyasız Kahraman", "day": "2026-12-04", "time": "20:00", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/madalyasiz-kahraman?cinemaBranchId=16400", "price": "400 TL'den başlar" },
+    { "title": "Kobra Murat", "day": "2026-12-06", "time": "21:30", "cat": "konser", "venue": "Hayal Kahvesi Uşak", "url": "https://www.bubilet.com.tr/usak/etkinlik/kobra-murat-", "price": "500 TL" },
+    { "title": "Etekler ve Pantolonlar", "day": "2026-12-24", "time": "19:00", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/etekler-ve-pantolonlar?cinemaBranchId=16400", "price": "1.500 TL'den başlar" },
+    { "title": "Kuyucaklı Yusuf Muazzez", "day": "2026-12-27", "time": "16:00", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5FKFY/TURKIYE/tr/kuyucakli-yusuf-muazzez-27-12-2026-usak", "price": "400 TL'den başlar" },
+    { "title": "Lady Macbeth", "day": "2026-12-27", "time": "18:00", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5FKFX/TURKIYE/tr/lady-macbeth-27-12-2026-usak", "price": "400 TL'den başlar" },
+    { "title": "Çalıkuşu", "day": "2026-12-27", "time": "19:30", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5FKGK/TURKIYE/tr/calikusu-27-12-2026-usak", "price": "400 TL'den başlar" },
+    { "title": "İçimizdeki Şeytan", "day": "2026-12-27", "time": "20:30", "cat": "tiyatro", "venue": "Uşak Atatürk Kültür Merkezi", "url": "https://www.biletix.com/etkinlik/5FKGL/TURKIYE/tr/icimizdeki-seytan-27-12-2026-usak", "price": "400 TL'den başlar" }
+  ]
+}

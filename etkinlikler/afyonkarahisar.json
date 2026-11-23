@@ -1,0 +1,14 @@
+{
+  "city": "Afyonkarahisar",
+  "items": [
+    { "title": "Venüs", "day": "2026-11-27", "cat": "konser", "venue": "Hayal Kahvesi Afyon", "url": "https://www.songkick.com/concerts/43414472-venus-tr-at-hayal-kahvesi-afyon" },
+    { "title": "Dönüşüm - Franz Kafka", "day": "2026-11-28", "time": "19:00", "cat": "tiyatro", "venue": "Afyon Girne Koleji", "url": "https://biletinial.com/tr-tr/tiyatro/donusum-franz-kafka-tiyatro-?cinemaBranchId=36400", "price": "750 TL'den başlar" },
+    { "title": "WALKMAN 90'lar Türkçe Pop Gecesi", "day": "2026-11-28", "time": "21:00", "cat": "konser", "venue": "Jolly Joker Afyonkarahisar", "url": "https://biletinial.com/tr-tr/muzik/walkman-90lar-turkce-pop-gecesi-jj?cinemaBranchId=27180", "price": "321 TL'den başlar" },
+    { "title": "Üstün Dökmen ile 'Küçük Şeyler'", "day": "2026-12-04", "time": "20:00", "cat": "diger", "venue": "Afyon Girne Koleji", "url": "https://biletinial.com/tr-tr/tiyatro/ustun-dokmen-ile-kucuk-seyler?cinemaBranchId=36400", "price": "1.344 TL'den başlar" },
+    { "title": "Afra", "day": "2026-12-05", "time": "21:00", "cat": "konser", "venue": "Jolly Joker Afyonkarahisar", "url": "https://biletinial.com/tr-tr/muzik/afra-jj?cinemaBranchId=27180", "price": "802,50 TL'den başlar" },
+    { "title": "7 Kocalı Hürmüz - Tiyatro Kafe", "day": "2026-12-07", "time": "19:30", "cat": "tiyatro", "venue": "Afyon Girne Koleji", "url": "https://biletinial.com/tr-tr/tiyatro/yedikocali-hurmuz-atf?cinemaBranchId=36400", "price": "672 TL'den başlar" },
+    { "title": "Sevcan Orhan", "day": "2026-12-12", "time": "21:00", "cat": "konser", "venue": "Jolly Joker Afyonkarahisar", "url": "https://biletinial.com/tr-tr/muzik/sevcan-orhan-jj?cinemaBranchId=27180", "price": "1.605 TL'den başlar" },
+    { "title": "Flashback 90'lar Türkçe Pop Gecesi", "day": "2026-12-19", "time": "21:00", "cat": "konser", "venue": "Jolly Joker Afyonkarahisar", "url": "https://biletinial.com/tr-tr/muzik/flashback-90lar-turkce-pop-gecesi-jj?cinemaBranchId=27180", "price": "428 TL'den başlar" },
+    { "title": "Nilgün Belgün - Aşk ve Komedi", "day": "2026-12-26", "time": "20:00", "cat": "tiyatro", "venue": "Afyon Girne Koleji", "url": "https://biletinial.com/tr-tr/tiyatro/nilgun-belgun-ask-ve-komedi-epizot-tytr?cinemaBranchId=36400", "price": "1.500 TL'den başlar" }
+  ]
+}

@@ -1,14 +1,19 @@
 {
   "items": [
+    { "title": "Çakallarla Dans 8: Şututgart Çıkarması", "genre": "Komedi", "since": "2026-11-06" },
     { "title": "Av. Mahsun: Ben Sana İnanıyorum", "genre": "Komedi", "since": "2026-11-13" },
     { "title": "Godzilla Minus Zero", "genre": "Aksiyon, bilim kurgu", "since": "2026-11-13" },
     { "title": "Ebenezer: Bir Noel Şarkısı", "genre": "Fantastik, dram", "since": "2026-11-13" },
     { "title": "Bir Banka Nasıl Soyulur", "genre": "Aksiyon, gerilim", "since": "2026-11-13" },
-    { "title": "Buruk Noel", "genre": "Dram", "since": "2026-11-13" },
-    { "title": "Sapık", "genre": "Korku, gerilim", "since": "2026-11-13" },
-    { "title": "Cinlerin Düğünü", "genre": "Dram", "since": "2026-11-06" },
+    { "title": "Aşk Tesadüfleri Sever 3", "genre": "Romantik, dram", "since": "2026-11-20" },
     { "title": "Açlık Oyunları: Hasatta Gündoğumu", "genre": "Aksiyon, fantastik, macera", "since": "2026-11-20" },
+    { "title": "Ben, Rocky", "genre": "Biyografi, dram", "since": "2026-11-20" },
     { "title": "Artakalan", "genre": "Dram", "since": "2026-11-20" },
-    { "title": "İdeal Koca", "genre": "Fantastik, romantik komedi", "since": "2026-11-27" }
+    { "title": "Zor Baba 4", "genre": "Komedi", "since": "2026-11-27" },
+    { "title": "İdeal Koca", "genre": "Fantastik, romantik komedi", "since": "2026-11-27" },
+    { "title": "Kağıttan Kaplan", "genre": "Suç, dram, gerilim", "since": "2026-11-27" },
+    { "title": "Örümcek-Adam: Yepyeni Bir Gün", "genre": "Aksiyon, macera", "since": "2026-12-04" },
+    { "title": "Vahşi Gece 2", "genre": "Aksiyon, komedi", "since": "2026-12-04" },
+    { "title": "2 Aile Arasında", "genre": "Komedi", "since": "2026-12-04" }
   ]
 }

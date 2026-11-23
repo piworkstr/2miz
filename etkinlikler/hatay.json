@@ -1,0 +1,20 @@
+{
+  "city": "Hatay",
+  "items": [
+    { "title": "Lady Macbeth", "day": "2026-11-28", "time": "20:00", "cat": "tiyatro", "venue": "Hatay Ekin Koleji (Antakya)", "url": "https://biletsirasi.com/tiyatro/lady-macbeth", "price": "900 TL'den başlar" },
+    { "title": "Eşyanın Tabiatı", "day": "2026-11-28", "time": "20:00", "cat": "tiyatro", "venue": "Sınav Koleji Aziz Sancar Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/esyanin-tabiati", "price": "1650 TL'den başlar" },
+    { "title": "Sefa Doğanay – Tek mi Sandınız?", "day": "2026-12-02", "time": "20:30", "cat": "standup", "venue": "TED İskenderun Koleji (İskenderun)", "url": "https://biletsirasi.com/stand-up/sefa-doganay-tek-mi-sandiniz", "price": "950 TL'den başlar" },
+    { "title": "Boşanma Teklifi", "day": "2026-12-03", "time": "20:30", "cat": "tiyatro", "venue": "Hatay Ekin Koleji (Antakya)", "url": "https://www.biletix.com/etkinlik/5PESE/TURKIYE/tr/bosanma-teklifi-03-12-2026-hatay", "price": "650 TL'den başlar" },
+    { "title": "Karı Koca İşleri - Yeni Sürüm", "day": "2026-12-05", "time": "20:30", "cat": "tiyatro", "venue": "Hatay Ekin Koleji (Antakya)", "url": "https://biletsirasi.com/tiyatro/kari-koca-isleri-yeni-surum" },
+    { "title": "Candles and Echoes - İskenderun", "day": "2026-12-07", "time": "20:15", "cat": "konser", "venue": "TED İskenderun Koleji (İskenderun)", "url": "https://biletsirasi.com/konser/candles-and-echoes-iskenderun", "price": "890 TL'den başlar" },
+    { "title": "Kel Diva", "day": "2026-12-09", "time": "20:00", "cat": "tiyatro", "venue": "İskenderun Teknik Üniversitesi Güzel Sanatlar Fakültesi (İskenderun)", "url": "https://www.biletix.com/etkinlik/52728/TURKIYE/en/art-kel-diva-09-12-2026-hatay" },
+    { "title": "Fosforlu Cevriye", "day": "2026-12-11", "time": "20:30", "cat": "tiyatro", "venue": "AKAD Kültür Merkezi (İskenderun)", "url": "https://biletsirasi.com/tiyatro/fosforlu-cevriye", "price": "1120 TL'den başlar" },
+    { "title": "Romeo & Juliet", "day": "2026-12-12", "time": "20:00", "cat": "tiyatro", "venue": "Hatay Güneş Koleji (Antakya)", "url": "https://biletsirasi.com/tiyatro/romeo-juliet" },
+    { "title": "Seninle Evlenir Miyim?", "day": "2026-12-15", "time": "20:30", "cat": "tiyatro", "venue": "Hatay Ekin Koleji (Antakya)", "url": "https://www.biletix.com/etkinlik/5PESM/TURKIYE/tr/seninle-evlenir-miyim-15-12-2026-hatay", "price": "650 TL'den başlar" },
+    { "title": "Bu Hikaye Senden Uzun Osman", "day": "2026-12-16", "time": "20:30", "cat": "tiyatro", "venue": "TED İskenderun Koleji (İskenderun)", "url": "https://www.biletix.com/etkinlik/5STEV/TURKIYE/en/art-bu-hikaye-senden-uzun-osman-16-12-2026-hatay" },
+    { "title": "Ali Congun - Adliye Çayı", "day": "2026-12-17", "time": "20:30", "cat": "standup", "venue": "Doğuş Okulları Aşağıokçular Kampüsü", "url": "https://biletsirasi.com/stand-up/ali-congun-adliye-cayi", "price": "1100 TL'den başlar" },
+    { "title": "Yung Ouzo", "day": "2026-12-19", "time": "20:00", "cat": "konser", "venue": "NEVA Performance Hall", "url": "https://biletsirasi.com/konser/yung-ouzo#city=hatay", "price": "849 TL'den başlar" },
+    { "title": "Çöz Çözebilirsen", "day": "2026-12-20", "time": "20:00", "cat": "tiyatro", "venue": "Dörtyol TED Koleji Salonu (Dörtyol)", "url": "https://biletsirasi.com/tiyatro/coz-cozebilirsen#city=osmaniye", "price": "665 TL'den başlar" },
+    { "title": "Ceren Gündoğdu Candle Session", "day": "2026-12-23", "time": "20:30", "cat": "konser", "venue": "Hatay Ekin Koleji (Antakya)", "url": "https://www.biletix.com/etkinlik/5UCSS/TURKIYE/tr/ceren-gundogdu-candle-session-23-12-2026-hatay", "price": "660 TL'den başlar" }
+  ]
+}

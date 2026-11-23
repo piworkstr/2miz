@@ -1,0 +1,19 @@
+{
+  "city": "Aydın",
+  "items": [
+    { "title": "Ozbi", "day": "2026-11-26", "cat": "konser", "venue": "Holly Stone Performance Hall Aydın", "url": "https://biletinial.com/en-tr/music/ozbi-konseri", "price": "900 TL'den başlar" },
+    { "title": "Yüksek Sadakat", "day": "2026-11-27", "cat": "konser", "venue": "Holly Stone Performance Hall Aydın", "url": "https://biletinial.com/en-tr/music/yuksek-sadakat", "price": "800 TL'den başlar" },
+    { "title": "Marilyn Monroe", "day": "2026-11-29", "time": "20:00", "cat": "tiyatro", "venue": "Nazilli Mehmet Yüzügüler Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/marilyn-monroe?cinemaBranchId=16211", "price": "1.008 TL'den başlar" },
+    { "title": "Seksendört", "day": "2026-12-04", "cat": "konser", "venue": "Holly Stone Performance Hall Aydın", "url": "https://songkick.com/concerts/43296487-seksendort-at-holly-stone-performance-hall-aydin" },
+    { "title": "Morkomedyen Stand Up", "day": "2026-12-07", "time": "19:00", "cat": "standup", "venue": "Nazilli Mehmet Yüzügüler Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/morkomedyen?cinemaBranchId=16211", "price": "1.299 TL'den başlar" },
+    { "title": "Venüs", "day": "2026-12-08", "cat": "konser", "venue": "Holly Stone Performance Hall Aydın", "url": "https://songkick.com/concerts/43414440-venus-at-holly-stone-performance-hall-aydin" },
+    { "title": "İte Kaka", "day": "2026-12-11", "time": "20:00", "cat": "tiyatro", "venue": "Aydın Şükran Güngör - Yıldız Kenter Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/ite-kaka-ss?cinemaBranchId=16205", "price": "1.232 TL'den başlar" },
+    { "title": "Lumera - Sezen Aksu Şarkıları", "day": "2026-12-12", "time": "20:30", "cat": "konser", "venue": "Aydın Şükran Güngör - Yıldız Kenter Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/muzik/lumera-trio-sezen-aksu-sarkilari?cinemaBranchId=16205", "price": "1.096 TL'den başlar" },
+    { "title": "Lumera - Sezen Aksu Şarkıları", "day": "2026-12-14", "cat": "konser", "venue": "Nazilli Mehmet Yüzügüler Kültür Merkezi", "url": "https://biletinial.com/tr-tr/muzik/lumera-trio-sezen-aksu-sarkilari?cinemaBranchId=16211", "price": "1.000 TL'den başlar" },
+    { "title": "80'ler 90'lar Gülümseten Hatıralar", "day": "2026-12-14", "time": "20:30", "cat": "gosteri", "venue": "Landon Coffee Co.", "url": "https://biletinial.com/tr-tr/tiyatro/80ler-90lar-gulumseten-hatiralar", "price": "560 TL'den başlar" },
+    { "title": "Bir Baba Hamlet", "day": "2026-12-18", "time": "20:30", "cat": "tiyatro", "venue": "Aydın Şükran Güngör - Yıldız Kenter Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/bir-baba-hamlet?cinemaBranchId=16205", "price": "1.895 TL'den başlar" },
+    { "title": "Davetli Misafir", "day": "2026-12-19", "time": "20:00", "cat": "tiyatro", "venue": "Aydın Şükran Güngör - Yıldız Kenter Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/davetli-misafir?cinemaBranchId=16205", "price": "987 TL'den başlar" },
+    { "title": "7 Kocalı Hürmüz - Tiyatro Kafe", "day": "2026-12-20", "time": "19:30", "cat": "tiyatro", "venue": "Aydın Şükran Güngör - Yıldız Kenter Tiyatro Salonu", "url": "https://biletinial.com/tr-tr/tiyatro/yedikocali-hurmuz-atf?cinemaBranchId=16205", "price": "672 TL'den başlar" },
+    { "title": "Yükleniyor", "day": "2026-12-24", "cat": "tiyatro", "venue": "Nazilli Mehmet Yüzügüler Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/yukleniyor?cinemaBranchId=16211", "price": "600 TL'den başlar" }
+  ]
+}

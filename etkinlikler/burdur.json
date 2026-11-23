@@ -1,0 +1,9 @@
+{
+  "city": "Burdur",
+  "items": [
+    { "title": "Yeraltından Notlar", "day": "2026-11-27", "time": "20:00", "cat": "tiyatro", "venue": "Burdur Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/yeraltindan-notlar" },
+    { "title": "Mahşer-i Cümbüş", "day": "2026-11-30", "time": "20:00", "cat": "tiyatro", "venue": "Burdur Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/mahser-i-cumbus#city=isparta", "price": "1120 TL'den başlar" },
+    { "title": "Afara – Bir Arabesk Müzikali | Uğur Aslan'la Bu Kez Baş Başa", "day": "2026-12-23", "time": "20:00", "cat": "tiyatro", "venue": "Burdur Kültür Merkezi", "url": "https://biletsirasi.com/tiyatro/afara-bir-arabesk-muzikali-ugur-aslanla-bu-kez-bas-basa#city=isparta", "price": "1000 TL'den başlar" },
+    { "title": "Hijyenik Aşklar", "day": "2026-12-26", "time": "20:00", "cat": "tiyatro", "venue": "Burdur Kültür Merkezi", "url": "https://biletinial.com/tr-tr/tiyatro/hijyenik-asklar-tiyatro-oyunu", "price": "850 TL'den başlar" }
+  ]
+}
