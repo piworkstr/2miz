@@ -1,0 +1,19 @@
+{
+  "city": "Tekirdağ",
+  "items": [
+    {"title":"Baba - Haluk Bilginer","day":"2026-11-24","time":"20:30","cat":"tiyatro","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/baba-haluk-bilginer#city=tekirdag"},
+    {"title":"Anlatanadam","day":"2026-11-25","time":"20:30","cat":"standup","venue":"Çorlu Memduh Şevket Esendal Sahnesi","url":"https://mekanrehber.com/etkinlik/anlatanadam-tekirdag-2026-11-25/","price":"950 TL'den başlar"},
+    {"title":"Sefa Doğanay – Tek mi Sandınız?","day":"2026-11-27","time":"20:30","cat":"standup","venue":"Tekirdağ Yahya Kemal Beyatlı Kültür Merkezi Büyük Salon","url":"https://biletsirasi.com/stand-up/sefa-doganay-tek-mi-sandiniz#city=tekirdag","price":"1050 TL'den başlar"},
+    {"title":"Özgür Turhan - Yepyenisi","day":"2026-11-28","time":"20:30","cat":"standup","venue":"Tekirdağ Yahya Kemal Beyatlı Kültür Merkezi","url":"https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi#city=tekirdag"},
+    {"title":"Ersin Korkut - Ben mi Yapmışım?","day":"2026-11-28","time":"20:30","cat":"standup","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/stand-up/ersin-korkut-ben-mi-yapmisim#city=tekirdag"},
+    {"title":"Morkomedyen","day":"2026-12-01","time":"20:00","cat":"standup","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/stand-up/morkomedyen#city=tekirdag","price":"1299 TL'den başlar"},
+    {"title":"Nükhet Duru","day":"2026-12-04","time":"21:00","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/konser/nukhet-duru#city=tekirdag","price":"1000 TL'den başlar"},
+    {"title":"Soner Sarıkabadayı","day":"2026-12-05","time":"21:00","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://mekanrehber.com/etkinlik/soner-sarikabadayi-tekirdag-2026-12-05/"},
+    {"title":"Soner Arıca","day":"2026-12-09","time":"20:30","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/konser/soner-arica#city=tekirdag","price":"1550 TL'den başlar"},
+    {"title":"Ceylan Ertem","day":"2026-12-11","time":"20:00","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/konser/ceylan-ertem#city=tekirdag","price":"1600 TL'den başlar"},
+    {"title":"Kaan Tangöze","day":"2026-12-17","time":"21:00","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/konser/kaan-tangoze","price":"1300 TL'den başlar"},
+    {"title":"Ayna","day":"2026-12-18","time":"20:30","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://www.biletix.com/etkinlik/5BYO4/DIGER/tr/ayna-18-12-2026-tekirdag","price":"1250 TL'den başlar"},
+    {"title":"Miray Akovalıgil 'Ya Bende Bir Şey Yoksa?'","day":"2026-12-24","time":"20:00","cat":"standup","venue":"Tekirdağ Yahya Kemal Beyatlı Kültür Merkezi","url":"https://biletsirasi.com/stand-up/miray-akovaligil-ya-bende-bir-sey-yoksa","price":"800 TL'den başlar"},
+    {"title":"Cem Adrian","day":"2026-12-30","time":"20:30","cat":"konser","venue":"Çorlu Ünal Baysan Kültür Merkezi","url":"https://biletsirasi.com/konser/cem-adrian","price":"1300 TL'den başlar"}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "city": "Çanakkale",
+  "items": [
+    {"title":"Başar Keklik","day":"2026-11-25","time":"21:45","cat":"konser","venue":"The Keep","url":"https://mekanrehber.com/etkinlik/basar-keklik-canakkale-2026-11-25/","price":"399 TL'den başlar"},
+    {"title":"Profesyonel","day":"2026-11-27","time":"20:30","cat":"tiyatro","venue":"Çanakkale İçdaş Kongre Merkezi","url":"https://jollin.com.tr/etkinlik/profesyonel-2nucdp/","price":"1580 TL'den başlar"},
+    {"title":"Bar Psikoloğu - Psikogösteri","day":"2026-11-28","time":"20:00","cat":"standup","venue":"Çanakkale Yalı Hanı","url":"https://jollin.com.tr/etkinlik/bar-psikologu-psikogosteri-hgebee/","price":"1250 TL'den başlar"},
+    {"title":"Anadolu Ateşi","day":"2026-11-30","time":"20:30","cat":"gosteri","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/dans/anadolu-atesi#city=canakkale","price":"2500 TL'den başlar"},
+    {"title":"Romeo & Juliet","day":"2026-12-01","time":"20:00","cat":"tiyatro","venue":"Çanakkale Belediyesi Kültür Merkezi Salonu (Yeni Hizmet Binası)","url":"https://jollin.com.tr/etkinlik/romeo-juliet-m3e379/","price":"600 TL'den başlar"},
+    {"title":"Soner Sarıkabadayı","day":"2026-12-04","time":"21:00","cat":"konser","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://mekanrehber.com/etkinlik/soner-sarikabadayi-canakkale-2026-12-04/"},
+    {"title":"Tahsin Hasoğlu","day":"2026-12-09","time":"20:30","cat":"standup","venue":"Çanakkale Belediyesi Kültür Merkezi Salonu (Yeni Hizmet Binası)","url":"https://biletsirasi.com/stand-up/tahsin-hasoglu#city=canakkale","price":"1000 TL'den başlar"},
+    {"title":"Sagopa Kajmer","day":"2026-12-10","time":"21:00","cat":"konser","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/konser/sagopa-kajmer","price":"1350 TL'den başlar"},
+    {"title":"Ayna","day":"2026-12-11","time":"20:30","cat":"konser","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/konser/ayna","price":"750 TL'den başlar"},
+    {"title":"Evgeny Grinko","day":"2026-12-15","time":"20:30","cat":"konser","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/konser/evgeny-grinko","price":"2250 TL'den başlar"},
+    {"title":"Kemal Ayça - Yakışmadı Kemal Ayça","day":"2026-12-18","time":"20:30","cat":"standup","venue":"Kepez Belediyesi Turhan Mildon Kültür Merkezi","url":"https://biletsirasi.com/stand-up/kemal-ayca-yakismadi-kemal-ayca#city=canakkale","price":"500 TL'den başlar"},
+    {"title":"İlker Ayrık'la Gerçekler Acıdır","day":"2026-12-21","time":"20:30","cat":"standup","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/stand-up/ilker-ayrikla-gercekler-acidir#city=canakkale","price":"1250 TL'den başlar"},
+    {"title":"Gökhan Türkmen","day":"2026-12-23","time":"20:30","cat":"konser","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/konser/gokhan-turkmen","price":"2250 TL'den başlar"},
+    {"title":"7 Kocalı Hürmüz Müzikali","day":"2026-12-25","cat":"gosteri","venue":"ÇOMÜ İçdaş Kongre Merkezi","url":"https://biletsirasi.com/muzikal/7-kocali-hurmuz-canakkale","price":"1350 TL'den başlar"}
+  ]
+}

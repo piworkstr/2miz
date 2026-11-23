@@ -1,0 +1,29 @@
+{
+  "city": "Kocaeli",
+  "items": [
+    {"title":"Profesyonel","day":"2026-11-25","time":"20:30","cat":"tiyatro","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5MN72/TURKIYE/tr/profesyonel-25-11-2026-kocaeli","price":"1.620 TL'den başlar"},
+    {"title":"Ve Ateş Bizi Tüketiyor (Kocaeli Şehir Tiyatroları)","day":"2026-11-27","cat":"tiyatro","venue":"Süleyman Demirel Kültür Merkezi Büyük Salon, İzmit","url":"https://biletinial.com/tr-tr/tiyatro/ve-ates-bizi-tuketiyor-kocaeli-bb"},
+    {"title":"Onur Gökçek Stand Up","day":"2026-11-28","cat":"standup","venue":"Alternaif Tiyatro, İzmit","url":"https://biletinial.com/tr-tr/tiyatro/onur-gokcek-stand-up"},
+    {"title":"Sena Şener - Yeni Dönem 2026 Turnesi","day":"2026-11-28","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Kocaeli","url":"https://www.biletix.com/etkinlik/5LND4/TURKIYE/tr/sena-sener-yeni-donem-2026-turnesi-28-11-2026-kocaeli","price":"850 TL'den başlar"},
+    {"title":"Amadeus - Veda Turnesi","day":"2026-11-30","time":"20:30","cat":"tiyatro","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5PEA4/TURKIYE/tr/amadeus-30-11-2026-kocaeli"},
+    {"title":"Kötü Bir Gün","day":"2026-12-01","cat":"tiyatro","venue":"Gebze Osman Hamdi Bey Kültür Merkezi","url":"https://www.biletix.com/etkinlik/5PD38/TURKIYE/tr/art-kotu-bir-gun-01-12-2026-kocaeli"},
+    {"title":"Ogün Sanlısoy","day":"2026-12-04","time":"21:00","cat":"konser","venue":"Hayal Kahvesi Kocaeli","url":"https://www.biletix.com/etkinlik/5W936/TURKIYE/tr/ogun-sanlisoy-04-12-2026-kocaeli","price":"1.100 TL'den başlar"},
+    {"title":"Çirkin","day":"2026-12-05","cat":"tiyatro","venue":"Süleyman Demirel Kültür Merkezi Büyük Salon, İzmit","url":"https://biletinial.com/tr-tr/tiyatro/cirkin-bbt"},
+    {"title":"Kocaeli 2'li Stand-Up Gecesi","day":"2026-12-05","cat":"standup","venue":"Saraka Kültür Sanat Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/kocaeli-2li-stand-up-gecesi"},
+    {"title":"Evgeny Grinko","day":"2026-12-08","time":"20:30","cat":"konser","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5RG90/TURKIYE/tr/evgeny-grinko-08-12-2026-kocaeli","price":"2.500 TL'den başlar"},
+    {"title":"Fırat Tanış ile Gelin Tanış Olalım","day":"2026-12-09","cat":"gosteri","venue":"Çayırova Prof. Dr. Necmettin Erbakan Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/firat-tanis-ile-gelin-tanis-olalim-donkisot"},
+    {"title":"80'ler 90'lar Gülümseten Hatıralar","day":"2026-12-10","cat":"gosteri","venue":"Darıca Adnan Menderes Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/80ler-90lar-gulumseten-hatiralar"},
+    {"title":"Shirley Valentine - Sumru Yavrucuk","day":"2026-12-12","cat":"tiyatro","venue":"Kocaeli Marmara Koleji Salonu Hasan Ali Yücel Sahnesi","url":"https://biletinial.com/tr-tr/tiyatro/shirley-valetine-ozkyorg"},
+    {"title":"Demet Akalın","day":"2026-12-12","time":"21:00","cat":"konser","venue":"Jolly Joker Kocaeli","url":"https://www.biletix.com/etkinlik/5S586/TURKIYE/tr/demet-akalin-12-12-2026-kocaeli","price":"1.425 TL'den başlar"},
+    {"title":"Yüksek Sadakat","day":"2026-12-12","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Kocaeli","url":"https://www.biletix.com/etkinlik/5ERKG/TURKIYE/tr/yuksek-sadakat-12-12-2026-kocaeli","price":"800 TL'den başlar"},
+    {"title":"Doğu Ekspresinde Cinayet","day":"2026-12-14","cat":"tiyatro","venue":"Gebze Osman Hamdi Bey Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/dogu-ekspresinde-cinayet-"},
+    {"title":"Mahşer-i Cümbüş","day":"2026-12-18","time":"20:00","cat":"tiyatro","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5NL70/TURKIYE/tr/mahser-i-cumbus-18-12-2026-kocaeli","price":"550 TL'den başlar"},
+    {"title":"Madrigal","day":"2026-12-18","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Kocaeli","url":"https://www.biletix.com/etkinlik/5PSLG/TURKIYE/tr/madrigal-18-12-2026-kocaeli","price":"600 TL'den başlar"},
+    {"title":"Yeni Türkü","day":"2026-12-19","time":"20:00","cat":"konser","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5BYOW/TURKIYE/tr/yeni-turku-19-12-2026-kocaeli","price":"1.250 TL'den başlar"},
+    {"title":"Fazıl Say - Çılgın Nar Ağacı","day":"2026-12-20","time":"20:00","cat":"konser","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5UVAB/TURKIYE/tr/fazil-say-cilgin-nar-agaci-20-12-2026-kocaeli","price":"1.650 TL'den başlar"},
+    {"title":"Anadolu Ateşi","day":"2026-12-24","time":"20:30","cat":"gosteri","venue":"Kocaeli Büyükşehir Belediyesi Uluslararası Kongre Merkezi","url":"https://www.biletix.com/etkinlik/5RG88/TURKIYE/tr/anadolu-atesi-24-12-2026-kocaeli","price":"2.500 TL'den başlar"},
+    {"title":"Sergen Deveci - Ketenpere / Olan Stand Up","day":"2026-12-26","time":"20:30","cat":"standup","venue":"Alternaif Tiyatro, İzmit","url":"https://biletinial.com/tr-tr/tiyatro/sergen-deveci-ketenpere-olan-stand-up","price":"950 TL'den başlar"},
+    {"title":"Ersay Üner","day":"2026-12-26","time":"21:00","cat":"konser","venue":"Jolly Joker Kocaeli","url":"https://www.biletix.com/etkinlik/5S589/TURKIYE/tr/ersay-uner-26-12-2026-kocaeli","price":"855 TL'den başlar"},
+    {"title":"Dj Ali Taş ile 90'lar 2000'ler Pop Gecesi - Yılbaşı Özel","day":"2026-12-31","time":"21:00","cat":"konser","venue":"Jolly Joker Kocaeli","url":"https://www.biletix.com/etkinlik/5S595/TURKIYE/tr/dj-ali-tas-ile-90-lar-2000ler-pop-gecesi-yilbasi-ozel-31-12-2026-kocaeli","price":"342 TL'den başlar"}
+  ]
+}

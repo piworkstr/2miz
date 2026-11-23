@@ -1,0 +1,13 @@
+{
+  "city": "Yalova",
+  "items": [
+    {"title":"Suç ve Ceza","day":"2026-11-26","time":"20:00","cat":"tiyatro","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/suc-ve-ceza-oyunu-x5pfpa/"},
+    {"title":"Lumera Balkan Ezgileri","day":"2026-11-28","time":"20:00","cat":"konser","venue":"Yalova Halk Eğitim Merkezi","url":"https://jollin.com.tr/etkinlik/lumera-balkan-ezgileri-pyebe7/"},
+    {"title":"80'ler 90'lar Gülümseten Hatıralar","day":"2026-12-07","time":"20:00","cat":"tiyatro","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/80ler-90lar-gulumseten-hatiralar-fkqnue/"},
+    {"title":"Lumera Trio - Sezen Aksu Şarkıları","day":"2026-12-11","time":"20:30","cat":"konser","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/lumera-trio-sezen-aksu-sarkilari-zc577p/"},
+    {"title":"Fikrinle Yüzleşebilir Misin? Terzi Fikri","day":"2026-12-15","time":"20:00","cat":"tiyatro","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/fikrinle-yuzlesebilir-misin-terzi-fikri-yjqyeg/"},
+    {"title":"Özlem Kosif - Hayatım Yanlış Anlama","day":"2026-12-18","time":"20:00","cat":"gosteri","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/ozlem-kosif-hayatim-yanlis-anlama-vnvxn3/"},
+    {"title":"Şamhal İsmail & String Quartet","day":"2026-12-20","time":"18:00","cat":"konser","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/samhal-ismail-string-quartet-3n7n64/"},
+    {"title":"Yoshi Enomoto Stand Up","day":"2026-12-23","time":"20:00","cat":"standup","venue":"Yalova Halk Eğitim Merkezi Konferans Salonu","url":"https://jollin.com.tr/etkinlik/yoshi-enomoto-stand-up-panwtc/"}
+  ]
+}

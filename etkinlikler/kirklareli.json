@@ -1,0 +1,19 @@
+{
+  "city": "Kırklareli",
+  "items": [
+    {"title":"Ali Poyrazoğlu - Şıngır Şıngır Beyoğlu","day":"2026-11-26","time":"20:30","cat":"tiyatro","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/56622/TURKIYE/tr/ali-poyrazoglu-singir-singir-beyoglu-26-11-2026-kirklareli","price":"1100 TL'den başlar"},
+    {"title":"Aşk Listesi","day":"2026-11-29","time":"19:00","cat":"tiyatro","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/5BR37/TURKIYE/tr/ask-listesi-29-11-2026-kirklareli","price":"1356 TL'den başlar"},
+    {"title":"İnsan Kaynakları","day":"2026-12-01","time":"20:00","cat":"standup","venue":"Kırklareli Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/stand-up/insan-kaynaklari"},
+    {"title":"Kaç Baba Kaç","day":"2026-12-02","time":"20:30","cat":"tiyatro","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/56623/TURKIYE/tr/kac-baba-kac-02-12-2026-kirklareli","price":"1210 TL'den başlar"},
+    {"title":"Doğu Demirkol","day":"2026-12-03","time":"20:30","cat":"standup","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://biletinial.com/tr-tr/tiyatro/dogu-demirkol-stand-up-gosterisi?cinemaBranchId=17482","price":"1500 TL'den başlar"},
+    {"title":"Yakışmadı Kemal Ayça","day":"2026-12-04","time":"20:30","cat":"standup","venue":"Kırklareli Atatürk Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/yakismadi-kemal-ayca","price":"700 TL'den başlar"},
+    {"title":"Çelik","day":"2026-12-06","time":"20:30","cat":"konser","venue":"Lüleburgaz Yıldızları Sanat Akademisi","url":"https://biletinial.com/tr-tr/muzik/celik-konseri?cinemaBranchId=17482"},
+    {"title":"Mahşer-i Cümbüş","day":"2026-12-08","time":"20:00","cat":"tiyatro","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/5NL74/TURKIYE/tr/mahser-i-cumbus-08-12-2026-kirklareli","price":"550 TL'den başlar"},
+    {"title":"Hayrettin ile Kaos Night","day":"2026-12-09","time":"20:30","cat":"standup","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/5HAYU/TURKIYE/tr/hayrettin-ile-kaos-night-09-12-2026-kirklareli"},
+    {"title":"Ayna","day":"2026-12-12","time":"20:00","cat":"konser","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/5BYOF/TURKIYE/tr/ayna-12-12-2026-kirklareli","price":"1200 TL'den başlar"},
+    {"title":"Morkomedyen","day":"2026-12-16","time":"20:00","cat":"standup","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://biletinial.com/tr-tr/tiyatro/morkomedyen?cinemaBranchId=17482","price":"1299 TL'den başlar"},
+    {"title":"Destanların Dansı","day":"2026-12-18","time":"20:00","cat":"gosteri","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://biletinial.com/tr-tr/muzik/destanlarin-dansi?cinemaBranchId=17482"},
+    {"title":"Kadın Kafası","day":"2026-12-19","time":"20:30","cat":"tiyatro","venue":"Lüleburgaz Yıldızları Sanat Akademisi Cahit Irgat Salonu","url":"https://www.biletix.com/etkinlik/56631/TURKIYE/tr/kadin-kafasi-19-12-2026-kirklareli","price":"990 TL'den başlar"},
+    {"title":"Pera","day":"2026-12-19","time":"22:00","cat":"konser","venue":"Cage Performance Hall Kırklareli","url":"https://biletsirasi.com/konser/pera","price":"600 TL'den başlar"}
+  ]
+}

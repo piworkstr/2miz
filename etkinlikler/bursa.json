@@ -1,0 +1,30 @@
+{
+  "city": "Bursa",
+  "items": [
+    {"title":"Anlatanadam","day":"2026-11-24","cat":"tiyatro","venue":"Podyum Sanat Mahal","url":"https://biletinial.com/tr-tr/tiyatro/anlatanadam?cinemaBranchId=15736","price":"950 TL'den başlar"},
+    {"title":"Mavi","day":"2026-11-25","time":"21:00","cat":"konser","venue":"Holly Stone Performance Hall Bursa","url":"https://www.biletix.com/etkinlik/5DRUJ/ISTANBUL/tr/mavi-25-11-2026-bursa","price":"500 TL'den başlar"},
+    {"title":"BBDSO - Öğretmenler Günü Konseri","day":"2026-11-26","cat":"konser","venue":"Merinos Atatürk Kongre ve Kültür Merkezi","url":"https://www.bursasenfoni.com/konser_detay/ogretmenler-gunu-konseri/170"},
+    {"title":"Göç Hayaller Kumpanyası (Devlet Tiyatrosu)","day":"2026-11-27","time":"18:00","cat":"tiyatro","venue":"Feraizcizade Oda Tiyatrosu","url":"https://biletinial.com/tr-tr/tiyatro/goc-hayaller-kumpanyasi-dt?cinemaBranchId=15783","price":"105 TL'den başlar"},
+    {"title":"Sena Şener - Yeni Dönem 2026 Turnesi","day":"2026-11-27","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Bursa","url":"https://www.biletix.com/etkinlik/5LND3/IZMIR/tr/sena-sener-yeni-donem-2026-turnesi-27-11-2026-bursa","price":"850 TL'den başlar"},
+    {"title":"Murda","day":"2026-11-27","time":"22:00","cat":"konser","venue":"Holly Stone Performance Hall Bursa","url":"https://www.biletix.com/etkinlik/5OF2A/ISTANBUL/tr/murda-27-11-2026-bursa","price":"750 TL'den başlar"},
+    {"title":"Doğu Ekspresinde Cinayet","day":"2026-11-28","cat":"tiyatro","venue":"Merinos AKKM Orhangazi Salonu","url":"https://biletinial.com/tr-tr/tiyatro/dogu-ekspresinde-cinayet-","price":"1000 TL'den başlar"},
+    {"title":"Anadolu Ateşi","day":"2026-12-01","time":"20:30","cat":"gosteri","venue":"Merinos AKKM Osmangazi Salonu","url":"https://biletinial.com/tr-tr/tiyatro/anadolu-atesi---","price":"2000 TL'den başlar"},
+    {"title":"İlker Ayrık'la Gerçekler Acıdır","day":"2026-12-02","cat":"gosteri","venue":"Merinos AKKM Osmangazi Salonu","url":"https://biletinial.com/tr-tr/tiyatro/ilker-ayrikla-gercekler-acidir","price":"1000 TL'den başlar"},
+    {"title":"BBDSO - Dünya Engelliler Günü Konseri","day":"2026-12-03","cat":"konser","venue":"Merinos Atatürk Kongre ve Kültür Merkezi","url":"https://www.bursasenfoni.com/konser_detay/dunya-engelliler-gunu-konseri/171"},
+    {"title":"Ali Rıza Tanyeli - Kendime Düşünceler Stand Up","day":"2026-12-04","time":"20:30","cat":"standup","venue":"Lalibi Meşelipark","url":"https://biletinial.com/tr-tr/tiyatro/ali-riza-tanyeli-kendime-dusunceler-stand-up","price":"1000 TL'den başlar"},
+    {"title":"Ayna","day":"2026-12-06","cat":"konser","venue":"Baob Sahne","url":"https://songkick.com/concerts/43352462-ayna-at-baob-sahne"},
+    {"title":"Özgür Turhan - Yepyenisi","day":"2026-12-09","time":"20:30","cat":"standup","venue":"Gemlik Cemil Meriç Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/ozgur-turhan-yepyenisi","price":"1120 TL'den başlar"},
+    {"title":"Mağara Kadını (Bursa Devlet Tiyatrosu)","day":"2026-12-10","time":"18:00","cat":"tiyatro","venue":"Feraizcizade Oda Tiyatrosu","url":"https://biletinial.com/tr-tr/tiyatro/magara-kadini-bursa-dt?cinemaBranchId=15783"},
+    {"title":"Doğu Demirkol Stand Up","day":"2026-12-11","time":"20:30","cat":"standup","venue":"Merinos AKKM Orhangazi Salonu","url":"https://biletinial.com/tr-tr/tiyatro/dogu-demirkol-stand-up-gosterisi","price":"1500 TL'den başlar"},
+    {"title":"Amadeus - Veda Turnesi","day":"2026-12-11","time":"20:30","cat":"tiyatro","venue":"Merinos AKKM Osmangazi Salonu","url":"https://biletinial.com/tr-tr/tiyatro/amadeus-piu","price":"1495 TL'den başlar"},
+    {"title":"Uzi","day":"2026-12-13","time":"18:00","cat":"konser","venue":"Hayal Kahvesi Bursa","url":"https://www.biletix.com/etkinlik/5DRU2/IZMIR/tr/uzi-13-12-2026-bursa","price":"900 TL'den başlar"},
+    {"title":"Yüksek Sadakat","day":"2026-12-15","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Bursa","url":"https://www.biletix.com/etkinlik/5ERK3/IZMIR/tr/yuksek-sadakat-15-12-2026-bursa","price":"800 TL'den başlar"},
+    {"title":"BBDSO Konseri - Şef Michal Nesterowicz, solist Sebastian Jacot (flüt)","day":"2026-12-17","cat":"konser","venue":"Merinos Atatürk Kongre ve Kültür Merkezi","url":"https://www.bursasenfoni.com/konser_detay/konser/173"},
+    {"title":"Cem İşçiler - Açık Konuşuyorum (Yeni Sezon)","day":"2026-12-19","cat":"standup","venue":"Studyou Sahne","url":"https://biletinial.com/tr-tr/tiyatro/cem-isciler-stand-up","price":"700 TL'den başlar"},
+    {"title":"No.1","day":"2026-12-19","time":"22:30","cat":"konser","venue":"Holly Stone Performance Hall Bursa","url":"https://www.biletix.com/etkinlik/5OSB2/ISTANBUL/tr/no-1-19-12-2026-bursa","price":"888 TL'den başlar"},
+    {"title":"Dertli Divani & Gülcihan Koç Konseri","day":"2026-12-20","time":"20:00","cat":"konser","venue":"Podyum Sanat Mahal","url":"https://biletinial.com/tr-tr/muzik/dertli-divani-gulcihan-koc-konseri?cinemaBranchId=15736","price":"1096 TL'den başlar"},
+    {"title":"BBDSO - Yeni Yıl Konseri","day":"2026-12-24","cat":"konser","venue":"Merinos Atatürk Kongre ve Kültür Merkezi","url":"https://www.bursasenfoni.com/konser_detay/yeni-yil-konseri/174"},
+    {"title":"Redd","day":"2026-12-26","time":"22:00","cat":"konser","venue":"Hayal Kahvesi Bursa","url":"https://www.biletix.com/etkinlik/5EAO4/IZMIR/tr/redd-26-12-2026-bursa","price":"899 TL'den başlar"},
+    {"title":"Fazlı Polat - Şaka Şaka Stand-Up","day":"2026-12-27","time":"19:00","cat":"standup","venue":"Podyum Sanat Mahal","url":"https://biletinial.com/tr-tr/tiyatro/fazli-polat-saka-saka-stand-up?cinemaBranchId=15736","price":"1000 TL'den başlar"}
+  ]
+}

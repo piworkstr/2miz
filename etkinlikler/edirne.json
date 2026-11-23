@@ -1,0 +1,19 @@
+{
+  "city": "Edirne",
+  "items": [
+    {"title":"Baba - Haluk Bilginer","day":"2026-11-23","time":"20:30","cat":"tiyatro","venue":"Trakya Üniversitesi Balkan Kongre Merkezi","url":"https://biletsirasi.com/tiyatro/baba-haluk-bilginer#city=edirne"},
+    {"title":"Gökhan Türkmen","day":"2026-11-28","time":"20:30","cat":"konser","venue":"Trakya Üniversitesi 75. Yıl Kapalı Spor Salonu","url":"https://biletsirasi.com/konser/gokhan-turkmen"},
+    {"title":"Melis Fis","day":"2026-11-29","time":"16:30","cat":"konser","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/konser/melis-fis","price":"1500 TL'den başlar"},
+    {"title":"Pınar Fidan","day":"2026-12-02","time":"20:30","cat":"standup","venue":"Edirne Halk Eğitim Merkezi","url":"https://biletsirasi.com/stand-up/pinar-fidan","price":"750 TL'den başlar"},
+    {"title":"Cem İşçiler - Açık Konuşuyorum","day":"2026-12-03","time":"20:00","cat":"standup","venue":"Edirne Halk Eğitim Merkezi","url":"https://biletsirasi.com/stand-up/cem-isciler-acik-konusuyorum"},
+    {"title":"Lumera - Sezen Aksu Şarkıları","day":"2026-12-03","time":"20:00","cat":"konser","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/konser/lumera-sezen-aksu-sarkilari"},
+    {"title":"Doğu Demirkol","day":"2026-12-04","time":"20:30","cat":"standup","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/stand-up/dogu-demirkol","price":"1500 TL'den başlar"},
+    {"title":"Soytarılar","day":"2026-12-07","time":"20:30","cat":"tiyatro","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/tiyatro/soytarilar#city=edirne","price":"1100 TL'den başlar"},
+    {"title":"Sefa Doğanay – Tek mi Sandınız?","day":"2026-12-09","time":"20:30","cat":"standup","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://biletsirasi.com/stand-up/sefa-doganay-tek-mi-sandiniz#city=edirne","price":"950 TL'den başlar"},
+    {"title":"Evgeny Grinko","day":"2026-12-09","time":"20:30","cat":"konser","venue":"Trakya Üniversitesi Balkan Kongre Merkezi","url":"https://biletsirasi.com/konser/evgeny-grinko#city=edirne","price":"2500 TL'den başlar"},
+    {"title":"Ayna","day":"2026-12-16","time":"20:30","cat":"konser","venue":"Edirne Belediyesi Atatürk Kültür Merkezi","url":"https://www.biletix.com/etkinlik/5BZA6/TURKIYE/tr/music-ayna-16-12-2026-edirne","price":"1250 TL'den başlar"},
+    {"title":"Ezginin Günlüğü","day":"2026-12-16","time":"20:30","cat":"konser","venue":"Edirne Belediyesi Atatürk Kültür Merkezi (Belediye Konservatuvar Binası)","url":"https://biletsirasi.com/konser/ezginin-gunlugu#city=edirne","price":"1206 TL'den başlar"},
+    {"title":"Motive","day":"2026-12-18","time":"20:30","cat":"konser","venue":"Trakya Üniversitesi 75. Yıl Kapalı Spor Salonu","url":"https://biletsirasi.com/konser/motive#city=edirne","price":"1100 TL'den başlar"},
+    {"title":"Taladro","day":"2026-12-24","time":"22:00","cat":"konser","venue":"Cherry Lounge Edirne","url":"https://biletsirasi.com/konser/taladro#city=edirne","price":"650 TL'den başlar"}
+  ]
+}

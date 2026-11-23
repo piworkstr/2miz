@@ -1,0 +1,18 @@
+{
+  "city": "Balıkesir",
+  "items": [
+    {"title":"Kanlı Nigar","day":"2026-11-24","time":"20:00","cat":"tiyatro","venue":"Balıkesir Avlu Kongre ve Kültür Merkezi Fatih Salonu","url":"https://www.politikam.com/balikesir-kasim-2026-tiyatro-takvimi-oyunlar-tarihler"},
+    {"title":"İlk Bakışta Prima Facie (Nilüfer Kent Tiyatrosu)","day":"2026-11-26","time":"20:00","cat":"tiyatro","venue":"Balıkesir Avlu Kongre ve Kültür Merkezi Fatih Salonu","url":"https://www.politikam.com/balikesir-kasim-2026-tiyatro-takvimi-oyunlar-tarihler"},
+    {"title":"Başar Keklik","day":"2026-11-26","time":"21:45","cat":"konser","venue":"Hayal Kahvesi Bandırma","url":"https://mekanrehber.com/etkinlik/basar-keklik-balikesir-2026-11-26/"},
+    {"title":"80'ler 90'lar Gülümseten Hatıralar","day":"2026-11-30","cat":"tiyatro","venue":"Bandırma Barış Manço Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/80ler-90lar-gulumseten-hatiralar","price":"700 TL'den başlar"},
+    {"title":"İlker Ayrık'la Gerçekler Acıdır","day":"2026-12-03","time":"20:30","cat":"standup","venue":"Balıkesir Avlu Kongre ve Kültür Merkezi Fatih Salonu","url":"https://biletinial.com/tr-tr/tiyatro/ilker-ayrikla-gercekler-acidir","price":"1500 TL'den başlar"},
+    {"title":"Morkomedyen Stand Up","day":"2026-12-08","cat":"standup","venue":"Balıkesir Avlu Kültür Merkezi Ertuğrul Salonu","url":"https://biletinial.com/tr-tr/tiyatro/morkomedyen","price":"1299 TL'den başlar"},
+    {"title":"Hadi Öldürsene Canikom","day":"2026-12-11","cat":"tiyatro","venue":"Balıkesir Avlu Kültür Merkezi Ertuğrul Salonu","url":"https://biletinial.com/tr-tr/tiyatro/hadi-oldursene-canikom-tiyatro-etkinligi","price":"1045 TL'den başlar"},
+    {"title":"Plastik Aşklar / Oya Başar & Begüm Birgören","day":"2026-12-13","cat":"tiyatro","venue":"Edremit Şükrü Tunar Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/plastik-asklar","price":"1100 TL'den başlar"},
+    {"title":"Neşe-i Muhabbet (Nurseli İdiz)","day":"2026-12-14","cat":"gosteri","venue":"Balıkesir Avlu Kültür Merkezi Ertuğrul Salonu","url":"https://biletinial.com/tr-tr/tiyatro/nese-i-muhabbet","price":"1250 TL'den başlar"},
+    {"title":"Destanların Dansı","day":"2026-12-16","cat":"gosteri","venue":"Balıkesir Avlu Kültür Merkezi","url":"https://biletinial.com/tr-tr/muzik/destanlarin-dansi?cinemaBranchId=15124","price":"900 TL'den başlar"},
+    {"title":"O.M.G","day":"2026-12-23","cat":"tiyatro","venue":"Balıkesir Altıeylül Hasan Can Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/omg","price":"1250 TL'den başlar"},
+    {"title":"Cambazın Cenazesi","day":"2026-12-26","cat":"tiyatro","venue":"Bandırma Barış Manço Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/cambazin-cenazesi-bati","price":"1000 TL'den başlar"},
+    {"title":"Okan Çabalar Stand Up","day":"2026-12-29","cat":"standup","venue":"Bandırma Barış Manço Kültür Merkezi","url":"https://biletinial.com/tr-tr/tiyatro/okan-cabalar","price":"1000 TL'den başlar"}
+  ]
+}

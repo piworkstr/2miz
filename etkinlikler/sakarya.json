@@ -1,0 +1,26 @@
+{
+  "city": "Sakarya",
+  "items": [
+    {"title":"Lumera Trio - Sezen Aksu Şarkıları","day":"2026-11-24","cat":"konser","venue":"Sakarya Ted Sahne","url":"https://konserbilet.com/etkinlikler/lumera-trio-sezen-aksu-sarkilari-sakarya-ted-sahne-2026-11-24-bubilet"},
+    {"title":"Yeni Türkü","day":"2026-11-25","cat":"konser","venue":"TED Sakarya Koleji Konferans Salonu","url":"https://konserbilet.com/etkinlikler/yeni-turku-ted-sakarya-koleji-konferans-salonu-2026-11-25-biletix"},
+    {"title":"Fazlı Polat - Şaka Şaka","day":"2026-11-25","time":"20:30","cat":"standup","venue":"Sakarya Kale Sahne","url":"https://biletsirasi.com/stand-up/fazli-polat-saka-saka"},
+    {"title":"Ceren Gündoğdu - Candle Session","day":"2026-11-28","cat":"konser","venue":"Sakarya Kale Sahne","url":"https://konserbilet.com/etkinlikler/ceren-gundogdu-candle-session-sakarya-kale-sahne-2026-11-28-biletix"},
+    {"title":"Beyaz Geceler","day":"2026-11-29","cat":"tiyatro","venue":"Sakarya Kale Sahne","url":"https://iticket.com.tr/etkinlikler/tiyatro/sakarya/beyaz-geceler-tiyatrosu-29-kasim-sakarya-bilet","price":"545 TL"},
+    {"title":"Hayrettin ile Kaos Night","day":"2026-11-29","time":"20:00","cat":"standup","venue":"TED Sakarya Koleji Konferans Salonu","url":"https://biletsirasi.com/stand-up/hayrettin-ile-kaos-night"},
+    {"title":"Morkomedyen","day":"2026-12-04","time":"20:00","cat":"standup","venue":"Serdivan Belediyesi Kültür Sanat ve Kongre Merkezi","url":"https://biletsirasi.com/stand-up/morkomedyen"},
+    {"title":"Wegh","day":"2026-12-04","time":"21:30","cat":"konser","venue":"Del Lago Performance Hall, Serdivan","url":"https://www.biletix.com/etkinlik/5EO14/TURKIYE/tr/wegh-04-12-2026-sakarya","price":"1.000 TL'den başlar"},
+    {"title":"Hijyenik Aşklar","day":"2026-12-05","cat":"tiyatro","venue":"Sakarya Kale Sahne","url":"https://www.bubilet.com.tr/sakarya/etkinlik/hijyenik-asklar-oyunu/seans/270125"},
+    {"title":"Doğu Demirkol","day":"2026-12-05","time":"20:30","cat":"standup","venue":"Serdivan Belediyesi Kültür Sanat ve Kongre Merkezi","url":"https://biletsirasi.com/stand-up/dogu-demirkol","price":"1.500 TL'den başlar"},
+    {"title":"Destanların Dansı","day":"2026-12-09","cat":"gosteri","venue":"Serdivan Belediyesi Kültür Sanat ve Kongre Merkezi","url":"https://konserbilet.com/etkinlikler/destanlarin-dansi-serdivan-belediyesi-kultur-sanat-ve-kongre-merkezi-2026-12-09-biletinial"},
+    {"title":"Özgür Turhan - Yepyenisi","day":"2026-12-10","time":"20:30","cat":"standup","venue":"Sakarya Kale Sahne","url":"https://biletsirasi.com/stand-up/ozgur-turhan-yepyenisi"},
+    {"title":"Kuyucaklı Yusuf","day":"2026-12-12","cat":"tiyatro","venue":"Serdivan Belediyesi Kültür ve Kongre Merkezi","url":"https://iticket.com.tr/etkinlikler/tiyatro/sakarya/kuyucakli-yusuf-tiyatrosu-sakarya-bilet","price":"967 TL"},
+    {"title":"Kobra Murat ile Kadınlar Matinesi","day":"2026-12-12","time":"21:30","cat":"konser","venue":"Del Lago Performance Hall, Serdivan","url":"https://www.biletix.com/etkinlik/5EO17/TURKIYE/tr/kobra-murat-ile-kadinlar-matinesi-12-12-2026-sakarya","price":"1.250 TL'den başlar"},
+    {"title":"Arem & Arman","day":"2026-12-18","time":"21:30","cat":"konser","venue":"Del Lago Performance Hall, Serdivan","url":"https://www.biletix.com/etkinlik/5EO19/TURKIYE/tr/arem-arman-18-12-2026-sakarya","price":"699 TL'den başlar"},
+    {"title":"Meksika Açmazı - İyi Misin?","day":"2026-12-19","time":"20:30","cat":"standup","venue":"Sakarya Kale Sahne","url":"https://biletsirasi.com/stand-up/meksika-acmazi-iyi-misin"},
+    {"title":"Sefiller","day":"2026-12-20","cat":"tiyatro","venue":"Sakarya Kale Sahne","url":"https://iticket.com.tr/etkinlikler/tiyatro/sakarya/sefiller-tiyatrosu-20-aralik-sakarya-bilet","price":"500 TL'den başlar"},
+    {"title":"Sergen Deveci - Ketenpere / Olan Stand Up","day":"2026-12-25","time":"20:30","cat":"standup","venue":"Sakarya Kale Sahne","url":"https://biletinial.com/tr-tr/tiyatro/sergen-deveci-ketenpere-olan-stand-up","price":"950 TL'den başlar"},
+    {"title":"Ali Congun - Adliye Çayı","day":"2026-12-26","time":"20:30","cat":"standup","venue":"Sakarya Kale Sahne","url":"https://biletsirasi.com/stand-up/ali-congun-adliye-cayi"},
+    {"title":"Düş Payı","day":"2026-12-28","cat":"tiyatro","venue":"TED Sakarya Koleji","url":"https://iticket.com.tr/etkinlikler/tiyatro/sakarya/dus-payi-tiyatrosu-sakarya-bilet","price":"1.635 TL"},
+    {"title":"Emre Kaya - Yılbaşı","day":"2026-12-31","time":"21:00","cat":"konser","venue":"Del Lago Performance Hall, Serdivan","url":"https://www.biletix.com/etkinlik/5EO20/TURKIYE/tr/emre-kaya-31-12-2026-sakarya","price":"2.500 TL'den başlar"}
+  ]
+}
