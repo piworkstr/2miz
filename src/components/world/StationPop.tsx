@@ -451,63 +451,56 @@ export function StationPop({
           </GText>
         </View>
       </View>
-      {/* Sıra: boş yerler küçük madalyon; iş varsa ürün ve kalan süre; hazır olan çelenkli (dokununca toplanır). */}
-      <Pressable
-        onPress={ready > 0 ? onCollect : undefined}
-        accessibilityLabel={ready > 0 ? 'Hazır olanları topla' : 'Üretim sırası'}
-        style={{ position: 'absolute', left: mcx - rowW / 2, top: rowTop, flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}
-      >
-        {Array.from({ length: slots }, (_, k) => {
-          const j = jobs[k];
-          const done = !!j && j.ready <= now;
-          const w = done ? QR : Q;
-          return (
-            <View key={k} style={{ width: w, alignItems: 'center', marginTop: done ? 0 : (QR - Q) / 2 }}>
-              <View
-                style={{
-                  width: w,
-                  height: w,
-                  borderRadius: w / 2,
-                  backgroundColor: j ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
-                  borderWidth: done ? 3 : 1.5,
-                  borderColor: done ? '#76BA48' : 'rgba(255,255,255,0.8)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {j ? (
-                  <Icon k={j.recipe} size={Math.round(w * 0.7)} />
-                ) : (
-                  <GText light size={11}>
-                    Boş
-                  </GText>
-                )}
+      {/* Sıra: tek beyaz şerit. Sıradaki işler ürün çizimi ve kalan süreyle, boş yerler küçük noktalarla, sağda dolu/toplam. */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: rowTop + 4, alignItems: 'center' }}>
+        <Pressable
+          onPress={ready > 0 ? onCollect : () => {}}
+          accessibilityLabel={ready > 0 ? 'Hazır olanları topla' : `Üretim sırası, ${jobs.length}/${slots}`}
+          style={{
+            marginLeft: (mcx - box.w / 2) * 2,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            minHeight: 44,
+            paddingHorizontal: 16,
+            paddingVertical: 6,
+            borderRadius: 26,
+            backgroundColor: '#FFFAF0',
+            ...SH,
+          }}
+        >
+          {jobs.map((j, k) => {
+            const done = j.ready <= now;
+            return (
+              <View key={k} style={{ alignItems: 'center', minWidth: 46 }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#fff',
+                    borderWidth: done ? 2.5 : 1.5,
+                    borderColor: done ? '#76BA48' : '#F0E4D0',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon k={j.recipe} size={28} />
+                </View>
+                <GText size={10} color={done ? GREEN_INK : '#8C6E54'} style={{ lineHeight: 13 }}>
+                  {done ? 'Hazır' : timeLeft(j.ready - now)}
+                </GText>
               </View>
-              {j &&
-                (done ? (
-                  <View
-                    style={{
-                      marginTop: 1,
-                      backgroundColor: '#76BA48',
-                      borderRadius: 9,
-                      borderWidth: 1.5,
-                      borderColor: '#fff',
-                      paddingHorizontal: 6,
-                    }}
-                  >
-                    <GText size={10} color="#fff" style={{ lineHeight: 14 }}>
-                      Hazır
-                    </GText>
-                  </View>
-                ) : (
-                  <GText light size={11} style={{ marginTop: 1, width: 70, textAlign: 'center' }}>
-                    {timeLeft(j.ready - now)}
-                  </GText>
-                ))}
-            </View>
-          );
-        })}
-      </Pressable>
+            );
+          })}
+          {Array.from({ length: Math.max(0, slots - jobs.length) }, (_, k) => (
+            <View key={`e${k}`} style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#E6D7BE' }} />
+          ))}
+          <GText size={13} color="#8C6E54" style={{ marginLeft: 2 }}>
+            {jobs.length ? `${jobs.length}/${slots}` : 'Sıra boş'}
+          </GText>
+        </Pressable>
+      </View>
       {/* Atölye boşken kaldırılabilir (onay sorulur). Taşımak için ekran kapatılıp atölye basılı tutularak sürüklenir. */}
       {jobs.length === 0 && (
         <Pressable
