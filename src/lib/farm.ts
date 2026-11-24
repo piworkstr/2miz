@@ -1761,7 +1761,7 @@ export function applyAction(
       const b = BUILDINGS[t.item];
       const an = ANIMALS[act.item];
       if (!b.animals.includes(act.item)) return `${an.name} burada yaşamaz.`;
-      if (t.res.length >= b.cap) return `${b.name} dolu (${b.cap}).`;
+      if (t.res.length >= b.cap) return `${b.name} dolu (${b.cap} hayvan). ${an.name} için dükkândan yeni bir ${b.name.toLocaleLowerCase('tr-TR')} kur.`;
       if (lv < an.lvl) return `${an.name} ${an.lvl}. seviyede açılır.`;
       if (f.coins < an.cost) return 'Yeterli altının yok.';
       f.coins -= an.cost;
