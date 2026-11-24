@@ -2598,7 +2598,7 @@ export default function GardenScreen() {
                 zIndex: 9000,
               }}
             >
-              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 24 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BODY, fontSize: 24 }}>
                 💋
               </Text>
             </View>
@@ -2722,7 +2722,12 @@ export default function GardenScreen() {
               <Ionicons name="close-circle" size={18} color="#fff" />
             </View>
             {away.map((l, i) => (
-              <Text key={i} maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+              <Text
+                key={i}
+                maxFontSizeMultiplier={1.0}
+                numberOfLines={1}
+                style={{ color: '#fff', fontFamily: FONT_BODY, fontSize: 12, fontWeight: '600' }}
+              >
                 · {l.text.replace(`${partnerName} `, '')}
               </Text>
             ))}
@@ -3435,7 +3440,7 @@ export function FarmVisit({
           <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}>
             {title}
           </Text>
-          <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 11, color: MUTED }}>
+          <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: FONT_BODY, fontSize: 11, color: MUTED }}>
             Ziyaret · sürükleyerek gez, tezgâha dokunup alışveriş yap
           </Text>
         </View>
@@ -3526,7 +3531,7 @@ function NameCard({
                 maxLength={22}
                 style={input}
               />
-              <Text style={{ color: badFarm ? '#C0392B' : MUTED, fontSize: 12 }}>
+              <Text style={{ color: badFarm ? '#C0392B' : MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
                 {badFarm ? 'En az 3 harf olmalı.' : 'Pazarda ilanlarınız bu adla görünür; gerçek adınız görünmez.'}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -3541,7 +3546,7 @@ function NameCard({
                 maxLength={14}
                 style={input}
               />
-              {badDog && <Text style={{ color: '#C0392B', fontSize: 12 }}>En az 2 harf olmalı.</Text>}
+              {badDog && <Text style={{ color: '#C0392B', fontFamily: FONT_BODY, fontSize: 12 }}>En az 2 harf olmalı.</Text>}
               <Pressable
                 onPress={() => {
                   setIsOpen(!isOpen);
@@ -3552,14 +3557,14 @@ function NameCard({
                 <Ionicons name={isOpen ? 'eye-outline' : 'eye-off-outline'} size={20} color={INK} />
                 <View style={{ flex: 1 }}>
                   <Text style={label}>Çiftlik ziyarete açık</Text>
-                  <Text style={{ color: MUTED, fontSize: 12 }}>
+                  <Text style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
                     Başka çiftler çiftliğinizin görünümünü gezebilir. Altın, depo ve notlarınız görünmez.
                   </Text>
                 </View>
                 <Text style={{ fontFamily: FONT_BOLD, color: isOpen ? '#4E8E2A' : MUTED }}>{isOpen ? 'Açık' : 'Kapalı'}</Text>
               </Pressable>
               {isOpen && !!visitors?.length && (
-                <Text style={{ color: MUTED, fontSize: 12 }}>
+                <Text style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
                   Son uğrayanlar:{' '}
                   {visitors
                     .slice(0, 4)
@@ -3624,7 +3629,7 @@ function UnlockGrid({ list, dim }: { list: Unlock[]; dim?: boolean }) {
               {a ? (
                 <Image source={a.src} style={{ width: 42, height: 42 }} resizeMode="contain" />
               ) : (
-                <Text style={{ fontSize: 28 }}>{u.emoji ?? '✨'}</Text>
+                <Text style={{ fontFamily: FONT_BODY, fontSize: 28 }}>{u.emoji ?? '✨'}</Text>
               )}
             </View>
             <Text
@@ -3703,7 +3708,7 @@ function LevelCard({ level, up, xp, onClose }: { level: number; up: boolean; xp:
                 ) : (
                   <Text style={{ color: MUTED, textAlign: 'center' }}>Açılacak her şeyi açtınız.</Text>
                 )}
-                <Text style={{ color: MUTED, fontSize: 12, textAlign: 'center' }}>
+                <Text style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 12, textAlign: 'center' }}>
                   Tecrübe; hasat, hayvan ürünü, üretim ve sipariş teslimiyle kazanılır.
                 </Text>
                 <Pressable
@@ -3844,7 +3849,7 @@ function ToolPop({
               )}
             </Pressable>
           </SeedChip>
-          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, lineHeight: 16, color: MUTED }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BODY, fontSize: 12, lineHeight: 16, color: MUTED }}>
             {kind === 'orak'
               ? 'Orağı sürükle, hazır olanların üstünden geçir. Dokunursan yalnızca burası toplanır.'
               : 'Kovayı sürükle, susuz ekinlerin üstünden geçir. Dokunursan yalnızca burası sulanır.'}
@@ -3858,7 +3863,7 @@ function ToolPop({
   return (
     <View style={box}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontSize: 12, color: MUTED }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
           Tohumu sürükle, tarlaların üstünden geçir
         </Text>
         {more}
@@ -4117,7 +4122,7 @@ function Items({ list, level, coins, onPick }: { list: Item[]; level: number; co
               <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 12, color: '#7A5A00' }}>
                 {level < it.lvl ? `Seviye ${it.lvl}` : `${it.cost} altın`}
               </Text>
-              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+              <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: FONT_BODY, fontSize: 10, color: MUTED }}>
                 {it.sub}
               </Text>
             </Pressable>
@@ -4278,7 +4283,7 @@ function StockIcon({ k, w, h }: { k: string; w: number; h: number }) {
   const a = stockArt(k);
   if (a) return <Image source={a.src} style={{ width: w, height: h }} resizeMode="contain" />;
   return (
-    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: Math.round(h * 0.72), lineHeight: h, height: h }}>
+    <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BODY, fontSize: Math.round(h * 0.72), lineHeight: h, height: h }}>
       {STOCK_EMOJI[k] ?? '📦'}
     </Text>
   );
@@ -4336,10 +4341,10 @@ function Sheet(p: SheetProps) {
           {farm.log.length === 0 && <Note>Henüz bir şey olmadı. İlk tohumu ekin!</Note>}
           {farm.log.map((l, k) => (
             <View key={k} style={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}>
-              <Text maxFontSizeMultiplier={1.0} style={{ width: 46, color: MUTED, fontSize: 12 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ width: 46, color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
                 {ago(now - l.at)}
               </Text>
-              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: INK, fontSize: 13 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: INK, fontFamily: FONT_BODY, fontSize: 13 }}>
                 {l.text}
               </Text>
             </View>
@@ -4602,7 +4607,7 @@ function Sheet(p: SheetProps) {
         {empties > 1 && (
           <Pressable onPress={() => p.setPlantAll(!p.plantAll)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name={p.plantAll ? 'checkbox' : 'square-outline'} size={20} color={GREEN} />
-            <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontSize: 13 }}>
+            <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontFamily: FONT_BODY, fontSize: 13 }}>
               Boş tarlaların hepsine ek ({empties})
             </Text>
           </Pressable>
@@ -5074,7 +5079,7 @@ function ShopPanel({
                       </Text>
                     </View>
                   )}
-                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontSize: 10, color: MUTED }}>
+                  <Text maxFontSizeMultiplier={1.0} numberOfLines={1} style={{ fontFamily: FONT_BODY, fontSize: 10, color: MUTED }}>
                     {it.sub}
                   </Text>
                   {have > 0 && !full && (
@@ -5090,7 +5095,10 @@ function ShopPanel({
             );
           })}
         </ScrollView>
-        <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 11, lineHeight: 15, textAlign: 'center' }}>
+        <Text
+          maxFontSizeMultiplier={1.0}
+          style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 11, lineHeight: 15, textAlign: 'center' }}
+        >
           {shop === 'crop'
             ? soil
               ? 'Sağa sürükle, tarlaların üstünden geçir'
@@ -5134,7 +5142,7 @@ function BigOrderCard({
         <Image source={ART.pazar.src} style={{ width: 34, height: 34 }} resizeMode="contain" />
         <View style={{ flex: 1 }}>
           <GText size={15}>Haftalık büyük sipariş</GText>
-          <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 11 }}>
+          <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 11 }}>
             {o.done ? 'Tamamlandı · yenisi pazartesi gelir' : `Kasaba pazarı için · ${rest} kaldı`}
           </Text>
         </View>
@@ -5151,18 +5159,22 @@ function BigOrderCard({
               {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
             </Text>
             {left[k] > 0 && !o.done && (
-              <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}>
+              <Text
+                maxFontSizeMultiplier={1.0}
+                style={{ fontFamily: FONT_BODY, fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}
+              >
                 · depoda {farm.stock[k] ?? 0}
               </Text>
             )}
           </View>
         ))}
       </View>
-      <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
-        Ödül: +{o.coins} altın · +{o.xp} tecrübe · 2 balta · 1 kazma. İkiniz de katkı verirseniz altın +%{Math.round((BIG_BOTH - 1) * 100)}.
+      <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
+        Ödül: +{o.coins.toLocaleString('tr-TR')} altın · +{o.xp.toLocaleString('tr-TR')} tecrübe · 2 balta · 1 kazma. İkiniz de katkı
+        verirseniz altın +%{Math.round((BIG_BOTH - 1) * 100)}.
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
+        <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
           {mine || theirs ? `Katkı: sen ${mine} · ${partnerName} ${theirs}` : 'Henüz katkı yok'}
         </Text>
         {!o.done && (
@@ -5230,8 +5242,9 @@ function Orders({
                       {orderWho(o)}
                       {o.special ? ' · özel sipariş ⭐' : ''}
                     </Text>
-                    <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 12 }}>
-                      +{o.coins} altın · +{o.xp} tecrübe{o.tool ? ` · +1 ${TOOLS[o.tool].name.toLocaleLowerCase('tr-TR')}` : ''}
+                    <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
+                      +{o.coins.toLocaleString('tr-TR')} altın · +{o.xp} tecrübe
+                      {o.tool ? ` · +1 ${TOOLS[o.tool].name.toLocaleLowerCase('tr-TR')}` : ''}
                     </Text>
                   </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -5242,7 +5255,10 @@ function Orders({
                           {o.given[k] ?? 0}/{q} {PRODUCT_NAME[k] ?? k}
                         </Text>
                         {left[k] > 0 && (
-                          <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}>
+                          <Text
+                            maxFontSizeMultiplier={1.0}
+                            style={{ fontFamily: FONT_BODY, fontSize: 11, color: (farm.stock[k] ?? 0) > 0 ? GREEN : MUTED }}
+                          >
                             · depoda {farm.stock[k] ?? 0}
                           </Text>
                         )}
@@ -5250,7 +5266,7 @@ function Orders({
                     ))}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontSize: 12 }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ flex: 1, color: MUTED, fontFamily: FONT_BODY, fontSize: 12 }}>
                       {who(o) ? `Katkı: ${who(o)}` : ''}
                     </Text>
                     {/* Geri çevir: verilen ürünler depoya döner, yenisi 20 dakika sonra yazılır. */}
@@ -5272,7 +5288,7 @@ function Orders({
                   </View>
                 </>
               ) : (
-                <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 13 }}>
+                <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 13 }}>
                   Yeni sipariş {timeLeft(o.openAt - now)} sonra yazılacak
                 </Text>
               )}
@@ -5316,7 +5332,7 @@ function Workshops({ farm, now, onClose, onPick }: { farm: Farm; now: number; on
               </Text>
               <Text
                 maxFontSizeMultiplier={1.0}
-                style={{ fontSize: 12, color: r.ready ? GREEN : MUTED, fontWeight: r.ready ? '800' : '400' }}
+                style={{ fontFamily: FONT_BODY, fontSize: 12, color: r.ready ? GREEN : MUTED, fontWeight: r.ready ? '800' : '400' }}
               >
                 {r.ready
                   ? `${r.ready} ürün hazır, topla`
@@ -5401,7 +5417,7 @@ function Kitchen({
                     {(farm.stock[id] ?? 0) > 0 ? ` · depoda ${farm.stock[id]}` : ''}
                   </Text>
                   {locked ? (
-                    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED }}>
+                    <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
                       {r.lvl}. seviyede açılır
                     </Text>
                   ) : (
@@ -5439,7 +5455,11 @@ function Kitchen({
                       {Object.entries(r.needs)
                         .filter(([k, q]) => (farm.stock[k] ?? 0) < q)
                         .map(([k, q]) => (
-                          <Text key={k} maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: '#C7354F', marginTop: 2 }}>
+                          <Text
+                            key={k}
+                            maxFontSizeMultiplier={1.0}
+                            style={{ fontFamily: FONT_BODY, fontSize: 11, color: '#C7354F', marginTop: 2 }}
+                          >
                             {q - (farm.stock[k] ?? 0)} {PRODUCT_NAME[k].toLocaleLowerCase('tr-TR')} eksik · {sourceOf(k, farm)}
                           </Text>
                         ))}
@@ -5507,7 +5527,10 @@ function Baskets({
                 <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: FONT_BOLD, fontSize: 13, color: INK }}>
                   {b.name} · +{b.coins} altın, +{b.points} puan
                 </Text>
-                <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: hasAll(farm, b.needs) ? GREEN : MUTED }}>
+                <Text
+                  maxFontSizeMultiplier={1.0}
+                  style={{ fontFamily: FONT_BODY, fontSize: 12, color: hasAll(farm, b.needs) ? GREEN : MUTED }}
+                >
                   {needsText(b.needs)}
                 </Text>
               </View>
@@ -5562,6 +5585,7 @@ function NoteTree({
             borderRadius: 12,
             padding: 10,
             color: INK,
+            fontFamily: FONT_BODY,
             fontSize: 14,
           }}
         />
@@ -5590,10 +5614,13 @@ function NoteTree({
                 paddingVertical: 6,
               }}
             >
-              <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontSize: 14 }}>
+              <Text maxFontSizeMultiplier={1.0} style={{ color: INK, fontFamily: FONT_BODY, fontSize: 14 }}>
                 {n.text}
               </Text>
-              <Text maxFontSizeMultiplier={1.0} style={{ color: MUTED, fontSize: 10, textAlign: mine ? 'right' : 'left' }}>
+              <Text
+                maxFontSizeMultiplier={1.0}
+                style={{ color: MUTED, fontFamily: FONT_BODY, fontSize: 10, textAlign: mine ? 'right' : 'left' }}
+              >
                 {mine ? 'sen' : partnerName} · {ago(now - n.at)}
               </Text>
             </View>

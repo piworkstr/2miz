@@ -42,15 +42,15 @@ type Who = { coupleId: string; uid: string; name: string; partnerName: string };
 const label = (key: string, n: number) => `${n} ${PRODUCT_NAME[key] ?? key}`;
 
 // Çiftliğin kendi renkleri: krem zemin, ahşap çerçeve.
-const INK = '#4A2E14';
-const MUTED = '#8A6F4A';
-const BROWN = '#9A6534';
-const CREAM = '#FFF8E8';
-const CELL = '#FBFAF6';
-const LINE = '#E5C99B';
-const SAND = '#F6D58E';
-const ROSE = '#E8516A';
-const GOLD = '#7A5A00';
+const INK = '#4A2E1C';
+const MUTED = '#8C6E54';
+const BROWN = '#F0E4D0'; // ince kenarlık (sade görünüm)
+const CREAM = '#FFFAF0';
+const CELL = '#FFFFFF';
+const LINE = '#F0E4D0';
+const SAND = '#F0E4D0'; // ikincil düğme ve başlık zemini
+const ROSE = '#76BA48'; // asıl düğme ve seçili sekme (yeşil)
+const GOLD = '#4A2E1C';
 
 function Icon({ k, size }: { k: string; size: number }) {
   const a = stockArt(k);
@@ -58,11 +58,14 @@ function Icon({ k, size }: { k: string; size: number }) {
   if (k === 'balta' || k === 'kazma')
     return (
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={k === 'balta' ? 'hammer' : 'construct'} size={Math.round(size * 0.7)} color={BROWN} />
+        <Ionicons name={k === 'balta' ? 'hammer' : 'construct'} size={Math.round(size * 0.7)} color={MUTED} />
       </View>
     );
   return (
-    <Text maxFontSizeMultiplier={1.0} style={{ fontSize: Math.round(size * 0.7), lineHeight: size, height: size, textAlign: 'center' }}>
+    <Text
+      maxFontSizeMultiplier={1.0}
+      style={{ fontFamily: 'Baloo2_500Medium', fontSize: Math.round(size * 0.7), lineHeight: size, height: size, textAlign: 'center' }}
+    >
       {STOCK_EMOJI[k] ?? '📦'}
     </Text>
   );
@@ -72,7 +75,7 @@ function Coins({ n, size = 14, color = GOLD }: { n: number | string; size?: numb
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
       <Image source={ART.coin.src} style={{ width: size + 2, height: size + 2 }} resizeMode="contain" />
       <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: size, color }}>
-        {n}
+        {typeof n === 'number' ? n.toLocaleString('tr-TR') : n}
       </Text>
     </View>
   );
@@ -84,7 +87,7 @@ function Heading({ title, sub }: { title: string; sub?: string }) {
         {title}
       </Text>
       {!!sub && (
-        <Text maxFontSizeMultiplier={1.15} style={{ fontSize: 12, color: MUTED }}>
+        <Text maxFontSizeMultiplier={1.15} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}>
           {sub}
         </Text>
       )}
@@ -92,7 +95,7 @@ function Heading({ title, sub }: { title: string; sub?: string }) {
   );
 }
 const Note = ({ children }: { children: ReactNode }) => (
-  <Text maxFontSizeMultiplier={1.2} style={{ color: MUTED, fontSize: 13, lineHeight: 18 }}>
+  <Text maxFontSizeMultiplier={1.2} style={{ color: MUTED, fontFamily: 'Baloo2_500Medium', fontSize: 13, lineHeight: 18 }}>
     {children}
   </Text>
 );
@@ -294,7 +297,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
 
   return (
     <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: SAND }} edges={['top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: CREAM }} edges={['top']}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: PAD, paddingVertical: 10 }}>
           {ART.pazar && <Image source={ART.pazar.src} style={{ width: 96, height: 82 }} resizeMode="contain" />}
           <View style={{ flex: 1, gap: 4 }}>
@@ -302,7 +305,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
               Çiftçi pazarı
             </Text>
             {!!farm.name && (
-              <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 13, color: MUTED }}>
+              <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 13, color: MUTED }}>
                 {farm.name}
               </Text>
             )}
@@ -339,7 +342,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
             <Ionicons name="close" size={20} color={INK} />
           </Pressable>
         </View>
-        <View style={{ height: 4, backgroundColor: BROWN }} />
+        <View style={{ height: 1.5, backgroundColor: BROWN }} />
         <ScrollView
           style={{ flex: 1, backgroundColor: CREAM }}
           contentContainerStyle={{ padding: PAD, gap: 10, paddingBottom: 40 }}
@@ -382,7 +385,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                     >
                       {PRODUCT_NAME[buy.key] ?? buy.key}
                     </Text>
-                    <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}>
                       depoda {farm.stock[buy.key] ?? 0}
                     </Text>
                   </View>
@@ -414,7 +417,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                     tool?.key === k,
                     <>
                       <Coins n={TOOLS[k].cost} size={12} />
-                      <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 11, color: MUTED }}>
+                      <Text maxFontSizeMultiplier={1.0} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 11, color: MUTED }}>
                         elinde {toolsOf(farm)[k]}
                       </Text>
                     </>,
@@ -434,7 +437,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                     >
                       {TOOLS[tool.key].name}
                     </Text>
-                    <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                    <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}>
                       {tool.key === 'balta' ? 'yabani ağaç ve çalıları keser' : 'kaya ve taşları kırar'}
                     </Text>
                   </View>
@@ -485,7 +488,10 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                         {label(o.key, o.n)}
                       </Text>
                       {done ? (
-                        <Text maxFontSizeMultiplier={1.0} style={{ fontSize: 12, color: MUTED, lineHeight: 40 }}>
+                        <Text
+                          maxFontSizeMultiplier={1.0}
+                          style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED, lineHeight: 40 }}
+                        >
                           Bugün alındı
                         </Text>
                       ) : (
@@ -523,7 +529,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                       >
                         {label(l.key, l.n)}
                       </Text>
-                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
+                      <Text
+                        maxFontSizeMultiplier={1.1}
+                        numberOfLines={1}
+                        style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}
+                      >
                         {`${l.farm} · seviye ${l.lvl}`}
                       </Text>
                     </View>
@@ -562,7 +572,11 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                       >
                         {n.name}
                       </Text>
-                      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={{ fontSize: 12, color: MUTED }}>
+                      <Text
+                        maxFontSizeMultiplier={1.1}
+                        numberOfLines={1}
+                        style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}
+                      >
                         {`seviye ${n.lvl}${n.dog ? ` · köpeği ${n.dog}` : ''}`}
                       </Text>
                     </View>
@@ -593,6 +607,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                   borderColor: LINE,
                   backgroundColor: '#fff',
                   paddingHorizontal: 14,
+                  fontFamily: 'Baloo2_500Medium',
                   fontSize: 16,
                   color: INK,
                 }}
@@ -622,7 +637,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Coins n={l.price} size={12} />
-                      <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                      <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}>
                         · {Math.max(1, Math.round((l.expMs - Date.now()) / 3600000))} saat kaldı
                       </Text>
                     </View>
@@ -674,7 +689,7 @@ export function FarmMarket({ open, onClose, farm, who }: { open: boolean; onClos
                               <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 15, color: INK }}>
                                 {PRODUCT_NAME[sell.key]}
                               </Text>
-                              <Text maxFontSizeMultiplier={1.1} style={{ fontSize: 12, color: MUTED }}>
+                              <Text maxFontSizeMultiplier={1.1} style={{ fontFamily: 'Baloo2_500Medium', fontSize: 12, color: MUTED }}>
                                 depoda {farm.stock[sell.key] ?? 0} · sistem fiyatı {PRICE[sell.key]}
                               </Text>
                             </View>

@@ -26,8 +26,8 @@ import { GText } from './FarmUI';
 // durur; istenen ürün atölyenin üstüne sürüklenir. Ürüne dokununca parşömen balonda adı, süresi ve malzemeleri görünür.
 // Atölyenin adı altındaki kurdelede, sıradaki işler onun altındaki madalyonlardadır.
 // Ekran açıkken çiftlik kaydırılamaz (karartı dokunuşu alır): parçalar hep aynı yerde durur.
-const M = 76; // ürün madalyonunun çapı
-const M_ON = 86; // seçili madalyon
+const M_BIG = 76; // ürün madalyonunun çapı
+const M_ON_BIG = 86; // seçili madalyon
 const R_MIN = 118; // yayın yarıçapı (az ürün)
 const DROP = 92; // atölyeye bırakma yarıçapı
 const GREEN_INK = '#2F6E12';
@@ -100,9 +100,13 @@ function RecipeMedal({
   picked,
   hidden,
   stock,
+  m,
+  mOn,
   api,
 }: {
   id: RecipeId;
+  m: number;
+  mOn: number;
   stock: number; // depoda bu üründen kaç tane var
   x: number;
   y: number;
@@ -136,7 +140,7 @@ function RecipeMedal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [id],
   );
-  const size = picked ? M_ON : M;
+  const size = picked ? mOn : m;
   const r = RECIPES[id];
   return (
     <View
@@ -262,6 +266,9 @@ export function StationPop({
   const mh = Math.min(190, Math.max(96, spr?.h ?? 120));
   // Yayın merkezi atölyenin biraz üstüdür; ekran kenarına yakınsa ekranda kalacak kadar kayar.
   const n = list.length;
+  // Ürün çoksa daireler küçülür: altı ürünlü atölyede yay ekranın kenarına taşmasın.
+  const M = n >= 6 ? 62 : n === 5 ? 70 : M_BIG;
+  const M_ON = n >= 6 ? 72 : n === 5 ? 80 : M_ON_BIG;
   // Yay atölyenin hemen üstünü sarar: yarıçap atölyenin yarı boyundan biraz büyüktür; ürün çoksa yay genişler.
   const R = Math.max(R_MIN, mh * 0.5 + M_ON * 0.62) + (n > 4 ? 22 : 0);
   const STEP = Math.min(44, (Math.asin(Math.min(1, (M + 12) / 2 / R)) * 2 * 180) / Math.PI + 2);
@@ -385,6 +392,8 @@ export function StationPop({
           picked={pk === id}
           hidden={drag === id}
           stock={farm.stock[id] ?? 0}
+          m={M}
+          mOn={M_ON}
           api={api}
         />
       ))}
