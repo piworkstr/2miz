@@ -72,6 +72,7 @@ export type DecorId =
   | 'cikolataci'
   | 'kahveci'
   | 'dondurmaci'
+  | 'sekerci'
   | 'mandira'
   | 'atolye'
   | 'konserve'
@@ -205,7 +206,9 @@ export type RecipeId =
   | 'hceviziyagi'
   | 'sevgilikutusu'
   | 'cikolatadondurma'
-  | 'limonsorbe';
+  | 'limonsorbe'
+  | 'karamel'
+  | 'pamukseker';
 // Üretim yeri: hepsi dükkândan alınıp çiftliğe konan atölyelerdir. 'mutfak' yalnızca eski kayıtlardaki yarım işler için durur.
 export type Station =
   | 'mutfak'
@@ -220,7 +223,8 @@ export type Station =
   | 'asci'
   | 'cikolataci'
   | 'kahveci'
-  | 'dondurmaci';
+  | 'dondurmaci'
+  | 'sekerci';
 export const RECIPES: Record<
   RecipeId,
   {
@@ -325,8 +329,10 @@ export const RECIPES: Record<
   kirazrecel: { name: 'Kiraz reçeli', emoji: '🍒', needs: { kiraz: 6 }, sell: 520, xp: 30, lvl: 36, mins: 120, at: 'konserve' },
   elmasuyu: { name: 'Elma suyu', emoji: '🧃', needs: { elma: 8 }, sell: 480, xp: 28, lvl: 37, mins: 60, at: 'meyvesuyu' },
   yogurt: { name: 'Yoğurt', emoji: '🥣', needs: { milk: 4 }, sell: 270, xp: 26, lvl: 38, mins: 90, at: 'mandira' },
-  // Şeker kamışı kazanda kaynatılarak şekere döner: reçel atölyesinin kazanında yapılır.
-  seker: { name: 'Şeker', emoji: '🧊', needs: { sekerkamisi: 2 }, sell: 780, xp: 34, lvl: 39, mins: 60, at: 'konserve' },
+  // Şeker, şeker fabrikasında yapılır (reçel atölyesi yalnız reçel ve marmelat yapar).
+  seker: { name: 'Şeker', emoji: '🧊', needs: { sekerkamisi: 2 }, sell: 780, xp: 34, lvl: 39, mins: 60, at: 'sekerci' },
+  karamel: { name: 'Karamel', emoji: '🍮', needs: { seker: 1, tereyagi: 1 }, sell: 1120, xp: 44, lvl: 43, mins: 60, at: 'sekerci' },
+  pamukseker: { name: 'Pamuk şeker', emoji: '🍭', needs: { seker: 1 }, sell: 1020, xp: 40, lvl: 47, mins: 30, at: 'sekerci' },
   armutrecel: { name: 'Armut reçeli', emoji: '🍐', needs: { armut: 4, seker: 1 }, sell: 1350, xp: 46, lvl: 40, mins: 150, at: 'konserve' },
   krema: { name: 'Krema', emoji: '🥛', needs: { milk: 2, tereyagi: 1 }, sell: 250, xp: 26, lvl: 41, mins: 45, at: 'mandira' },
   cilekdondurma: {
@@ -446,6 +452,7 @@ export const STATIONS: Record<Station, { name: string; slot: string; from: strin
   cikolataci: { name: 'Çikolatacı', slot: 'kalıp', from: 'çikolatacıdan', inn: 'çikolatacıda' },
   kahveci: { name: 'Kahve dükkânı', slot: 'demlik', from: 'kahve dükkânından', inn: 'kahve dükkânında' },
   dondurmaci: { name: 'Dondurmacı', slot: 'kazan', from: 'dondurmacıdan', inn: 'dondurmacıda' },
+  sekerci: { name: 'Şeker fabrikası', slot: 'kazan', from: 'şeker fabrikasından', inn: 'şeker fabrikasında' },
 };
 // Tarifin yapıldığı yer. alt'ı olan tarif (reçel, turşu) o atölye çiftlikteyse orada, değilse mutfakta yapılır.
 export const stationOf = (r: RecipeId, f?: Farm): Station => {
@@ -607,7 +614,7 @@ export const DECOR: Record<
     xp: 12,
     lvl: 7,
     w: 1.5,
-    perk: 'Reçel, marmelat ve şeker yapar',
+    perk: 'Reçel ve marmelat yapar',
     station: true,
   },
   asci: {
@@ -716,6 +723,16 @@ export const DECOR: Record<
     lvl: 44,
     w: 1.6,
     perk: 'Kakaodan sütlü ve çilekli çikolata, sevgili kutusu hazırlar',
+    station: true,
+  },
+  sekerci: {
+    name: 'Şeker fabrikası',
+    sp: 'sekerci',
+    cost: 3000,
+    xp: 38,
+    lvl: 39,
+    w: 1.6,
+    perk: 'Şeker kamışından şeker, karamel ve pamuk şeker yapar',
     station: true,
   },
   dondurmaci: {

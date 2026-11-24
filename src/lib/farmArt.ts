@@ -154,6 +154,9 @@ export const ART: Record<string, { src: ImageSourcePropType; h: number }> = {
   limonsorbe: { src: require('../../assets/farm/limonsorbe.webp'), h: 1.198 },
   inekahiri: { src: require('../../assets/farm/inekahiri.webp'), h: 0.713 },
   keciagili: { src: require('../../assets/farm/keciagili.webp'), h: 0.726 },
+  sekerci: { src: require('../../assets/farm/sekerci.webp'), h: 0.941 },
+  karamel: { src: require('../../assets/farm/karamel.webp'), h: 0.965 },
+  pamukseker: { src: require('../../assets/farm/pamukseker.webp'), h: 1.333 },
   // </yeni-atolyeler>
   // Atölyeler ve ürünleri
   mandira: { src: require('../../assets/farm/mandira.webp'), h: 0.817 },
