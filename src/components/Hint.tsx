@@ -3,6 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { db } from '../lib/firebase';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { tx } from '../lib/theme';
 import { useTheme } from '../lib/useTheme';
@@ -11,6 +12,7 @@ import { useTheme } from '../lib/useTheme';
 // Durum kişinin profilinde saklanır (hints.<id>).
 export function Hint({ id, children }: { id: string; children: ReactNode }) {
   const t = useTheme();
+  const l = useL();
   const { user, profile } = useSession();
   const [open, setOpen] = useState(false);
   if (!user || profile?.hints?.[id]) return null;
@@ -23,7 +25,7 @@ export function Hint({ id, children }: { id: string; children: ReactNode }) {
       <Pressable
         onPress={() => setOpen((o) => !o)}
         hitSlop={10}
-        accessibilityLabel="Açıklama"
+        accessibilityLabel={l('Açıklama', 'Info')}
         style={{
           width: 22,
           height: 22,
@@ -62,7 +64,7 @@ export function Hint({ id, children }: { id: string; children: ReactNode }) {
           <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
             <Pressable onPress={() => setOpen(false)} style={{ paddingVertical: 6, paddingHorizontal: 10 }}>
               <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontWeight: '700', fontSize: 13 }}>
-                {tx(t, 'Tekrar göster')}
+                {tx(t, l('Tekrar göster', 'Show again'))}
               </Text>
             </Pressable>
             <Pressable
@@ -70,7 +72,7 @@ export function Hint({ id, children }: { id: string; children: ReactNode }) {
               style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: t.colors.primary }}
             >
               <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '700', fontSize: 13 }}>
-                {tx(t, 'Anladım')}
+                {tx(t, l('Anladım', 'Got it'))}
               </Text>
             </Pressable>
           </View>

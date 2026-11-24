@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { trDate } from './date';
+import { enDate, trDate } from './date';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
 import { useCallback, useState } from 'react';
 import { db } from './firebase';
@@ -59,9 +59,10 @@ export function nextMilestone(dayCount: number): { at: number; inDays: number } 
   return { at, inDays: at - dayCount };
 }
 
-export function birthdayLabel(key: string) {
+export function birthdayLabel(key: string, lang: 'tr' | 'en' = 'tr') {
   const { m, d } = parse(key);
-  return trDate(new Date(2000, m - 1, d));
+  const date = new Date(2000, m - 1, d);
+  return lang === 'en' ? enDate(date) : trDate(date);
 }
 
 // Partnerin sevgi diline göre küçük bir öneri.
@@ -71,4 +72,12 @@ export const LOVE_TIPS: Record<LoveLanguage, (name: string) => string> = {
   hediye: (n) => `${n} düşünülmüş olmayı sever. Küçük ama ona özel bir sürpriz hazırla.`,
   temas: (n) => `${n} sarılınca sevildiğini hisseder. Bugün sebepsiz uzun bir sarılma ver.`,
   hizmet: (n) => `${n} için sevgi, yükünü paylaşmak demek. Onun bir işini habersizce hallet.`,
+};
+
+export const LOVE_TIPS_EN: Record<LoveLanguage, (name: string) => string> = {
+  soz: (n) => `${n} thrives on kind words. Write one sentence today about why you love them.`,
+  zaman: (n) => `What ${n} values most is time together. Set aside a phone-free evening this week.`,
+  hediye: (n) => `${n} loves feeling thought of. Prepare a small surprise that's just for them.`,
+  temas: (n) => `${n} feels loved through touch. Give them a long hug today, for no reason at all.`,
+  hizmet: (n) => `For ${n}, love means sharing the load. Quietly take care of one of their chores.`,
 };

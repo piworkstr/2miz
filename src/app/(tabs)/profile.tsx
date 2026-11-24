@@ -12,9 +12,11 @@ import { PetNames } from '../../components/PetNames';
 import { ProfileEditCard } from '../../components/ProfileEditCard';
 import { ThemeOption } from '../../components/ThemeOption';
 import { Button, Card, Muted, Screen, T, Title } from '../../components/ui';
-import { activeMood, MOODS } from '../../lib/avatar';
-import { prettyDate, trDate } from '../../lib/date';
+import { activeMood, MOODS, moodLabel } from '../../lib/avatar';
+import { enDate, prettyDate, trDate } from '../../lib/date';
 import { useUpcomingDates } from '../../lib/dates';
+import { useL } from '../../lib/i18n';
+import { interestLabel } from '../../lib/interests';
 import { auth } from '../../lib/firebase';
 import { loveLanguage as loveLanguageOf, type LoveLanguage } from '../../lib/loveLanguage';
 import { openPlus, usePlus } from '../../lib/plus';
@@ -26,29 +28,30 @@ import { GuideCard } from '../../components/GuideCard';
 import { UpdateCard } from '../../components/UpdateCard';
 import { PersonaCard } from '../../components/PersonaCard';
 import { LanguageCard } from '../../components/LanguageCard';
-import { birthdayLabel, daysUntilYearly, LOVE_TIPS, nextMilestone, useCoupleStats } from '../../lib/stats';
+import { birthdayLabel, daysUntilYearly, LOVE_TIPS, LOVE_TIPS_EN, nextMilestone, useCoupleStats } from '../../lib/stats';
 import { themeList, tx, type Theme } from '../../lib/theme';
 import { saveTheme, useTheme } from '../../lib/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-const STATUS: Record<NonNullable<Couple['status']>, string> = {
-  sevgili: 'Sevgili',
-  nisanli: 'Nişanlı',
-  evli: 'Evli',
-  uzak: 'Uzak mesafe',
+const STATUS: Record<NonNullable<Couple['status']>, { tr: string; en: string }> = {
+  sevgili: { tr: 'Sevgili', en: 'Dating' },
+  nisanli: { tr: 'Nişanlı', en: 'Engaged' },
+  evli: { tr: 'Evli', en: 'Married' },
+  uzak: { tr: 'Uzak mesafe', en: 'Long distance' },
 };
 
 export default function Profile() {
   const { user, profile, partnerName, partnerProfile, couple } = useSession();
   const t = useTheme();
+  const l = useL();
   const stats = useCoupleStats(couple?.id);
   const dates = useUpcomingDates(couple?.id);
   const [saving, setSaving] = useState<string | null>(null);
   const [themesOpen, setThemesOpen] = useState(false);
 
   if (!user || !couple) return null;
-  const myName = profile?.name ?? 'Sen';
+  const myName = profile?.name ?? l('Sen', 'You');
   const nextDate = dates.find((d) => d.status === 'confirmed');
 
   async function choose(theme: Theme) {
@@ -70,10 +73,14 @@ export default function Profile() {
       <CoupleInfoCard />
       <Card style={{ gap: 8, zIndex: 5 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <T style={{ flex: 1, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Nasıl yaşıyorsunuz?')}</T>
+          <T style={{ flex: 1, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>
+            {tx(t, l('Nasıl yaşıyorsunuz?', 'How do you live?'))}
+          </T>
           <Hint id="living">
-            Günlük görevler buna göre seçilir: ayrı yaşıyorsanız "kahvaltı hazırla" gibi ev içi görevler çıkmaz, uzak mesafedeyseniz yalnız
-            uzaktan yapılabilenler gelir. İkiniz de değiştirebilirsiniz.
+            {l(
+              'Günlük görevler buna göre seçilir: ayrı yaşıyorsanız "kahvaltı hazırla" gibi ev içi görevler çıkmaz, uzak mesafedeyseniz yalnız uzaktan yapılabilenler gelir. İkiniz de değiştirebilirsiniz.',
+              'Daily tasks are picked based on this: if you live apart, at-home tasks like "make breakfast" won\'t come up; if you\'re long distance, you only get tasks you can do apart. Either of you can change it.',
+            )}
           </Hint>
         </View>
         <LivingChips compact />
@@ -86,7 +93,7 @@ export default function Profile() {
       <FeedbackCard />
       <PlusCard />
 
-      <Section title="Birbirinizi tanıyın">
+      <Section title={l('Birbirinizi tanıyın', 'Get to know each other')}>
         <AboutUs myName={myName} partnerName={partnerName} me={profile} partner={partnerProfile} />
         {partnerProfile?.loveLanguage && (
           <Card
@@ -99,20 +106,26 @@ export default function Profile() {
             }}
           >
             <Ionicons name="bulb-outline" size={20} color={t.colors.primary} />
-            <T style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>{LOVE_TIPS[partnerProfile.loveLanguage as LoveLanguage]?.(partnerName)}</T>
+            <T style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>
+              {(t.lang === 'en' ? LOVE_TIPS_EN : LOVE_TIPS)[partnerProfile.loveLanguage as LoveLanguage]?.(partnerName)}
+            </T>
           </Card>
         )}
         <PetNames />
       </Section>
 
-      <Section title="Hikayeniz rakamlarla">
+      <Section title={l('Hikayeniz rakamlarla', 'Your story in numbers')}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          <Stat icon="checkmark-done-outline" value={stats?.days} label="birlikte tamamlanan gün" />
-          <Stat icon="flame-outline" value={couple.bestStreak ?? couple.streak ?? 0} label="en uzun seri" />
-          <Stat icon="images-outline" value={stats?.photos} label="anı (selfie)" />
-          <Stat icon="game-controller-outline" value={stats?.games} label="oynanan oyun" />
-          <Stat icon="gift-outline" value={stats?.coupons} label="kullanılan kupon" />
-          <Stat icon={t.id === 'asko' ? 'heart' : 'star-outline'} value={couple.points ?? 0} label={`toplam ${t.copy.points}`} />
+          <Stat icon="checkmark-done-outline" value={stats?.days} label={l('birlikte tamamlanan gün', 'days completed together')} />
+          <Stat icon="flame-outline" value={couple.bestStreak ?? couple.streak ?? 0} label={l('en uzun seri', 'longest streak')} />
+          <Stat icon="images-outline" value={stats?.photos} label={l('anı (selfie)', 'memories (selfies)')} />
+          <Stat icon="game-controller-outline" value={stats?.games} label={l('oynanan oyun', 'games played')} />
+          <Stat icon="gift-outline" value={stats?.coupons} label={l('kullanılan kupon', 'coupons used')} />
+          <Stat
+            icon={t.id === 'asko' ? 'heart' : 'star-outline'}
+            value={couple.points ?? 0}
+            label={l(`toplam ${t.copy.points}`, `total ${t.copy.points}`)}
+          />
         </View>
       </Section>
 
@@ -120,24 +133,31 @@ export default function Profile() {
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Ionicons name="calendar" size={24} color={t.colors.primary} />
           <View style={{ flex: 1 }}>
-            <Muted style={{ fontSize: 13 }}>Sıradaki date</Muted>
-            <T style={{ fontWeight: '600' }}>{prettyDate(nextDate.id)}</T>
+            <Muted style={{ fontSize: 13 }}>{l('Sıradaki date', 'Next date')}</Muted>
+            <T style={{ fontWeight: '600' }}>{prettyDate(nextDate.id, t.lang)}</T>
           </View>
         </Card>
       )}
 
-      <Section title="Görünüm">
+      <Section title={l('Görünüm', 'Appearance')}>
         <Pressable
           onPress={() => setThemesOpen(!themesOpen)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}
         >
           <Ionicons name="color-palette-outline" size={20} color={t.colors.primary} />
-          <T style={{ flex: 1 }}>Tema: {t.name}</T>
+          <T style={{ flex: 1 }}>
+            {l('Tema', 'Theme')}: {t.name}
+          </T>
           <Ionicons name={themesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={t.colors.muted} />
         </Pressable>
         {themesOpen && (
           <>
-            <Muted>Tema sadece senin telefonunu değiştirir, {partnerName} kendi temasını seçer.</Muted>
+            <Muted>
+              {l(
+                `Tema sadece senin telefonunu değiştirir, ${partnerName} kendi temasını seçer.`,
+                `The theme only changes your phone; ${partnerName} picks their own.`,
+              )}
+            </Muted>
             {themeList(t.lang).map((theme) => (
               <ThemeOption
                 key={theme.id}
@@ -151,7 +171,7 @@ export default function Profile() {
         )}
       </Section>
 
-      <Button label="Çıkış yap" variant="secondary" onPress={() => signOut(auth).then(() => router.replace('/welcome'))} />
+      <Button label={l('Çıkış yap', 'Sign out')} variant="secondary" onPress={() => signOut(auth).then(() => router.replace('/welcome'))} />
       <EndCouple />
       <DeleteAccount />
       <UpdateCard />
@@ -163,13 +183,18 @@ export default function Profile() {
 function PlusCard() {
   const t = useTheme();
   const { user, partnerName } = useSession();
+  const l = useL();
   const plus = usePlus();
-  const until = plus.until ? trDate(new Date(plus.until)) : '';
+  const en = t.lang === 'en';
+  const until = plus.until ? (en ? enDate(new Date(plus.until), { year: true }) : trDate(new Date(plus.until))) : '';
+  const giver = plus.by === 'hediye' ? 'bir iz' : plus.by === user?.uid ? l('Sen', 'You') : partnerName;
   const line = plus.paid
-    ? `${plus.by === 'hediye' ? 'bir iz' : plus.by === user?.uid ? 'Sen' : partnerName} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
+    ? en
+      ? `${giver} gifted it to you both${until ? ` · until ${until}` : ''}`
+      : `${giver} ikinize hediye etti${until ? ` · ${until}’e kadar` : ''}`
     : plus.beta
-      ? 'Beta boyunca her şey açık'
-      : 'Sınırsız çark, oyun ve seyahat albümü';
+      ? l('Beta boyunca her şey açık', 'Everything is open during the beta')
+      : l('Sınırsız çark, oyun ve seyahat albümü', 'Unlimited wheel, games and travel albums');
   return (
     <Pressable
       onPress={() => openPlus('card')}
@@ -225,6 +250,7 @@ function StoryCard({
   partner: Profile | null;
 }) {
   const t = useTheme();
+  const l = useL();
   const on = t.colors.onPrimary;
   const count = couple.startDate ? daysTogether(couple.startDate) : null;
   const anniv = couple.startDate ? daysUntilYearly(couple.startDate) : null;
@@ -234,10 +260,13 @@ function StoryCard({
   const upcoming =
     anniv && mile
       ? anniv.days === 0
-        ? `Bugün ${anniv.years}. yıl dönümünüz!`
+        ? l(`Bugün ${anniv.years}. yıl dönümünüz!`, `Today is your ${ordinal(anniv.years)} anniversary!`)
         : mile.inDays < anniv.days
-          ? `${mile.at}. gününüze ${mile.inDays} gün kaldı`
-          : `${anniv.years}. yıl dönümünüze ${anniv.days} gün kaldı`
+          ? l(`${mile.at}. gününüze ${mile.inDays} gün kaldı`, `${dayWord(mile.inDays)} to your day ${mile.at}`)
+          : l(
+              `${anniv.years}. yıl dönümünüze ${anniv.days} gün kaldı`,
+              `${dayWord(anniv.days)} to your ${ordinal(anniv.years)} anniversary`,
+            )
       : null;
 
   return (
@@ -271,7 +300,7 @@ function StoryCard({
             overflow: 'hidden',
           }}
         >
-          {tx(t, STATUS[couple.status])}
+          {tx(t, STATUS[couple.status][t.lang])}
         </Text>
       )}
       {count ? (
@@ -281,17 +310,20 @@ function StoryCard({
               {count}
             </Text>
             <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 16, color: on, fontFamily: t.fonts.body }}>
-              gündür birlikte
+              {l('gündür birlikte', count === 1 ? 'day together' : 'days together')}
             </Text>
           </View>
           <Text maxFontSizeMultiplier={1.25} style={{ color: on, opacity: 0.9, fontSize: 14, fontFamily: t.fonts.body }}>
-            Başlangıç: {prettyDate(couple.startDate!)}
+            {l('Başlangıç', 'Since')}: {prettyDate(couple.startDate!, t.lang)}
             {upcoming ? `\n${upcoming}` : ''}
           </Text>
         </>
       ) : (
         <Text maxFontSizeMultiplier={1.25} style={{ color: on, fontSize: 14, fontFamily: t.fonts.body }}>
-          Ne zamandan beri birlikte olduğunuzu ekleyin, gün sayacınız burada başlasın.
+          {l(
+            'Ne zamandan beri birlikte olduğunuzu ekleyin, gün sayacınız burada başlasın.',
+            'Add when you got together and your day counter starts here.',
+          )}
         </Text>
       )}
     </View>
@@ -311,18 +343,20 @@ function AboutUs({
   partner: Profile | null;
 }) {
   const t = useTheme();
+  const l = useL();
   const people = [
     { name: myName, p: me, mine: true },
     { name: partnerName, p: partner, mine: false },
   ];
   const lang = (p: Profile | null) =>
-    (p?.loveLanguage ? loveLanguageOf(p.loveLanguage as LoveLanguage, t.lang)?.name : null) ?? 'Test çözülmedi';
+    (p?.loveLanguage ? loveLanguageOf(p.loveLanguage as LoveLanguage, t.lang)?.name : null) ?? l('Test çözülmedi', 'Quiz not taken');
   const bday = (p: Profile | null) => {
     if (!p?.birthDate) return '–';
     const d = daysUntilYearly(p.birthDate);
-    return `${birthdayLabel(p.birthDate)}\n${d.days === 0 ? 'bugün! 🎂' : `${d.days} gün kaldı`}`;
+    return `${birthdayLabel(p.birthDate, t.lang)}\n${d.days === 0 ? l('bugün! 🎂', 'today! 🎂') : l(`${d.days} gün kaldı`, `in ${dayWord(d.days)}`)}`;
   };
   const common = (me?.interests ?? []).filter((x) => partner?.interests?.includes(x));
+  const likes = (p: Profile | null) => (p?.interests ?? []).map((i) => interestLabel(i, t.lang)).join(', ');
 
   const row = (icon: IconName, label: string, values: [string, string]) => (
     <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>
@@ -374,20 +408,22 @@ function AboutUs({
                 )}
               </View>
               <T style={{ fontWeight: '700', fontSize: 16 }}>{name}</T>
-              <Muted style={{ fontSize: 12 }}>{mood ? `${MOODS[mood].emoji} ${MOODS[mood].label}` : mine ? 'Avatarı düzenle' : ' '}</Muted>
+              <Muted style={{ fontSize: 12 }}>
+                {mood ? `${MOODS[mood].emoji} ${moodLabel(mood, t.lang)}` : mine ? l('Avatarı düzenle', 'Edit avatar') : ' '}
+              </Muted>
             </Pressable>
           );
         })}
       </View>
-      {row('heart-outline', 'Sevgi dili', [lang(me), lang(partner)])}
-      {row('gift-outline', 'Doğum günü', [bday(me), bday(partner)])}
-      {row('sparkles-outline', 'Sevdikleri', [
-        me?.interests?.join(', ') || 'Henüz eklemedin · üstteki “Düzenle”den ekle',
-        partner?.interests?.join(', ') || 'Henüz eklemedi',
+      {row('heart-outline', l('Sevgi dili', 'Love language'), [lang(me), lang(partner)])}
+      {row('gift-outline', l('Doğum günü', 'Birthday'), [bday(me), bday(partner)])}
+      {row('sparkles-outline', l('Sevdikleri', 'Likes'), [
+        likes(me) || l('Henüz eklemedin · üstteki “Düzenle”den ekle', 'Nothing yet · add some with “Edit” above'),
+        likes(partner) || l('Henüz eklemedi', 'Nothing yet'),
       ])}
       {!!common.length && (
         <View style={{ gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.border }}>
-          <Muted style={{ fontSize: 12 }}>İkinizin de sevdikleri</Muted>
+          <Muted style={{ fontSize: 12 }}>{l('İkinizin de sevdikleri', 'You both like')}</Muted>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {common.map((c) => (
               <Text
@@ -404,7 +440,7 @@ function AboutUs({
                   overflow: 'hidden',
                 }}
               >
-                {c}
+                {interestLabel(c, t.lang)}
               </Text>
             ))}
           </View>
@@ -436,4 +472,11 @@ function Stat({ icon, value, label }: { icon: IconName; value: number | undefine
       <Muted style={{ fontSize: 12 }}>{tx(t, label)}</Muted>
     </View>
   );
+}
+
+// İngilizce sayı yazımı: 1 day / 3 days, 1st / 2nd / 3rd / 11th.
+const dayWord = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
+function ordinal(n: number) {
+  const s = n % 100 >= 11 && n % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th');
+  return `${n}${s}`;
 }

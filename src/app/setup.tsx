@@ -4,18 +4,20 @@ import { Pressable, Text, View } from 'react-native';
 import { Button, ErrorText, Muted, Screen, Title } from '../components/ui';
 import { db } from '../lib/firebase';
 import { GENDER_OPTIONS, type Gender } from '../lib/gender';
-import { INTERESTS } from '../lib/interests';
+import { useL } from '../lib/i18n';
+import { INTERESTS, interestLabel } from '../lib/interests';
 import { useSession, type Profile } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 
-const TIMES: { id: NonNullable<Profile['notifyTime']>; label: string; hint: string }[] = [
-  { id: 'sabah', label: 'Sabah', hint: '09:00' },
-  { id: 'ogle', label: 'Öğle', hint: '13:00' },
-  { id: 'aksam', label: 'Akşam', hint: '19:00' },
+const TIMES: { id: NonNullable<Profile['notifyTime']>; label: string; en: string; hint: string }[] = [
+  { id: 'sabah', label: 'Sabah', en: 'Morning', hint: '09:00' },
+  { id: 'ogle', label: 'Öğle', en: 'Noon', hint: '13:00' },
+  { id: 'aksam', label: 'Akşam', en: 'Evening', hint: '19:00' },
 ];
 
 export default function Setup() {
   const t = useTheme();
+  const l = useL();
   const { user } = useSession();
   const [interests, setInterests] = useState<string[]>([]);
   const [gender, setGender] = useState<Gender | ''>('');
@@ -37,7 +39,7 @@ export default function Setup() {
         skip ? { onboarded: true } : { interests, notifyTime: time, onboarded: true, ...(gender ? { gender } : {}) },
       );
     } catch {
-      setError('Kaydedilemedi, tekrar dene.');
+      setError(l('Kaydedilemedi, tekrar dene.', "Couldn't save, please try again."));
       setBusy(null);
     }
   }
@@ -53,11 +55,16 @@ export default function Setup() {
 
   return (
     <Screen>
-      <Title>Biraz daha tanışalım</Title>
-      <Muted>Görevleri ve ileride date önerilerini sana göre seçmek için. İstersen sonra doldurabilirsin.</Muted>
+      <Title>{l('Biraz daha tanışalım', "Let's get to know you a bit more")}</Title>
+      <Muted>
+        {l(
+          'Görevleri ve ileride date önerilerini sana göre seçmek için. İstersen sonra doldurabilirsin.',
+          'So we can pick tasks and, later on, date ideas for you. You can fill this in later if you like.',
+        )}
+      </Muted>
 
       <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
-        Nelerden hoşlanırsın?
+        {l('Nelerden hoşlanırsın?', 'What do you enjoy?')}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {INTERESTS.map((i) => {
@@ -68,7 +75,7 @@ export default function Setup() {
                 maxFontSizeMultiplier={1.25}
                 style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}
               >
-                {i}
+                {interestLabel(i, t.lang)}
               </Text>
             </Pressable>
           );
@@ -76,9 +83,14 @@ export default function Setup() {
       </View>
 
       <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
-        Cinsiyetin (isteğe bağlı)
+        {l('Cinsiyetin (isteğe bağlı)', 'Your gender (optional)')}
       </Text>
-      <Muted>Yalnızca önerileri sana göre sıralamak için. Partnerinle eşleşmeni etkilemez.</Muted>
+      <Muted>
+        {l(
+          'Yalnızca önerileri sana göre sıralamak için. Partnerinle eşleşmeni etkilemez.',
+          "Only used to sort suggestions for you. It doesn't affect pairing with your partner.",
+        )}
+      </Muted>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {GENDER_OPTIONS.map((o) => {
           const on = gender === o.id;
@@ -88,7 +100,7 @@ export default function Setup() {
                 maxFontSizeMultiplier={1.25}
                 style={{ color: on ? t.colors.primary : t.colors.text, fontFamily: t.fonts.body, fontSize: 15 }}
               >
-                {o.label}
+                {l(o.label, o.en)}
               </Text>
             </Pressable>
           );
@@ -96,7 +108,7 @@ export default function Setup() {
       </View>
 
       <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 17, fontWeight: '600', color: t.colors.text, marginTop: 8 }}>
-        Günün görevi ne zaman gelsin?
+        {l('Günün görevi ne zaman gelsin?', "When should today's task arrive?")}
       </Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {TIMES.map((o) => {
@@ -104,7 +116,7 @@ export default function Setup() {
           return (
             <Pressable key={o.id} onPress={() => setTime(o.id)} style={[chip(on), { flex: 1, alignItems: 'center' }]}>
               <Text maxFontSizeMultiplier={1.25} style={{ color: on ? t.colors.primary : t.colors.text, fontWeight: '600', fontSize: 15 }}>
-                {o.label}
+                {l(o.label, o.en)}
               </Text>
               <Muted style={{ fontSize: 12 }}>{o.hint}</Muted>
             </Pressable>
@@ -114,8 +126,8 @@ export default function Setup() {
 
       <ErrorText>{error}</ErrorText>
       <View style={{ gap: 10, marginTop: 8 }}>
-        <Button label="Devam et" onPress={() => finish(false)} busy={busy === 'save'} />
-        <Button label="Sonra" variant="secondary" onPress={() => finish(true)} busy={busy === 'skip'} />
+        <Button label={l('Devam et', 'Continue')} onPress={() => finish(false)} busy={busy === 'save'} />
+        <Button label={l('Sonra', 'Later')} variant="secondary" onPress={() => finish(true)} busy={busy === 'skip'} />
       </View>
     </Screen>
   );

@@ -5,6 +5,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { db } from '../lib/firebase';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, Input, Muted, T } from './ui';
@@ -12,14 +13,15 @@ import { Button, Card, Input, Muted, T } from './ui';
 // Deneme kullanıcıları hata ve eksikleri buradan bildirir. Cihaz ve sürüm bilgisi otomatik eklenir.
 // Kurucu çift aynı kartın altında gelen bildirimleri görür ve "yapıldı" işaretler.
 type Kind = 'hata' | 'eksik' | 'oneri' | 'olay'; // olay: kullanım sayacı (ör. arama düğmesi), listede görünmez
-const KINDS: { id: Kind; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'hata', label: 'Hata', icon: 'bug-outline' },
-  { id: 'eksik', label: 'Eksik', icon: 'remove-circle-outline' },
-  { id: 'oneri', label: 'Öneri', icon: 'bulb-outline' },
+const KINDS: { id: Kind; label: string; en: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { id: 'hata', label: 'Hata', en: 'Bug', icon: 'bug-outline' },
+  { id: 'eksik', label: 'Eksik', en: 'Missing', icon: 'remove-circle-outline' },
+  { id: 'oneri', label: 'Öneri', en: 'Idea', icon: 'bulb-outline' },
 ];
 
 export function FeedbackCard() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, profile } = useSession();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>('hata');
@@ -71,18 +73,25 @@ export function FeedbackCard() {
       <Card style={{ gap: 10 }}>
         <Pressable onPress={() => setOpen((o) => !o)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Ionicons name="chatbox-ellipses-outline" size={18} color={t.colors.primary} />
-          <T style={{ flex: 1, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>Hata ve öneri bildir</T>
+          <T style={{ flex: 1, fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>
+            {l('Hata ve öneri bildir', 'Report a bug or idea')}
+          </T>
           <Ionicons name={open ? 'chevron-up' : 'chevron-forward'} size={16} color={t.colors.muted} />
         </Pressable>
         {open && (
           <>
-            <Muted style={{ fontSize: 12 }}>Ne oldu, ne bekliyordun? Hangi ekranda? Cihaz ve sürüm bilgisi otomatik eklenir.</Muted>
+            <Muted style={{ fontSize: 12 }}>
+              {l(
+                'Ne oldu, ne bekliyordun? Hangi ekranda? Cihaz ve sürüm bilgisi otomatik eklenir.',
+                'What happened, what did you expect? On which screen? Device and version info are added automatically.',
+              )}
+            </Muted>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {KINDS.map((k) => (
                 <Pressable key={k.id} onPress={() => setKind(k.id)} style={chip(kind === k.id)}>
                   <Ionicons name={k.icon} size={14} color={kind === k.id ? t.colors.primary : t.colors.muted} />
                   <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 13, fontWeight: '600', color: t.colors.text }}>
-                    {k.label}
+                    {l(k.label, k.en)}
                   </Text>
                 </Pressable>
               ))}
@@ -93,14 +102,16 @@ export function FeedbackCard() {
               multiline
               maxLength={1000}
               placeholder={
-                kind === 'hata' ? 'Örn. Çiftlikte ağılı taşıyamadım, basılı tutunca…' : 'Örn. Görevlerde şunu da görmek isterdim…'
+                kind === 'hata'
+                  ? l('Örn. Çiftlikte ağılı taşıyamadım, basılı tutunca…', "e.g. I couldn't move the barn on the farm when I held it…")
+                  : l('Örn. Görevlerde şunu da görmek isterdim…', "e.g. I'd love to see this in tasks too…")
               }
               style={{ minHeight: 84 }}
             />
             {done ? (
-              <Muted style={{ textAlign: 'center' }}>Teşekkürler, aldık 💛</Muted>
+              <Muted style={{ textAlign: 'center' }}>{l('Teşekkürler, aldık 💛', 'Thanks, got it 💛')}</Muted>
             ) : (
-              <Button label="Gönder" onPress={send} busy={busy} style={{ opacity: text.trim() ? 1 : 0.5 }} />
+              <Button label={l('Gönder', 'Send')} onPress={send} busy={busy} style={{ opacity: text.trim() ? 1 : 0.5 }} />
             )}
           </>
         )}

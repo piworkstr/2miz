@@ -8,7 +8,8 @@ import { ageFrom, DateInput, toDateKey, type DateParts } from './DateInput';
 import { Avatar } from './Avatar';
 import { auth, db } from '../lib/firebase';
 import { GENDER_OPTIONS, type Gender } from '../lib/gender';
-import { INTERESTS } from '../lib/interests';
+import { useL } from '../lib/i18n';
+import { INTERESTS, interestLabel } from '../lib/interests';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Button, Card, ErrorText, Input, Muted, T } from './ui';
@@ -21,6 +22,7 @@ function partsOf(key?: string): DateParts {
 
 export function ProfileEditCard() {
   const t = useTheme();
+  const l = useL();
   const { user, profile, couple } = useSession();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -45,10 +47,10 @@ export function ProfileEditCard() {
   async function save() {
     if (!user || busy) return;
     const n = name.trim().slice(0, 30);
-    if (!n) return setError('Partnerinin göreceği adını yaz.');
+    if (!n) return setError(l('Partnerinin göreceği adını yaz.', 'Enter the name your partner will see.'));
     const key = toDateKey(birth);
-    if (!key) return setError('Doğum tarihini gün / ay / yıl olarak gir.');
-    if (ageFrom(key) < 18) return setError('bir iz, 18 yaş ve üzeri içindir.');
+    if (!key) return setError(l('Doğum tarihini gün / ay / yıl olarak gir.', 'Enter your birth date as day / month / year.'));
+    if (ageFrom(key) < 18) return setError(l('bir iz, 18 yaş ve üzeri içindir.', 'bir iz is for ages 18 and up.'));
     setBusy(true);
     setError('');
     try {
@@ -63,19 +65,19 @@ export function ProfileEditCard() {
       if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: n }).catch(() => {});
       setOpen(false);
     } catch {
-      setError('Kaydedilemedi, tekrar dene.');
+      setError(l('Kaydedilemedi, tekrar dene.', "Couldn't save, please try again."));
     } finally {
       setBusy(false);
     }
   }
 
   const bd = partsOf(profile.birthDate);
-  const bdText = bd.d ? `${bd.d}.${bd.m}.${bd.y}` : 'Doğum tarihi yok';
+  const bdText = bd.d ? `${bd.d}.${bd.m}.${bd.y}` : l('Doğum tarihi yok', 'No birth date');
 
   return (
     <Card style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable onPress={() => router.push('/avatar')} accessibilityLabel="Avatarını değiştir">
+        <Pressable onPress={() => router.push('/avatar')} accessibilityLabel={l('Avatarını değiştir', 'Change your avatar')}>
           <Avatar p={profile} name={profile.name} size={48} showMood={false} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -86,20 +88,38 @@ export function ProfileEditCard() {
           <Pressable onPress={start} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 }}>
             <Ionicons name="create-outline" size={18} color={t.colors.primary} />
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
-              Düzenle
+              {l('Düzenle', 'Edit')}
             </Text>
           </Pressable>
         )}
       </View>
       {open && (
         <>
-          <Muted style={{ fontSize: 12 }}>Adın</Muted>
-          <Input value={name} onChangeText={setName} maxLength={30} placeholder="Adın" autoCapitalize="words" />
-          <Muted style={{ fontSize: 12 }}>Doğum tarihin (partnerin kutlaması için)</Muted>
+          <Muted style={{ fontSize: 12 }}>{l('Adın', 'Your name')}</Muted>
+          <Input value={name} onChangeText={setName} maxLength={30} placeholder={l('Adın', 'Your name')} autoCapitalize="words" />
+          <Muted style={{ fontSize: 12 }}>
+            {l('Doğum tarihin (partnerin kutlaması için)', 'Your birth date (so your partner can celebrate)')}
+          </Muted>
           <DateInput value={birth} onChange={setBirth} />
-          <Muted style={{ fontSize: 12 }}>Telefon numaran (isteğe bağlı · yalnızca partnerin görür, oyunda “Ara” için)</Muted>
-          <Input value={phone} onChangeText={setPhone} maxLength={18} placeholder="+90 5xx xxx xx xx" keyboardType="phone-pad" />
-          <Muted style={{ fontSize: 12 }}>Cinsiyetin (isteğe bağlı · yalnızca önerileri sana göre sıralamak için)</Muted>
+          <Muted style={{ fontSize: 12 }}>
+            {l(
+              'Telefon numaran (isteğe bağlı · yalnızca partnerin görür, oyunda “Ara” için)',
+              'Your phone number (optional · only your partner sees it, for “Call” in games)',
+            )}
+          </Muted>
+          <Input
+            value={phone}
+            onChangeText={setPhone}
+            maxLength={18}
+            placeholder={l('+90 5xx xxx xx xx', '+1 555 123 4567')}
+            keyboardType="phone-pad"
+          />
+          <Muted style={{ fontSize: 12 }}>
+            {l(
+              'Cinsiyetin (isteğe bağlı · yalnızca önerileri sana göre sıralamak için)',
+              'Your gender (optional · only used to sort suggestions for you)',
+            )}
+          </Muted>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {GENDER_OPTIONS.map((o) => {
               const on = gender === o.id;
@@ -120,13 +140,18 @@ export function ProfileEditCard() {
                     maxFontSizeMultiplier={1.25}
                     style={{ color: on ? t.colors.onPrimarySoft : t.colors.text, fontWeight: on ? '700' : '400' }}
                   >
-                    {o.label}
+                    {l(o.label, o.en)}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Muted style={{ fontSize: 12 }}>Sevdiklerin (partnerin “Birbirinizi tanıyın” bölümünde görür)</Muted>
+          <Muted style={{ fontSize: 12 }}>
+            {l(
+              'Sevdiklerin (partnerin “Birbirinizi tanıyın” bölümünde görür)',
+              'Things you like (your partner sees them under “Get to know each other”)',
+            )}
+          </Muted>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {INTERESTS.map((i) => {
               const on = interests.includes(i);
@@ -144,20 +169,20 @@ export function ProfileEditCard() {
                   }}
                 >
                   <Text maxFontSizeMultiplier={1.25} style={{ color: on ? t.colors.primary : t.colors.text, fontSize: 14 }}>
-                    {i}
+                    {interestLabel(i, t.lang)}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Button style={{ flex: 1 }} label="Vazgeç" variant="secondary" onPress={() => setOpen(false)} />
-            <Button style={{ flex: 1 }} label="Kaydet" onPress={save} busy={busy} />
+            <Button style={{ flex: 1 }} label={l('Vazgeç', 'Cancel')} variant="secondary" onPress={() => setOpen(false)} />
+            <Button style={{ flex: 1 }} label={l('Kaydet', 'Save')} onPress={save} busy={busy} />
           </View>
           <ErrorText>{error}</ErrorText>
           <Pressable onPress={() => router.push('/avatar')} style={{ alignItems: 'center', padding: 4 }}>
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontSize: 13 }}>
-              Avatarını / fotoğrafını değiştir
+              {l('Avatarını / fotoğrafını değiştir', 'Change your avatar / photo')}
             </Text>
           </Pressable>
         </>

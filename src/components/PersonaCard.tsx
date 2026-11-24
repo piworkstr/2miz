@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { DEMO_COUPLE, PERSONAS, type PersonaId } from '../lib/demoPersona';
 import { db } from '../lib/firebase';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted, T } from './ui';
@@ -10,6 +11,7 @@ import { Card, Muted, T } from './ui';
 // Yalnız kurucu çiftte görünür: hesabı Mert ya da Bahar tanıtım kimliğine çevirir (ad, avatar, hitap).
 export function PersonaCard() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, profile } = useSession();
   const [busy, setBusy] = useState<PersonaId | null>(null);
   if (!user || !couple || couple.id !== DEMO_COUPLE) return null;
@@ -33,8 +35,11 @@ export function PersonaCard() {
 
   return (
     <Card style={{ gap: 8 }}>
-      <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>Tanıtım kimliği</T>
-      <Muted style={{ fontSize: 12 }}>Ekran görüntüleri için hesabını Mert ya da Bahar yap. Şu an: {profile?.name}</Muted>
+      <T style={{ fontSize: 16, fontWeight: '600', fontFamily: t.fonts.button }}>{l('Tanıtım kimliği', 'Promo identity')}</T>
+      <Muted style={{ fontSize: 12 }}>
+        {l('Ekran görüntüleri için hesabını Mert ya da Bahar yap. Şu an', 'Turn your account into Mert or Bahar for screenshots. Now')}:{' '}
+        {profile?.name}
+      </Muted>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         {(Object.keys(PERSONAS) as PersonaId[]).map((id) => {
           const p = PERSONAS[id];
@@ -58,7 +63,7 @@ export function PersonaCard() {
               }}
             >
               <Image source={{ uri: `data:image/jpeg;base64,${p.photo}` }} style={{ width: 40, height: 40, borderRadius: 20 }} />
-              <Text style={{ fontWeight: '700', color: t.colors.text }}>{busy === id ? '…' : `${p.name} ol`}</Text>
+              <Text style={{ fontWeight: '700', color: t.colors.text }}>{busy === id ? '…' : l(`${p.name} ol`, `Be ${p.name}`)}</Text>
             </Pressable>
           );
         })}

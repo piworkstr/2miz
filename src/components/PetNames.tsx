@@ -2,10 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { PET_MAX, savePetNames } from '../lib/greeting';
+import { useL } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { useTheme } from '../lib/useTheme';
 import { Card, Muted, T } from './ui';
 
+const IDEAS_EN = ['babe', 'baby', 'honey', 'sweetheart', 'love', 'darling', 'sweetie', 'angel', 'handsome', 'beautiful', 'cutie', 'my one'];
 const IDEAS = [
   'aşkım',
   'bebeğim',
@@ -24,6 +26,7 @@ const IDEAS = [
 // Birbirinize nasıl hitap ediyorsunuz? Senin yazdıkların partnerinin ana ekranındaki selamlamada çıkar.
 export function PetNames() {
   const t = useTheme();
+  const l = useL();
   const { user, profile, partnerProfile, partnerName } = useSession();
   const mine = profile?.petNames ?? [];
   const [text, setText] = useState('');
@@ -56,7 +59,7 @@ export function PetNames() {
         {label}
       </Text>
       {onRemove && (
-        <Pressable onPress={onRemove} hitSlop={8} accessibilityLabel={`${label} hitabını kaldır`}>
+        <Pressable onPress={onRemove} hitSlop={8} accessibilityLabel={l(`${label} hitabını kaldır`, `Remove ${label}`)}>
           <Ionicons name="close-circle" size={18} color={t.colors.muted} />
         </Pressable>
       )}
@@ -70,22 +73,22 @@ export function PetNames() {
         <Card style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="chatbubble-ellipses-outline" size={18} color={t.colors.primary} />
-            <T style={{ flex: 1, fontWeight: '600' }}>Hitaplarınız</T>
+            <T style={{ flex: 1, fontWeight: '600' }}>{l('Hitaplarınız', 'Pet names')}</T>
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
-              {mine.length ? 'Düzenle' : 'Ekle'}
+              {mine.length ? l('Düzenle', 'Edit') : l('Ekle', 'Add')}
             </Text>
           </View>
           <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: t.colors.text }}>
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-              Sen → {partnerName}:{' '}
+              {l('Sen', 'You')} → {partnerName}:{' '}
             </Text>
-            {mine.length ? mine.join(', ') : 'henüz yok'}
+            {mine.length ? mine.join(', ') : l('henüz yok', 'none yet')}
           </Text>
           <Text maxFontSizeMultiplier={1.25} style={{ fontSize: 14, color: t.colors.text }}>
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted }}>
-              {partnerName} → sen:{' '}
+              {partnerName} → {l('sen', 'you')}:{' '}
             </Text>
-            {partnerProfile?.petNames?.length ? partnerProfile.petNames.join(', ') : 'henüz yok'}
+            {partnerProfile?.petNames?.length ? partnerProfile.petNames.join(', ') : l('henüz yok', 'none yet')}
           </Text>
         </Card>
       </Pressable>
@@ -95,15 +98,18 @@ export function PetNames() {
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <T style={{ flex: 1, fontWeight: '600' }}>{partnerName}'e nasıl hitap edersin?</T>
+        <T style={{ flex: 1, fontWeight: '600' }}>{l(`${partnerName}'e nasıl hitap edersin?`, `What do you call ${partnerName}?`)}</T>
         <Pressable onPress={() => setEditing(false)} hitSlop={10}>
           <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '600' }}>
-            Bitti
+            {l('Bitti', 'Done')}
           </Text>
         </Pressable>
       </View>
       <Muted style={{ fontSize: 13 }}>
-        Yazdıkların {partnerName}'in ana ekranında "Günaydın aşkım" gibi selamlamada çıkar. En fazla {PET_MAX} tane.
+        {l(
+          `Yazdıkların ${partnerName}'in ana ekranında "Günaydın aşkım" gibi selamlamada çıkar. En fazla ${PET_MAX} tane.`,
+          `What you write shows up in ${partnerName}'s greeting on the home screen, like "Good morning, babe". Up to ${PET_MAX}.`,
+        )}
       </Muted>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {mine.map((n) => chip(n, () => save(mine.filter((x) => x !== n))))}
@@ -114,7 +120,7 @@ export function PetNames() {
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Örn. aşkım"
+              placeholder={l('Örn. aşkım', 'e.g. babe')}
               placeholderTextColor={t.colors.muted}
               maxLength={20}
               returnKeyType="done"
@@ -136,12 +142,13 @@ export function PetNames() {
               style={{ paddingHorizontal: 16, borderRadius: 12, backgroundColor: t.colors.primary, justifyContent: 'center' }}
             >
               <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.onPrimary, fontWeight: '600' }}>
-                Ekle
+                {l('Ekle', 'Add')}
               </Text>
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {IDEAS.filter((i) => !mine.includes(i))
+            {(t.lang === 'en' ? IDEAS_EN : IDEAS)
+              .filter((i) => !mine.includes(i))
               .slice(0, 8)
               .map((i) => (
                 <Pressable

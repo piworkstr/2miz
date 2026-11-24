@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useL } from '../lib/i18n';
 import { useTheme } from '../lib/useTheme';
 import { Muted } from './ui';
 
@@ -9,10 +10,11 @@ import { Muted } from './ui';
 // Expo Go'da (geliştirme) güncelleme sistemi kapalıdır; orada yalnızca sürüm görünür.
 export function UpdateCard() {
   const t = useTheme();
+  const l = useL();
   const [state, setState] = useState<'idle' | 'checking' | 'downloading' | 'none' | 'error'>('idle');
   const version = Constants.expoConfig?.version ?? '?';
   const build = Constants.expoConfig?.ios?.buildNumber ?? Constants.expoConfig?.android?.versionCode ?? '';
-  const upd = Updates.updateId ? Updates.updateId.slice(-6) : Updates.isEmbeddedLaunch ? 'yerleşik' : '';
+  const upd = Updates.updateId ? Updates.updateId.slice(-6) : Updates.isEmbeddedLaunch ? l('yerleşik', 'built-in') : '';
   const enabled = Updates.isEnabled && Constants.appOwnership !== 'expo';
 
   async function check() {
@@ -31,21 +33,21 @@ export function UpdateCard() {
 
   const label =
     state === 'checking'
-      ? 'Bakılıyor…'
+      ? l('Bakılıyor…', 'Checking…')
       : state === 'downloading'
-        ? 'İndiriliyor, uygulama yenilenecek…'
+        ? l('İndiriliyor, uygulama yenilenecek…', 'Downloading, the app will reload…')
         : state === 'none'
-          ? 'Güncel ✓'
+          ? l('Güncel ✓', 'Up to date ✓')
           : state === 'error'
-            ? 'Bakılamadı, interneti kontrol et'
-            : 'Güncellemeyi kontrol et';
+            ? l('Bakılamadı, interneti kontrol et', "Couldn't check, check your internet")
+            : l('Güncellemeyi kontrol et', 'Check for updates');
 
   return (
     <View style={{ alignItems: 'center', gap: 4 }}>
       <Muted style={{ fontSize: 12 }}>
         bir iz {version}
         {build ? ` (${build})` : ''}
-        {upd ? ` · güncelleme ${upd}` : ''}
+        {upd ? ` · ${l('güncelleme', 'update')} ${upd}` : ''}
         {Constants.appOwnership === 'expo' ? ' · Expo Go' : ''}
       </Muted>
       {enabled && (
