@@ -284,6 +284,26 @@ const PENS: Partial<Record<string, { sw: number; sh: number; slots: [number, num
     ],
     px: { koyun: 76, inek: 92, keci: 78 },
   },
+  inekahiri: {
+    sw: 460,
+    sh: 328,
+    slots: [
+      [112, 250],
+      [248, 240],
+      [190, 276],
+    ],
+    px: { inek: 98 },
+  },
+  keciagili: {
+    sw: 460,
+    sh: 334,
+    slots: [
+      [178, 264],
+      [302, 252],
+      [246, 284],
+    ],
+    px: { keci: 80 },
+  },
   kumes: {
     sw: 412,
     sh: 407,

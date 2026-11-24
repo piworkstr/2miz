@@ -46,7 +46,7 @@ export type CropId =
   | 'nane';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari' | 'keci';
 export type TreeId = 'elma' | 'kiraz' | 'armut' | 'zeytin' | 'avokado' | 'kakao' | 'limon' | 'hcevizi';
-export type BuildingId = 'kumes' | 'agil' | 'kovan';
+export type BuildingId = 'kumes' | 'agil' | 'kovan' | 'inekahiri' | 'keciagili';
 export type DecorId =
   | 'gulcali'
   | 'lavanta'
@@ -506,7 +506,11 @@ export const giftWait = (f: Farm, uid: string, now: number) => {
 // Tavuk/koyun/inek yemlenince üretime başlar (yem: depodan 1 buğday, yoksa 5 altın); arılar yemsiz kendi döngüsünde.
 export const BUILDINGS: Record<BuildingId, { name: string; cost: number; lvl: number; w: number; animals: AnimalId[]; cap: number }> = {
   kumes: { name: 'Kümes', cost: 120, lvl: 2, w: 1.45, animals: ['tavuk'], cap: 3 },
-  agil: { name: 'Ağıl', cost: 260, lvl: 4, w: 1.7, animals: ['koyun', 'inek', 'keci'], cap: 3 },
+  // Her hayvanın kendi evi vardır. Ağıl yalnızca koyun alır; eskiden ağıla alınmış inekler oldukları yerde kalır
+  // (yaşamaya ve süt vermeye devam eder), yeni inekler inek ahırına alınır.
+  agil: { name: 'Ağıl', cost: 260, lvl: 4, w: 1.7, animals: ['koyun'], cap: 3 },
+  inekahiri: { name: 'İnek ahırı', cost: 320, lvl: 6, w: 1.95, animals: ['inek'], cap: 3 },
+  keciagili: { name: 'Keçi ağılı', cost: 1500, lvl: 57, w: 1.95, animals: ['keci'], cap: 3 },
   kovan: { name: 'Kovanlar', cost: 400, lvl: 9, w: 1.3, animals: ['ari'], cap: 3 },
 };
 export const FEED_COINS = 5;
@@ -1760,8 +1764,12 @@ export function applyAction(
       if (t.k !== 'building') return 'Önce bina kur.';
       const b = BUILDINGS[t.item];
       const an = ANIMALS[act.item];
-      if (!b.animals.includes(act.item)) return `${an.name} burada yaşamaz.`;
-      if (t.res.length >= b.cap) return `${b.name} dolu (${b.cap} hayvan). ${an.name} için dükkândan yeni bir ${b.name.toLocaleLowerCase('tr-TR')} kur.`;
+      if (!b.animals.includes(act.item)) {
+        const home = (Object.keys(BUILDINGS) as BuildingId[]).find((k) => BUILDINGS[k].animals.includes(act.item));
+        return home ? `${an.name} burada yaşamaz; evi ${BUILDINGS[home].name}. Dükkândan kurabilirsin.` : `${an.name} burada yaşamaz.`;
+      }
+      if (t.res.length >= b.cap)
+        return `${b.name} dolu (${b.cap} hayvan). ${an.name} için dükkândan yeni bir ${b.name.toLocaleLowerCase('tr-TR')} kur.`;
       if (lv < an.lvl) return `${an.name} ${an.lvl}. seviyede açılır.`;
       if (f.coins < an.cost) return 'Yeterli altının yok.';
       f.coins -= an.cost;
