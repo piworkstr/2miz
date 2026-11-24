@@ -334,8 +334,11 @@ export function StationPop({
   const pState = pk ? stateOf(pk) : null;
   const pAt = pk ? pos[list.indexOf(pk)] : null;
   // Balonun kuyruğu çizimin alt kenarında, soldan %47'dedir: kuyruk seçili madalyonun üstüne gelir.
-  const balLeft = pAt ? Math.min(box.w - BAL_W - 8, Math.max(8, pAt.x - BAL_W / 2)) : 0;
-  const balTop = pAt ? pAt.y - M_ON / 2 - BAL_H - 2 : 0;
+  // Kart hep yayın tamamının üstünde, ortada durur: seçili ürün yanlarda olsa bile komşu ürünlerin üstünü kapatmaz.
+  // Hangi ürünün seçili olduğunu yeşil halka ve büyüyen daire gösterir.
+  const arcTop = Math.min(...pos.map((q) => q.y)) - M_ON / 2;
+  const balLeft = Math.min(box.w - BAL_W - 8, Math.max(8, cx - BAL_W / 2));
+  const balTop = Math.max(top, arcTop - BAL_H + 4);
   const needs = pr ? Object.entries(pr.needs) : [];
   const hint =
     pState === 'locked'
@@ -400,17 +403,6 @@ export function StationPop({
       {/* Seçili ürünün kartı: ad + süre, malzemeler, tek satır yönerge. Altındaki küçük ok seçili ürünü gösterir. */}
       {pr && pk && pAt && !drag && (
         <View pointerEvents="none" style={{ position: 'absolute', left: balLeft, top: balTop, width: BAL_W, height: BAL_H }}>
-          <View
-            style={{
-              position: 'absolute',
-              left: Math.min(BAL_W - 30, Math.max(14, pAt.x - balLeft - 8)),
-              bottom: 6,
-              width: 16,
-              height: 16,
-              backgroundColor: '#FFFAF0',
-              transform: [{ rotate: '45deg' }],
-            }}
-          />
           <View
             style={{
               height: BAL_H - 14,
