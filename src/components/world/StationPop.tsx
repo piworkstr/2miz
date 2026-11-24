@@ -247,7 +247,7 @@ export function StationPop({
     .sort((a, b) => RECIPES[a].lvl - RECIPES[b].lvl || RECIPES[a].sell - RECIPES[b].sell || a.localeCompare(b))
     // Açılmış tarifler ve sıradaki tek kilitli tarif (ne geleceği görünsün).
     .filter((id, _k, all) => RECIPES[id].lvl <= level || all.filter((q) => RECIPES[q].lvl > level).indexOf(id) < 1)
-    .slice(0, 6);
+    .slice(0, 9);
   const stateOf = (id: RecipeId): St =>
     level < RECIPES[id].lvl ? 'locked' : full ? 'full' : hasAll(farm, RECIPES[id].needs) ? 'ok' : 'missing';
 
@@ -270,17 +270,26 @@ export function StationPop({
   const M = n >= 6 ? 62 : n === 5 ? 70 : M_BIG;
   const M_ON = n >= 6 ? 72 : n === 5 ? 80 : M_ON_BIG;
   // Yay atölyenin hemen üstünü sarar: yarıçap atölyenin yarı boyundan biraz büyüktür; ürün çoksa yay genişler.
-  const R = Math.max(R_MIN, mh * 0.5 + M_ON * 0.62) + (n > 4 ? 22 : 0);
-  const STEP = Math.min(44, (Math.asin(Math.min(1, (M + 12) / 2 / R)) * 2 * 180) / Math.PI + 2);
-  const tot = (n - 1) * STEP;
-  const half = R * Math.sin((Math.min(180, tot) / 2) * (Math.PI / 180)) + M_ON / 2 + 6;
+  // Altıdan fazla ürün tek yaya sığmaz: ilk açılanlar içteki yayda, sonradan açılanlar dıştaki yayda durur.
+  const two = n > 6;
+  const nIn = two ? Math.floor(n / 2) : n;
+  const R = Math.max(R_MIN, mh * 0.5 + M_ON * 0.62) + (n > 4 && !two ? 22 : 0);
+  const R2 = R + M + 16;
+  const stepOf = (r: number) => Math.min(44, (Math.asin(Math.min(1, (M + 12) / 2 / r)) * 2 * 180) / Math.PI + 2);
+  const halfOf = (r: number, cnt: number) => r * Math.sin((Math.min(180, (cnt - 1) * stepOf(r)) / 2) * (Math.PI / 180)) + M_ON / 2 + 6;
+  const half = Math.max(halfOf(R, nIn), two ? halfOf(R2, n - nIn) : 0);
+  const RT = two ? R2 : R;
   const BAL_W = 230;
   const BAL_H = 112;
   const cx = Math.min(box.w - half, Math.max(half, mcx));
-  const cy = Math.min(box.h - bottom - mh / 2 - 170, Math.max(top + BAL_H + R + M_ON / 2 - 8, mcy));
+  const cy = Math.min(box.h - bottom - mh / 2 - 170, Math.max(top + BAL_H + RT + M_ON / 2 - 8, mcy));
   const pos = list.map((_id, k) => {
-    const a = (-90 - tot / 2 + k * STEP) * (Math.PI / 180);
-    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+    const inner = k < nIn;
+    const r = inner ? R : R2;
+    const cnt = inner ? nIn : n - nIn;
+    const st2 = stepOf(r);
+    const a = (-90 - ((cnt - 1) * st2) / 2 + (inner ? k : k - nIn) * st2) * (Math.PI / 180);
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
   });
   const RIB_W = 180;
   const RIB_H = 38;

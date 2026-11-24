@@ -43,9 +43,12 @@ export type CropId =
   | 'sekerkamisi'
   | 'yulaf'
   | 'kahve'
-  | 'nane';
+  | 'nane'
+  | 'lale'
+  | 'lavanta'
+  | 'vanilya';
 export type AnimalId = 'tavuk' | 'koyun' | 'inek' | 'ari' | 'keci';
-export type TreeId = 'elma' | 'kiraz' | 'armut' | 'zeytin' | 'avokado' | 'kakao' | 'limon' | 'hcevizi';
+export type TreeId = 'elma' | 'kiraz' | 'armut' | 'zeytin' | 'avokado' | 'kakao' | 'limon' | 'hcevizi' | 'findik';
 export type BuildingId = 'kumes' | 'agil' | 'kovan' | 'inekahiri' | 'keciagili';
 export type DecorId =
   | 'gulcali'
@@ -73,6 +76,7 @@ export type DecorId =
   | 'kahveci'
   | 'dondurmaci'
   | 'sekerci'
+  | 'cicekci'
   | 'mandira'
   | 'atolye'
   | 'konserve'
@@ -122,6 +126,10 @@ export const CROPS: Record<CropId, { name: string; cost: number; mins: number; s
   yulaf: { name: 'Yulaf', cost: 95, mins: 300, sell: 290, xp: 72, lvl: 46 },
   kahve: { name: 'Kahve', cost: 110, mins: 420, sell: 360, xp: 90, lvl: 48 },
   nane: { name: 'Nane', cost: 100, mins: 240, sell: 300, xp: 70, lvl: 55 },
+  // 61–78. seviye: çiçekçinin çiçekleri ve vanilya
+  lale: { name: 'Lale', cost: 120, mins: 300, sell: 380, xp: 95, lvl: 61 },
+  lavanta: { name: 'Lavanta', cost: 130, mins: 360, sell: 410, xp: 100, lvl: 64 },
+  vanilya: { name: 'Vanilya', cost: 160, mins: 480, sell: 500, xp: 120, lvl: 74 },
 };
 
 // Hayvanlar çayıra (çimene) konur, tarlaya değil. Her hayvan gerçekte verdiği ürünleri verir:
@@ -208,7 +216,32 @@ export type RecipeId =
   | 'cikolatadondurma'
   | 'limonsorbe'
   | 'karamel'
-  | 'pamukseker';
+  | 'pamukseker'
+  | 'havuckek'
+  | 'elmarecel'
+  | 'yastik'
+  | 'patkizartma'
+  | 'battaniye'
+  | 'misiryagi'
+  | 'kabakturta'
+  | 'karisiksu'
+  | 'meyveturta'
+  | 'kabakyagi'
+  | 'kavunrecel'
+  | 'lalebuketi'
+  | 'gulbuketi'
+  | 'lavantademeti'
+  | 'karisikbuket'
+  | 'cicektaci'
+  | 'patlamismisir'
+  | 'findikkremasi'
+  | 'findikcikolata'
+  | 'sicakcikolata'
+  | 'vazobuket'
+  | 'vanilyadondurma'
+  | 'beyazcikolata'
+  | 'makaron'
+  | 'lolipop';
 // Üretim yeri: hepsi dükkândan alınıp çiftliğe konan atölyelerdir. 'mutfak' yalnızca eski kayıtlardaki yarım işler için durur.
 export type Station =
   | 'mutfak'
@@ -224,7 +257,8 @@ export type Station =
   | 'cikolataci'
   | 'kahveci'
   | 'dondurmaci'
-  | 'sekerci';
+  | 'sekerci'
+  | 'cicekci';
 export const RECIPES: Record<
   RecipeId,
   {
@@ -304,14 +338,14 @@ export const RECIPES: Record<
     mins: 90,
     at: 'tatli',
   },
-  // 35. seviye: ileri ürünler (uzun tarif zincirleri)
+  // 34. seviye: ileri ürünler (uzun tarif zincirleri)
   yaspasta: {
     name: 'Yaş pasta',
     emoji: '🎂',
     needs: { kek: 2, cilek: 3, honey: 1, tereyagi: 1 },
     sell: 850,
     xp: 40,
-    lvl: 35,
+    lvl: 34,
     mins: 180,
     at: 'tatli',
   },
@@ -332,6 +366,167 @@ export const RECIPES: Record<
   // Şeker, şeker fabrikasında yapılır (reçel atölyesi yalnız reçel ve marmelat yapar).
   seker: { name: 'Şeker', emoji: '🧊', needs: { sekerkamisi: 2 }, sell: 780, xp: 34, lvl: 39, mins: 60, at: 'sekerci' },
   karamel: { name: 'Karamel', emoji: '🍮', needs: { seker: 1, tereyagi: 1 }, sell: 1120, xp: 44, lvl: 43, mins: 60, at: 'sekerci' },
+  // 16–34 arası boş seviyeleri dolduran ürünler ve 61–78. seviyeler
+  havuckek: {
+    name: 'Havuçlu kek',
+    emoji: '🥕',
+    needs: { bugdayunu: 1, havuc: 3, egg: 2 },
+    sell: 130,
+    xp: 17,
+    lvl: 16,
+    mins: 75,
+    at: 'firin',
+  },
+  elmarecel: { name: 'Elma reçeli', emoji: '🍎', needs: { elma: 6 }, sell: 240, xp: 19, lvl: 18, mins: 120, at: 'konserve' },
+  yastik: { name: 'Yastık', emoji: '🛏️', needs: { kumas: 1, pamuk: 2 }, sell: 1140, xp: 25, lvl: 20, mins: 120, at: 'atolye' },
+  patkizartma: {
+    name: 'Patates kızartması',
+    emoji: '🍟',
+    needs: { patates: 3, aycicekyagi: 1 },
+    sell: 1130,
+    xp: 26,
+    lvl: 22,
+    mins: 60,
+    at: 'asci',
+  },
+  battaniye: { name: 'Battaniye', emoji: '🧶', needs: { wool: 4, kumas: 1 }, sell: 920, xp: 27, lvl: 26, mins: 180, at: 'atolye' },
+  misiryagi: { name: 'Mısır yağı', emoji: '🌽', needs: { misir: 6 }, sell: 430, xp: 24, lvl: 27, mins: 90, at: 'yag' },
+  kabakturta: {
+    name: 'Balkabaklı turta',
+    emoji: '🥧',
+    needs: { kabak: 2, bugdayunu: 1, egg: 2 },
+    sell: 480,
+    xp: 26,
+    lvl: 29,
+    mins: 120,
+    at: 'tatli',
+  },
+  karisiksu: {
+    name: 'Karışık meyve suyu',
+    emoji: '🧃',
+    needs: { elma: 3, kiraz: 3, armut: 3 },
+    sell: 530,
+    xp: 26,
+    lvl: 30,
+    mins: 60,
+    at: 'meyvesuyu',
+  },
+  meyveturta: {
+    name: 'Meyveli turta',
+    emoji: '🥧',
+    needs: { bugdayunu: 1, kiraz: 4, tereyagi: 1 },
+    sell: 370,
+    xp: 26,
+    lvl: 31,
+    mins: 120,
+    at: 'tatli',
+  },
+  kabakyagi: { name: 'Kabak çekirdeği yağı', emoji: '🎃', needs: { kabak: 3 }, sell: 610, xp: 28, lvl: 32, mins: 120, at: 'yag' },
+  kavunrecel: { name: 'Kavun reçeli', emoji: '🍈', needs: { kavun: 3 }, sell: 950, xp: 30, lvl: 33, mins: 150, at: 'konserve' },
+  lalebuketi: { name: 'Lale buketi', emoji: '🌷', needs: { lale: 3 }, sell: 1500, xp: 48, lvl: 62, mins: 45, at: 'cicekci' },
+  gulbuketi: { name: 'Gül buketi', emoji: '🌹', needs: { gul: 5 }, sell: 730, xp: 44, lvl: 63, mins: 45, at: 'cicekci' },
+  lavantademeti: { name: 'Lavanta demeti', emoji: '💜', needs: { lavanta: 3 }, sell: 1620, xp: 51, lvl: 65, mins: 45, at: 'cicekci' },
+  karisikbuket: {
+    name: 'Karışık buket',
+    emoji: '💐',
+    needs: { gul: 2, lale: 2, aycicegi: 2 },
+    sell: 1600,
+    xp: 51,
+    lvl: 66,
+    mins: 60,
+    at: 'cicekci',
+  },
+  cicektaci: {
+    name: 'Çiçek tacı',
+    emoji: '🌸',
+    needs: { gul: 2, lavanta: 2, lale: 1 },
+    sell: 1870,
+    xp: 53,
+    lvl: 67,
+    mins: 90,
+    at: 'cicekci',
+  },
+  patlamismisir: {
+    name: 'Patlamış mısır',
+    emoji: '🍿',
+    needs: { misir: 3, tereyagi: 1 },
+    sell: 320,
+    xp: 44,
+    lvl: 68,
+    mins: 30,
+    at: 'asci',
+  },
+  findikkremasi: {
+    name: 'Fındık kreması',
+    emoji: '🌰',
+    needs: { findik: 3, kakao: 2, seker: 1 },
+    sell: 2530,
+    xp: 59,
+    lvl: 70,
+    mins: 120,
+    at: 'cikolataci',
+  },
+  findikcikolata: {
+    name: 'Fındıklı çikolata',
+    emoji: '🍫',
+    needs: { sutlucikolata: 1, findik: 3 },
+    sell: 3470,
+    xp: 65,
+    lvl: 71,
+    mins: 90,
+    at: 'cikolataci',
+  },
+  sicakcikolata: {
+    name: 'Sıcak çikolata',
+    emoji: '☕',
+    needs: { sutlucikolata: 1, milk: 2, krema: 1 },
+    sell: 2890,
+    xp: 62,
+    lvl: 72,
+    mins: 45,
+    at: 'kahveci',
+  },
+  vazobuket: {
+    name: 'Vazoda buket',
+    emoji: '💐',
+    needs: { karisikbuket: 1, lavantademeti: 1 },
+    sell: 4250,
+    xp: 71,
+    lvl: 73,
+    mins: 60,
+    at: 'cicekci',
+  },
+  vanilyadondurma: {
+    name: 'Vanilyalı dondurma',
+    emoji: '🍨',
+    needs: { krema: 1, seker: 1, vanilya: 2 },
+    sell: 2680,
+    xp: 62,
+    lvl: 75,
+    mins: 120,
+    at: 'dondurmaci',
+  },
+  beyazcikolata: {
+    name: 'Beyaz çikolata',
+    emoji: '🍫',
+    needs: { kakao: 2, seker: 1, milk: 2, vanilya: 1 },
+    sell: 2280,
+    xp: 60,
+    lvl: 76,
+    mins: 150,
+    at: 'cikolataci',
+  },
+  makaron: {
+    name: 'Makaron',
+    emoji: '🍬',
+    needs: { egg: 3, seker: 1, vanilya: 1, findik: 2 },
+    sell: 2440,
+    xp: 62,
+    lvl: 77,
+    mins: 150,
+    at: 'tatli',
+  },
+  lolipop: { name: 'Lolipop', emoji: '🍭', needs: { seker: 2 }, sell: 2060, xp: 60, lvl: 78, mins: 45, at: 'sekerci' },
   pamukseker: { name: 'Pamuk şeker', emoji: '🍭', needs: { seker: 1 }, sell: 1020, xp: 40, lvl: 47, mins: 30, at: 'sekerci' },
   armutrecel: { name: 'Armut reçeli', emoji: '🍐', needs: { armut: 4, seker: 1 }, sell: 1350, xp: 46, lvl: 40, mins: 150, at: 'konserve' },
   krema: { name: 'Krema', emoji: '🥛', needs: { milk: 2, tereyagi: 1 }, sell: 250, xp: 26, lvl: 41, mins: 45, at: 'mandira' },
@@ -453,6 +648,7 @@ export const STATIONS: Record<Station, { name: string; slot: string; from: strin
   kahveci: { name: 'Kahve dükkânı', slot: 'demlik', from: 'kahve dükkânından', inn: 'kahve dükkânında' },
   dondurmaci: { name: 'Dondurmacı', slot: 'kazan', from: 'dondurmacıdan', inn: 'dondurmacıda' },
   sekerci: { name: 'Şeker fabrikası', slot: 'kazan', from: 'şeker fabrikasından', inn: 'şeker fabrikasında' },
+  cicekci: { name: 'Çiçekçi', slot: 'tezgâh', from: 'çiçekçiden', inn: 'çiçekçide' },
 };
 // Tarifin yapıldığı yer. alt'ı olan tarif (reçel, turşu) o atölye çiftlikteyse orada, değilse mutfakta yapılır.
 export const stationOf = (r: RecipeId, f?: Farm): Station => {
@@ -567,6 +763,7 @@ export const TREES: Record<
     lvl: 59,
     w: 1.25,
   },
+  findik: { name: 'Fındık ağacı', fruit: 'Fındık', cost: 3200, first: 420, mins: 360, yieldN: 3, sell: 260, xp: 34, lvl: 69, w: 1.2 },
 };
 
 export const DECOR: Record<
@@ -723,6 +920,16 @@ export const DECOR: Record<
     lvl: 44,
     w: 1.6,
     perk: 'Kakaodan sütlü ve çilekli çikolata, sevgili kutusu hazırlar',
+    station: true,
+  },
+  cicekci: {
+    name: 'Çiçekçi',
+    sp: 'cicekci',
+    cost: 6000,
+    xp: 60,
+    lvl: 62,
+    w: 1.6,
+    perk: 'Lale, gül ve lavantadan buket, çiçek tacı ve vazoda buket hazırlar',
     station: true,
   },
   sekerci: {
