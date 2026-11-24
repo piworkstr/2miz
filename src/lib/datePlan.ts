@@ -32,6 +32,45 @@ type Act = {
   eve?: true; // akşam işi: yarım günde (14:00-18:00) çıkmaz
   warm?: true; // sıcak hava işi: kasım-mart arasında çıkmaz
 };
+// Yaşa göre uygunluk: [en az, en çok]. Çiftin yaş ortalaması aralığın dışındaysa o etkinlik geri plana düşer
+// (tamamen yasaklanmaz; seçenek azsa yine çıkabilir). Listede olmayan etkinlik her yaşa uygundur.
+const AGE: Record<string, [number, number]> = {
+  milkshake: [0, 30],
+  atari: [0, 32],
+  trambolin: [0, 32],
+  fotoavi: [0, 35],
+  cesaret: [0, 35],
+  vitrin: [0, 35],
+  dans: [0, 40],
+  scooter: [0, 38],
+  paten: [0, 38],
+  karaoke: [0, 42],
+  lazer: [0, 40],
+  kacis: [0, 45],
+  macerapark: [0, 42],
+  tirmanis: [0, 42],
+  gokart: [0, 45],
+  atv: [0, 48],
+  durum: [0, 40],
+  spa: [26, 99],
+  sikyemek: [24, 99],
+  sahaf: [27, 99],
+  corba: [27, 99],
+  pazar: [27, 99],
+  cay: [24, 99],
+  yemekkursu: [24, 99],
+};
+const ageOff = (id: string, age?: number) => {
+  const g = AGE[id];
+  return age && g ? age < g[0] || age > g[1] : false;
+};
+// Doğum tarihlerinden çiftin yaş ortalaması (biri girilmemişse diğeri; ikisi de yoksa undefined).
+export function coupleAge(births: (string | undefined | null)[], now: number = Date.now()): number | undefined {
+  const ages = births
+    .map((b) => (b && /^\d{4}-\d{2}-\d{2}$/.test(b) ? (now - new Date(`${b}T00:00:00`).getTime()) / (365.25 * 86400000) : NaN))
+    .filter((a) => a > 10 && a < 100);
+  return ages.length ? Math.round(ages.reduce((x, y) => x + y, 0) / ages.length) : undefined;
+}
 const R: DateType = 'romantik';
 const E: DateType = 'eglenceli';
 const M: DateType = 'macera';
@@ -209,7 +248,11 @@ let cold = isCold(Date.now());
 const fits = (a: Act, type: DateType, dur: DateDur) =>
   a.types.includes(type) && (dur !== 'short' || !a.long) && (dur === 'full' || !a.morn) && (dur !== 'half' || !a.eve) && !(cold && a.warm);
 
-export function makePlan(type: DateType, dur: DateDur, budget: number, seed: number, now: number = Date.now()): Plan {
+// avoid: az önce gösterilen planların adımları ("Başka plan oluştur" gerçekten başka plan versin diye geri plana itilir).
+// age: çiftin yaş ortalaması; yaşa uymayan etkinlikler geri plana düşer.
+export type PlanOpts = { avoid?: string[]; age?: number };
+export function makePlan(type: DateType, dur: DateDur, budget: number, seed: number, now: number = Date.now(), opts: PlanOpts = {}): Plan {
+  const avoid = new Set(opts.avoid ?? []);
   cold = isCold(now);
   const r = rng(seed);
   const D = DATE_DURS[dur];
@@ -227,7 +270,12 @@ export function makePlan(type: DateType, dur: DateDur, budget: number, seed: num
     const cands = pool.filter((a) => !used.has(a.id) && ok(a) && a.cost <= money);
     const share = Math.max(20, mins / Math.max(1, left));
     const target = money * moneyShare;
-    const score = (a: Act) => Math.abs(a.mins - share) / share + (0.6 * Math.abs(a.cost - target)) / Math.max(target, 150) + r() * 0.6;
+    const score = (a: Act) =>
+      Math.abs(a.mins - share) / share +
+      (0.6 * Math.abs(a.cost - target)) / Math.max(target, 150) +
+      r() * 0.6 +
+      (avoid.has(a.id) ? 6 : 0) +
+      (ageOff(a.id, opts.age) ? 2.5 : 0);
     const a = cands.map((x) => [score(x), x] as const).sort((x, y) => x[0] - y[0])[0]?.[1] ?? null;
     if (a) {
       used.add(a.id);
@@ -258,7 +306,7 @@ export function makePlan(type: DateType, dur: DateDur, budget: number, seed: num
 }
 
 // Tek adımı değiştir: aynı yerde durabilecek, bütçeye sığan başka bir etkinlik. Yoksa plan aynen döner.
-export function swapStep(plan: Plan, index: number, seed: number): Plan {
+export function swapStep(plan: Plan, index: number, seed: number, age?: number): Plan {
   const cur = plan.steps[index];
   const src = POOL.find((a) => a.id === cur.id);
   if (!src) return plan;
@@ -266,13 +314,16 @@ export function swapStep(plan: Plan, index: number, seed: number): Plan {
   const used = new Set(plan.steps.map((s) => s.id));
   const room = plan.budget - (plan.total - cur.c);
   const slot: Slot = index === 0 ? 'start' : index === plan.steps.length - 1 ? 'end' : 'mid';
-  const cands = shuffle(
+  const all = shuffle(
     POOL.filter(
       (a) =>
         !used.has(a.id) && fits(a, plan.type, plan.dur) && a.cost <= room && a.kind === src.kind && (a.kind ? true : a.slot.includes(slot)),
     ),
     r,
   );
+  // Yaşa uyanlar varsa yalnız onlar.
+  const fitAge = all.filter((a) => !ageOff(a.id, age));
+  const cands = fitAge.length ? fitAge : all;
   // Süresi yakın olan öne.
   const next = cands.sort((x, y) => Math.abs(x.mins - cur.m) - Math.abs(y.mins - cur.m)).slice(0, 4)[
     Math.floor(r() * Math.min(4, cands.length))

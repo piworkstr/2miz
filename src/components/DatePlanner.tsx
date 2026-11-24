@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useMemo, useState, type ComponentProps } from 'react';
+import { useMemo, useRef, useState, type ComponentProps } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { prettyDate } from '../lib/date';
 import {
   BUDGETS,
   clock,
+  coupleAge,
   costLabel,
   DATE_DURS,
   DATE_TYPES,
@@ -34,7 +35,7 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 // mevcut date önerisine dönüşür (partner onaylar) ve date günü adımlar işaretlenir.
 export function DatePlanner() {
   const t = useTheme();
-  const { user, couple, partnerName, partnerId, profile } = useSession();
+  const { user, couple, partnerName, partnerId, profile, partnerProfile } = useSession();
   const all = usePartners();
   // Kampanyalar: çiftin şehrindeki mekanlar önce; şehir seçilmemişse hepsi.
   const partners = sameCity(all ?? [], couple?.city);
@@ -49,6 +50,9 @@ export function DatePlanner() {
   const [error, setError] = useState('');
   const [added, setAdded] = useState('');
   const days = useMemo(() => nextDays(14), []);
+  // Son gösterilen planların adımları: "Başka plan oluştur" aynı adımları yeniden getirmesin.
+  const seen = useRef<string[][]>([]);
+  const age = coupleAge([profile?.birthDate, partnerProfile?.birthDate]);
   if (!user || !couple) return null;
 
   const money = custom !== null ? parseInt(custom, 10) || 0 : budget;
@@ -57,7 +61,9 @@ export function DatePlanner() {
     setAdded('');
     if (money < 100) return setError('Bütçe en az 100 TL olmalı.');
     setPicking(false);
-    setPlan(makePlan(type, dur, Math.min(money, 100000), Date.now() % 2147483647));
+    const next = makePlan(type, dur, Math.min(money, 100000), Date.now() % 2147483647, Date.now(), { avoid: seen.current.flat(), age });
+    seen.current = [...seen.current, next.steps.map((s) => s.id)].slice(-2);
+    setPlan(next);
   };
   const chip = (key: string, label: string, on: boolean, onPress: () => void, icon?: IconName) => (
     <Pressable
@@ -146,7 +152,7 @@ export function DatePlanner() {
             start={plan.start}
             seed={plan.seed}
             partners={partners}
-            onSwap={(i) => setPlan(swapStep(plan, i, Date.now() % 2147483647))}
+            onSwap={(i) => setPlan(swapStep(plan, i, Date.now() % 2147483647, age))}
           />
           <Muted style={{ fontSize: 12 }}>Tutarlar iki kişi için yaklaşık değerdir; saatler öneridir.</Muted>
           {added ? (
