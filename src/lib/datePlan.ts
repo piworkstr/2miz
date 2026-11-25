@@ -52,6 +52,13 @@ const AGE: Record<string, [number, number]> = {
   gokart: [0, 45],
   atv: [0, 48],
   durum: [0, 40],
+  ziplama: [0, 38],
+  basket: [0, 40],
+  yuksekip: [0, 42],
+  burger: [0, 40],
+  aksan: [0, 40],
+  meze: [25, 99],
+  okey: [25, 99],
   lunapark: [0, 40],
   filmafisi: [0, 38],
   vr: [0, 42],
@@ -290,6 +297,110 @@ const POOL: Act[] = [
   { id: 'geceyuruyus', name: 'Eve en uzun yoldan yürüyerek dönmek', mins: 40, cost: 0, types: [M, S], slot: ['end'] },
   { id: 'sokaklezzet', name: 'Sokak lezzetiyle kapanış', mins: 35, cost: 350, types: [M, E], slot: ['end'] },
   { id: 'zirvecay', name: 'Manzara karşısında termos çayı', mins: 30, cost: 50, types: [M, R], slot: ['end'] },
+  { id: 'bisikletkahve', name: 'Bisikletle bir kahveciye gitmek', mins: 50, cost: 350, types: [M, E], slot: ['start'], cat: 'kafe' },
+  { id: 'smoothie', name: 'Taze sıkılmış meyve suyu içmek', mins: 25, cost: 250, types: [E, S, M], slot: ['start', 'mid'] },
+  { id: 'borek', name: 'Börekçide sıcak börek ve çay', mins: 35, cost: 300, types: [S, E, R], slot: ['start'] },
+  {
+    id: 'brunch',
+    name: 'Geç kahvaltı: serpme yerine tek tabak brunch',
+    mins: 70,
+    cost: 800,
+    types: [R, E],
+    slot: ['start'],
+    cat: 'restoran',
+    long: true,
+    morn: true,
+  },
+  { id: 'otobuscam', name: 'Otobüsün en arka koltuğunda şehir turu', mins: 40, cost: 50, types: [M, S], slot: ['start', 'mid'] },
+  { id: 'cicekpazari', name: 'Çiçek pazarını gezmek', mins: 35, cost: 0, types: [R, S], slot: ['start', 'mid'] },
+  {
+    id: 'planetaryum',
+    name: 'Planetaryum ya da bilim merkezi gezmek',
+    mins: 75,
+    cost: 400,
+    types: [S, E, M],
+    slot: ['mid'],
+    cat: 'eglence',
+  },
+  { id: 'hayvanat', name: 'Hayvanat bahçesi ya da doğa parkı gezmek', mins: 100, cost: 500, types: [E, S], slot: ['mid'], long: true },
+  { id: 'galeri', name: 'Küçük bir sanat galerisinde favori eserinizi seçmek', mins: 40, cost: 0, types: [S, R], slot: ['mid'] },
+  { id: 'tarihiyer', name: 'Şehrin tarihi bir yerini rehbersiz gezmek', mins: 60, cost: 150, types: [S, M, R], slot: ['mid'] },
+  { id: 'kedi', name: 'Kedi kafesinde vakit geçirmek', mins: 45, cost: 350, types: [S, E], slot: ['mid'], cat: 'kafe' },
+  { id: 'barinak', name: 'Barınakta hayvanları sevip mama bırakmak', mins: 60, cost: 200, types: [S, R, M], slot: ['mid'] },
+  { id: 'bitki', name: 'Birlikte bir saksı bitkisi seçip ad koymak', mins: 30, cost: 250, types: [S, R], slot: ['mid'] },
+  { id: 'parfum', name: 'Parfümeride birbirinize koku seçmek', mins: 30, cost: 0, types: [R, E], slot: ['mid'] },
+  { id: 'kurabiye', name: 'Evde birlikte kurabiye yapmak', mins: 75, cost: 200, types: [S, R, E], slot: ['mid'] },
+  { id: 'resim', name: 'Aynı manzarayı ayrı ayrı çizip karşılaştırmak', mins: 45, cost: 100, types: [S, E, R], slot: ['mid'] },
+  { id: 'polaroid', name: 'Günün her durağında tek kare çekip albüm yapmak', mins: 20, cost: 0, types: [R, E], slot: ['mid'] },
+  { id: 'zamankapsulu', name: 'Küçük bir zaman kapsülü hazırlamak', mins: 40, cost: 50, types: [R, S], slot: ['mid'] },
+  { id: 'sarkisoz', name: 'Birbirinize bir şarkı adamak ve nedenini anlatmak', mins: 20, cost: 0, types: [R], slot: ['mid'] },
+  { id: 'ilkler', name: 'İlişkinizin ilklerini sırayla hatırlamak', mins: 25, cost: 0, types: [R, S], slot: ['mid'] },
+  { id: 'yabanci', name: 'Bir saat boyunca turist gibi davranmak', mins: 60, cost: 0, types: [E, M], slot: ['mid'] },
+  {
+    id: 'aksan',
+    name: 'Kafede sipariş verirken rol yapmak: yeni tanışmış gibi',
+    mins: 45,
+    cost: 300,
+    types: [E, R],
+    slot: ['mid'],
+    cat: 'kafe',
+  },
+  { id: 'pingpong', name: 'Parkta badminton ya da frizbi', mins: 40, cost: 100, types: [E, M], slot: ['mid'] },
+  { id: 'basket', name: 'Sahada bire bir basketbol ya da penaltı atışı', mins: 40, cost: 0, types: [E, M], slot: ['mid'] },
+  { id: 'dansdersi', name: 'Bir dans dersi denemek', mins: 60, cost: 700, types: [E, R], slot: ['mid'], cat: 'eglence' },
+  { id: 'okey', name: 'Kıraathanede okey ya da tavla turnuvası', mins: 60, cost: 150, types: [E, S], slot: ['mid'] },
+  { id: 'legoyap', name: 'Oyuncakçıdan küçük bir set alıp birlikte yapmak', mins: 60, cost: 500, types: [E, S], slot: ['mid'] },
+  {
+    id: 'yuksekip',
+    name: 'Zipline ya da salıncak gibi bir adrenalin denemesi',
+    mins: 45,
+    cost: 900,
+    types: [M],
+    slot: ['mid'],
+    cat: 'eglence',
+  },
+  { id: 'yuzme', name: 'Kapalı havuzda yüzmek', mins: 75, cost: 600, types: [M, E], slot: ['mid'] },
+  { id: 'yoga', name: 'Birlikte yoga ya da esneme dersi', mins: 60, cost: 500, types: [S, M], slot: ['mid'] },
+  { id: 'koyyolu', name: 'Şehir dışında bir köy kahvesinde çay içmek', mins: 120, cost: 300, types: [M, S], slot: ['mid'], long: true },
+  { id: 'orman', name: 'Ormanda sessiz bir yürüyüş ve termos molası', mins: 90, cost: 50, types: [M, S], slot: ['mid'], long: true },
+  { id: 'fener', name: 'Bir fenere ya da iskelenin ucuna kadar yürümek', mins: 45, cost: 0, types: [M, R], slot: ['mid'] },
+  { id: 'carsi', name: 'Kapalı çarşıda pazarlık yarışı', mins: 45, cost: 200, types: [M, E], slot: ['mid'] },
+  { id: 'yerelotobus', name: 'Bir hatta son durağa kadar gidip dönmek', mins: 80, cost: 100, types: [M], slot: ['mid'], long: true },
+  { id: 'ucurum', name: 'Şehrin en iyi gün batımı noktasını aramak', mins: 50, cost: 0, types: [M, R], slot: ['mid'] },
+  { id: 'soruzar', name: 'Zar atın: çıkan sayı kadar soru sorun', mins: 25, cost: 0, types: [E, M], slot: ['mid'], kind: 'question' },
+  { id: 'sorumasa', name: 'Yemek beklerken 5 soru', mins: 25, cost: 0, types: [R, S, E], slot: ['mid'], kind: 'question' },
+  { id: 'aynakare', name: 'Aynada ya da vitrinde yansımanızı çekmek', mins: 15, cost: 0, types: [R, S, E], slot: ['mid'], kind: 'photo' },
+  { id: 'elele', name: 'El ele bir kare: sadece elleriniz', mins: 10, cost: 0, types: [R, S], slot: ['mid'], kind: 'photo' },
+  { id: 'ziplama', name: 'Aynı anda zıplayıp havada fotoğraf', mins: 15, cost: 0, types: [E, M], slot: ['mid'], kind: 'photo' },
+  {
+    id: 'yabancicektir',
+    name: 'Bir yabancıdan fotoğrafınızı çekmesini istemek',
+    mins: 10,
+    cost: 0,
+    types: [M, E, R],
+    slot: ['mid'],
+    kind: 'photo',
+  },
+  {
+    id: 'meze',
+    name: 'Meze ve ara sıcaklarla uzun bir sofra',
+    mins: 100,
+    cost: 1500,
+    types: [R, S],
+    slot: ['end'],
+    cat: 'restoran',
+    eve: true,
+  },
+  { id: 'ramen', name: 'Ramen ya da noodle denemek', mins: 60, cost: 800, types: [E, M], slot: ['end'], cat: 'restoran' },
+  { id: 'burger', name: 'Burger yiyip günün en komik anını seçmek', mins: 50, cost: 700, types: [E], slot: ['end'], cat: 'restoran' },
+  { id: 'kumpir', name: 'Kumpir ya da waffle ile sahilde kapanış', mins: 40, cost: 400, types: [E, R, M], slot: ['end'] },
+  { id: 'evmakarna', name: 'Evde birlikte makarna yapıp mum yakmak', mins: 80, cost: 300, types: [R, S], slot: ['end'] },
+  { id: 'filmsec', name: 'Birbirinizin en sevdiği filmi izlemek', mins: 120, cost: 100, types: [S, R, E], slot: ['end'], eve: true },
+  { id: 'acikhava', name: 'Açık hava sineması ya da konseri', mins: 120, cost: 600, types: [R, E], slot: ['end'], eve: true, warm: true },
+  { id: 'nargile', name: 'Bir kafede oyun oynayıp sohbet etmek', mins: 60, cost: 400, types: [E, S], slot: ['end'], cat: 'kafe' },
+  { id: 'ruzgar', name: 'Sahilde ya da tepede sessizce oturmak', mins: 30, cost: 0, types: [S, M, R], slot: ['end'] },
+  { id: 'gunozeti', name: 'Günü üç kelimeyle özetleyip not almak', mins: 15, cost: 0, types: [S, R, E, M], slot: ['end'] },
+  { id: 'geceferi', name: 'Gece vapuruyla ya da otobüsle manzaralı dönüş', mins: 45, cost: 100, types: [M, R], slot: ['end'], eve: true },
   { id: 'soru', name: 'Birbirinize 5 soru sorun', mins: 30, cost: 0, types: [R, S], slot: ['mid'], kind: 'question' },
   { id: 'cesaret', name: 'Doğruluk mu cesaret mi: 5 tur', mins: 30, cost: 0, types: [M, E], slot: ['mid'], kind: 'question' },
   { id: 'foto', name: 'Birlikte fotoğraf çekmek', mins: 20, cost: 0, types: [R, S], slot: ['mid'], kind: 'photo' },
@@ -382,17 +493,19 @@ export function makePlan(type: DateType, dur: DateDur, budget: number, seed: num
     r,
   );
   const used = new Set<string>();
+  // Bütçe 0: bütçe sınırı yok; tutar seçimde rol oynamaz (yalnız süre, tür ve çeşitlilik).
+  const free = budget <= 0;
   let money = budget;
   let mins = D.mins;
   // Bir yuvaya en uygun etkinlik: bütçeye sığmalı; süresi o adıma düşen süre payına, tutarı bütçe payına yakın olmalı
   // (plan hem süreyi doldursun hem bütçeyi kullansın). Küçük bir rastgelelik her seferinde başka plan çıkarır.
   const pick = (ok: (a: Act) => boolean, left: number, moneyShare: number): Act | null => {
-    const cands = pool.filter((a) => !used.has(a.id) && ok(a) && a.cost <= money);
+    const cands = pool.filter((a) => !used.has(a.id) && ok(a) && (free || a.cost <= money));
     const share = Math.max(20, mins / Math.max(1, left));
     const target = money * moneyShare;
     const score = (a: Act) =>
       Math.abs(a.mins - share) / share +
-      (0.6 * Math.abs(a.cost - target)) / Math.max(target, 150) +
+      (free ? 0 : (0.6 * Math.abs(a.cost - target)) / Math.max(target, 150)) +
       r() * 0.6 +
       (avoid.has(a.id) ? 6 : 0) +
       (ageOff(a.id, opts.age) ? 2.5 : 0);
@@ -432,7 +545,7 @@ export function swapStep(plan: Plan, index: number, seed: number, age?: number):
   if (!src) return plan;
   const r = rng(seed);
   const used = new Set(plan.steps.map((s) => s.id));
-  const room = plan.budget - (plan.total - cur.c);
+  const room = plan.budget > 0 ? plan.budget - (plan.total - cur.c) : Infinity;
   const slot: Slot = index === 0 ? 'start' : index === plan.steps.length - 1 ? 'end' : 'mid';
   const all = shuffle(
     POOL.filter(

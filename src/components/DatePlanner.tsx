@@ -1,10 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useMemo, useState, type ComponentProps } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { prettyDate } from '../lib/date';
 import {
-  BUDGETS,
   clock,
   coupleAge,
   costLabel,
@@ -34,7 +33,7 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 // Son gösterilen planların adımları (ekrandan çıkıp dönünce de hatırlanır): yeni plan bunları tekrar getirmez.
 const seen: { current: string[][] } = { current: [] };
 
-// Date planlayıcı: bütçe, tür ve süre seçilir; adım adım bir program çıkar. Program bir güne eklenince
+// Date planlayıcı: tür ve süre seçilir (bütçe sorulmaz; planın yaklaşık tutarı gösterilir); adım adım bir program çıkar. Program bir güne eklenince
 // mevcut date önerisine dönüşür (partner onaylar) ve date günü adımlar işaretlenir.
 export function DatePlanner() {
   const t = useTheme();
@@ -43,8 +42,6 @@ export function DatePlanner() {
   // Kampanyalar: çiftin şehrindeki mekanlar önce; şehir seçilmemişse hepsi.
   const partners = sameCity(all ?? [], couple?.city);
   const dates = useUpcomingDates(couple?.id);
-  const [budget, setBudget] = useState(1000);
-  const [custom, setCustom] = useState<string | null>(null); // null: hazır tutarlardan biri seçili
   const [type, setType] = useState<DateType>('romantik');
   const [dur, setDur] = useState<DateDur>('half');
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -57,13 +54,11 @@ export function DatePlanner() {
   const age = coupleAge([profile?.birthDate, partnerProfile?.birthDate]);
   if (!user || !couple) return null;
 
-  const money = custom !== null ? parseInt(custom, 10) || 0 : budget;
   const create = () => {
     setError('');
     setAdded('');
-    if (money < 100) return setError('Bütçe en az 100 TL olmalı.');
     setPicking(false);
-    const next = makePlan(type, dur, Math.min(money, 100000), Date.now() % 2147483647, Date.now(), { avoid: seen.current.flat(), age });
+    const next = makePlan(type, dur, 0, Date.now() % 2147483647, Date.now(), { avoid: seen.current.flat(), age });
     seen.current = [...seen.current, next.steps.map((s) => s.id)].slice(-4);
     setPlan(next);
   };
@@ -101,35 +96,6 @@ export function DatePlanner() {
         <Ionicons name="sparkles" size={18} color={t.colors.primary} />
         <T style={{ fontWeight: '700', fontSize: 16 }}>Date planı oluştur</T>
       </View>
-      {label('Bütçe (iki kişi)')}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {BUDGETS.map((b) =>
-          chip(String(b), `${b.toLocaleString('tr-TR')} TL`, custom === null && budget === b, () => {
-            setCustom(null);
-            setBudget(b);
-          }),
-        )}
-        {chip('ozel', 'Özel', custom !== null, () => setCustom(custom ?? ''))}
-      </View>
-      {custom !== null && (
-        <TextInput
-          value={custom}
-          onChangeText={(v) => setCustom(v.replace(/[^\d]/g, ''))}
-          placeholder="Bütçeni yaz (TL)"
-          placeholderTextColor={t.colors.muted}
-          keyboardType="number-pad"
-          maxLength={6}
-          style={{
-            minHeight: 44,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: t.colors.border,
-            paddingHorizontal: 12,
-            fontSize: 15,
-            color: t.colors.text,
-          }}
-        />
-      )}
       {label('Nasıl bir date')}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {(Object.keys(DATE_TYPES) as DateType[]).map((k) =>
