@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useMemo, useRef, useState, type ComponentProps } from 'react';
+import { useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { prettyDate } from '../lib/date';
 import {
@@ -31,6 +31,9 @@ import { Button, Card, ErrorText, Muted, T } from './ui';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
+// Son gösterilen planların adımları (ekrandan çıkıp dönünce de hatırlanır): yeni plan bunları tekrar getirmez.
+const seen: { current: string[][] } = { current: [] };
+
 // Date planlayıcı: bütçe, tür ve süre seçilir; adım adım bir program çıkar. Program bir güne eklenince
 // mevcut date önerisine dönüşür (partner onaylar) ve date günü adımlar işaretlenir.
 export function DatePlanner() {
@@ -51,7 +54,6 @@ export function DatePlanner() {
   const [added, setAdded] = useState('');
   const days = useMemo(() => nextDays(14), []);
   // Son gösterilen planların adımları: "Başka plan oluştur" aynı adımları yeniden getirmesin.
-  const seen = useRef<string[][]>([]);
   const age = coupleAge([profile?.birthDate, partnerProfile?.birthDate]);
   if (!user || !couple) return null;
 
@@ -62,7 +64,7 @@ export function DatePlanner() {
     if (money < 100) return setError('Bütçe en az 100 TL olmalı.');
     setPicking(false);
     const next = makePlan(type, dur, Math.min(money, 100000), Date.now() % 2147483647, Date.now(), { avoid: seen.current.flat(), age });
-    seen.current = [...seen.current, next.steps.map((s) => s.id)].slice(-2);
+    seen.current = [...seen.current, next.steps.map((s) => s.id)].slice(-4);
     setPlan(next);
   };
   const chip = (key: string, label: string, on: boolean, onPress: () => void, icon?: IconName) => (
