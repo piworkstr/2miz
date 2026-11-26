@@ -8,7 +8,9 @@ import {
   COSTS,
   createCoupon,
   FREE_COUPON_LIMIT,
+  CouponError,
   IDEAS,
+  IDEAS_EN,
   markUsed,
   PREMIUM_LIMITS_ENABLED,
   redeemCoupon,
@@ -17,12 +19,14 @@ import {
   walletOf,
   type Coupon,
 } from '../../lib/coupons';
+import { useL, useLang } from '../../lib/i18n';
 import { useSession } from '../../lib/session';
 import { tx } from '../../lib/theme';
 import { useTheme } from '../../lib/useTheme';
 
 export default function Coupons() {
   const t = useTheme();
+  const l = useL();
   const { user, couple, partnerId, partnerName } = useSession();
   const coupons = useCoupons(couple?.id);
   const [adding, setAdding] = useState(false);
@@ -60,46 +64,61 @@ export default function Coupons() {
         <Ionicons name={t.id === 'asko' ? 'heart' : 'star'} size={26} color={t.colors.primary} />
         <View style={{ flex: 1 }}>
           <T style={{ fontSize: 24, fontWeight: '700', fontFamily: t.fonts.button }}>{String(wallet)}</T>
-          <Muted style={{ fontSize: 13 }}>{tx(t, `${t.copy.points} harcayabilirsin`)}</Muted>
+          <Muted style={{ fontSize: 13 }}>{tx(t, l(`${t.copy.points} harcayabilirsin`, `${t.copy.points} to spend`))}</Muted>
         </View>
       </View>
 
       <HowItWorks partnerName={partnerName} open={coupons.length === 0} />
 
       {owedToMe.length > 0 && (
-        <Section title={`${partnerName} sana borçlu`} hint="Açtığın kuponlar. Yerine getirdiğinde o işaretleyecek.">
+        <Section
+          title={l(`${partnerName} sana borçlu`, `${partnerName} owes you`)}
+          hint={l('Açtığın kuponlar. Yerine getirdiğinde o işaretleyecek.', 'Coupons you opened. They’ll mark them once they deliver.')}
+        >
           {owedToMe.map((c) => (
-            <Ticket key={c.id} coupon={c} badge="Açıldı" />
+            <Ticket key={c.id} coupon={c} badge={l('Açıldı', 'Opened')} />
           ))}
         </Section>
       )}
 
       <Section
-        title={`${partnerName}'in kuponları`}
-        hint={forSale.length ? 'Puanınla bir kupon aç, gerçek hayatta tadını çıkar.' : `${partnerName} henüz kupon yazmadı.`}
+        title={l(`${partnerName}'in kuponları`, `${partnerName}'s coupons`)}
+        hint={
+          forSale.length
+            ? l('Puanınla bir kupon aç, gerçek hayatta tadını çıkar.', 'Open one with your points and enjoy it in real life.')
+            : l(`${partnerName} henüz kupon yazmadı.`, `${partnerName} hasn't written any coupons yet.`)
+        }
       >
         {forSale.map((c) => (
           <RedeemTicket key={c.id} coupon={c} coupleId={couple.id} uid={user.uid} wallet={wallet} />
         ))}
       </Section>
 
-      <Section title="Senin kuponların" hint={`${partnerName} bunları puanıyla açabilir.`}>
+      <Section
+        title={l('Senin kuponların', 'Your coupons')}
+        hint={l(`${partnerName} bunları puanıyla açabilir.`, `${partnerName} can open these with their points.`)}
+      >
         {mine.map((c) => (
           <MyTicket key={c.id} coupon={c} coupleId={couple.id} partnerName={partnerName} />
         ))}
         {adding ? (
           <NewCoupon coupleId={couple.id} uid={user.uid} onDone={() => setAdding(false)} />
         ) : atLimit ? (
-          <Muted>Ücretsiz planda aynı anda {FREE_COUPON_LIMIT} kupon yazabilirsin. Premium ile sınırsız.</Muted>
+          <Muted>
+            {l(
+              `Ücretsiz planda aynı anda ${FREE_COUPON_LIMIT} kupon yazabilirsin. Premium ile sınırsız.`,
+              `On the free plan you can have ${FREE_COUPON_LIMIT} coupons at a time. Unlimited with Premium.`,
+            )}
+          </Muted>
         ) : (
-          <Button label="Yeni kupon yaz" variant="secondary" onPress={() => setAdding(true)} />
+          <Button label={l('Yeni kupon yaz', 'Write a new coupon')} variant="secondary" onPress={() => setAdding(true)} />
         )}
       </Section>
 
       {used.length > 0 && (
-        <Section title="Kullanılanlar">
+        <Section title={l('Kullanılanlar', 'Used')}>
           {used.map((c) => (
-            <Ticket key={c.id} coupon={c} faded badge="Kullanıldı" />
+            <Ticket key={c.id} coupon={c} faded badge={l('Kullanıldı', 'Used')} />
           ))}
         </Section>
       )}
@@ -110,25 +129,41 @@ export default function Coupons() {
 // "Buranın olayı ne?" — kuponların mantığı üç adımda. Hiç kupon yokken açık gelir, sonra tek dokunuşla açılır.
 function HowItWorks({ partnerName, open: openAtStart }: { partnerName: string; open: boolean }) {
   const t = useTheme();
+  const l = useL();
   const [open, setOpen] = useState(openAtStart);
   const steps = [
     [
       'create-outline',
-      'Kupon yaz',
-      `Partnerine vermek istediğin bir sözü yaz: "Kahvaltı benden", "Bir akşam telefonsuz". Bir de puan fiyatı koy.`,
+      l('Kupon yaz', 'Write a coupon'),
+      l(
+        `Partnerine vermek istediğin bir sözü yaz: "Kahvaltı benden", "Bir akşam telefonsuz". Bir de puan fiyatı koy.`,
+        `Write a promise for your partner: "Breakfast is on me", "A phone-free evening". Then set a price in points.`,
+      ),
     ],
-    ['star-outline', 'Puan birikir', 'Günlük görevleri birlikte tamamladıkça ortak puanınız artar. İkiniz de aynı kasadan harcarsınız.'],
+    [
+      'star-outline',
+      l('Puan birikir', 'Points add up'),
+      l(
+        'Günlük görevleri birlikte tamamladıkça ortak puanınız artar. İkiniz de aynı kasadan harcarsınız.',
+        'Your shared points grow as you finish daily tasks together. You both spend from the same pot.',
+      ),
+    ],
     [
       'gift-outline',
-      'Kuponu aç',
-      `${partnerName} puanıyla kuponunu açar; sen sözünü gerçek hayatta yerine getirince "Yapıldı" dersin. Tersi de aynı.`,
+      l('Kuponu aç', 'Open a coupon'),
+      l(
+        `${partnerName} puanıyla kuponunu açar; sen sözünü gerçek hayatta yerine getirince "Yapıldı" dersin. Tersi de aynı.`,
+        `${partnerName} opens your coupon with points; once you keep your promise in real life, you mark it done. Same the other way around.`,
+      ),
     ],
   ] as const;
   return (
     <View style={{ borderWidth: 1, borderColor: t.colors.border, borderRadius: t.radius.card, padding: 14, gap: 10 }}>
       <Pressable onPress={() => setOpen((o) => !o)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name="help-circle-outline" size={20} color={t.colors.primary} />
-        <T style={{ flex: 1, fontWeight: '600', fontFamily: t.fonts.button }}>{tx(t, 'Kuponlar nasıl çalışır?')}</T>
+        <T style={{ flex: 1, fontWeight: '600', fontFamily: t.fonts.button }}>
+          {tx(t, l('Kuponlar nasıl çalışır?', 'How do coupons work?'))}
+        </T>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={t.colors.muted} />
       </Pressable>
       {open &&
@@ -160,6 +195,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 
 function Ticket({ coupon, badge, faded, children }: { coupon: Coupon; badge?: string; faded?: boolean; children?: ReactNode }) {
   const t = useTheme();
+  const l = useL();
   return (
     <View
       style={{
@@ -181,7 +217,7 @@ function Ticket({ coupon, badge, faded, children }: { coupon: Coupon; badge?: st
           {coupon.title}
         </Text>
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.primary, fontWeight: '700', fontSize: 14 }}>
-          {coupon.cost} puan
+          {coupon.cost} {l('puan', 'pts')}
         </Text>
       </View>
       {badge && (
@@ -208,18 +244,36 @@ function Ticket({ coupon, badge, faded, children }: { coupon: Coupon; badge?: st
 }
 
 function RedeemTicket({ coupon, coupleId, uid, wallet }: { coupon: Coupon; coupleId: string; uid: string; wallet: number }) {
+  const l = useL();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const short = wallet < coupon.cost;
 
   async function redeem() {
     setError('');
-    if (short) return setError(`${coupon.cost - wallet} puan daha lazım. Görevleri tamamladıkça birikir.`);
+    if (short)
+      return setError(
+        l(
+          `${coupon.cost - wallet} puan daha lazım. Görevleri tamamladıkça birikir.`,
+          `You need ${coupon.cost - wallet} more points. They add up as you finish tasks.`,
+        ),
+      );
     setBusy(true);
     try {
       await redeemCoupon(coupleId, coupon.id, uid);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kupon açılamadı.');
+      const code = e instanceof CouponError ? e.code : null;
+      setError(
+        code === 'notfound'
+          ? l('Kupon bulunamadı.', 'Coupon not found.')
+          : code === 'taken'
+            ? l('Bu kupon zaten açılmış.', 'This coupon is already open.')
+            : code === 'own'
+              ? l('Kendi kuponunu açamazsın.', "You can't open your own coupon.")
+              : code === 'short'
+                ? l('Yeterli puanın yok.', "You don't have enough points.")
+                : l('Kupon açılamadı.', "Couldn't open the coupon."),
+      );
     } finally {
       setBusy(false);
     }
@@ -227,7 +281,12 @@ function RedeemTicket({ coupon, coupleId, uid, wallet }: { coupon: Coupon; coupl
 
   return (
     <Ticket coupon={coupon}>
-      <Button label={`${coupon.cost} puanla aç`} variant={short ? 'secondary' : 'primary'} onPress={redeem} busy={busy} />
+      <Button
+        label={l(`${coupon.cost} puanla aç`, `Open for ${coupon.cost} points`)}
+        variant={short ? 'secondary' : 'primary'}
+        onPress={redeem}
+        busy={busy}
+      />
       <ErrorText>{error}</ErrorText>
     </Ticket>
   );
@@ -235,14 +294,15 @@ function RedeemTicket({ coupon, coupleId, uid, wallet }: { coupon: Coupon; coupl
 
 function MyTicket({ coupon, coupleId, partnerName }: { coupon: Coupon; coupleId: string; partnerName: string }) {
   const t = useTheme();
+  const l = useL();
   const [busy, setBusy] = useState(false);
 
   if (coupon.status === 'redeemed') {
     return (
-      <Ticket coupon={coupon} badge={`${partnerName} açtı`}>
-        <Muted style={{ fontSize: 13 }}>Sözünü tuttuğunda işaretle.</Muted>
+      <Ticket coupon={coupon} badge={l(`${partnerName} açtı`, `${partnerName} opened it`)}>
+        <Muted style={{ fontSize: 13 }}>{l('Sözünü tuttuğunda işaretle.', 'Mark it once you’ve kept your promise.')}</Muted>
         <Button
-          label="Yerine getirdim"
+          label={l('Yerine getirdim', 'Done')}
           busy={busy}
           onPress={async () => {
             setBusy(true);
@@ -261,7 +321,7 @@ function MyTicket({ coupon, coupleId, partnerName }: { coupon: Coupon; coupleId:
     <Ticket coupon={coupon}>
       <Pressable onPress={() => removeCoupon(coupleId, coupon.id)} hitSlop={8} style={{ alignSelf: 'flex-end' }}>
         <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.muted, fontSize: 13 }}>
-          Kaldır
+          {l('Kaldır', 'Remove')}
         </Text>
       </Pressable>
     </Ticket>
@@ -270,6 +330,9 @@ function MyTicket({ coupon, coupleId, partnerName }: { coupon: Coupon; coupleId:
 
 function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; onDone: () => void }) {
   const t = useTheme();
+  const l = useL();
+  const { lang } = useLang();
+  const ideas = lang === 'en' ? IDEAS_EN : IDEAS;
   const [title, setTitle] = useState('');
   const [cost, setCost] = useState(20);
   const [busy, setBusy] = useState(false);
@@ -277,13 +340,13 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
 
   async function save() {
     setError('');
-    if (!title.trim()) return setError('Kuponun ne olduğunu yaz.');
+    if (!title.trim()) return setError(l('Kuponun ne olduğunu yaz.', 'Write what the coupon is for.'));
     setBusy(true);
     try {
       await createCoupon(coupleId, uid, title, cost);
       onDone();
     } catch {
-      setError('Kaydedilemedi, tekrar dene.');
+      setError(l('Kaydedilemedi, tekrar dene.', "Couldn't save, please try again."));
       setBusy(false);
     }
   }
@@ -299,9 +362,14 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
 
   return (
     <Card>
-      <Input placeholder="Kuponun ne? Örn. Kahvaltı benden" value={title} onChangeText={setTitle} maxLength={60} />
+      <Input
+        placeholder={l('Kuponun ne? Örn. Kahvaltı benden', 'What’s the coupon? e.g. Breakfast is on me')}
+        value={title}
+        onChangeText={setTitle}
+        maxLength={60}
+      />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {IDEAS.map((idea) => (
+        {ideas.map((idea) => (
           <Pressable key={idea} onPress={() => setTitle(idea)} style={chip(title === idea)}>
             <Text maxFontSizeMultiplier={1.25} style={{ color: t.colors.text, fontSize: 13 }}>
               {idea}
@@ -309,7 +377,7 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
           </Pressable>
         ))}
       </ScrollView>
-      <Muted style={{ fontSize: 13 }}>Kaç puan değerinde?</Muted>
+      <Muted style={{ fontSize: 13 }}>{l('Kaç puan değerinde?', 'How many points is it worth?')}</Muted>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         {COSTS.map((c) => (
           <Pressable key={c} onPress={() => setCost(c)} style={chip(cost === c)}>
@@ -321,8 +389,8 @@ function NewCoupon({ coupleId, uid, onDone }: { coupleId: string; uid: string; o
       </View>
       <ErrorText>{error}</ErrorText>
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button style={{ flex: 1 }} label="Vazgeç" variant="secondary" onPress={onDone} />
-        <Button style={{ flex: 1 }} label="Kaydet" onPress={save} busy={busy} />
+        <Button style={{ flex: 1 }} label={l('Vazgeç', 'Cancel')} variant="secondary" onPress={onDone} />
+        <Button style={{ flex: 1 }} label={l('Kaydet', 'Save')} onPress={save} busy={busy} />
       </View>
     </Card>
   );

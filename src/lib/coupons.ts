@@ -39,6 +39,25 @@ export const IDEAS = [
   'Seçtiğin yere date',
 ];
 
+export const IDEAS_EN = [
+  'Breakfast is on me',
+  'You pick tonight’s movie',
+  '30-minute massage',
+  'Dishes are on me for a week',
+  'I’ll bring your favorite dessert',
+  'I say "yes" all day',
+  'Phone-free dinner',
+  'A date wherever you choose',
+];
+
+// İşlemden atılan hatalar kodla gelir; ekran bunu kullanıcının diline çevirir.
+export type RedeemError = 'notfound' | 'taken' | 'own' | 'short';
+export class CouponError extends Error {
+  constructor(public code: RedeemError) {
+    super(code);
+  }
+}
+
 // Ücretsiz planda aynı anda en fazla 3 aktif kupon (premium devreye girince açılır).
 export const FREE_COUPON_LIMIT = 3;
 export const PREMIUM_LIMITS_ENABLED = false;
@@ -84,12 +103,12 @@ export async function redeemCoupon(coupleId: string, couponId: string, uid: stri
   const couponRef = doc(col(coupleId), couponId);
   await runTransaction(db, async (tx) => {
     const [c, k] = [await tx.get(coupleRef), await tx.get(couponRef)];
-    if (!c.exists() || !k.exists()) throw new Error('Kupon bulunamadı.');
+    if (!c.exists() || !k.exists()) throw new CouponError('notfound');
     const couple = c.data() as Couple;
     const coupon = k.data() as Coupon;
-    if (coupon.status !== 'active') throw new Error('Bu kupon zaten açılmış.');
-    if (coupon.owner === uid) throw new Error('Kendi kuponunu açamazsın.');
-    if (walletOf(couple, uid) < coupon.cost) throw new Error('Yeterli puanın yok.');
+    if (coupon.status !== 'active') throw new CouponError('taken');
+    if (coupon.owner === uid) throw new CouponError('own');
+    if (walletOf(couple, uid) < coupon.cost) throw new CouponError('short');
     tx.update(coupleRef, { [`spent.${uid}`]: (couple.spent?.[uid] ?? 0) + coupon.cost });
     tx.update(couponRef, { status: 'redeemed', redeemedBy: uid, redeemedAt: serverTimestamp() });
   });
